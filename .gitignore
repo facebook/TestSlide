@@ -1,0 +1,6 @@
+dist/
+MANIFEST
+TestSlide.egg-info/
+**/__pycache__/
+**/*.pyc
+docs/_build/
