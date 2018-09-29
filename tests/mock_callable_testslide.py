@@ -133,14 +133,11 @@ def mock_callable_context(context):
             def works_for_matching_signature(self):
                 self.callable_target(*self.call_args, **self.call_kwargs),
 
-            @context.xexample
+            @context.example
             def raises_TypeError_for_mismatching_signature(self):
                 args = ("some", "invalid", "args", "list")
                 kwargs = {"invalid_kwarg": "invalid_value"}
-                with self.assertRaisesWithMessage(
-                    TypeError,
-                    "Call signature mismatches original implementation signature.",
-                ):
+                with self.assertRaises(TypeError):
                     self.callable_target(*args, **kwargs)
 
             @context.sub_context(".for_call(*args, **kwargs)")
@@ -477,7 +474,7 @@ def mock_callable_context(context):
         @context.sub_context(".to_raise(exception)")
         def to_raise_exception(context):
 
-            context.memoize("exception_class", lambda _: Exception)
+            context.memoize("exception_class", lambda _: RuntimeError)
             context.memoize("times", lambda _: 3)
 
             @context.shared_context
@@ -943,12 +940,13 @@ def mock_callable_context(context):
             self.target_arg = target
             self.callable_arg = "__str__"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.__str__
+            self.callable_target = lambda: str(target)
 
         context.merge_context(
             "examples for target",
             callable_accepts_no_args=True,
             has_original_callable=False,
+            can_yield=False,
         )
 
         @context.example

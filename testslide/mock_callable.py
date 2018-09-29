@@ -15,6 +15,7 @@ import functools
 from typing import List, Callable  # noqa
 import testslide
 from testslide.strict_mock import StrictMock
+from testslide.strict_mock import _add_signature_validation
 
 
 def mock_callable(target, method):
@@ -380,6 +381,7 @@ def _patch(target, method, new_value):
     else:
         original_callable = getattr(target, method)
 
+    new_value = _add_signature_validation(new_value, target, method)
     restore_value = target.__dict__.get(method, None)
 
     if inspect.isclass(target):

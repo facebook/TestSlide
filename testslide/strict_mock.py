@@ -18,7 +18,26 @@ if sys.version_info[0] >= 3:
 else:
     from mock import create_autospec
 
-from testslide.common import _add_signature_validation
+
+def _add_signature_validation(value, template, attr_name):
+    if isinstance(template, StrictMock):
+        if "__template" in template.__dict__:
+            template = template.__dict__["__template"]
+        else:
+            return value
+    template_function = getattr(template, attr_name)
+    if sys.version_info[0] == 2 and not (
+        not inspect.isfunction(template_function) and not template_function.im_self
+    ):
+        # This is needed for Python 2, as create_autospec breaks
+        # with TypeError when caling either static or class
+        # methods
+        return create_autospec(template_function, side_effect=value)
+    else:
+        instance_mock = create_autospec(template)
+        function_mock = getattr(instance_mock, attr_name)
+        function_mock.side_effect = value
+        return function_mock
 
 
 class UndefinedBehavior(BaseException):

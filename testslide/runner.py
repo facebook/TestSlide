@@ -233,16 +233,14 @@ class DocumentFormatter(Formatter):
             for path, line, function_name, text in traceback.extract_tb(
                 exception.__traceback__
             ):
-                # Hide TestSlide's steps of the stack
-                if not path.startswith(os.path.dirname(__file__)):
-                    if self.trim_strace_path_prefix:
-                        split = path.split(self.trim_strace_path_prefix)
-                        if len(split) == 2 and not split[0]:
-                            path = split[1]
-                    self.print_cyan(
-                        '      File "{}", line {}, in {}\n'
-                        "        {}".format(path, line, function_name, text)
-                    )
+                if self.trim_strace_path_prefix:
+                    split = path.split(self.trim_strace_path_prefix)
+                    if len(split) == 2 and not split[0]:
+                        path = split[1]
+                self.print_cyan(
+                    '      File "{}", line {}, in {}\n'
+                    "        {}".format(path, line, function_name, text)
+                )
 
     def finish(self, not_executed_examples):
         Formatter.finish(self, not_executed_examples)
