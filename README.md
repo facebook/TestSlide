@@ -140,7 +140,7 @@ mock.has_proxy = lambda : False
 mock.has_proxy()  # => False
 ```
 
-`StrictMock` also covers you, in case you try to do somethnig clowny:
+`StrictMock` also covers you, in case you try to do something clowny:
 
 ```python
 mock.has_proxy = lambda invalid_arg: False
@@ -186,7 +186,7 @@ class TestRequest(TestCase):
     self.request.get_header('Accept')  # => raises UndefinedBehaviorForCall
 
   def test_compose_behavior(self):
-    'Passes as new behavior was added on top of the previos'
+    'Passes as new behavior was added on top of the previous'
     self.mock_callable(self.request, 'get_header')\
       .for_call('Accept')\
       .to_return_value('*/*')
