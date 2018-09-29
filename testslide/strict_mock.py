@@ -18,6 +18,8 @@ if sys.version_info[0] >= 3:
 else:
     from mock import create_autospec
 
+from testslide.common import _add_signature_validation
+
 
 class UndefinedBehavior(BaseException):
     """
@@ -171,31 +173,13 @@ class StrictMock(object):
             or self.__is_runtime_attr(name)
         )
 
-    def __is_instance_method(self, f):
-        return not inspect.isfunction(f) and not f.im_self
-
     def __get_mock_value(self, name, value):
         if hasattr(self.__template, name):
-            template_function = getattr(self.__template, name)
-
             # If we are working with a callable we need to actually
             # set the side effect of the callable, not directly assign
             # the value to the callable
-            if callable(template_function):
-                if sys.version_info[0] == 2 and not self.__is_instance_method(
-                    getattr(self.__template, name)
-                ):
-                    # This is needed for Python 2, as create_autospec breaks
-                    # with TypeError when caling either static or class
-                    # methods
-                    value = create_autospec(
-                        getattr(self.__template, name), side_effect=value
-                    )
-                else:
-                    instance_mock = create_autospec(self.__template)
-                    function_mock = getattr(instance_mock, name)
-                    function_mock.side_effect = value
-                    value = function_mock
+            if callable(getattr(self.__template, name)):
+                value = _add_signature_validation(value, self.__template, name)
         return value
 
     def __setattr__(self, name, value):
