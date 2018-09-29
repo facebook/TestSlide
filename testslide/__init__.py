@@ -692,11 +692,6 @@ def reset():
     before_once_executed = False
 
 
-def _test_function(arg1, arg2, kwarg1=None, kwarg2=None):
-    "This function is used by some unit tests only"
-    return "original response"
-
-
 class TestCase(unittest.TestCase):
     """
     A subclass of unittest.TestCase that adds TestSlide's features.
@@ -713,3 +708,8 @@ class TestCase(unittest.TestCase):
     mock_callable = staticmethod(testslide.mock_callable.mock_callable)
 
     mock_constructor = staticmethod(testslide.mock_constructor.mock_constructor)
+
+
+def _test_function(arg1, arg2, kwarg1=None, kwarg2=None):
+    "This function is used by some unit tests only"
+    return "original response"

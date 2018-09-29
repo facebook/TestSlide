@@ -21,10 +21,12 @@ import contextlib
 from testslide.strict_mock import StrictMock
 
 
-class ParentTarget(object):
+class TargetStr(object):
     def __str__(self):
         return "original response"
 
+
+class ParentTarget(TargetStr):
     def instance_method(self, arg1, arg2, kwarg1=None, kwarg2=None):
         return "original response"
 
@@ -91,7 +93,10 @@ def mock_callable_context(context):
 
     @context.shared_context
     def examples_for_target(
-        context, callable_accepts_no_args=False, has_original_callable=True
+        context,
+        callable_accepts_no_args=False,
+        has_original_callable=True,
+        can_yield=True,
     ):
         @context.function
         def assert_all(self):
@@ -431,39 +436,43 @@ def mock_callable_context(context):
                     ):
                         self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.sub_context(".to_yield_values(values_list)")
-        def to_yield_values_values_list(context):
+        if can_yield:
 
-            context.memoize("values_list", lambda _: ["first", "second", "third"])
-            context.memoize("times", lambda self: len(self.values_list) - 1)
+            @context.sub_context(".to_yield_values(values_list)")
+            def to_yield_values_values_list(context):
 
-            @context.before
-            def setup_mock(self):
-                self.mock_callable_dsl.to_yield_values(self.values_list)
+                context.memoize("values_list", lambda _: ["first", "second", "third"])
+                context.memoize("times", lambda self: len(self.values_list) - 1)
 
-            context.nest_context("mock call arguments")
-            context.nest_context("assertions")
-
-            @context.memoize
-            def iterable(self):
-                return iter(self.callable_target(*self.call_args, **self.call_kwargs))
-
-            @context.example
-            def yield_values_from_list_in_order(self):
-                for value in self.values_list:
-                    self.assertEqual(next(self.iterable), value)
-
-            @context.sub_context
-            def when_list_is_empty(context):
                 @context.before
-                def before(self):
-                    for _ in self.values_list:
-                        next(self.iterable)
+                def setup_mock(self):
+                    self.mock_callable_dsl.to_yield_values(self.values_list)
+
+                context.nest_context("mock call arguments")
+                context.nest_context("assertions")
+
+                @context.memoize
+                def iterable(self):
+                    return iter(
+                        self.callable_target(*self.call_args, **self.call_kwargs)
+                    )
 
                 @context.example
-                def it_raises_StopIteration(self):
-                    with self.assertRaises(StopIteration):
-                        next(self.iterable)
+                def yield_values_from_list_in_order(self):
+                    for value in self.values_list:
+                        self.assertEqual(next(self.iterable), value)
+
+                @context.sub_context
+                def when_list_is_empty(context):
+                    @context.before
+                    def before(self):
+                        for _ in self.values_list:
+                            next(self.iterable)
+
+                    @context.example
+                    def it_raises_StopIteration(self):
+                        with self.assertRaises(StopIteration):
+                            next(self.iterable)
 
         @context.sub_context(".to_raise(exception)")
         def to_raise_exception(context):
@@ -806,24 +815,39 @@ def mock_callable_context(context):
         context.memoize("call_args", lambda _: ())
         context.memoize("call_kwargs", lambda _: {})
 
-        @context.before
-        def before(self):
-            target = Target()
-            self.original_callable = target.__str__
-            self.target_arg = target
-            self.callable_arg = "__str__"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.__str__
+        @context.shared_context
+        def magic_method_tests(context):
+            @context.before
+            def before(self):
+                self.original_callable = self.target.__str__
+                self.target_arg = self.target
+                self.callable_arg = "__str__"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = lambda: str(self.target)
 
-        context.merge_context("examples for target", callable_accepts_no_args=True)
-
-        @context.example
-        def other_instances_are_not_mocked(self):
-            mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mocked value"
+            context.merge_context(
+                "examples for target", callable_accepts_no_args=True, can_yield=False
             )
-            self.assertEqual(self.callable_target(), "mocked value")
-            self.assertEqual(str(Target()), "original response")
+
+            @context.example
+            def other_instances_are_not_mocked(self):
+                mock_callable(self.target_arg, self.callable_arg).to_return_value(
+                    "mocked value"
+                )
+                self.assertEqual(self.callable_target(), "mocked value")
+                self.assertEqual(str(Target()), "original response")
+
+        @context.sub_context
+        def with_magic_method_defined_on_class(context):
+            context.memoize("target", lambda self: ParentTarget())
+            context.merge_context("magic method tests")
+
+        @context.sub_context
+        def with_magic_method_defined_on_parent_class(context):
+            context.memoize("target", lambda self: Target())
+            context.merge_context("magic method tests")
 
     @context.shared_context
     def class_is_not_mocked(context):

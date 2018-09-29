@@ -266,11 +266,6 @@ class _CallOriginalRunner(_Runner):
         return self.original_callable(*args, **kwargs)
 
 
-##
-## DSL
-##
-
-
 class _CallableMock(object):
     def __init__(self, target, method):
         self.target = target
@@ -304,6 +299,112 @@ class _CallableMock(object):
     @property
     def _registered_calls(self):
         return [runner.accepted_args for runner in self.runners if runner.accepted_args]
+
+
+class _DescriptorProxy(object):
+    def __init__(self, original_class_attr, attr_name):
+        self.original_class_attr = original_class_attr
+        self.attr_name = attr_name
+        self.instance_attr_map = {}
+
+    def __set__(self, instance, value):
+        self.instance_attr_map[id(instance)] = value
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        if id(instance) in self.instance_attr_map:
+            return self.instance_attr_map[id(instance)]
+        else:
+            if self.original_class_attr:
+                return self.original_class_attr.__get__(instance, owner)
+            else:
+                for parent in owner.mro()[1:]:
+                    method = parent.__dict__.get(self.attr_name, None)
+                    if type(method) is type(self):
+                        continue
+                    if method:
+                        return method.__get__(instance, owner)
+                return instance.__get__(instance, owner)
+
+    def __delete__(self, instance):
+        if instance in self.instance_attr_map:
+            del self.instance_attr_map[instance]
+
+
+def _is_instance_method(target, method):
+    if inspect.ismodule(target):
+        return False
+
+    if inspect.isclass(target):
+        klass = target
+    else:
+        klass = type(target)
+
+    for k in klass.mro():
+        if method in k.__dict__ and inspect.isfunction(k.__dict__[method]):
+            return True
+    return False
+
+
+def _mock_instance_attribute(instance, attr, value):
+    """
+    Patch attribute at instance with given value. This works for any instance
+    attribute, even when the attribute is defined via the descriptor protocol using
+    __get__ at the class (eg with @property).
+
+    This allows mocking of the attribute only at the desired instance, as opposed to
+    using Python's unittest.mock.patch.object + PropertyMock, that requires patching
+    at the class level, thus affecting all instances (not only the one you want).
+    """
+    klass = type(instance)
+    class_restore_value = klass.__dict__.get(attr, None)
+    setattr(klass, attr, _DescriptorProxy(class_restore_value, attr))
+    setattr(instance, attr, value)
+
+    def unpatch_class():
+        if class_restore_value:
+            setattr(klass, attr, class_restore_value)
+        else:
+            delattr(klass, attr)
+
+    return unpatch_class
+
+
+def _patch(target, method, new_value):
+    if isinstance(target, six.string_types):
+        target = testslide._importer(target)
+
+    if isinstance(target, StrictMock):
+        original_callable = None
+    else:
+        original_callable = getattr(target, method)
+
+    restore_value = target.__dict__.get(method, None)
+
+    if inspect.isclass(target):
+        if _is_instance_method(target, method):
+            raise ValueError(
+                "Patching an instance method at the class is not supported: "
+                "bugs are easy to introduce, as patch is not scoped for an "
+                "instance, which can potentially even break class behavior; "
+                "assertions on calls are ambiguous (for every instance or one "
+                "global assertion?)."
+            )
+        new_value = staticmethod(new_value)
+
+    if _is_instance_method(target, method):
+        unpatcher = _mock_instance_attribute(target, method, new_value)
+    else:
+        setattr(target, method, new_value)
+
+        def unpatcher():
+            if restore_value:
+                setattr(target, method, restore_value)
+            else:
+                delattr(target, method)
+
+    return original_callable, unpatcher
 
 
 class _MockCallableDSL(object):
@@ -346,54 +447,13 @@ class _MockCallableDSL(object):
             _unpatchers.append(del_callable_mock)
 
             if patch:
-                original_callable, unpatcher = self._patch(
-                    target, method, callable_mock
-                )
+                original_callable, unpatcher = _patch(target, method, callable_mock)
                 _unpatchers.append(unpatcher)
             self._original_callable = original_callable
             callable_mock.original_callable = original_callable
         else:
             self._callable_mock = self.CALLABLE_MOCKS[target_method_id]
             self._original_callable = self._callable_mock.original_callable
-
-    @staticmethod
-    def _is_instance_method(klass, method):
-        for k in klass.mro():
-            if method in k.__dict__ and inspect.isfunction(k.__dict__[method]):
-                return True
-        return False
-
-    def _patch(self, target, method, new_value):
-        if isinstance(target, six.string_types):
-            target = testslide._importer(target)
-
-        if isinstance(target, StrictMock):
-            original_callable = None
-        else:
-            original_callable = getattr(target, method)
-
-        restore_value = target.__dict__.get(method, None)
-
-        if inspect.isclass(target):
-            if self._is_instance_method(target, method):
-                raise ValueError(
-                    "Patching an instance method at the class is not supported: "
-                    "bugs are easy to introduce, as patch is not scoped for an "
-                    "instance, which can potentially even break class behavior; "
-                    "assertions on calls are ambiguous (for every instance or one "
-                    "global assertion?)."
-                )
-            setattr(target, method, staticmethod(new_value))
-        else:
-            setattr(target, method, new_value)
-
-        def unpatcher():
-            if restore_value:
-                setattr(target, method, restore_value)
-            else:
-                delattr(target, method)
-
-        return original_callable, unpatcher
 
     def _add_runner(self, runner):
         if self._runner:
