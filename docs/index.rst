@@ -1,5 +1,5 @@
-Welcome to TestSlide's documentation!
-=====================================
+TestSlide: Fluent Python Testing
+================================
 
 .. toctree::
    :maxdepth: 2
