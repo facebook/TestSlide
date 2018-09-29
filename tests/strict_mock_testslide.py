@@ -28,7 +28,7 @@ class Template(TemplateParent):
     non_callable = "original value"
 
     def __init__(self):
-        super(type(self), self).__init__()
+        super(Template, self).__init__()
         self.runtime_attr_from_init = True
 
     def instance_method(self, message):

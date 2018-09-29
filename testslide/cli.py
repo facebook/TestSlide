@@ -27,13 +27,19 @@ _unittest_testcase_loaded = False
 
 
 def _filename_to_module_name(name):
-    if not (os.path.isfile(name) and name.lower().endswith(".py")):
+    if not (
+        os.path.isfile(name)
+        and (name.lower().endswith(".py") or name.lower().endswith(".pyc"))
+    ):
         raise ValueError("Expected a .py file, got {}".format(name))
 
     if os.path.isabs(name):
         name = os.path.relpath(name, os.getcwd())
-
-    return name[:-3].replace(os.path.sep, ".")
+    if name.lower().endswith(".pyc"):
+        end = -4
+    else:
+        end = -3
+    return name[:end].replace(os.path.sep, ".")
 
 
 def _get_all_test_case_subclasses():

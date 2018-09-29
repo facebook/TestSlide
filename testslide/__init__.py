@@ -703,7 +703,7 @@ class TestCase(unittest.TestCase):
         )
         self.addCleanup(testslide.mock_callable.unpatch_all_callable_mocks)
         self.addCleanup(testslide.mock_constructor.unpatch_all_constructor_mocks)
-        super().setUp()
+        super(TestCase, self).setUp()
 
     mock_callable = staticmethod(testslide.mock_callable.mock_callable)
 
