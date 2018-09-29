@@ -2,6 +2,7 @@
 
 [![Build Status](https://api.travis-ci.org/facebookincubator/TestSlide.svg?branch=master)](https://travis-ci.org/facebookincubator/TestSlide)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PyPI version](https://badge.fury.io/py/TestSlide.svg)](https://badge.fury.io/py/TestSlide)
 
 TestSlide makes writing tests fluid and easy. It allows complex mock setup without manual labor. TestSlide's mocks have a plethora of validations under the hood, so you can trust your test signal, specially when code changes. [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development) are well supported by a [DSL](https://en.wikipedia.org/wiki/Domain-specific_language), that allows you to describe your test cases close to spoken language. The included test runner, is full of nice features, allowing you to iterate quickly.
 
