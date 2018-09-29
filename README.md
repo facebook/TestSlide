@@ -378,7 +378,7 @@ https://testslide.readthedocs.io/
 ## Join the TestSlide community
 
 * Website: https://github.com/facebookincubator/TestSlide
-See the CONTRIBUTING file for how to help out.
+See the [CONTRIBUTING](CONTRIBUTING.md)  file for how to help out.
 
 ## License
-TestSlide is MIT licensed, as found in the LICENSE file.
+TestSlide is MIT licensed, as found in the [LICENSE](LICENSE) file.
