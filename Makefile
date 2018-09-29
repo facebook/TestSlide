@@ -13,11 +13,11 @@ black_check:
 .PHONY: unittest_tests
 unittest_tests:
 	# We need to convert file names to module names for Python 2...
-	python -m unittest --verbose $(for f in tests/*_unittest.py ; do echo ${f%.py} | tr / .  ; done)
+	python -m unittest --verbose --failfast $(for f in tests/*_unittest.py ; do echo ${f%.py} | tr / .  ; done)
 
 .PHONY: testslide_tests
 testslide_tests:
-	python -m testslide.cli tests/*_testslide.py
+	python -m testslide.cli --fail-fast tests/*_testslide.py
 
 .PHONY: test
 test: black_check unittest_tests testslide_tests
