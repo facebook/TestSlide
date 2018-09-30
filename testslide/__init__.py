@@ -356,7 +356,7 @@ class Context(object):
         self.add_function("mock_callable", _mock_callable)
 
         def register_assertion(assertion):
-            self.after_functions.append(assertion)
+            self.after_functions.append(lambda context_data: assertion())
 
         testslide.mock_callable.register_assertion = register_assertion
 
