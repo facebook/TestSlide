@@ -18,5 +18,9 @@ unittest_tests:
 testslide_tests:
 	python -m testslide.cli --fail-fast tests/*_testslide.py
 
+.PHONY: docs
+docs:
+	cd docs && make html
+
 .PHONY: test
-test: black_check unittest_tests testslide_tests
+test: black_check unittest_tests testslide_tests docs
