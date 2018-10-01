@@ -142,7 +142,7 @@ Shuffled Execution
 Each test must be independent and isolated from each other. For example, if one test manipulates some module level object, that the next test depends on, we are leaking the context of one test to the next. To catch such cases, you can run your tests with ``--shuffle``: tests will be executed in a random order every time. The test signal must always be the same, no matter in what order tests run. You can tweak the seed with ``--seed``.
 
 Tip: Automatic Test Execution
-------------------------
+-----------------------------
 
 To help iterate even quicker, you can pair ``testslide`` execution with `entr <http://www.entrproject.org/>`_ (or any similar):
 
