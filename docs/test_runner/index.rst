@@ -96,7 +96,7 @@ And then run your tests with ``--focus``:
 
   $ testslide calc_test.py
   calc.TestCalcSub
-    *ftest_sub_positive
+    *ftest_sub_positive: PASS
   
   Finished 1 example(s) in 0.0s:
     Successful: 1
@@ -119,11 +119,11 @@ And this test will be skipped:
 
   $ testslide calc_test.py
   calc.TestCalcAdd
-    test_add_negative
-    test_add_positive
+    test_add_negative: PASS
+    test_add_positive: PASS
   calc.TestCalcSub
-    test_sub_negative
-    xtest_sub_positive
+    test_sub_negative: PASS
+    xtest_sub_positive: SKIP
   
   Finished 4 example(s) in 0.0s:
     Successful: 3
