@@ -61,6 +61,8 @@ TestSlide's mocks failure messages guide you towards the solution, that you can 
 
 .. code-block:: python
 
+  import storage
+  
   class Backup(object):
     def __init__(self):
       self.storage = storage.Client(timeout=60)
