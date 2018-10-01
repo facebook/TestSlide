@@ -18,7 +18,7 @@ Scaffold the code you want to test ``backup.py``:
 
 .. code-block:: python
 
-  class BackupClient:
+  class Backup(object):
     def delete(self, path):
       pass
 
@@ -34,11 +34,13 @@ Write a test case for it ``backup_test.py``:
     def setUp(self):
       super().setUp()
       self.storage = StrictMock(storage.Client)
+      # Makes storage.Client(timeout=60) return the mock
       self.mock_constructor(storage, 'Client')\
         .for_call(timeout=60)\
         .to_return_value(self.storage)
-    
+  
     def test_delete_from_storage(self):
+      # Set behavior and assertion for the call at the mock
       self.mock_callable(self.storage, 'delete')\
         .for_call('/file/to/delete')\
         .to_return_value(True)\
@@ -59,7 +61,7 @@ TestSlide's mocks failure messages guide you towards the solution, that you can 
 
 .. code-block:: python
 
-  class Backup:
+  class Backup(object):
     def __init__(self):
       self.storage = storage.Client(timeout=60)
   
