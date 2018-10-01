@@ -139,6 +139,7 @@ class _Runner(object):
             if times != self.call_count:
                 raise AssertionError(
                     (
+                        "calls did not match assertion.\n"
                         "{}, {}:\n"
                         "  expected: called exactly {} time(s) with {}"
                         "  received: {} call(s)"
@@ -158,6 +159,7 @@ class _Runner(object):
             if self.call_count < times:
                 raise AssertionError(
                     (
+                        "calls did not match assertion.\n"
                         "{}, {}:\n"
                         "  expected: called at least {} time(s) with {}"
                         "  received: {} call(s)"
@@ -177,6 +179,7 @@ class _Runner(object):
             if not self.call_count or self.call_count > times:
                 raise AssertionError(
                     (
+                        "calls did not match assertion.\n"
                         "{}, {}:\n"
                         "  expected: called at most {} time(s) with {}"
                         "  received: {} call(s)"
