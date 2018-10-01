@@ -233,6 +233,9 @@ class DocumentFormatter(Formatter):
             for path, line, function_name, text in traceback.extract_tb(
                 exception.__traceback__
             ):
+                # Hide TestSlide's steps of the stack
+                if path.startswith(os.path.dirname(__file__)):
+                    continue
                 if self.trim_strace_path_prefix:
                     split = path.split(self.trim_strace_path_prefix)
                     if len(split) == 2 and not split[0]:
