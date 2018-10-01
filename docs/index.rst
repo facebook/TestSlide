@@ -33,15 +33,15 @@ Write a test case for it ``backup_test.py``:
   class TestBackupDelete(TestCase):
     def setUp(self):
       super().setUp()
-      self.storage = StrictMock(storage.Client)
+      self.storage_mock = StrictMock(storage.Client)
       # Makes storage.Client(timeout=60) return the mock
       self.mock_constructor(storage, 'Client')\
         .for_call(timeout=60)\
-        .to_return_value(self.storage)
+        .to_return_value(self.storage_mock)
   
     def test_delete_from_storage(self):
       # Set behavior and assertion for the call at the mock
-      self.mock_callable(self.storage, 'delete')\
+      self.mock_callable(self.storage_mock, 'delete')\
         .for_call('/file/to/delete')\
         .to_return_value(True)\
         .and_assert_called_once()
