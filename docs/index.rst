@@ -1,9 +1,9 @@
 TestSlide: Fluent Python Testing
 ================================
 
-TestSlide makes writing tests fluid and easy. Whether you prefer classic `unit testing <https://docs.python.org/3/library/unittest.html>`_, `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ or `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_, it  helps you be productive, with its easy to use well behaved mocks and its awesome test runner.
+TestSlide makes writing tests fluid and easy. Whether you prefer classic `unit testing <https://docs.python.org/3/library/unittest.html>`_, `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ or `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_, it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.
 
-TestSlide is designed to work well with other test frameworks, so you can use it on top of existing ``unittest.TestCase`` without rewriting everything.
+It is designed to work well with other test frameworks, so you can use it on top of existing ``unittest.TestCase`` without rewriting everything.
 
 Quickstart
 ----------
@@ -22,19 +22,17 @@ Scaffold the code you want to test ``backup.py``:
     def delete(self, path):
       pass
 
-Write a test case for it ``backup_test.py``:
+Write a test case ``backup_test.py`` describing the expected behavior:
 
 .. code-block:: python
 
-  from testslide import TestCase, StrictMock, mock_callable
-  import storage
-  from backup import Backup
+  import testslide, backup, storage
   
-  class TestBackupDelete(TestCase):
+  class TestBackupDelete(testslide.TestCase):
     def setUp(self):
       super().setUp()
-      self.storage_mock = StrictMock(storage.Client)
-      # Makes storage.Client(timeout=60) return the mock
+      self.storage_mock = testslide.StrictMock(storage.Client)
+      # Makes storage.Client(timeout=60) return self.storage_mock
       self.mock_constructor(storage, 'Client')\
         .for_call(timeout=60)\
         .to_return_value(self.storage_mock)
@@ -45,11 +43,9 @@ Write a test case for it ``backup_test.py``:
         .for_call('/file/to/delete')\
         .to_return_value(True)\
         .and_assert_called_once()
-      Backup().delete('/file/to/delete')
+      backup.Backup().delete('/file/to/delete')
 
-.. note::
-
-  TestSlide's :doc:`strict_mock/index` , :doc:`mock_callable/index` and :doc:`mock_constructor/index` are used seamlessly with Python's unittest. You can also use :doc:`testslide_dsl/index` to write tests.
+TestSlide's :doc:`strict_mock/index` , :doc:`mock_callable/index` and :doc:`mock_constructor/index` are seamlessly integrated with Python's TestCase.
 
 Run the test and see the failure:
 
