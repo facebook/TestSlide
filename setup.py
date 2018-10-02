@@ -22,12 +22,16 @@ setup(
         'typing;python_version<"3"',
         'mock;python_version<"3"',
     ],
-    extra_require = [
-        'black;python_version>"2"',
-        "sphinx",
-        "sphinx-autobuild",
-        "sphinx_rtd_theme",
-    ],
+    extras_require = {
+        'test': [
+            'black;python_version>"2"',
+        ],
+        'build': [
+            "sphinx",
+            "sphinx-autobuild",
+            "sphinx_rtd_theme",
+        ],
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
