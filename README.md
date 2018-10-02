@@ -1,6 +1,6 @@
 # TestSlide: Fluent Python Testing
 
-[![Build Status](https://api.travis-ci.org/facebookincubator/TestSlide.svg?branch=master)](https://travis-ci.org/facebookincubator/TestSlide)
+[![Build Status](https://travis-ci.com/facebookincubator/TestSlide.svg?branch=master)](https://travis-ci.com/facebookincubator/TestSlide)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyPI version](https://badge.fury.io/py/TestSlide.svg)](https://badge.fury.io/py/TestSlide)
 
