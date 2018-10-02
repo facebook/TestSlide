@@ -87,4 +87,4 @@ It is all about letting the failure messages guide you towards the solution. The
    mock_callable/index.rst
    mock_constructor/index.rst
    testslide_dsl/index.rst
-   writing_good_tests/index.rst
+   code_snippets/index.rst
