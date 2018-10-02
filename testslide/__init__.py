@@ -259,6 +259,9 @@ class Example(object):
         for after in reversed(after_functions):
             with aggregated_exceptions.catch():
                 after(context_data)
+        for assertion in self.context.assertions:
+            with aggregated_exceptions.catch():
+                assertion()
         if aggregated_exceptions.exceptions:
             aggregated_exceptions.raise_correct_exception()
 
@@ -356,7 +359,7 @@ class Context(object):
         self.add_function("mock_callable", _mock_callable)
 
         def register_assertion(assertion):
-            self.after_functions.append(lambda context_data: assertion())
+            self.assertions.append(assertion)
 
         testslide.mock_callable.register_assertion = register_assertion
 
@@ -391,6 +394,7 @@ class Context(object):
         self.examples = []
         self.before_functions = []
         self.after_functions = []
+        self.assertions = []
         self.around_functions = []
         self.context_data_methods = {}
         self.context_data_memoizable_attributes = {}

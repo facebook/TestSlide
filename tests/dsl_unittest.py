@@ -1358,6 +1358,29 @@ class TestDSLAfterHook(TestDSLBase):
             def not_allowed(self):
                 pass
 
+    def test_assertions_run_after_after_hooks(self):
+        """
+        Assertions must be the last thing executed, allowing any registered
+        after hooks to fulfill them.
+        """
+        mock = Mock()
+
+        @context
+        def top(context):
+            context.memoize("target", lambda self: Mock())
+
+            @context.after
+            def call_target(self):
+                self.target.something()
+
+            @context.example
+            def assert_something_called(self):
+                self.mock_callable(self.target, "something").to_return_value(
+                    None
+                ).and_assert_called_once()
+
+        self.run_first_context_first_example()
+
 
 class TestDSLAroundHook(TestDSLBase):
     def test_around_hook(self):  # NOQA C91
