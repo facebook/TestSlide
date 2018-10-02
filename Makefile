@@ -20,7 +20,7 @@ testslide_tests:
 
 .PHONY: docs
 docs:
-	cd docs && make html
+	cd docs && if python -c 'import sys ; sys.exit(1 if sys.version.startswith("2.") else 0)' ; then make html ; fi
 
 .PHONY: test
 test: black_check unittest_tests testslide_tests docs
