@@ -19,14 +19,20 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "six",
-        'typing;python_version<"3"',
-        'mock;python_version<"3"',
-        'black;python_version>"2"',
-        "ipython",
-        "sphinx",
-        "sphinx-autobuild",
-        "sphinx_rtd_theme",
+        'typing ; python_version<"3"',
+        'mock ; python_version<"3"',
     ],
+    extras_require = {
+        'test': [
+            'black ; python_version>="3"',
+        ],
+        'build': [
+            "ipython",
+            "sphinx",
+            "sphinx-autobuild",
+            "sphinx_rtd_theme",
+        ],
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

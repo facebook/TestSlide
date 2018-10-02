@@ -24,3 +24,6 @@ docs:
 
 .PHONY: test
 test: black_check unittest_tests testslide_tests docs
+
+install:
+	pip install -e .[test,build]
