@@ -27,6 +27,7 @@ setup(
             'black;python_version>"2"',
         ],
         'build': [
+            "ipython",
             "sphinx",
             "sphinx-autobuild",
             "sphinx_rtd_theme",
