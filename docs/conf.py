@@ -25,13 +25,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'TestSlide'
-copyright = '2018, Fabio Pugliese Ornellas'
-author = 'Fabio Pugliese Ornellas'
+copyright = 'Facebook, Inc. and its affiliates.'
+author = 'Fabio Pugliese Ornellas & Contributors'
 
 # The short X.Y version
-version = ''
+version = '1.0.0rc1'
 # The full version, including alpha/beta/rc tags
-release = '0.1dev'
+release = version
 
 
 # -- General configuration ---------------------------------------------------
