@@ -71,3 +71,12 @@ Internally, mock_callable will:
 
 * Patch the class at its module with a subclass of it, that is dynamically created.
 * ``__new__`` of this dynamic subclass is handled by mock_callable.
+
+Integration With Other Frameworks
+---------------------------------
+
+mock_constructor comes out of the box with support for Python`s unittest (via ``testslide.TestCase``) and :doc:`../testslide_dsl/index`. You can easily integrate it with any other test framework you prefer:
+
+* Integrate :doc:`../mock_callable/index` (used by mock_constructor under the hook).
+* After each test execution, you must **unconditionally** call ``testslide.mock_constructor.unpatch_all_callable_mocks``. This will undo all patches, so the next test is not affected by them. Eg: for Python's unittest: ``self.addCleanup(testslide.mock_constructor.unpatch_all_callable_mocks)``.
+* You can then call ``testslide.mock_constructor.mock_constructor`` directly from your tests.
