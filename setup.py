@@ -15,8 +15,13 @@ setup(
     url="https://github.com/facebookincubator/TestSlide",
     license="MIT",
     description="A test framework for Python that makes mocking and iterating over code with tests a breeze",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
+    long_description=(
+        "TestSlide makes writing tests fluid and easy. Whether you prefer classic unit testing, TDD or BDD, it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.\n"
+        "\n"
+        "It is designed to work well with other test frameworks, so you can use it on top of existing unittest.TestCase without rewriting everything."
+        "\n"
+        "Full documentation at https://testslide.readthedocs.io/."
+    ),
     install_requires=[
         "six",
         'typing ; python_version<"3"',
