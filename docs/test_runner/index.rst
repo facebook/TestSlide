@@ -141,6 +141,11 @@ Shuffled Execution
 
 Each test must be independent and isolated from each other. For example, if one test manipulates some module level object, that the next test depends on, we are leaking the context of one test to the next. To catch such cases, you can run your tests with ``--shuffle``: tests will be executed in a random order every time. The test signal must always be the same, no matter in what order tests run. You can tweak the seed with ``--seed``.
 
+Slow Imports Profiler
+---------------------
+
+As projects grow with more dependencies, running a test for a few lines of code can take several seconds. This is often cause by time spent on importing dependencies, rather that the tests themselves. If you run your tests with ``--import-profiler $MS``, any imported module that took more that that the given amount of milliseconds will be reported in a nice and readable tree view. This helps you optimize your imports, so your unit tests can run faster. Frequently, the cause of slow imports is the construction of heavy objects at module level.
+
 Tip: Automatic Test Execution
 -----------------------------
 
