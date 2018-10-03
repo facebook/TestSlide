@@ -29,7 +29,7 @@ copyright = 'Facebook, Inc. and its affiliates.'
 author = 'Fabio Pugliese Ornellas & Contributors'
 
 # The short X.Y version
-version = '1.0.0rc2'
+version = '1.0.0rc3'
 # The full version, including alpha/beta/rc tags
 release = version
 
