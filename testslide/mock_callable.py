@@ -276,7 +276,7 @@ class _CallableMock(object):
         self.method = method
         self.runners = []
 
-    def __call__(self, *args, **kwargs):
+    def _real_call(self, *args, **kwargs):
         for runner in self.runners:
             if runner.can_accept_args(*args, **kwargs):
                 return runner.run(*args, **kwargs)
@@ -299,6 +299,18 @@ class _CallableMock(object):
             )
             raise UnexpectedCallArguments(ex_msg)
         raise UndefinedBehaviorForCall(ex_msg)
+
+    def __call__(self, *args, **kwargs):
+        if self.original_callable and inspect.iscoroutinefunction(
+            self.original_callable
+        ):
+
+            async def async_callable_mock(*args, **kwargs):
+                return self._real_call(*args, **kwargs)
+
+            return async_callable_mock(*args, **kwargs)
+        else:
+            return self._real_call(*args, **kwargs)
 
     @property
     def _registered_calls(self):
