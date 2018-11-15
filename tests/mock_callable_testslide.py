@@ -44,7 +44,7 @@ class Target(ParentTarget):
         self.dynamic_instance_method = (
             lambda arg1, arg2, kwarg1=None, kwarg2=None: "original response"
         )
-        super(Target).__init__()
+        super(Target, self).__init__()
 
 
 @context("mock_callable(target, callable)")  # noqa: C901
@@ -904,7 +904,7 @@ def mock_callable_context(context):
     @context.sub_context
     def When_target_is_a_StrictMock_instance(context):
         @context.shared_context
-        def other_instances_are_not_mocked(context):
+        def other_instances_are_not_mocked(context, runtime_attrs=[]):
             @context.example
             def other_instances_are_not_mocked(self):
                 mock_callable(self.target_arg, self.callable_arg).to_return_value(
@@ -914,7 +914,9 @@ def mock_callable_context(context):
                     self.callable_target(*self.call_args, **self.call_kwargs),
                     "mocked value",
                 )
-                other_strict_mock = StrictMock(template=Target)
+                other_strict_mock = StrictMock(
+                    template=Target, runtime_attrs=runtime_attrs
+                )
                 mock_callable(other_strict_mock, self.callable_arg).to_return_value(
                     "other mocked value"
                 )
@@ -977,7 +979,9 @@ def mock_callable_context(context):
 
             @context.before
             def before(self):
-                target = StrictMock(template=Target)
+                target = StrictMock(
+                    template=Target, runtime_attrs=["dynamic_instance_method"]
+                )
                 self.original_callable = None
                 self.target_arg = target
                 self.mock_callable_dsl = mock_callable(
@@ -987,7 +991,10 @@ def mock_callable_context(context):
 
             context.merge_context("examples for target", has_original_callable=False)
 
-            context.merge_context("other instances are not mocked")
+            context.merge_context(
+                "other instances are not mocked",
+                runtime_attrs=["dynamic_instance_method"],
+            )
 
         @context.sub_context
         def And_attribute_is_a_class_method(context):
