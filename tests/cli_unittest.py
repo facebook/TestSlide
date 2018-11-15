@@ -362,9 +362,9 @@ class TestCliDocumentation(TestCliBase):
         ):
             self.execute()
 
-    def test_default_trim_strace_path_prefix(self):
+    def test_default_trim_stack_trace_path_prefix(self):
         """
-        Default value for --trim-strace-path-prefix trims path shared with
+        Default value for --trim-stack-trace-path-prefix trims path shared with
         testslide itself.
         """
         with patch.object(traceback, "extract_tb", return_value=self.tb_list):
@@ -378,11 +378,11 @@ class TestCliDocumentation(TestCliBase):
             ):
                 self.execute()
 
-    def test_nonempty_trim_strace_path_prefix(self):
+    def test_nonempty_trim_stack_trace_path_prefix(self):
         """
-        Trims prefix passed to --trim-strace-path-prefix.
+        Trims prefix passed to --trim-stack-trace-path-prefix.
         """
-        self.argv.append("--trim-strace-path-prefix")
+        self.argv.append("--trim-stack-trace-path-prefix")
         self.argv.append(self.tb_prefix)
         with patch.object(traceback, "extract_tb", return_value=self.tb_list):
             with self.assert_in_stdout(
@@ -397,9 +397,9 @@ class TestCliDocumentation(TestCliBase):
 
     def test_empty_trim_strace_path_prefix(self):
         """
-        Trims nothing if '' passed to --trim-strace-path-prefix.
+        Trims nothing if '' passed to --trim-stack-trace-path-prefix.
         """
-        self.argv.append("--trim-strace-path-prefix")
+        self.argv.append("--trim-stack-trace-path-prefix")
         self.argv.append("")
         with patch.object(traceback, "extract_tb", return_value=self.tb_list):
             with self.assert_in_stdout(
