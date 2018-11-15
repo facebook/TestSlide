@@ -203,16 +203,22 @@ class Cli(object):
             action="store_true",
             help="Suppress output (stdout and stderr) of tested code",
         )
-        default_trim_strace_path_prefix = os.getcwd() + os.sep
+        default_trim_stack_trace_path_prefix = os.getcwd() + os.sep
         parser.add_argument(
-            "--trim-strace-path-prefix",
+            "--trim-stack-trace-path-prefix",
             nargs=1,
             type=str,
-            default=[default_trim_strace_path_prefix],
+            default=[default_trim_stack_trace_path_prefix],
             help=(
                 "Remove the specified prefix from stack trace paths in the output. "
-                "Default: {}".format(repr(default_trim_strace_path_prefix))
+                "Default: {}".format(repr(default_trim_stack_trace_path_prefix))
             ),
+        )
+        parser.add_argument(
+            "--show-testslide-stack-trace",
+            default=False,
+            action="store_true",
+            help="TestSlide's own code is trimmed from stack traces by default. This flags disables that, useful for TestSlide's own development.",
         )
         parser.add_argument(
             "--import-profiler",
@@ -280,7 +286,10 @@ class Cli(object):
 
         config.format = parsed_args.format
         config.force_color = parsed_args.force_color
-        config.trim_strace_path_prefix = parsed_args.trim_strace_path_prefix[0]
+        config.trim_stack_trace_path_prefix = parsed_args.trim_stack_trace_path_prefix[
+            0
+        ]
+        config.show_testslide_stack_trace = parsed_args.show_testslide_stack_trace
         config.shuffle = parsed_args.shuffle
         config.seed = parsed_args.seed[0] if parsed_args.seed else None
         config.focus = parsed_args.focus
@@ -322,7 +331,8 @@ class Cli(object):
             self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
                 force_color=config.force_color,
                 import_secs=import_secs,
-                trim_strace_path_prefix=config.trim_strace_path_prefix,
+                trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
+                show_testslide_stack_trace=config.show_testslide_stack_trace,
             ),
             shuffle=config.shuffle,
             seed=config.seed,

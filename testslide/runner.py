@@ -31,12 +31,17 @@ class Formatter(object):
     """
 
     def __init__(
-        self, force_color=False, import_secs=None, trim_strace_path_prefix=None
+        self,
+        force_color=False,
+        import_secs=None,
+        trim_stack_trace_path_prefix=None,
+        show_testslide_stack_trace=False,
     ):
         self.force_color = force_color
         self.import_secs = import_secs
         self._import_secs_warn = True
-        self.trim_strace_path_prefix = trim_strace_path_prefix
+        self.trim_stack_trace_path_prefix = trim_stack_trace_path_prefix
+        self.show_testslide_stack_trace = show_testslide_stack_trace
         self.reset()
 
     def reset(self):
@@ -233,11 +238,12 @@ class DocumentFormatter(Formatter):
             for path, line, function_name, text in traceback.extract_tb(
                 exception.__traceback__
             ):
-                # Hide TestSlide's steps of the stack
-                if path.startswith(os.path.dirname(__file__)):
+                if not self.show_testslide_stack_trace and path.startswith(
+                    os.path.dirname(__file__)
+                ):
                     continue
-                if self.trim_strace_path_prefix:
-                    split = path.split(self.trim_strace_path_prefix)
+                if self.trim_stack_trace_path_prefix:
+                    split = path.split(self.trim_stack_trace_path_prefix)
                     if len(split) == 2 and not split[0]:
                         path = split[1]
                 self.print_cyan(
