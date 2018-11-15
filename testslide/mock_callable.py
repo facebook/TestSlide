@@ -379,12 +379,12 @@ def _patch(target, method, new_value):
     if isinstance(target, six.string_types):
         target = testslide._importer(target)
 
-    if isinstance(target, StrictMock) or not hasattr(target, method):
+    if isinstance(target, StrictMock):
         original_callable = None
     else:
         original_callable = getattr(target, method)
-        new_value = _add_signature_validation(new_value, target, method)
 
+    new_value = _add_signature_validation(new_value, target, method)
     restore_value = target.__dict__.get(method, None)
 
     if inspect.isclass(target):

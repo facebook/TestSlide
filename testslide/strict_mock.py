@@ -25,6 +25,11 @@ def _add_signature_validation(value, template, attr_name):
             template = template.__dict__["__template"]
         else:
             return value
+
+    # This covers runtime attributes
+    if not hasattr(template, attr_name):
+        return value
+
     template_function = getattr(template, attr_name)
     if sys.version_info[0] == 2 and not (
         not inspect.isfunction(template_function) and not template_function.im_self

@@ -40,7 +40,11 @@ class ParentTarget(TargetStr):
 
 
 class Target(ParentTarget):
-    pass
+    def __init__(self):
+        self.dynamic_instance_method = (
+            lambda arg1, arg2, kwarg1=None, kwarg2=None: "original response"
+        )
+        super(Target).__init__()
 
 
 @context("mock_callable(target, callable)")  # noqa: C901
@@ -384,7 +388,8 @@ def mock_callable_context(context):
             def setup_mock(self):
                 self.mock_callable_dsl.to_return_value(self.value)
 
-            context.nest_context("mock call arguments")
+            if has_original_callable:
+                context.nest_context("mock call arguments")
             context.nest_context("assertions")
 
             @context.example
@@ -409,7 +414,8 @@ def mock_callable_context(context):
             def setup_mock(self):
                 self.mock_callable_dsl.to_return_values(self.values_list)
 
-            context.nest_context("mock call arguments")
+            if has_original_callable:
+                context.nest_context("mock call arguments")
             context.nest_context("assertions")
 
             @context.example
@@ -445,7 +451,8 @@ def mock_callable_context(context):
                 def setup_mock(self):
                     self.mock_callable_dsl.to_yield_values(self.values_list)
 
-                context.nest_context("mock call arguments")
+                if has_original_callable:
+                    context.nest_context("mock call arguments")
                 context.nest_context("assertions")
 
                 @context.memoize
@@ -489,7 +496,8 @@ def mock_callable_context(context):
 
                     self.callable_target = _callable_target
 
-                context.nest_context("mock call arguments")
+                if has_original_callable:
+                    context.nest_context("mock call arguments")
                 context.nest_context("assertions")
 
             @context.sub_context
@@ -543,7 +551,8 @@ def mock_callable_context(context):
             def setup_mock(self):
                 self.mock_callable_dsl.with_implementation(self.func)
 
-            context.nest_context("mock call arguments")
+            if has_original_callable:
+                context.nest_context("mock call arguments")
             context.nest_context("assertions")
 
             @context.example
@@ -893,108 +902,123 @@ def mock_callable_context(context):
         context.merge_context("class is not mocked")
 
     @context.sub_context
-    def When_target_is_instance_method_of_a_StrictMock_instance(context):
+    def When_target_is_a_StrictMock_instance(context):
+        @context.shared_context
+        def other_instances_are_not_mocked(context):
+            @context.example
+            def other_instances_are_not_mocked(self):
+                mock_callable(self.target_arg, self.callable_arg).to_return_value(
+                    "mocked value"
+                )
+                self.assertEqual(
+                    self.callable_target(*self.call_args, **self.call_kwargs),
+                    "mocked value",
+                )
+                other_strict_mock = StrictMock(template=Target)
+                mock_callable(other_strict_mock, self.callable_arg).to_return_value(
+                    "other mocked value"
+                )
+                self.assertEqual(
+                    getattr(other_strict_mock, self.callable_arg)(
+                        *self.call_args, **self.call_kwargs
+                    ),
+                    "other mocked value",
+                )
 
-        context.memoize("callable_arg", lambda _: "instance_method")
+        @context.sub_context
+        def And_attribute_is_a_instance_method(context):
 
-        @context.before
-        def before(self):
-            target = StrictMock(template=Target)
-            self.original_callable = None
-            self.target_arg = target
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.instance_method
+            context.memoize("callable_arg", lambda _: "instance_method")
 
-        context.merge_context("examples for target", has_original_callable=False)
+            @context.before
+            def before(self):
+                target = StrictMock(template=Target)
+                self.original_callable = None
+                self.target_arg = target
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = target.instance_method
 
-        @context.example
-        def other_instances_are_not_mocked(self):
-            mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mocked value"
-            )
-            self.assertEqual(
-                self.callable_target(*self.call_args, **self.call_kwargs),
-                "mocked value",
-            )
-            other_strict_mock = StrictMock(template=Target)
-            mock_callable(other_strict_mock, self.callable_arg).to_return_value(
-                "other mocked value"
-            )
-            self.assertEqual(
-                getattr(other_strict_mock, self.callable_arg)(
-                    *self.call_args, **self.call_kwargs
-                ),
-                "other mocked value",
-            )
+            context.merge_context("examples for target", has_original_callable=False)
 
-    @context.sub_context
-    def When_target_is_magic_instance_method_of_a_StrictMock_instance(context):
+            context.merge_context("other instances are not mocked")
 
-        context.memoize("call_args", lambda _: ())
-        context.memoize("call_kwargs", lambda _: {})
+        @context.sub_context
+        def And_attribute_is_a_magic_instance_method(context):
 
-        @context.before
-        def before(self):
-            target = StrictMock(template=Target)
-            self.original_callable = None
-            self.target_arg = target
-            self.callable_arg = "__str__"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = lambda: str(target)
+            context.memoize("call_args", lambda _: ())
+            context.memoize("call_kwargs", lambda _: {})
 
-        context.merge_context(
-            "examples for target",
-            callable_accepts_no_args=True,
-            has_original_callable=False,
-            can_yield=False,
-        )
+            @context.before
+            def before(self):
+                target = StrictMock(template=Target)
+                self.original_callable = None
+                self.target_arg = target
+                self.callable_arg = "__str__"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = lambda: str(target)
 
-        @context.example
-        def other_instances_are_not_mocked(self):
-            mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mocked value"
-            )
-            self.assertEqual(
-                self.callable_target(*self.call_args, **self.call_kwargs),
-                "mocked value",
-            )
-            other_strict_mock = StrictMock(template=Target)
-            mock_callable(other_strict_mock, self.callable_arg).to_return_value(
-                "other mocked value"
-            )
-            self.assertEqual(
-                getattr(other_strict_mock, self.callable_arg)(
-                    *self.call_args, **self.call_kwargs
-                ),
-                "other mocked value",
+            context.merge_context(
+                "examples for target",
+                callable_accepts_no_args=True,
+                has_original_callable=False,
+                can_yield=False,
             )
 
-    @context.sub_context
-    def When_target_is_class_method_of_a_StrictMock_instance(context):
-        @context.before
-        def before(self):
-            target = StrictMock(template=Target)
-            self.original_callable = None
-            self.target_arg = target
-            self.callable_arg = "class_method"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.class_method
+            context.merge_context("other instances are not mocked")
 
-        context.merge_context("examples for target", has_original_callable=False)
-        context.merge_context("other instances are not mocked")
-        context.merge_context("class is not mocked")
+        @context.sub_context
+        def And_attribute_is_a_dynamic_instance_method(context):
 
-    @context.sub_context
-    def When_target_is_static_method_of_a_StrictMock_instance(context):
-        @context.before
-        def before(self):
-            target = StrictMock(template=Target)
-            self.original_callable = None
-            self.target_arg = target
-            self.callable_arg = "static_method"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.static_method
+            context.memoize("callable_arg", lambda _: "dynamic_instance_method")
 
-        context.merge_context("examples for target", has_original_callable=False)
-        context.merge_context("other instances are not mocked")
-        context.merge_context("class is not mocked")
+            @context.before
+            def before(self):
+                target = StrictMock(template=Target)
+                self.original_callable = None
+                self.target_arg = target
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = target.dynamic_instance_method
+
+            context.merge_context("examples for target", has_original_callable=False)
+
+            context.merge_context("other instances are not mocked")
+
+        @context.sub_context
+        def And_attribute_is_a_class_method(context):
+            @context.before
+            def before(self):
+                target = StrictMock(template=Target)
+                self.original_callable = None
+                self.target_arg = target
+                self.callable_arg = "class_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = target.class_method
+
+            context.merge_context("examples for target", has_original_callable=False)
+            context.merge_context("other instances are not mocked")
+            context.merge_context("class is not mocked")
+
+        @context.sub_context
+        def And_attribute_is_a_static_method(context):
+            @context.before
+            def before(self):
+                target = StrictMock(template=Target)
+                self.original_callable = None
+                self.target_arg = target
+                self.callable_arg = "static_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = target.static_method
+
+            context.merge_context("examples for target", has_original_callable=False)
+            context.merge_context("other instances are not mocked")
+            context.merge_context("class is not mocked")
