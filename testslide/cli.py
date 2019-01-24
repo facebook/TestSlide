@@ -153,7 +153,7 @@ class Cli(object):
     def _regex_type(string):
         return re.compile(string)
 
-    def _build_parser(self):
+    def _build_parser(self, disable_test_files):
         parser = argparse.ArgumentParser(description="TestSlide")
         parser.add_argument(
             "-f",
@@ -229,26 +229,28 @@ class Cli(object):
                 "more than the given number of ms to import. Experimental."
             ),
         )
-        parser.add_argument(
-            "test_files",
-            nargs="+",
-            type=str,
-            default=[],
-            help=(
-                "List of file paths that contain either unittes.TestCase "
-                "tests and/or TestSlide's DSL tests."
-            ),
-        )
+        if not disable_test_files:
+            parser.add_argument(
+                "test_files",
+                nargs="+",
+                type=str,
+                default=[],
+                help=(
+                    "List of file paths that contain either unittes.TestCase "
+                    "tests and/or TestSlide's DSL tests."
+                ),
+            )
         return parser
 
-    def __init__(self, args, default_trim_stack_trace_path_prefix=None):
+    def __init__(self, args, default_trim_stack_trace_path_prefix=None, modules=None):
         self.args = args
         self._default_trim_stack_trace_path_prefix = (
             default_trim_stack_trace_path_prefix
             if default_trim_stack_trace_path_prefix
             else os.getcwd() + os.sep
         )
-        self.parser = self._build_parser()
+        self.parser = self._build_parser(disable_test_files=bool(modules))
+        self._modules = modules
 
     @staticmethod
     def _do_imports(import_module_names, profile_threshold_ms=None):
@@ -305,10 +307,12 @@ class Cli(object):
             parsed_args.filter_regex[0] if parsed_args.filter_regex else None
         )
         config.quiet = parsed_args.quiet
-        config.import_module_names = [
-            _filename_to_module_name(test_file) for test_file in parsed_args.test_files
-        ]
-
+        if self._modules:
+            config.import_module_names = self._modules
+        else:
+            config.import_module_names = [
+                _filename_to_module_name(test_file) for test_file in parsed_args.test_files
+            ]
         return config
 
     def run(self):
