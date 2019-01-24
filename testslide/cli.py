@@ -203,15 +203,14 @@ class Cli(object):
             action="store_true",
             help="Suppress output (stdout and stderr) of tested code",
         )
-        default_trim_stack_trace_path_prefix = os.getcwd() + os.sep
         parser.add_argument(
             "--trim-stack-trace-path-prefix",
             nargs=1,
             type=str,
-            default=[default_trim_stack_trace_path_prefix],
+            default=[self._default_trim_stack_trace_path_prefix],
             help=(
                 "Remove the specified prefix from stack trace paths in the output. "
-                "Default: {}".format(repr(default_trim_stack_trace_path_prefix))
+                "Default: {}".format(repr(self._default_trim_stack_trace_path_prefix))
             ),
         )
         parser.add_argument(
@@ -242,8 +241,13 @@ class Cli(object):
         )
         return parser
 
-    def __init__(self, args):
+    def __init__(self, args, default_trim_stack_trace_path_prefix=None):
         self.args = args
+        self._default_trim_stack_trace_path_prefix = (
+            default_trim_stack_trace_path_prefix
+            if default_trim_stack_trace_path_prefix
+            else os.getcwd() + os.sep
+        )
         self.parser = self._build_parser()
 
     @staticmethod
