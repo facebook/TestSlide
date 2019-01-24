@@ -311,7 +311,8 @@ class Cli(object):
             config.import_module_names = self._modules
         else:
             config.import_module_names = [
-                _filename_to_module_name(test_file) for test_file in parsed_args.test_files
+                _filename_to_module_name(test_file)
+                for test_file in parsed_args.test_files
             ]
         return config
 
