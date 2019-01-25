@@ -171,6 +171,9 @@ class Cli(object):
             "--shuffle", action="store_true", help="Randomize example execution order"
         )
         parser.add_argument(
+            "-l", "--list", action="store_true", help="List all tests one per line"
+        )
+        parser.add_argument(
             "--seed",
             nargs=1,
             type=int,
@@ -297,6 +300,7 @@ class Cli(object):
         ]
         config.show_testslide_stack_trace = parsed_args.show_testslide_stack_trace
         config.shuffle = parsed_args.shuffle
+        config.list = parsed_args.list
         config.seed = parsed_args.seed[0] if parsed_args.seed else None
         config.focus = parsed_args.focus
         config.fail_fast = parsed_args.fail_fast
@@ -333,25 +337,32 @@ class Cli(object):
             import_secs = self._do_imports(
                 config.import_module_names, config.profile_threshold_ms
             )
+            sys.exit(0)
         else:
             import_secs = self._load_all_examples(config.import_module_names)
-        exit_code = Runner(
-            Context.all_top_level_contexts,
-            self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
-                force_color=config.force_color,
-                import_secs=import_secs,
-                trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
-                show_testslide_stack_trace=config.show_testslide_stack_trace,
-            ),
-            shuffle=config.shuffle,
-            seed=config.seed,
-            focus=config.focus,
-            fail_fast=config.fail_fast,
-            names_text_filter=config.names_text_filter,
-            names_regex_filter=config.names_regex_filter,
-            quiet=config.quiet,
-        ).run()
-        sys.exit(exit_code)
+            if config.list:
+                for context in Context.all_top_level_contexts:
+                    for example in context.all_examples:
+                        print(example.full_name)
+                sys.exit(0)
+            else:
+                exit_code = Runner(
+                    Context.all_top_level_contexts,
+                    self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
+                        force_color=config.force_color,
+                        import_secs=import_secs,
+                        trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
+                        show_testslide_stack_trace=config.show_testslide_stack_trace,
+                    ),
+                    shuffle=config.shuffle,
+                    seed=config.seed,
+                    focus=config.focus,
+                    fail_fast=config.fail_fast,
+                    names_text_filter=config.names_text_filter,
+                    names_regex_filter=config.names_regex_filter,
+                    quiet=config.quiet,
+                ).run()
+                sys.exit(exit_code)
 
 
 def main():

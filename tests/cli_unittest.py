@@ -131,6 +131,27 @@ class TestCliBase(unittest.TestCase):
         return "\x1b[0m\x1b[36m{}\x1b[0m".format(text)
 
 
+class TestCliList(TestCliBase):
+    def setUp(self):
+        super(TestCliList, self).setUp()
+        self.argv.append("--list")
+
+    def test_list(self):
+        """
+        With --list, print test names one per line.
+        """
+        self.argv.append("--quiet")
+        with self.assert_in_stdout(
+            "top context: passing example\n"
+            "top context: failing example\n"
+            "top context: focused example\n"
+            "top context: skipped example\n"
+            "top context: unittest SkipTest\n"
+            "top context, nested context: passing nested example\n"
+        ):
+            self.execute()
+
+
 class TestCliQuiet(TestCliBase):
     def setUp(self):
         super(TestCliQuiet, self).setUp()
