@@ -158,7 +158,7 @@ class Cli(object):
         parser.add_argument(
             "-f",
             "--format",
-            choices=["p", "progress", "d", "documentation"],
+            choices=self.FORMAT_NAME_TO_FORMATTER_CLASS.keys(),
             default="documentation",
             help="Configure output format. Default: %(default)s",
         )
