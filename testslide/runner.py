@@ -113,7 +113,6 @@ class Formatter(object):
         """
         self.end_time = time()
         self.duration_secs = self.end_time - self.start_time
-        pass
 
     def _print_attrs(self, attrs, *values, **kwargs):
         stream = kwargs.get("file", sys.stdout)
