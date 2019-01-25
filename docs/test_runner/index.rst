@@ -32,6 +32,16 @@ Whatever ``unittest.TestCase`` or :doc:`DSL<../testslide_dsl/index>` declared in
 
   Tests inheriting from ``testslide.TestCase`` can **also** be executed by Python's unittest `CLI <https://docs.python.org/3/library/unittest.html#command-line-interface>`_.
 
+Listing Available Tests
+-----------------------
+
+You can use ``--list`` to run test discovery and list all tests found:
+
+.. code-block:: none
+
+  $ testslide backup_test.py
+  backup_test.TestBackupDelete: test_delete_from_storage
+
 Multiple Failures Report
 ------------------------
 
