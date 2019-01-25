@@ -334,20 +334,23 @@ class Cli(object):
             return 0
         else:
             import_secs = self._load_all_examples(config.import_module_names)
+            formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
+                force_color=config.force_color,
+                import_secs=import_secs,
+                trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
+                show_testslide_stack_trace=config.show_testslide_stack_trace,
+            )
             if config.list:
+                formatter.discovery_start()
                 for context in Context.all_top_level_contexts:
                     for example in context.all_examples:
-                        print(example.full_name)
+                        formatter.example_discovered(example)
+                formatter.discovery_finish()
                 return 0
             else:
                 return Runner(
-                    Context.all_top_level_contexts,
-                    self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
-                        force_color=config.force_color,
-                        import_secs=import_secs,
-                        trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
-                        show_testslide_stack_trace=config.show_testslide_stack_trace,
-                    ),
+                    contexts=Context.all_top_level_contexts,
+                    formatter=formatter,
                     shuffle=config.shuffle,
                     seed=config.seed,
                     focus=config.focus,

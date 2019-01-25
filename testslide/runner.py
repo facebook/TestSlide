@@ -44,6 +44,24 @@ class Formatter(object):
         self.show_testslide_stack_trace = show_testslide_stack_trace
         self.reset()
 
+    def discovery_start(self):
+        """
+        To be called before example discovery starts.
+        """
+        pass
+
+    def example_discovered(self, example):
+        """
+        To be called when a new example is discovered.
+        """
+        print(example.full_name)
+
+    def discovery_finish(self):
+        """
+        To be called before example discovery finishes.
+        """
+        pass
+
     def reset(self):
         """
         To be called before each run.
