@@ -322,31 +322,25 @@ class Cli(object):
 
     def run(self):
         try:
-            config = self._get_config_from_parsed_args(
-                self.parser.parse_args(self.args)
-            )
+            parsed_args = self.parser.parse_args(self.args)
         except SystemExit as e:
-            if e.code > 0:
-                # FIXME find a better way to exit without ignoring other exit
-                # hooks
-                os._exit(e.code)
-            else:
-                return
+            return e.code
+        config = self._get_config_from_parsed_args(parsed_args)
 
         if config.profile_threshold_ms is not None:
             import_secs = self._do_imports(
                 config.import_module_names, config.profile_threshold_ms
             )
-            sys.exit(0)
+            return 0
         else:
             import_secs = self._load_all_examples(config.import_module_names)
             if config.list:
                 for context in Context.all_top_level_contexts:
                     for example in context.all_examples:
                         print(example.full_name)
-                sys.exit(0)
+                return 0
             else:
-                exit_code = Runner(
+                return Runner(
                     Context.all_top_level_contexts,
                     self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
                         force_color=config.force_color,
@@ -362,14 +356,12 @@ class Cli(object):
                     names_regex_filter=config.names_regex_filter,
                     quiet=config.quiet,
                 ).run()
-                sys.exit(exit_code)
 
 
 def main():
-    # We need to make sure current directory is at sys.path, to allow relative module imports.
     if not "" in sys.path:
         sys.path.insert(0, "")
-    Cli(sys.argv[1:]).run()
+    sys.exit(Cli(sys.argv[1:]).run())
 
 
 if __name__ == "__main__":

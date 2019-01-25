@@ -106,9 +106,12 @@ class TestCliBase(unittest.TestCase):
             ),
         )
 
-    def execute(self):
-        with patch.object(sys, "exit"):
-            cli.Cli(self.argv + [__file__]).run()
+    def execute(self, expected_return_value=0):
+        with patch.object(sys, "exit") as exit:
+            self.assertEqual(
+                cli.Cli(self.argv + [__file__]).run(), expected_return_value
+            )
+            assert not exit.called
 
     @staticmethod
     def white(text):
@@ -190,7 +193,7 @@ class TestCliQuiet(TestCliBase):
             "  failing verbose: SimulatedFailure: test failure (extra)\n"
             "  last example: PASS\n"
         ):
-            self.execute()
+            self.execute(expected_return_value=1)
 
     def test_without_quiet(self):
         """
@@ -206,7 +209,7 @@ class TestCliQuiet(TestCliBase):
         )
         stderr = "stderr text\nstderr text\n"
         with self.assert_in_stdout(stdout), self.assert_in_stderr(stderr):
-            self.execute()
+            self.execute(expected_return_value=1)
 
 
 class TestCliDocumentation(TestCliBase):
@@ -255,7 +258,7 @@ class TestCliDocumentation(TestCliBase):
                 + "\n"
                 # TODO rest of output
             ):
-                self.execute()
+                self.execute(expected_return_value=1)
 
     def test_colored_output_with_force_color(self):
         """
@@ -281,7 +284,7 @@ class TestCliDocumentation(TestCliBase):
             + "\n"
             # TODO rest of output
         ):
-            self.execute()
+            self.execute(expected_return_value=1)
 
     def test_plain_output_without_terminal(self):
         """
@@ -298,7 +301,7 @@ class TestCliDocumentation(TestCliBase):
             "    passing nested example: PASS\n"
             # TODO rest of output
         ):
-            self.execute()
+            self.execute(expected_return_value=1)
 
     def test_shuffle(self):
         """
@@ -328,7 +331,7 @@ class TestCliDocumentation(TestCliBase):
             expected_stdout
             # TODO rest of output
         ):
-            self.execute()
+            self.execute(expected_return_value=1)
 
     def test_focus(self):
         """
@@ -353,7 +356,7 @@ class TestCliDocumentation(TestCliBase):
             "  failing example: SimulatedFailure: test failure (extra)\n\n"
             # TODO rest of output
         ):
-            self.execute()
+            self.execute(expected_return_value=1)
 
     def test_text_filter(self):
         """
@@ -397,7 +400,7 @@ class TestCliDocumentation(TestCliBase):
                     for path, line, func, code in self.tb_default_trimmed_list
                 )
             ):
-                self.execute()
+                self.execute(expected_return_value=1)
 
     def test_nonempty_trim_stack_trace_path_prefix(self):
         """
@@ -414,7 +417,7 @@ class TestCliDocumentation(TestCliBase):
                     for path, line, func, code in self.tb_custom_trimmed_list
                 )
             ):
-                self.execute()
+                self.execute(expected_return_value=1)
 
     def test_empty_trim_strace_path_prefix(self):
         """
@@ -431,7 +434,7 @@ class TestCliDocumentation(TestCliBase):
                     for path, line, func, code in self.tb_list
                 )
             ):
-                self.execute()
+                self.execute(expected_return_value=1)
 
 
 class TestCliProgress(TestCliBase):
@@ -442,7 +445,7 @@ class TestCliProgress(TestCliBase):
 
     def test_ouputs_dots(self):
         with self.assert_stdout(".F.SS.\n"):
-            self.execute()
+            self.execute(expected_return_value=1)
 
     def test_ouputs_colored_dots_with_terminal(self):
         with patch.object(self.captured_stdout, "isatty"):
@@ -455,4 +458,4 @@ class TestCliProgress(TestCliBase):
                 + self.green(".")
                 + "\n"
             ):
-                self.execute()
+                self.execute(expected_return_value=1)
