@@ -310,6 +310,7 @@ class Runner(object):
         fail_fast=False,
         names_text_filter=None,
         names_regex_filter=None,
+        names_regex_exclude=None,
         quiet=False,
     ):
         self.contexts = contexts
@@ -320,6 +321,7 @@ class Runner(object):
         self.fail_fast = fail_fast
         self.names_text_filter = names_text_filter
         self.names_regex_filter = names_regex_filter
+        self.names_regex_exclude = names_regex_exclude
         self.quiet = quiet
 
     def _run_example(self, example):
@@ -381,6 +383,10 @@ class Runner(object):
     def _filter(self, example, focus):
         if focus and not example.focus:
             return False
+
+        if self.names_regex_exclude:
+            if self.names_regex_exclude.match(example.full_name):
+                return False
 
         if self.names_text_filter:
             if self.names_text_filter not in example.full_name:

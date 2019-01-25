@@ -374,12 +374,30 @@ class TestCliDocumentation(TestCliBase):
 
     def test_regexp_filter(self):
         """
-        Execute only examples matching partial text filter.
+        Execute only examples matching regex filter.
         """
         self.argv.append("--filter-regex")
         self.argv.append(".*passing nested.*")
         with self.assert_in_stdout(
             "top context\n"
+            "  nested context\n"
+            "    passing nested example: PASS\n\n"
+            # TODO rest of output
+        ):
+            self.execute()
+
+    def test_exclude_regexp(self):
+        """
+        Skip examples matching regex filter.
+        """
+        self.argv.append("--exclude-regex")
+        self.argv.append(".*failing.*")
+        with self.assert_in_stdout(
+            "top context\n"
+            "  passing example: PASS\n"
+            "  *focused example: PASS\n"
+            "  skipped example: SKIP\n"
+            "  unittest SkipTest: SKIP\n"
             "  nested context\n"
             "    passing nested example: PASS\n\n"
             # TODO rest of output

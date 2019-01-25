@@ -202,6 +202,12 @@ class Cli(object):
             help="Only execute examples which match given regex",
         )
         parser.add_argument(
+            "--exclude-regex",
+            nargs=1,
+            type=self._regex_type,
+            help="Exclude examples which match given regex from being executed",
+        )
+        parser.add_argument(
             "--quiet",
             action="store_true",
             help="Suppress output (stdout and stderr) of tested code",
@@ -310,6 +316,9 @@ class Cli(object):
         config.names_regex_filter = (
             parsed_args.filter_regex[0] if parsed_args.filter_regex else None
         )
+        config.names_regex_exclude = (
+            parsed_args.exclude_regex[0] if parsed_args.exclude_regex else None
+        )
         config.quiet = parsed_args.quiet
         if self._modules:
             config.import_module_names = self._modules
@@ -357,6 +366,7 @@ class Cli(object):
                     fail_fast=config.fail_fast,
                     names_text_filter=config.names_text_filter,
                     names_regex_filter=config.names_regex_filter,
+                    names_regex_exclude=config.names_regex_exclude,
                     quiet=config.quiet,
                 ).run()
 
