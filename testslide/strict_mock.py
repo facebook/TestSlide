@@ -42,6 +42,8 @@ def _add_signature_validation(value, template, attr_name):
         instance_mock = create_autospec(template)
         function_mock = getattr(instance_mock, attr_name)
         function_mock.side_effect = value
+        # Required to allow future create_autospec() calls to work
+        function_mock.__name__ = attr_name
         return function_mock
 
 

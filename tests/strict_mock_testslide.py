@@ -284,6 +284,16 @@ def strict_mock(context):
 
             context.merge_context("instance attributes")
 
+            @context.example
+            def works_with_mock_callable(self):
+                """
+                Covers a case where StrictMock would fail if mock_callable() was used on a
+                class method.
+                """
+                self.mock_callable(Template, "class_method").to_return_value(None)
+                strict_mock2 = StrictMock(Template)
+                strict_mock2.instance_method = lambda *args, **kwargs: None
+
         # @context.xsub_context
         # def mock_instance_after_any_object_as_template(context):
         #     context.merge_context('instance attributes')
