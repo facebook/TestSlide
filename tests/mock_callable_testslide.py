@@ -19,6 +19,7 @@ from testslide.mock_callable import (
 )
 import contextlib
 from testslide.strict_mock import StrictMock
+import sys
 
 
 class TargetStr(object):
@@ -45,6 +46,13 @@ class Target(ParentTarget):
             lambda arg1, arg2, kwarg1=None, kwarg2=None: "original response"
         )
         super(Target, self).__init__()
+
+    @property
+    def invalid(self):
+        """
+        Covers a case where create_autospec at an instance would fail.
+        """
+        raise RuntimeError("Should not be accessed")
 
 
 @context("mock_callable(target, callable)")  # noqa: C901
@@ -137,12 +145,14 @@ def mock_callable_context(context):
             def works_for_matching_signature(self):
                 self.callable_target(*self.call_args, **self.call_kwargs),
 
-            @context.example
-            def raises_TypeError_for_mismatching_signature(self):
-                args = ("some", "invalid", "args", "list")
-                kwargs = {"invalid_kwarg": "invalid_value"}
-                with self.assertRaises(TypeError):
-                    self.callable_target(*args, **kwargs)
+            if sys.version_info[0] != 2:
+
+                @context.example
+                def raises_TypeError_for_mismatching_signature(self):
+                    args = ("some", "invalid", "args", "list")
+                    kwargs = {"invalid_kwarg": "invalid_value"}
+                    with self.assertRaises(TypeError):
+                        self.callable_target(*args, **kwargs)
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):

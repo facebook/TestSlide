@@ -12,14 +12,19 @@ import sys
 import inspect
 import dis
 import copy
+import functools
 
 if sys.version_info[0] >= 3:
-    from unittest.mock import create_autospec
+    from unittest.mock import create_autospec, _must_skip
 else:
     from mock import create_autospec
+import inspect
 
 
 def _add_signature_validation(value, template, attr_name):
+    if sys.version_info[0] == 2:
+        return value
+
     if isinstance(template, StrictMock):
         if "__template" in template.__dict__:
             template = template.__dict__["__template"]
@@ -30,21 +35,19 @@ def _add_signature_validation(value, template, attr_name):
     if not hasattr(template, attr_name):
         return value
 
-    template_function = getattr(template, attr_name)
-    if sys.version_info[0] == 2 and not (
-        not inspect.isfunction(template_function) and not template_function.im_self
-    ):
-        # This is needed for Python 2, as create_autospec breaks
-        # with TypeError when caling either static or class
-        # methods
-        return create_autospec(template_function, side_effect=value)
-    else:
-        instance_mock = create_autospec(template)
-        function_mock = getattr(instance_mock, attr_name)
-        function_mock.side_effect = value
-        # Required to allow future create_autospec() calls to work
-        function_mock.__name__ = attr_name
-        return function_mock
+    callable_template = getattr(template, attr_name)
+    # FIXME decouple from _must_skip. It tells when self should be skipped
+    # for signature validation.
+    if _must_skip(template, attr_name, isinstance(template, type)):
+        callable_template = functools.partial(callable_template, None)
+
+    signature = inspect.signature(callable_template)
+
+    def with_sig_check(*args, **kwargs):
+        signature.bind(*args, **kwargs)
+        return value(*args, **kwargs)
+
+    return with_sig_check
 
 
 class UndefinedBehavior(BaseException):

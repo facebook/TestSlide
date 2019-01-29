@@ -136,6 +136,9 @@ StrictMock also ensures that method signatures match the ones from the template 
   (...)
   TypeError: too many positional arguments
 
+.. note::
+
+  This feature is **not** available in Python 2!
 
 Magic Methods
 -------------

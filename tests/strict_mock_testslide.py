@@ -176,17 +176,19 @@ def strict_mock(context):
                     with self.assertRaises(NoSuchAttribute):
                         self.strict_mock.non_existing_method = self.mock_function
 
-                @context.example
-                def fails_on_wrong_signature_call(self):
-                    setattr(
-                        self.strict_mock,
-                        self.test_method_name,
-                        lambda message, extra: None,
-                    )
-                    with self.assertRaises(TypeError):
-                        getattr(self.strict_mock, self.test_method_name)(
-                            "message", "extra"
+                if sys.version_info[0] != 2:
+
+                    @context.example
+                    def fails_on_wrong_signature_call(self):
+                        setattr(
+                            self.strict_mock,
+                            self.test_method_name,
+                            lambda message, extra: None,
                         )
+                        with self.assertRaises(TypeError):
+                            getattr(self.strict_mock, self.test_method_name)(
+                                "message", "extra"
+                            )
 
             @context.sub_context
             def success(context):
