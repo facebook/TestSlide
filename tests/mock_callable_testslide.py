@@ -176,6 +176,7 @@ def mock_callable_context(context):
                             )
 
                         if validate_signature:
+
                             @context.example
                             def it_rejects_unknown_arguments(self):
                                 with self.assertRaisesWithMessage(
@@ -188,14 +189,18 @@ def mock_callable_context(context):
                                         "      {}={},\n".format(
                                             k, self.specific_call_kwargs[k]
                                         )
-                                        for k in sorted(self.specific_call_kwargs.keys())
+                                        for k in sorted(
+                                            self.specific_call_kwargs.keys()
+                                        )
                                     )
                                     + "    }\n",
                                 ):
                                     self.callable_target(
                                         *self.call_args, **self.call_kwargs
                                     )
+
                     if validate_signature:
+
                         @context.sub_context
                         def with_mismatching_signature(context):
                             @context.xexample
@@ -769,6 +774,7 @@ def mock_callable_context(context):
         context.memoize("call_kwargs", lambda _: {})
         context.memoize("specific_call_args", lambda _: (0.000000001,))
         context.memoize("specific_call_kwargs", lambda _: {})
+
         @context.before
         def before(self):
             self.original_callable = time.sleep
