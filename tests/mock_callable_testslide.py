@@ -20,6 +20,7 @@ from testslide.mock_callable import (
 import contextlib
 from testslide.strict_mock import StrictMock
 import sys
+import time
 
 
 class TargetStr(object):
@@ -109,6 +110,7 @@ def mock_callable_context(context):
         callable_accepts_no_args=False,
         has_original_callable=True,
         can_yield=True,
+        validate_signature=True,
     ):
         @context.function
         def assert_all(self):
@@ -145,7 +147,7 @@ def mock_callable_context(context):
             def works_for_matching_signature(self):
                 self.callable_target(*self.call_args, **self.call_kwargs),
 
-            if sys.version_info[0] != 2:
+            if validate_signature and sys.version_info[0] != 2:
 
                 @context.example
                 def raises_TypeError_for_mismatching_signature(self):
@@ -173,42 +175,43 @@ def mock_callable_context(context):
                                 *self.specific_call_args, **self.specific_call_kwargs
                             )
 
-                        @context.example
-                        def it_rejects_unknown_arguments(self):
-                            with self.assertRaisesWithMessage(
-                                UnexpectedCallArguments,
-                                self.no_behavior_msg()
-                                + "\n  These are the registered calls:\n"
-                                + "    {}\n".format(self.specific_call_args)
-                                + "    {\n"
-                                + "".join(
-                                    "      {}={},\n".format(
-                                        k, self.specific_call_kwargs[k]
+                        if validate_signature:
+                            @context.example
+                            def it_rejects_unknown_arguments(self):
+                                with self.assertRaisesWithMessage(
+                                    UnexpectedCallArguments,
+                                    self.no_behavior_msg()
+                                    + "\n  These are the registered calls:\n"
+                                    + "    {}\n".format(self.specific_call_args)
+                                    + "    {\n"
+                                    + "".join(
+                                        "      {}={},\n".format(
+                                            k, self.specific_call_kwargs[k]
+                                        )
+                                        for k in sorted(self.specific_call_kwargs.keys())
                                     )
-                                    for k in sorted(self.specific_call_kwargs.keys())
-                                )
-                                + "    }\n",
-                            ):
-                                self.callable_target(
-                                    *self.call_args, **self.call_kwargs
-                                )
-
-                    @context.sub_context
-                    def with_mismatching_signature(context):
-                        @context.xexample
-                        def it_fails_to_mock(self):
-                            with self.assertRaisesWithMessage(
-                                ValueError,
-                                "Can not mock target for arguments that mismatch the "
-                                "original callable signature.",
-                            ):
-                                self.mock_callable_dsl.for_call(
-                                    "some",
-                                    "invalid",
-                                    "args",
-                                    and_some="invalid",
-                                    kwargs="values",
-                                )
+                                    + "    }\n",
+                                ):
+                                    self.callable_target(
+                                        *self.call_args, **self.call_kwargs
+                                    )
+                    if validate_signature:
+                        @context.sub_context
+                        def with_mismatching_signature(context):
+                            @context.xexample
+                            def it_fails_to_mock(self):
+                                with self.assertRaisesWithMessage(
+                                    ValueError,
+                                    "Can not mock target for arguments that mismatch the "
+                                    "original callable signature.",
+                                ):
+                                    self.mock_callable_dsl.for_call(
+                                        "some",
+                                        "invalid",
+                                        "args",
+                                        and_some="invalid",
+                                        kwargs="values",
+                                    )
 
         @context.shared_context
         def assertions(context):
@@ -759,6 +762,22 @@ def mock_callable_context(context):
             self.callable_target = testslide._test_function
 
         context.merge_context("examples for target")
+
+    @context.sub_context
+    def When_target_is_a_builtin(context):
+        context.memoize("call_args", lambda _: (0,))
+        context.memoize("call_kwargs", lambda _: {})
+        context.memoize("specific_call_args", lambda _: (0.000000001,))
+        context.memoize("specific_call_kwargs", lambda _: {})
+        @context.before
+        def before(self):
+            self.original_callable = time.sleep
+            self.target_arg = "time"
+            self.callable_arg = "sleep"
+            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
+            self.callable_target = time.sleep
+
+        context.merge_context("examples for target", validate_signature=False)
 
     @context.sub_context
     def When_target_is_instance_method_at_a_class(context):

@@ -41,10 +41,14 @@ def _add_signature_validation(value, template, attr_name):
     if _must_skip(template, attr_name, isinstance(template, type)):
         callable_template = functools.partial(callable_template, None)
 
-    signature = inspect.signature(callable_template)
+    try:
+        signature = inspect.signature(callable_template)
+    except ValueError:
+        signature = None
 
     def with_sig_check(*args, **kwargs):
-        signature.bind(*args, **kwargs)
+        if signature:
+            signature.bind(*args, **kwargs)
         return value(*args, **kwargs)
 
     return with_sig_check
