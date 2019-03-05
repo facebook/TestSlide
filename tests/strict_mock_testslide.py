@@ -61,12 +61,11 @@ class Template(TemplateParent):
         @staticmethod
         def static_method_extra(extra, message):
             return "static_method: {}".format(message)
-            
+
         @extra_arg
         @classmethod
         def class_method_extra(cls, extra, message):
             return "class_method: {}".format(message)
-
 
 
 class ContextManagerTemplate(Template):
