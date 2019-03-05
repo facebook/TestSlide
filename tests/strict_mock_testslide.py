@@ -43,27 +43,30 @@ class Template(TemplateParent):
     def instance_method(self, message):
         return "instance_method: {}".format(message)
 
-    @extra_arg
-    def instance_method_extra(self, extra, message):
-        return "instance_method: {}".format(message)
-
     @staticmethod
     def static_method(message):
-        return "static_method: {}".format(message)
-
-    @extra_arg
-    @staticmethod
-    def static_method_extra(extra, message):
         return "static_method: {}".format(message)
 
     @classmethod
     def class_method(cls, message):
         return "class_method: {}".format(message)
 
-    @extra_arg
-    @classmethod
-    def class_method_extra(cls, extra, message):
-        return "class_method: {}".format(message)
+    if sys.version_info[0] >= 3:
+
+        @extra_arg
+        def instance_method_extra(self, extra, message):
+            return "instance_method: {}".format(message)
+
+        @extra_arg
+        @staticmethod
+        def static_method_extra(extra, message):
+            return "static_method: {}".format(message)
+            
+        @extra_arg
+        @classmethod
+        def class_method_extra(cls, extra, message):
+            return "class_method: {}".format(message)
+
 
 
 class ContextManagerTemplate(Template):
