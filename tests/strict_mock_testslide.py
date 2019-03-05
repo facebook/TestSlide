@@ -12,8 +12,17 @@ from testslide.strict_mock import StrictMock, UndefinedBehavior, NoSuchAttribute
 
 import sys
 import copy
+import functools
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
+
+
+def extra_arg(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwds):
+        return f("extra", *args, **kwds)
+
+    return wrapper
 
 
 class TemplateParent(object):
@@ -34,12 +43,26 @@ class Template(TemplateParent):
     def instance_method(self, message):
         return "instance_method: {}".format(message)
 
+    @extra_arg
+    def instance_method_extra(self, extra, message):
+        return "instance_method: {}".format(message)
+
     @staticmethod
     def static_method(message):
         return "static_method: {}".format(message)
 
+    @extra_arg
+    @staticmethod
+    def static_method_extra(extra, message):
+        return "static_method: {}".format(message)
+
     @classmethod
     def class_method(cls, message):
+        return "class_method: {}".format(message)
+
+    @extra_arg
+    @classmethod
+    def class_method_extra(cls, extra, message):
         return "class_method: {}".format(message)
 
 
@@ -178,17 +201,30 @@ def strict_mock(context):
 
                 if sys.version_info[0] != 2:
 
-                    @context.example
-                    def fails_on_wrong_signature_call(self):
-                        setattr(
-                            self.strict_mock,
-                            self.test_method_name,
-                            lambda message, extra: None,
-                        )
-                        with self.assertRaises(TypeError):
-                            getattr(self.strict_mock, self.test_method_name)(
-                                "message", "extra"
+                    @context.sub_context
+                    def signature_validation(context):
+                        @context.example
+                        def fails_on_wrong_signature_call(self):
+                            setattr(
+                                self.strict_mock,
+                                self.test_method_name,
+                                lambda message, extra: None,
                             )
+                            with self.assertRaises(TypeError):
+                                getattr(self.strict_mock, self.test_method_name)(
+                                    "message", "extra"
+                                )
+
+                        @context.example
+                        def works_with_wraps(self):
+                            test_method_name = "{}_extra".format(self.test_method_name)
+                            setattr(
+                                self.strict_mock,
+                                test_method_name,
+                                lambda message: "mock: {}".format(message),
+                            )
+                            method = getattr(self.strict_mock, test_method_name)
+                            self.assertEqual(method("hello"), "mock: hello")
 
             @context.sub_context
             def success(context):

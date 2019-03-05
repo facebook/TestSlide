@@ -42,7 +42,7 @@ def _add_signature_validation(value, template, attr_name):
         callable_template = functools.partial(callable_template, None)
 
     try:
-        signature = inspect.signature(callable_template)
+        signature = inspect.signature(callable_template, follow_wrapped=False)
     except ValueError:
         signature = None
 
