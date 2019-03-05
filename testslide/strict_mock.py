@@ -48,7 +48,12 @@ def _add_signature_validation(value, template, attr_name):
 
     def with_sig_check(*args, **kwargs):
         if signature:
-            signature.bind(*args, **kwargs)
+            try:
+                signature.bind(*args, **kwargs)
+            except TypeError as e:
+                raise TypeError(
+                    "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
+                )
         return value(*args, **kwargs)
 
     return with_sig_check
