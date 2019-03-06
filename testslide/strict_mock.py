@@ -122,6 +122,26 @@ class _DescriptorProxy(object):
             del self.attrs[instance]
 
 
+class _MethodProxy(object):
+    def __init__(self, original_method, call):
+        self.__dict__["_original_method"] = original_method
+        self.__dict__["_call"] = call
+
+    def __getattr__(self, name):
+        # print(self.__dict__["_original_method"])
+        # print(dir(self.__dict__["_original_method"]))
+        return getattr(self.__dict__["_original_method"], name)
+
+    def __setattr__(self, name, value):
+        return setattr(self.__dict__["_original_method"], name, value)
+
+    def __delattr__(self, name):
+        return delattr(self.__dict__["_original_method"], name)
+
+    def __call__(self, *args, **kwargs):
+        return self.__dict__["_call"](*args, **kwargs)
+
+
 class StrictMock(object):
     """
     Mock object that won't allow any attribute access or method call, unless its
@@ -216,7 +236,10 @@ class StrictMock(object):
             # set the side effect of the callable, not directly assign
             # the value to the callable
             if callable(getattr(self.__template, name)):
-                value = _add_signature_validation(value, self.__template, name)
+                value = _MethodProxy(
+                    original_method=value,
+                    call=_add_signature_validation(value, self.__template, name),
+                )
         return value
 
     def __setattr__(self, name, value):

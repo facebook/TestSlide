@@ -270,6 +270,21 @@ def strict_mock(context):
                             SomeClass().mock_method,
                         )
 
+                    @context.example
+                    def can_access_attributes(self):
+                        self.mock_function.attribute = "value"
+                        setattr(
+                            self.strict_mock, self.test_method_name, self.mock_function
+                        )
+                        mocked_metod = getattr(self.strict_mock, self.test_method_name)
+                        self.assertEqual(getattr(mocked_metod, "attribute"), "value")
+                        setattr(mocked_metod, "new_attribute", "new_value")
+                        self.assertEqual(
+                            getattr(mocked_metod, "new_attribute"), "new_value"
+                        )
+                        delattr(mocked_metod, "new_attribute")
+                        self.assertFalse(hasattr(mocked_metod, "new_attribute"))
+
                 @context.sub_context
                 def when_template_has_context_manager_methods(context):
                     @context.example
