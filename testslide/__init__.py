@@ -195,6 +195,12 @@ class Skip(Exception):
     pass
 
 
+class UnexpectedSuccess(Exception):
+    """
+    Raised by an example when it unexpectedly succeeded
+    """
+
+
 class Example(object):
     """
     Individual example.
@@ -331,6 +337,18 @@ class _TestSlideTestResult(unittest.TestResult):
         returned by sys.exc_info()."""
         super(_TestSlideTestResult, self).addFailure(test, err)
         self._add_exception(err)
+
+    def addSkip(self, test, reason):
+        """Called when the test case test is skipped. reason is the reason
+        the test gave for skipping."""
+        super(_TestSlideTestResult, self).addSkip(test, reason)
+        self._add_exception((type(Skip), Skip(), None))
+
+    def addUnexpectedSuccess(self, test):
+        """Called when the test case test was marked with the expectedFailure()
+        decorator, but succeeded."""
+        super(_TestSlideTestResult, self).addUnexpectedSuccess(test)
+        self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None))
 
     def addSubTest(self, test, subtest, err):
         """Called at the end of a subtest.
