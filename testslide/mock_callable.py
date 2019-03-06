@@ -345,8 +345,12 @@ def _is_instance_method(target, method):
         klass = type(target)
 
     for k in klass.mro():
-        if method in k.__dict__ and inspect.isfunction(k.__dict__[method]):
-            return True
+        if method in k.__dict__:
+            value = k.__dict__[method]
+            if isinstance(value, _DescriptorProxy):
+                value = value.original_class_attr
+            if inspect.isfunction(value):
+                return True
     return False
 
 
