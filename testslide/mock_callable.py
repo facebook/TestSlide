@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 
 import six
 import inspect
-import types
 import functools
 from typing import List, Callable  # noqa
 import testslide

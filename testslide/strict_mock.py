@@ -18,7 +18,6 @@ if sys.version_info[0] >= 3:
     from unittest.mock import create_autospec, _must_skip
 else:
     from mock import create_autospec
-import inspect
 
 
 def _add_signature_validation(value, template, attr_name):
