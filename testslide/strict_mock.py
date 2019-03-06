@@ -236,6 +236,12 @@ class StrictMock(object):
             # set the side effect of the callable, not directly assign
             # the value to the callable
             if callable(getattr(self.__template, name)):
+                if not callable(value):
+                    raise ValueError(
+                        "{}: Template class attribute '{}' attribute is callable and '{}' is not.".format(
+                            repr(self), name, repr(value)
+                        )
+                    )
                 value = _MethodProxy(
                     original_method=value,
                     call=_add_signature_validation(value, self.__template, name),
