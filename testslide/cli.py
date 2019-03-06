@@ -18,7 +18,9 @@ from six import StringIO
 from . import redirect_stdout, redirect_stderr
 import traceback
 
-from . import Context, AggregatedExceptions, Skip
+from contextlib import contextmanager
+
+from . import _TestSlideTestResult, Context, AggregatedExceptions, Skip
 from .runner import Runner, ProgressFormatter, DocumentFormatter
 import unittest
 import testslide.dsl
@@ -81,8 +83,8 @@ def _load_unittest_test_cases(import_module_names):
 
     for test_case in _get_all_test_cases(import_module_names):
 
-        test_methods = [
-            getattr(test_case, test_method_name)
+        test_method_names = [
+            test_method_name
             for test_method_name in dir(test_case)
             if test_method_name.startswith("test")
             or test_method_name.startswith("ftest")
@@ -93,7 +95,7 @@ def _load_unittest_test_cases(import_module_names):
             if callable(getattr(test_case, test_method_name))
         ]
 
-        if not test_methods:
+        if not test_method_names:
             continue
 
         # This extra method is needed so context_code is evaluated with different
@@ -101,32 +103,45 @@ def _load_unittest_test_cases(import_module_names):
         def get_context_code(test_case):
             def context_code(test_case_context):
 
-                test_case_context.merge_test_case(test_case, "test_case")
+                for test_method_name in test_method_names:
 
-                for test_method in test_methods:
+                    @contextmanager
+                    def test_result():
+                        result = _TestSlideTestResult()
+                        yield result
+                        result.aggregated_exceptions.raise_correct_exception()
+
+                    @contextmanager
+                    def setup_and_teardown():
+                        test_case.setUpClass()
+                        yield
+                        test_case.tearDownClass()
 
                     # Same trick as above.
-                    def gen_example_code(test_method):
+                    def gen_example_code(test_method_name):
                         def example_code(self):
-                            test_method(self.test_case)
+                            with test_result() as result:
+                                with setup_and_teardown():
+                                    test_case(methodName=test_method_name)(
+                                        result=result
+                                    )
 
                         return example_code
 
-                    example_name = test_method.__name__
                     # Regular example
-                    if test_method.__name__.startswith("test"):
-                        test_case_context.example(example_name)(
-                            gen_example_code(test_method)
+                    if test_method_name.startswith("test"):
+                        test_case_context.example(test_method_name)(
+                            gen_example_code(test_method_name)
                         )
                     # Focused example
-                    if test_method.__name__.startswith("ftest"):
-                        test_case_context.fexample(example_name)(
-                            gen_example_code(test_method)
+                    if test_method_name.startswith("ftest"):
+                        test_case_context.fexample(test_method_name)(
+                            gen_example_code(test_method_name)
                         )
                     # Skipped example
-                    if test_method.__name__.startswith("xtest"):
-                        test_case_context.xexample(example_name)(
-                            gen_example_code(test_method)
+                    if test_method_name.startswith("xtest"):
+                        test_case_context.xexample(test_method_name)(
+                            gen_example_code(test_method_name)
                         )
 
             return context_code
