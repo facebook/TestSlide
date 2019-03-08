@@ -144,7 +144,7 @@ Stack Trace Simplification
 
 Stack traces can be hard to read. By default, TestSlide trims the working directory from file names on stack traces, simplifying the output. You can tweak this behavior with ``--trim-strace-path-prefix``.
 
-Also, stack trace lines that are from TestSlide's code base are hidden, as they are only useful when debugging TestSlide itself.
+Also, stack trace lines that are from TestSlide's code base are hidden, as they are only useful when debugging TestSlide itself. You can see them if you wish, by using ``--show-testslide-stack-trace``.
 
 Shuffled Execution
 ------------------
