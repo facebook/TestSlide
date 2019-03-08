@@ -104,7 +104,7 @@ And then run your tests with ``--focus``:
 
 .. code-block:: none
 
-  $ testslide calc_test.py
+  $ testslide --focus calc_test.py
   calc.TestCalcSub
     *ftest_sub_positive: PASS
   
