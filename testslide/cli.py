@@ -2,28 +2,33 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+# pyre-strict
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
+import json
 import os
 import re
-import json
-from time import time
 import sys
-from six import StringIO
-from . import redirect_stdout, redirect_stderr
 import traceback
-
-from contextlib import contextmanager
-
-from . import _TestSlideTestResult, Context, AggregatedExceptions, Skip
-from .runner import Runner, ProgressFormatter, DocumentFormatter
 import unittest
+from contextlib import contextmanager
+from time import time
+
 import testslide.dsl
+from six import StringIO
+
+from . import (
+    AggregatedExceptions,
+    Context,
+    Skip,
+    _TestSlideTestResult,
+    redirect_stderr,
+    redirect_stdout,
+)
+from .runner import DocumentFormatter, ProgressFormatter, Runner
+
 
 _unittest_testcase_loaded = False
 
