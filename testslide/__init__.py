@@ -2,22 +2,23 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-# pyre-strict
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
-import re
-import sys
-import types
-import typing as t
-import unittest
 from contextlib import contextmanager
-from types import ModuleType  # noqa
+
+from typing import List  # noqa
+import sys
+import unittest
+import re
+import types
 
 import testslide.mock_callable
 import testslide.mock_constructor
 from testslide.strict_mock import StrictMock
-
 
 if sys.version_info[0] >= 3:
     from contextlib import redirect_stdout, redirect_stderr
@@ -25,7 +26,6 @@ else:
 
     @contextmanager
     def redirect_stdout(target):
-        # type: (t.IO[str]) -> t.Iterator[None]
         original = sys.stdout
         sys.stdout = target
         try:
@@ -35,7 +35,6 @@ else:
 
     @contextmanager
     def redirect_stderr(target):
-        # type: (t.IO[str]) -> t.Iterator[None]
         original = sys.stderr
         sys.stderr = target
         try:
@@ -46,7 +45,6 @@ else:
 
 @contextmanager
 def _add_traceback_context_manager():
-    # type: () -> t.Iterator[None]
     """
     Add __traceback__ to exceptions raised within the block, to give Python
     2 compatibility.
@@ -87,7 +85,6 @@ class _ContextData(object):
     """
 
     def __init__(self, context):
-        # type: (Context) -> None
         self.context = context
         self.after_functions = []
         # The use of methodName parameter is required as a placeholder for
@@ -97,7 +94,6 @@ class _ContextData(object):
         self._sub_examples_agg_ex = AggregatedExceptions()
 
         def assert_sub_examples(self):
-            # type: () -> None
             if self._sub_examples_agg_ex.exceptions:
                 self._sub_examples_agg_ex.raise_correct_exception()
 
@@ -105,12 +101,10 @@ class _ContextData(object):
 
     @staticmethod
     def _not_callable(self):
-        # type: () -> t.NoReturn
         raise BaseException("This function should not be called outside test code.")
 
     @property
     def _all_methods(self):
-        # type: () -> Context
         return self.context.all_context_data_methods
 
     @property

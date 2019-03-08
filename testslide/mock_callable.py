@@ -2,17 +2,19 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-# pyre-strict
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import functools
-import inspect
-from typing import Callable, List  # noqa
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import six
+import inspect
+import functools
+from typing import List, Callable  # noqa
 import testslide
-from testslide.strict_mock import StrictMock, _add_signature_validation
+from testslide.strict_mock import StrictMock
+from testslide.strict_mock import _add_signature_validation
 
 
 def mock_callable(target, method):
