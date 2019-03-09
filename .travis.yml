@@ -1,13 +1,23 @@
 language: python
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "3.7"
+  - 2.7
+  - 3.4
+  - 3.5
+  - 3.6
 install:
   - make install
 script:
   make
-dist: xenial
-sudo: true
+
+matrix:
+  include:
+    # workaround for https://github.com/travis-ci/travis-ci/issues/9815
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
+    # black requires 3.6
+    - name: "Black formatting"
+      python: 3.6
+      install: pip install black
+      script: black --check testslide/ tests/

@@ -28,11 +28,7 @@ setup(
         'mock ; python_version<"3"',
     ],
     extras_require = {
-        'test': [
-            'black ; python_version>="3.6"',
-        ],
         'build': [
-            'black ; python_version>="3.6"',
             "ipython",
             "sphinx",
             "sphinx-autobuild",
