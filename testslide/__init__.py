@@ -3,21 +3,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
-import re
-import sys
-import types
-import unittest
 from contextlib import contextmanager
+
 from typing import List  # noqa
+import sys
+import unittest
+import re
+import types
 
 import testslide.mock_callable
 import testslide.mock_constructor
-from testslide.strict_mock import StrictMock
 
-
-if sys.version_info[0] >= 3 and sys.version_info[1] >= 5:
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     from contextlib import redirect_stdout, redirect_stderr
 else:
 
