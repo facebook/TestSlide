@@ -32,6 +32,7 @@ setup(
             'black ; python_version>="3.6"',
         ],
         'build': [
+            'black ; python_version>="3.6"',
             "ipython",
             "sphinx",
             "sphinx-autobuild",
