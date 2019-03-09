@@ -29,7 +29,7 @@ setup(
     ],
     extras_require = {
         'test': [
-            'black ; python_version>="3"',
+            'black ; python_version>="3.6"',
         ],
         'build': [
             "ipython",
