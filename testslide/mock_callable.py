@@ -66,8 +66,8 @@ def _format_args(indent, *args, **kwargs):
     s += "{"
     if kwargs:
         s += "\n"
-        for k, v in kwargs.items():
-            s += "{}  {}={},\n".format(indentation, k, v)
+        for k in sorted(kwargs.keys()):
+            s += "{}  {}={},\n".format(indentation, k, kwargs[k])
         s += "{}".format(indentation)
     s += "}\n"
     return s
