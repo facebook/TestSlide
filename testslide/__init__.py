@@ -18,9 +18,9 @@ import types
 
 import testslide.mock_callable
 import testslide.mock_constructor
-from testslide.strict_mock import StrictMock
+from testslide.strict_mock import StrictMock  # noqa
 
-if sys.version_info[0] >= 3:
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     from contextlib import redirect_stdout, redirect_stderr
 else:
 
