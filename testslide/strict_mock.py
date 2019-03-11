@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-import inspect
 import dis
 import copy
 import functools
@@ -18,6 +17,13 @@ if sys.version_info[0] >= 3:
     from unittest.mock import create_autospec, _must_skip
 else:
     from mock import create_autospec
+
+
+# inspect.signature kwarg 'wrapped' was introduced in 3.5
+if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+    import inspect
+else:
+    import inspect2 as inspect
 
 
 def _add_signature_validation(value, template, attr_name):
