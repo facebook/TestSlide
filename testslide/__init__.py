@@ -727,9 +727,13 @@ class TestCase(unittest.TestCase):
         self.addCleanup(testslide.mock_constructor.unpatch_all_constructor_mocks)
         super(TestCase, self).setUp()
 
-    mock_callable = staticmethod(testslide.mock_callable.mock_callable)
+    @staticmethod
+    def mock_callable(target, method):
+        return testslide.mock_callable.mock_callable(target, method)
 
-    mock_constructor = staticmethod(testslide.mock_constructor.mock_constructor)
+    @staticmethod
+    def mock_constructor(target, class_name):
+        return testslide.mock_constructor.mock_constructor(target, class_name)
 
 
 def _test_function(arg1, arg2, kwarg1=None, kwarg2=None):
