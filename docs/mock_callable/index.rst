@@ -248,7 +248,7 @@ Sometimes it is useful to mock only cherry picked calls for real targets and all
   self.mock_callable(some_object, 'some_method')\
     .to_call_original()
   self.mock_callable(some_object, 'some_method')\
-    .for_args('specific call')\
+    .for_call('specific call')\
     .to_return_value('specific response')
   some_object.some_method('any call')  # => returns whatever some_object.some_method() returns
   some_object.some_method('specific call')  # => 'specific response'
@@ -260,7 +260,7 @@ You can achieve the opposite (specific call goes through, mocked general case) w
   self.mock_callable(some_object, 'some_method_name')\
     .to_return_value('general case')
   self.mock_callable(some_object, 'some_method_name')\
-    .for_args('specific case')\
+    .for_call('specific case')\
     .to_call_original()
   some_object.some_method_name('whatever')  # => 'general case'
   some_object.some_method_name('specific case')  # => Calls the original callable, and return the value
