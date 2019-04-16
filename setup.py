@@ -8,7 +8,7 @@ from io import open
 
 setup(
     name="TestSlide",
-    version="1.4.8",
+    version="1.4.9",
     packages=["testslide"],
     maintainer="Fabio Pugliese Ornellas",
     maintainer_email="fabio.ornellas@gmail.com",
