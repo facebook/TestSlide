@@ -18,6 +18,34 @@ We actively welcome your pull requests.
 5. Make sure your code lints.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
+### Setting Up A Development Environment
+
+Generally speaking:
+
+- Install a supported Python version (see `.travis.yml`).
+- Install the dependencies: `make install`.
+- Run the tests: `make`.
+
+Here is a reference cookbook on how to achieve that using Docker and [pyenv](https://github.com/pyenv/pyenv):
+
+- Install [Docker CE](https://docs.docker.com/install/).
+- Clone the repo: `git clone https://github.com/facebookincubator/TestSlide.git`.
+- Create the Docker image: `docker create --name testslide --interactive --tty --mount type=bind,source="$PWD"/TestSlide,target=/root/src/TestSlide --workdir=/root/src/TestSlide debian /bin/bash`.
+- Start a container with this image: `docker start --interactive testslide`.
+- Install the dependencies: `apt update && apt -y install build-essential curl git libbz2-dev libncurses5-dev libreadline-dev libsqlite3-dev libssl-dev llvm vim wget zlib1g-dev`.
+- Install pyenv: `curl https://pyenv.run | bash`.
+- Add this to `~/.bashrc`:
+```
+export PATH="/root/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+```
+- Do `exec bash -i`.
+- Install Python: `pyenv install 3.7.3`.
+- Enable the installed version `pyenv shell 3.7.3`.
+- Install the dependencies: `make install`.
+- Run the tests: `make`.
+
 ## Contributor License Agreement ("CLA")
 
 In order to accept your pull request, we need you to submit a CLA. You only need
