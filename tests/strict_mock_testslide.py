@@ -85,6 +85,9 @@ def strict_mock(context):
         with self.assertRaises(exception) as cm:
             yield
         ex_msg = str(cm.exception)
+        if sys.version_info[0] == 2:
+            ex_msg = unicode(ex_msg)
+            msg = unicode(msg)
         self.assertEqual(
             ex_msg,
             msg,
@@ -157,7 +160,9 @@ def strict_mock(context):
     def with_a_given_template(context):
         @context.before
         def before(self):
-            self.runtime_attr = "runtime_attr"
+            self.runtime_attr = "some_runtime_attr"
+            if sys.version_info[0] == 2:
+                self.runtime_attr = self.runtime_attr.encode("utf-8")
 
         @context.shared_context
         def non_callable_attributes(context):
@@ -174,14 +179,15 @@ def strict_mock(context):
 
             @context.example
             def raises_when_an_non_existing_attribute_is_accessed(self):
+                attr_name = "non_existing_attr"
                 with self.assertRaisesWithMessage(
                     AttributeError,
                     "{}: ".format(self.strict_mock_str)
-                    + "Can not getattr() an attribute 'non_existing_attr' "
+                    + "Can not getattr() an attribute '{}' ".format(attr_name)
                     + "that is neither part of template class Template or "
-                    + "runtime_attrs=['runtime_attr'].",
+                    + "runtime_attrs=[{}].".format(repr(self.runtime_attr)),
                 ):
-                    self.strict_mock.non_existing_attr
+                    getattr(self.strict_mock, attr_name)
 
             @context.example
             def raises_when_setting_non_existing_attributes(self):
@@ -191,7 +197,9 @@ def strict_mock(context):
                     "{}:\n  ".format(self.strict_mock_str)
                     + "No such attribute '{}'.\n  ".format(attr_name)
                     + "Can not set attribute non_existing_attr that is neither "
-                    + "part of template class Template or runtime_attrs=['runtime_attr'].",
+                    + "part of template class Template or runtime_attrs=[{}].".format(
+                        repr(self.runtime_attr)
+                    ),
                 ):
                     setattr(self.strict_mock, attr_name, "whatever")
 
@@ -266,7 +274,7 @@ def strict_mock(context):
                         "{}: ".format(self.strict_mock_str)
                         + "Can not getattr() an attribute '{}' ".format(attr_name)
                         + "that is neither part of template class Template or "
-                        + "runtime_attrs=['runtime_attr'].",
+                        + "runtime_attrs=['{}'].".format(self.runtime_attr),
                     ):
                         getattr(self.strict_mock, attr_name)
 
@@ -280,7 +288,9 @@ def strict_mock(context):
                         + "Can not set attribute {} that is neither part of ".format(
                             attr_name
                         )
-                        + "template class Template or runtime_attrs=['runtime_attr'].",
+                        + "template class Template or runtime_attrs=['{}'].".format(
+                            self.runtime_attr
+                        ),
                     ):
                         self.strict_mock.non_existing_method = self.mock_function
 
