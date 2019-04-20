@@ -10,9 +10,10 @@ from __future__ import unicode_literals
 
 from testslide.strict_mock import StrictMock, UndefinedBehavior, NoSuchAttribute
 
-import sys
+import contextlib
 import copy
 import functools
+import sys
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
@@ -78,11 +79,30 @@ class ContextManagerTemplate(Template):
 
 @context("StrictMock")  # noqa: C901
 def strict_mock(context):
+    @context.function
+    @contextlib.contextmanager
+    def assertRaisesWithMessage(self, exception, msg):
+        with self.assertRaises(exception) as cm:
+            yield
+        ex_msg = str(cm.exception)
+        if sys.version_info[0] == 2:
+            ex_msg = unicode(ex_msg)
+            msg = unicode(msg)
+        self.assertEqual(
+            ex_msg,
+            msg,
+            "Expected exception {}.{} message "
+            "to be\n{}\nbut got\n{}.".format(
+                exception.__module__, exception.__name__, repr(msg), repr(ex_msg)
+            ),
+        )
+
     @context.sub_context
     def without_template(context):
         @context.before
         def before(self):
             self.strict_mock = StrictMock()
+            self.strict_mock_str = "<StrictMock 0x{:02X}>".format(id(self.strict_mock))
             self.value = 2341234123
 
         @context.example
@@ -91,8 +111,14 @@ def strict_mock(context):
 
         @context.example
         def raises_when_an_undefined_attribute_is_accessed(self):
-            with self.assertRaises(UndefinedBehavior):
-                self.strict_mock.undefined_attribute
+            attr_name = "undefined_attribute"
+            with self.assertRaisesWithMessage(
+                UndefinedBehavior,
+                "{}:\n  ".format(self.strict_mock_str)
+                + "Attribute '{}' has no behavior defined.\n  ".format(attr_name)
+                + "You can define behavior by assigning a value to it.",
+            ):
+                getattr(self.strict_mock, attr_name)
 
         @context.example
         def allows_mocking_any_attribute(self):
@@ -105,7 +131,12 @@ def strict_mock(context):
             setattr(self.strict_mock, name, self.value)
             self.assertTrue(hasattr(self.strict_mock, name))
             delattr(self.strict_mock, name)
-            with self.assertRaises(UndefinedBehavior):
+            with self.assertRaisesWithMessage(
+                UndefinedBehavior,
+                "{}:\n  ".format(self.strict_mock_str)
+                + "Attribute '{}' has no behavior defined.\n  ".format(name)
+                + "You can define behavior by assigning a value to it.",
+            ):
                 getattr(self.strict_mock, name)
 
         @context.example
@@ -119,7 +150,7 @@ def strict_mock(context):
 
         @context.example
         def allows_mocking_context_manager_methods(self):
-            enter_mock = "somethnig"
+            enter_mock = "something"
             self.strict_mock.__enter__ = lambda: enter_mock
             self.strict_mock.__exit__ = lambda exc_type, exc_value, traceback: None
             with self.strict_mock as target:
@@ -129,24 +160,48 @@ def strict_mock(context):
     def with_a_given_template(context):
         @context.before
         def before(self):
-            self.runtime_attr = "runtime_attr"
+            self.runtime_attr = "some_runtime_attr"
+            if sys.version_info[0] == 2:
+                self.runtime_attr = self.runtime_attr.encode("utf-8")
 
         @context.shared_context
         def non_callable_attributes(context):
             @context.example
             def raises_when_an_undefined_attribute_is_accessed(self):
-                with self.assertRaises(UndefinedBehavior):
-                    self.strict_mock.non_callable
+                attr_name = "non_callable"
+                with self.assertRaisesWithMessage(
+                    UndefinedBehavior,
+                    "{}:\n  ".format(self.strict_mock_str)
+                    + "Attribute '{}' has no behavior defined.\n  ".format(attr_name)
+                    + "You can define behavior by assigning a value to it.",
+                ):
+                    getattr(self.strict_mock, attr_name)
 
             @context.example
             def raises_when_an_non_existing_attribute_is_accessed(self):
-                with self.assertRaises(AttributeError):
-                    self.strict_mock.non_existing_attr
+                attr_name = "non_existing_attr"
+                with self.assertRaisesWithMessage(
+                    AttributeError,
+                    "{}: ".format(self.strict_mock_str)
+                    + "Can not getattr() an attribute '{}' ".format(attr_name)
+                    + "that is neither part of template class Template or "
+                    + "runtime_attrs=[{}].".format(repr(self.runtime_attr)),
+                ):
+                    getattr(self.strict_mock, attr_name)
 
             @context.example
             def raises_when_setting_non_existing_attributes(self):
-                with self.assertRaises(NoSuchAttribute):
-                    self.strict_mock.non_existing_attr = "whatever"
+                attr_name = "non_existing_attr"
+                with self.assertRaisesWithMessage(
+                    NoSuchAttribute,
+                    "{}:\n  ".format(self.strict_mock_str)
+                    + "No such attribute '{}'.\n  ".format(attr_name)
+                    + "Can not set attribute non_existing_attr that is neither "
+                    + "part of template class Template or runtime_attrs=[{}].".format(
+                        repr(self.runtime_attr)
+                    ),
+                ):
+                    setattr(self.strict_mock, attr_name, "whatever")
 
             @context.example
             def allows_existing_attributes_to_be_set(self):
@@ -187,18 +242,56 @@ def strict_mock(context):
             @context.sub_context
             def failures(context):
                 @context.example
+                def raises_when_setting_a_non_callable_value(self):
+                    non_callable = "non callable"
+                    with self.assertRaisesWithMessage(
+                        ValueError,
+                        "{}: ".format(self.strict_mock_str)
+                        + "Template class attribute '{}' attribute is ".format(
+                            self.test_method_name
+                        )
+                        + "callable and {} is not.".format(repr(non_callable)),
+                    ):
+                        setattr(self.strict_mock, self.test_method_name, "non callable")
+
+                @context.example
                 def raises_when_an_undefined_method_is_accessed(self):
-                    with self.assertRaises(UndefinedBehavior):
+                    with self.assertRaisesWithMessage(
+                        UndefinedBehavior,
+                        "{}:\n  ".format(self.strict_mock_str)
+                        + "Attribute '{}' has no behavior defined.\n  ".format(
+                            self.test_method_name
+                        )
+                        + "You can define behavior by assigning a value to it.",
+                    ):
                         getattr(self.strict_mock, self.test_method_name)
 
                 @context.example
-                def raises_when_an_non_existing_method_is_accessed(self):
-                    with self.assertRaises(AttributeError):
-                        self.strict_mock.non_existing_method
+                def raises_when_a_non_existing_method_is_accessed(self):
+                    attr_name = "non_existing_method"
+                    with self.assertRaisesWithMessage(
+                        AttributeError,
+                        "{}: ".format(self.strict_mock_str)
+                        + "Can not getattr() an attribute '{}' ".format(attr_name)
+                        + "that is neither part of template class Template or "
+                        + "runtime_attrs=['{}'].".format(self.runtime_attr),
+                    ):
+                        getattr(self.strict_mock, attr_name)
 
                 @context.example
                 def raises_when_setting_non_existing_methods(self):
-                    with self.assertRaises(NoSuchAttribute):
+                    attr_name = "non_existing_method"
+                    with self.assertRaisesWithMessage(
+                        NoSuchAttribute,
+                        "{}:\n  ".format(self.strict_mock_str)
+                        + "No such attribute '{}'.\n  ".format(attr_name)
+                        + "Can not set attribute {} that is neither part of ".format(
+                            attr_name
+                        )
+                        + "template class Template or runtime_attrs=['{}'].".format(
+                            self.runtime_attr
+                        ),
+                    ):
                         self.strict_mock.non_existing_method = self.mock_function
 
                 if sys.version_info[0] != 2:
@@ -329,6 +422,9 @@ def strict_mock(context):
             def before(self):
                 self.strict_mock = StrictMock(
                     Template, runtime_attrs=[self.runtime_attr]
+                )
+                self.strict_mock_str = "<StrictMock 0x{:02X} template={}>".format(
+                    id(self.strict_mock), "{}.Template".format(Template.__module__)
                 )
                 self.context_manager_strict_mock = StrictMock(ContextManagerTemplate)
 
