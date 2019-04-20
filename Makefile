@@ -22,8 +22,12 @@ testslide_tests:
 docs:
 	cd docs && if python -c 'import sys ; sys.exit(1 if sys.version.startswith("2.") else 0)' ; then make html ; fi
 
+.PHONY: build
+build:
+	python setup.py sdist
+
 .PHONY: test
-test: unittest_tests testslide_tests docs black_check
+test: unittest_tests testslide_tests docs black_check build
 
 .PHONY: install_deps
 install_deps:
