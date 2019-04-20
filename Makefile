@@ -32,3 +32,7 @@ test: unittest_tests testslide_tests docs black_check sdist
 .PHONY: install_deps
 install_deps:
 	pip install -e .[test,build]
+
+.PHONY: clean
+clean:
+	rm -rf dist/ MANIFEST TestSlide.egg-info/ */__pycache__/ */*.pyc docs/_build/
