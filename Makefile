@@ -16,14 +16,23 @@ unittest_tests:
 
 .PHONY: testslide_tests
 testslide_tests:
-	python -m testslide.cli --fail-fast tests/*_testslide.py
+	python -m testslide.cli --show-testslide-stack-trace --fail-fast tests/*_testslide.py
 
 .PHONY: docs
 docs:
 	cd docs && if python -c 'import sys ; sys.exit(1 if sys.version.startswith("2.") else 0)' ; then make html ; fi
 
-.PHONY: test
-test: black_check unittest_tests testslide_tests docs
+.PHONY: sdist
+sdist:
+	python setup.py sdist
 
-install:
+.PHONY: test
+test: unittest_tests testslide_tests docs black_check sdist
+
+.PHONY: install_deps
+install_deps:
 	pip install -e .[test,build]
+
+.PHONY: clean
+clean:
+	rm -rf dist/ MANIFEST TestSlide.egg-info/ */__pycache__/ */*.pyc docs/_build/
