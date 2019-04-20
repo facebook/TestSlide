@@ -16,7 +16,7 @@ unittest_tests:
 
 .PHONY: testslide_tests
 testslide_tests:
-	python -m testslide.cli --fail-fast tests/*_testslide.py
+	python -m testslide.cli --show-testslide-stack-trace --fail-fast tests/*_testslide.py
 
 .PHONY: docs
 docs:
