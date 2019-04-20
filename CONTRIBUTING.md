@@ -23,7 +23,7 @@ We actively welcome your pull requests.
 Generally speaking:
 
 - Install a supported Python version (see `.travis.yml`).
-- Install the dependencies: `make install`.
+- Install the dependencies: `make install_deps`.
 - Run the tests: `make`.
 
 Here is a reference cookbook on how to achieve that using Docker and [pyenv](https://github.com/pyenv/pyenv):
@@ -43,7 +43,7 @@ eval "$(pyenv virtualenv-init -)"
 - Do `exec bash -i`.
 - Install Python: `pyenv install 3.7.3`.
 - Enable the installed version `pyenv shell 3.7.3`.
-- Install the dependencies: `make install`.
+- Install the dependencies: `make install_deps`.
 - Run the tests: `make`.
 
 ## Contributor License Agreement ("CLA")

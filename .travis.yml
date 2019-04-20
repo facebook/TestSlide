@@ -5,7 +5,7 @@ python:
   - 3.5
   - 3.6
 install:
-  - make install
+  - make install_deps
 script:
   make
 

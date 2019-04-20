@@ -23,7 +23,8 @@ docs:
 	cd docs && if python -c 'import sys ; sys.exit(1 if sys.version.startswith("2.") else 0)' ; then make html ; fi
 
 .PHONY: test
-test: black_check unittest_tests testslide_tests docs
+test: unittest_tests testslide_tests docs black_check
 
-install:
+.PHONY: install_deps
+install_deps:
 	pip install -e .[test,build]
