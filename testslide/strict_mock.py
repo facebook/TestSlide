@@ -264,7 +264,7 @@ class StrictMock(object):
                 setattr(type(self), name, _DescriptorProxy(name))
                 self.__setattr__(name, value)
         else:
-            # If the template classs has the attribute we we haven't yet defined its
+            # If the template class has the attribute we we haven't yet defined its
             # behavior we use a different exception than when the attribute
             # doesn't event exist in the template class
             if hasattr(self.__template, name):
@@ -301,9 +301,9 @@ class StrictMock(object):
             )
         else:
             raise AttributeError(
-                "Can not getattr() an attribute '{}' that is neither part of "
+                "{}: Can not getattr() an attribute '{}' that is neither part of "
                 "template class {} or runtime_attrs={}.".format(
-                    attr, self.__template_name, self.__runtime_attrs
+                    str(self), attr, self.__template_name, self.__runtime_attrs
                 )
             )
 
