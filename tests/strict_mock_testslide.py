@@ -246,7 +246,7 @@ def strict_mock(context):
                         getattr(self.strict_mock, self.test_method_name)
 
                 @context.example
-                def raises_when_an_non_existing_method_is_accessed(self):
+                def raises_when_a_non_existing_method_is_accessed(self):
                     attr_name = "non_existing_method"
                     with self.assertRaisesWithMessage(
                         AttributeError,

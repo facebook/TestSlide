@@ -303,7 +303,7 @@ class StrictMock(object):
             raise AttributeError(
                 "{}: Can not getattr() an attribute '{}' that is neither part of "
                 "template class {} or runtime_attrs={}.".format(
-                    str(self), attr, self.__template_name, self.__runtime_attrs
+                    repr(self), attr, self.__template_name, self.__runtime_attrs
                 )
             )
 
