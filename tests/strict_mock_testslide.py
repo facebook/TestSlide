@@ -234,6 +234,19 @@ def strict_mock(context):
             @context.sub_context
             def failures(context):
                 @context.example
+                def raises_when_setting_a_non_callable_value(self):
+                    non_callable = "non callable"
+                    with self.assertRaisesWithMessage(
+                        ValueError,
+                        "{}: ".format(self.strict_mock_str)
+                        + "Template class attribute '{}' attribute is ".format(
+                            self.test_method_name
+                        )
+                        + "callable and {} is not.".format(repr(non_callable)),
+                    ):
+                        setattr(self.strict_mock, self.test_method_name, "non callable")
+
+                @context.example
                 def raises_when_an_undefined_method_is_accessed(self):
                     with self.assertRaisesWithMessage(
                         UndefinedBehavior,
