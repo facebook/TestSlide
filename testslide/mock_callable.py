@@ -109,9 +109,17 @@ class _Runner(object):
         self.original_callable = original_callable
         self.accepted_args = None
         self.call_count = 0
+        self.max_calls = None
 
     def run(self, *args, **kwargs):
         self.call_count += 1
+        if self.max_calls and self.call_count > self.max_calls:
+            raise UnexpectedCallReceived(
+                (
+                    "{}, {}: Unexpected call received.\n"
+                    "  Expected to receive at most {} calls, but an extra call was made."
+                ).format(_format_target(self.target), repr(self.method), self.max_calls)
+            )
 
     def add_accepted_args(self, *args, **kwargs):
         # TODO validate if args match callable signature
@@ -133,7 +141,13 @@ class _Runner(object):
         else:
             return "any arguments "
 
+    def _set_max_calls(self, times):
+        if not self.max_calls or (self.max_calls and times < self.max_calls):
+            self.max_calls = times
+
     def add_exact_calls_assertion(self, times):
+        self._set_max_calls(times)
+
         def assertion():
             if times != self.call_count:
                 raise AssertionError(
@@ -174,6 +188,8 @@ class _Runner(object):
         register_assertion(assertion)
 
     def add_at_most_calls_assertion(self, times):
+        self._set_max_calls(times)
+
         def assertion():
             if not self.call_count or self.call_count > times:
                 raise AssertionError(

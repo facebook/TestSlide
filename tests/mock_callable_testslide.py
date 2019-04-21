@@ -248,6 +248,24 @@ def mock_callable_context(context):
                         self.callable_target(*self.call_args, **self.call_kwargs)
 
             @context.shared_context
+            def called_more_times_fail(context):
+                @context.example
+                def called_more_times(self):
+                    for _ in range(self.times):
+                        self.callable_target(*self.call_args, **self.call_kwargs)
+                    with self.assertRaisesWithMessage(
+                        UnexpectedCallReceived,
+                        (
+                            "{}, {}: Unexpected call received.\n"
+                            "  Expected to receive at most {} calls, "
+                            "but an extra call was made."
+                        ).format(
+                            repr(self.target_arg), repr(self.callable_arg), self.times
+                        ),
+                    ):
+                        self.callable_target(*self.call_args, **self.call_kwargs)
+
+            @context.shared_context
             def called_exactly_times(context):
                 @context.example
                 def called_exactly_times(self):
@@ -269,7 +287,7 @@ def mock_callable_context(context):
 
                         context.merge_context("not called")
                         context.merge_context("called less times")
-                        context.merge_context("called more times")
+                        context.merge_context("called more times fail")
 
                     @context.sub_context
                     def passes_when(context):
@@ -330,7 +348,7 @@ def mock_callable_context(context):
                         context.merge_context("assert failure")
 
                         context.merge_context("not called")
-                        context.merge_context("called more times")
+                        context.merge_context("called more times fail")
 
                     @context.sub_context
                     def passes_when(context):
