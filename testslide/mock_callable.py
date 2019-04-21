@@ -655,10 +655,31 @@ class _MockCallableDSL(object):
     def and_assert_called_exactly(self, count):
         """
         Assert that there were exactly the given number of calls.
+
+        If assertion is for 0 calls, any received call will raise
+        UnexpectedCallReceived and also an AssertionError.
         """
+        if count is 0:
+            if self._runner:
+                raise ValueError(
+                    "Asked to not accept any calls, but a behavior was previously defined."
+                )
+            self.to_raise(
+                UnexpectedCallReceived(
+                    ("{}, {}: Excepted not to be called!").format(
+                        _format_target(self._target), repr(self._method)
+                    )
+                )
+            )
         self._assert_runner()
         self._runner.add_exact_calls_assertion(count)
         return self
+
+    def and_assert_not_called(self):
+        """
+        Short for and_assert_called_exactly(0)
+        """
+        return self.and_assert_called_exactly(0)
 
     def and_assert_called_once(self):
         """
@@ -697,11 +718,3 @@ class _MockCallableDSL(object):
         Short for self.and_assert_called_at_least(1).
         """
         return self.and_assert_called_at_least(1)
-
-    def and_assert_not_called(self):
-        """
-        Disallow calls, by raising UnexpectedCallReceived.
-        """
-        self._assert_runner()
-        self._runner.add_exact_calls_assertion(0)
-        return self

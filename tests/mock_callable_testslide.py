@@ -382,28 +382,13 @@ def mock_callable_context(context):
 
             @context.sub_context(".and_assert_not_called()")
             def and_assert_not_called(context):
-                @context.before
-                def setup_assertion(self):
-                    self.mock_callable_dsl.and_assert_not_called()
-
-                @context.sub_context
-                def passes_when(context):
-
-                    context.merge_context("not called")
-
-                @context.sub_context
-                def fails_when(context):
-
-                    context.merge_context("assert failure")
-
-                    @context.example
-                    def called_once(self):
-                        self.callable_target(*self.call_args, **self.call_kwargs)
-
-                    @context.example
-                    def called_several_times(self):
-                        for _ in range(self.times + 1):
-                            self.callable_target(*self.call_args, **self.call_kwargs)
+                @context.example
+                def can_not_use_with_previously_existing_behavior(self):
+                    with self.assertRaisesWithMessage(
+                        ValueError,
+                        "Asked to not accept any calls, but a behavior was previously defined.",
+                    ):
+                        self.mock_callable_dsl.and_assert_not_called()
 
         @context.sub_context
         def default_behavior(context):
@@ -413,6 +398,35 @@ def mock_callable_context(context):
                     UndefinedBehaviorForCall, self.no_behavior_msg()
                 ):
                     self.callable_target(*self.call_args, **self.call_kwargs)
+
+            @context.sub_context(".and_assert_not_called()")
+            def and_assert_not_called(context):
+                @context.before
+                def setup_assertion(self):
+                    self.mock_callable_dsl.and_assert_not_called()
+
+                @context.sub_context
+                def passes_when(context):
+                    @context.example
+                    def not_called(self):
+                        pass
+
+                @context.sub_context
+                def fails_when(context):
+                    @context.after
+                    def after(self):
+                        with self.assertRaises(AssertionError):
+                            self.assert_all()
+
+                    @context.example
+                    def called(self):
+                        with self.assertRaisesWithMessage(
+                            UnexpectedCallReceived,
+                            "{}, {}: Excepted not to be called!".format(
+                                repr(self.real_target), repr(self.callable_arg)
+                            ),
+                        ):
+                            self.callable_target(*self.call_args, **self.call_kwargs)
 
         @context.sub_context(".to_return(value)")
         def to_return_value(context):
@@ -779,6 +793,7 @@ def mock_callable_context(context):
         @context.before
         def before(self):
             self.original_callable = testslide._test_function
+            self.real_target = testslide
             self.target_arg = "testslide"
             self.callable_arg = "_test_function"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
@@ -796,6 +811,7 @@ def mock_callable_context(context):
         @context.before
         def before(self):
             self.original_callable = time.sleep
+            self.real_target = time
             self.target_arg = "time"
             self.callable_arg = "sleep"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
@@ -815,6 +831,7 @@ def mock_callable_context(context):
         @context.before
         def before(self):
             self.original_callable = Target.class_method
+            self.real_target = Target
             self.target_arg = Target
             self.callable_arg = "class_method"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
@@ -827,6 +844,7 @@ def mock_callable_context(context):
         @context.before
         def before(self):
             self.original_callable = Target.static_method
+            self.real_target = Target
             self.target_arg = Target
             self.callable_arg = "static_method"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
@@ -861,6 +879,7 @@ def mock_callable_context(context):
         def before(self):
             target = Target()
             self.original_callable = target.instance_method
+            self.real_target = target
             self.target_arg = target
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
             self.callable_target = target.instance_method
@@ -879,6 +898,7 @@ def mock_callable_context(context):
             @context.before
             def before(self):
                 self.original_callable = self.target.__str__
+                self.real_target = self.target
                 self.target_arg = self.target
                 self.callable_arg = "__str__"
                 self.mock_callable_dsl = mock_callable(
@@ -930,6 +950,7 @@ def mock_callable_context(context):
         def before(self):
             target = Target()
             self.original_callable = target.class_method
+            self.real_target = target
             self.target_arg = target
             self.callable_arg = "class_method"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
@@ -945,6 +966,7 @@ def mock_callable_context(context):
         def before(self):
             target = Target()
             self.original_callable = target.static_method
+            self.real_target = target
             self.target_arg = target
             self.callable_arg = "static_method"
             self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
@@ -989,6 +1011,7 @@ def mock_callable_context(context):
             def before(self):
                 target = StrictMock(template=Target)
                 self.original_callable = None
+                self.real_target = target
                 self.target_arg = target
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
@@ -1009,6 +1032,7 @@ def mock_callable_context(context):
             def before(self):
                 target = StrictMock(template=Target)
                 self.original_callable = None
+                self.real_target = target
                 self.target_arg = target
                 self.callable_arg = "__str__"
                 self.mock_callable_dsl = mock_callable(
@@ -1036,6 +1060,7 @@ def mock_callable_context(context):
                     template=Target, runtime_attrs=["dynamic_instance_method"]
                 )
                 self.original_callable = None
+                self.real_target = target
                 self.target_arg = target
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
@@ -1055,6 +1080,7 @@ def mock_callable_context(context):
             def before(self):
                 target = StrictMock(template=Target)
                 self.original_callable = None
+                self.real_target = target
                 self.target_arg = target
                 self.callable_arg = "class_method"
                 self.mock_callable_dsl = mock_callable(
@@ -1072,6 +1098,7 @@ def mock_callable_context(context):
             def before(self):
                 target = StrictMock(template=Target)
                 self.original_callable = None
+                self.real_target = target
                 self.target_arg = target
                 self.callable_arg = "static_method"
                 self.mock_callable_dsl = mock_callable(
