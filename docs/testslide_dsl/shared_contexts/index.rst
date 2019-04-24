@@ -1,49 +1,133 @@
 Sharing Contexts
 ================
 
-You can use shared contexts to avoid code duplication, and share common logic applicable to multiple contexts:
+Shared contexts allows sharing of common logic across different contexts. When you declare a shared context, its contents won't be evaluated, unless you either merge or nest it elsewhere. Let's see it in action.
+
+Merging
+-------
+
+When you merge a shared context, its hooks and examples will be added to the existing context, alongside existing hooks and examples:
 
 .. code-block:: python
-
-  from testslide.dsl import context
-
-  @context
-  def Sharing_contexts(context):
   
-      # This context will not be evaluated immediately, and can be reused later
+  from testslide.dsl import context
+  
+  @context
+  def Nesting_Shared_Contexts(context):
+  
       @context.shared_context
-      def Shared_context(context):
+      def some_shared_things(context):
+  
+          @context.before
+          def do_common_thing_before(self):
+              pass
   
           @context.example
-          def shared_example(self):
+          def common_example(self):
               pass
   
       @context.sub_context
-      def Merging_shared_contexts(context):
-          # The shared context will me merged into current context
-          context.merge_context('Shared context')
+      def when_one_thing(context):
+          context.merge_context('some shared things')
+
+          @context.before
+          def do_one_thing_before(self):
+              pass
+  
+          @context.example
+          def one_thing_example(self):
+              pass
   
       @context.sub_context
-      def Nesting_shared_contexts(context):
-          # The shared context will be nested below the current context
-          context.nest_context('Shared context')
+      def when_another_thing(context):
+          context.merge_context('some shared things')
+  
+          @context.before
+          def do_another_thing_before(self):
+              pass
+  
+          @context.example
+          def another_thing_example(self):
+              pass
 
-
-And when we execute them:
+Will result in:
 
 .. code-block:: none
 
-  Sharing contexts
-    Merging shared contexts
-      shared example: PASS
-    Nesting shared contexts
-      Shared context
-        shared example: PASS
+  Nesting Shared Contexts
+    when one thing
+      common example
+      one thing example
+    when another thing
+      common example
+      another thing example
   
-  Finished 2 examples in 0.0s:
-    Successful: 2
+  Finished 4 example(s) in 0.0s:
+    Successful: 4
 
-Note the difference between merging and nesting a shared context: when you merge, no new sub context is created, when you nest, a new sub context will be created below where it was nested.
+Nesting
+-------
+
+If you nest a shared context, another sub-context will be created, with the same name as the shared context, containing all the hooks and examples from the shared context:
+
+.. code-block:: python
+  
+  from testslide.dsl import context
+  
+  @context
+  def Nesting_Shared_Contexts(context):
+  
+      @context.shared_context
+      def some_shared_things(context):
+  
+          @context.before
+          def do_common_thing_before(self):
+              pass
+  
+          @context.example
+          def common_example(self):
+              pass
+  
+      @context.sub_context
+      def when_one_thing(context):
+          context.nest_context('some shared things')
+  
+          @context.before
+          def do_one_thing_before(self):
+              pass
+  
+          @context.example
+          def one_thing_example(self):
+              pass
+  
+      @context.sub_context
+      def when_another_thing(context):
+          context.nest_context('some shared things')
+  
+          @context.before
+          def do_another_thing_before(self):
+              pass
+  
+          @context.example
+          def another_thing_example(self):
+              pass
+
+Will result in:
+
+.. code-block:: none
+
+  Nesting Shared Contexts
+    when one thing
+      one thing example
+      some shared things
+        common example
+    when another thing
+      another thing example
+      some shared things
+        common example
+  
+  Finished 4 example(s) in 0.0s:
+    Successful: 4
 
 Parameterized shared contexts
 -----------------------------
