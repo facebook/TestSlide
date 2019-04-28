@@ -65,9 +65,9 @@ In principle, doing:
 
 Should be all you need. However, as of October 2018, Python 3 has a bug https://bugs.python.org/issue25731 that prevents this from working (it works in Python 2).
 
-mock_callable is a way to not only solve this for Python 3, but also provide the same interface for both.
+mock_constructor is a way to not only solve this for Python 3, but also provide the same interface for Python 2.
 
-Internally, mock_callable will:
+Internally, mock_constructor will:
 
 * Patch the class at its module with a subclass of it, that is dynamically created.
 * ``__new__`` of this dynamic subclass is handled by mock_callable.
