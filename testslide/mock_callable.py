@@ -454,7 +454,7 @@ class _MockCallableDSL(object):
         else:
             self._target = target
 
-        target_method_id = (id(target), method)
+        target_method_id = (id(self._target), method)
 
         if target_method_id not in self.CALLABLE_MOCKS:
             if not callable_mock:

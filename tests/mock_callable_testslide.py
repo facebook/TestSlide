@@ -21,6 +21,7 @@ import contextlib
 from testslide.strict_mock import StrictMock
 import sys
 import time
+import os
 
 
 class TargetStr(object):
@@ -800,6 +801,27 @@ def mock_callable_context(context):
             self.callable_target = testslide._test_function
 
         context.merge_context("examples for target")
+
+        @context.example
+        def works_with_alternative_module_names(self):
+            target = "os.path"
+            target_module = os.path
+            alternative_target = "testslide.cli.os.path"
+            import testslide.cli
+
+            alternative_target_module = testslide.cli.os.path
+            original_function = os.path.exists
+
+            self.mock_callable(target, "exists").for_call("found").to_return_value(True)
+            self.mock_callable(alternative_target, "exists").for_call(
+                "not_found"
+            ).to_return_value(False)
+            self.assertTrue(target_module.exists("found"))
+            self.assertTrue(alternative_target_module.exists("found"))
+            self.assertFalse(target_module.exists("not_found"))
+            self.assertFalse(alternative_target_module.exists("not_found"))
+            testslide.mock_callable.unpatch_all_callable_mocks()
+            self.assertEqual(os.path.exists, original_function, "Unpatch did not work")
 
     @context.sub_context
     def When_target_is_a_builtin(context):
