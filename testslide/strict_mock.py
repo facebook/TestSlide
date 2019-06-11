@@ -181,7 +181,16 @@ class StrictMock(object):
         self.__dict__["__template"] = template
         self.__dict__["__runtime_attrs"] = runtime_attrs or []
         self.__dict__["__name"] = name
-        self.__dict__["__caller"] = inspect.getframeinfo(inspect.stack()[1][0])
+
+        if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+            frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
+            filename = frameinfo.filename
+            lineno = frameinfo.lineno
+        else:
+            frame = inspect.stack()[1][0]
+            filename = inspect.getsourcefile(frame) or inspect.getfile(frame)
+            lineno = inspect.getframeinfo(frame).lineno
+        self.__dict__["__caller"] = "{}:{}".format(filename, lineno)
 
         if (
             self.__template
@@ -318,12 +327,8 @@ class StrictMock(object):
             name = " name={}".format(repr(self.__dict__["__name"]))
         else:
             name = ""
-        return "<StrictMock 0x{:02X}{name}{template} - {filename}:{lineno}>".format(
-            id(self),
-            name=name,
-            template=template,
-            filename=self.__dict__["__caller"].filename,
-            lineno=self.__dict__["__caller"].lineno,
+        return "<StrictMock 0x{:02X}{name}{template} {caller}>".format(
+            id(self), name=name, template=template, caller=self.__dict__["__caller"]
         )
 
     def __get_copy(self):

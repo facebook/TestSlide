@@ -13,6 +13,7 @@ from testslide.strict_mock import StrictMock, UndefinedBehavior, NoSuchAttribute
 import contextlib
 import copy
 import functools
+import inspect
 import sys
 import re
 
@@ -115,14 +116,19 @@ def strict_mock(context):
                 ),
             )
 
+    @context.memoize
+    def caller_filename_lineno(self):
+        current_module = sys.modules[__name__]
+        return inspect.getsourcefile(current_module) or inspect.getfile(current_module)
+
     @context.sub_context
     def without_template(context):
         @context.before
         def before(self):
             self.strict_mock = StrictMock()
             self.strict_mock_rgx = (
-                "<StrictMock 0x{:02X} - ".format(id(self.strict_mock))
-                + re.escape(__file__)
+                "<StrictMock 0x{:02X} ".format(id(self.strict_mock))
+                + re.escape(self.caller_filename_lineno)
                 + ":\d+>"
             )
             self.value = 2341234123
@@ -456,10 +462,10 @@ def strict_mock(context):
                     Template, runtime_attrs=[self.runtime_attr]
                 )
                 self.strict_mock_rgx = (
-                    "<StrictMock 0x{:02X} template={} - ".format(
+                    "<StrictMock 0x{:02X} template={} ".format(
                         id(self.strict_mock), "{}.Template".format(Template.__module__)
                     )
-                    + re.escape(__file__)
+                    + re.escape(self.caller_filename_lineno)
                     + ":\d+>"
                 )
                 self.context_manager_strict_mock = StrictMock(ContextManagerTemplate)
