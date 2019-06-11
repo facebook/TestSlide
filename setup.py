@@ -26,7 +26,6 @@ setup(
         "six",
         'typing ; python_version<"3"',
         'mock ; python_version<"3"',
-        'inspect2 ; python_version<"3.6"',
     ],
     extras_require = {
         'build': [
