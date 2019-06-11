@@ -20,13 +20,6 @@ else:
     from mock import create_autospec
 
 
-# inspect.signature kwarg 'wrapped' was introduced in 3.5
-if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-    import inspect
-else:
-    import inspect2 as inspect
-
-
 def _add_signature_validation(value, template, attr_name):
     if sys.version_info[0] == 2:
         return value
