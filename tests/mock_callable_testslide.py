@@ -381,16 +381,6 @@ def mock_callable_context(context):
                         for _ in range(self.times + 1):
                             self.callable_target(*self.call_args, **self.call_kwargs)
 
-            @context.sub_context(".and_assert_not_called()")
-            def and_assert_not_called(context):
-                @context.example
-                def can_not_use_with_previously_existing_behavior(self):
-                    with self.assertRaisesWithMessage(
-                        ValueError,
-                        "Asked to not accept any calls, but a behavior was previously defined.",
-                    ):
-                        self.mock_callable_dsl.and_assert_not_called()
-
         @context.sub_context
         def default_behavior(context):
             @context.example
