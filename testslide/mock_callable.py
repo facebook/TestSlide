@@ -660,6 +660,7 @@ class _MockCallableDSL(object):
         UnexpectedCallReceived and also an AssertionError.
         """
         if count is 0:
+            self._runner = None
             self.to_raise(
                 UnexpectedCallReceived(
                     ("{}, {}: Excepted not to be called!").format(
