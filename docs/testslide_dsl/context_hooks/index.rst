@@ -96,7 +96,7 @@ You can also define after hooks from within examples:
     do_first_thing()
 
     @self.after
-    def run_after_example_finishes():
+    def run_after_example_finishes(self):
       do_something_after_last_thing()
 
     do_last_thing()
