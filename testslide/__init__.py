@@ -268,9 +268,6 @@ class Example(object):
         for after in reversed(after_functions):
             with aggregated_exceptions.catch():
                 after(context_data)
-        for assertion in self.context.assertions:
-            with aggregated_exceptions.catch():
-                assertion()
         if aggregated_exceptions.exceptions:
             aggregated_exceptions.raise_correct_exception()
 
@@ -377,18 +374,22 @@ class Context(object):
         def _mock_callable(self, *args, **kwargs):
             return testslide.mock_callable.mock_callable(*args, **kwargs)
 
-        self.add_function("mock_callable", _mock_callable)
+        self.add_function("mock_callable", _mock_callable, skip_if_exists=True)
 
-        def register_assertion(assertion):
-            self.assertions.append(assertion)
+        def set_register_assertion(context_data, example):
+            def register_assertion(assertion):
+                self.after_functions.insert(0, lambda _: assertion())
 
-        testslide.mock_callable.register_assertion = register_assertion
+            testslide.mock_callable.register_assertion = register_assertion
+            example()
+
+        self.around_functions.append(set_register_assertion)
 
     def _setup_mock_constructor(self):
         def _mock_constructor(self, *args, **kwargs):
             return testslide.mock_constructor.mock_constructor(*args, **kwargs)
 
-        self.add_function("mock_constructor", _mock_constructor)
+        self.add_function("mock_constructor", _mock_constructor, skip_if_exists=True)
 
     # Constructor
 
@@ -415,7 +416,6 @@ class Context(object):
         self.examples = []
         self.before_functions = []
         self.after_functions = []
-        self.assertions = []
         self.around_functions = []
         self.context_data_methods = {}
         self.context_data_memoizable_attributes = {}
@@ -425,8 +425,9 @@ class Context(object):
         if not self.parent_context and not self.shared:
             self.all_top_level_contexts.append(self)
 
-        self._setup_mock_callable()
-        self._setup_mock_constructor()
+        if not self.parent_context:
+            self._setup_mock_callable()
+            self._setup_mock_constructor()
 
     # Properties
 
@@ -606,11 +607,11 @@ class Context(object):
             ]
         )
 
-    def add_function(self, name, function_code):
+    def add_function(self, name, function_code, skip_if_exists=False):
         """
         Add given function to example execution scope.
         """
-        if self._context_data_has_attr(name):
+        if not skip_if_exists and self._context_data_has_attr(name):
             raise AttributeError(
                 'Attribute "{}" already set for context "{}"'.format(name, self)
             )
