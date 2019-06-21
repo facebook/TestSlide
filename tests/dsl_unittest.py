@@ -24,6 +24,7 @@ from testslide import cli
 import traceback
 import io
 import os
+import subprocess
 
 
 class SomeTestCase(unittest.TestCase):
@@ -1736,3 +1737,73 @@ class TestExample(TestDSLBase):
             self.assertTrue(exfinal in e.exceptions)
         else:
             raise AssertionError("Expected test to fail")
+
+
+class TestMockCallableIntegration(TestDSLBase):
+    def test_mock_callable_integration(self):
+        @context
+        def fail_top(context):
+            @context.sub_context
+            def fail_sub_context(context):
+                @context.example
+                def expect_fail(self):
+                    self.mock_callable("os", "getcwd").for_call().to_return_value(
+                        "mocked_cwd"
+                    ).and_assert_called_once()
+
+        @context
+        def pass_top(context):
+            @context.sub_context
+            def pass_sub_context(context):
+                @context.example
+                def expect_pass(self):
+                    self.mock_callable("os", "getcwd").for_call().to_return_value(
+                        "mocked_cwd"
+                    ).and_assert_called_once()
+                    assert os.getcwd() == "mocked_cwd"
+
+        examples = {}
+
+        for all_top_level_context in Context.all_top_level_contexts:
+            for example in all_top_level_context.all_examples:
+                examples[example.name] = example
+
+        examples["expect pass"]()
+
+        with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
+            examples["expect fail"]()
+
+
+class TestMockConstructorIntegration(TestDSLBase):
+    def test_mock_constructor_integration(self):
+        @context
+        def fail_top(context):
+            @context.sub_context
+            def fail_sub_context(context):
+                @context.example
+                def expect_fail(self):
+                    self.mock_constructor("subprocess", "Popen").for_call(
+                        ["cmd"]
+                    ).to_return_value("mocked_popen").and_assert_called_once()
+
+        @context
+        def pass_top(context):
+            @context.sub_context
+            def pass_sub_context(context):
+                @context.example
+                def expect_pass(self):
+                    self.mock_constructor("subprocess", "Popen").for_call(
+                        ["cmd"]
+                    ).to_return_value("mocked_popen").and_assert_called_once()
+                    assert subprocess.Popen(["cmd"]) == "mocked_popen"
+
+        examples = {}
+
+        for all_top_level_context in Context.all_top_level_contexts:
+            for example in all_top_level_context.all_examples:
+                examples[example.name] = example
+
+        examples["expect pass"]()
+
+        with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
+            examples["expect fail"]()
