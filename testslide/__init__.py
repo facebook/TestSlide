@@ -184,7 +184,10 @@ class AggregatedExceptions(Exception):
         if Skip in ex_types or unittest.SkipTest in ex_types:
             raise Skip()
         else:
-            raise self
+            if len(self.exceptions) == 1:
+                raise self.exceptions[0]
+            else:
+                raise self
 
 
 class Skip(Exception):

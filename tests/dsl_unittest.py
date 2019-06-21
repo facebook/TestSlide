@@ -779,7 +779,7 @@ class TestDSLMergeTestCase(TestDSLBase):
                     calls.append("example")
                     raise SimulatedFailure("Simulated failure", "(extra)")
 
-            with self.assertRaises(AggregatedExceptions):
+            with self.assertRaises(SimulatedFailure):
                 self.run_first_context_first_example()
 
             self.assertEqual(
@@ -1083,7 +1083,7 @@ class TestDSLBeforeHook(TestDSLBase):
 
         try:
             self.run_first_context_first_example()
-        except AggregatedExceptions:
+        except SimulatedFailure:
             pass
         self.assertEqual(mock.mock_calls, [call("first before"), call("second before")])
 
