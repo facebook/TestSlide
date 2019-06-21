@@ -275,6 +275,7 @@ class Example(object):
         """
         Run example, including all hooks.
         """
+        _run_before_once_hooks()
         if not around_functions:
             self._example_runner(context_data)
             return
@@ -292,7 +293,6 @@ class Example(object):
         try:
             if self.skip:
                 raise Skip()
-            _run_before_once_hooks()
             context_data = _ContextData(self.context)
             with _add_traceback_context_manager():
                 self._run_example(
