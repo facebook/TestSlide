@@ -11,16 +11,12 @@ from __future__ import unicode_literals
 import argparse
 import os
 import re
-import json
 from time import time
 import sys
-from six import StringIO
-from . import redirect_stdout, redirect_stderr
-import traceback
 
 from contextlib import contextmanager
 
-from . import _TestSlideTestResult, Context, AggregatedExceptions, Skip
+from . import _TestSlideTestResult, Context
 from .runner import Runner, ProgressFormatter, DocumentFormatter
 import unittest
 import testslide.dsl
@@ -242,7 +238,10 @@ class Cli(object):
             "--show-testslide-stack-trace",
             default=False,
             action="store_true",
-            help="TestSlide's own code is trimmed from stack traces by default. This flags disables that, useful for TestSlide's own development.",
+            help=(
+                "TestSlide's own code is trimmed from stack traces by default. "
+                "This flags disables that, useful for TestSlide's own development."
+            ),
         )
         parser.add_argument(
             "--import-profiler",
@@ -389,7 +388,7 @@ class Cli(object):
 
 
 def main():
-    if not "" in sys.path:
+    if "" not in sys.path:
         sys.path.insert(0, "")
     sys.exit(Cli(sys.argv[1:]).run())
 

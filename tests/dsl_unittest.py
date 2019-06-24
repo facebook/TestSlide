@@ -10,8 +10,6 @@ from __future__ import unicode_literals
 
 import unittest
 import sys
-from contextlib import contextmanager
-from testslide import redirect_stdout, redirect_stderr
 
 if sys.version_info[0] >= 3:
     from unittest.mock import Mock, call, patch
@@ -20,9 +18,6 @@ else:
 
 from testslide import Context, AggregatedExceptions, reset
 from testslide.dsl import context, xcontext, fcontext, before_once
-from testslide import cli
-import traceback
-import io
 import os
 import subprocess
 
@@ -1364,7 +1359,6 @@ class TestDSLAfterHook(TestDSLBase):
         Assertions must be the last thing executed, allowing any registered
         after hooks to fulfill them.
         """
-        mock = Mock()
 
         @context
         def top(context):

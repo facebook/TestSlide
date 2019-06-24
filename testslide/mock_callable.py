@@ -659,7 +659,7 @@ class _MockCallableDSL(object):
         If assertion is for 0 calls, any received call will raise
         UnexpectedCallReceived and also an AssertionError.
         """
-        if count is 0:
+        if not count:
             self._runner = None
             self.to_raise(
                 UnexpectedCallReceived(

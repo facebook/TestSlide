@@ -89,8 +89,8 @@ def strict_mock(context):
             yield
         ex_msg = str(cm.exception)
         if sys.version_info[0] == 2:
-            ex_msg = unicode(ex_msg)
-            msg = unicode(msg)
+            ex_msg = unicode(ex_msg)  # noqa: F821
+            msg = unicode(msg)  # noqa: F821
         self.assertEqual(
             ex_msg,
             msg,
