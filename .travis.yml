@@ -14,9 +14,3 @@ matrix:
     - python: 3.7
       dist: xenial
       sudo: true
-
-    # black requires 3.6
-    - name: "Black formatting"
-      python: 3.6
-      install: pip install black
-      script: black --check testslide/ tests/
