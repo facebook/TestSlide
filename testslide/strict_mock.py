@@ -164,6 +164,8 @@ class StrictMock(object):
     or the tested code is misbehaving.
     """
 
+    TRIM_PATH_PREFIX = ""
+
     def __init__(self, template=None, runtime_attrs=None, name=None):
         """
         template: Template class to be used as a template for the mock. If the
@@ -190,6 +192,11 @@ class StrictMock(object):
             frame = inspect.stack()[1][0]
             filename = inspect.getsourcefile(frame) or inspect.getfile(frame)
             lineno = inspect.getframeinfo(frame).lineno
+
+        if self.TRIM_PATH_PREFIX:
+            split = filename.split(self.TRIM_PATH_PREFIX)
+            if len(split) == 2 and not split[0]:
+                filename = split[1]
         self.__dict__["__caller"] = "{}:{}".format(filename, lineno)
 
         if (
