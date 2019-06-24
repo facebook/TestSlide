@@ -6,6 +6,10 @@
 .PHONY: all
 all: test
 
+.PHONY: flake8
+flake8:
+	flake8 --select=F,C90 testslide/ tests/
+
 .PHONY: black_check
 black_check:
 	if command -v black; then black --check testslide/ tests/ ; fi
@@ -27,7 +31,7 @@ sdist:
 	python setup.py sdist
 
 .PHONY: test
-test: unittest_tests testslide_tests docs black_check sdist
+test: unittest_tests testslide_tests docs flake8 black_check sdist
 
 .PHONY: install_deps
 install_deps:
