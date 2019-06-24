@@ -24,6 +24,7 @@ from . import _TestSlideTestResult, Context, AggregatedExceptions, Skip
 from .runner import Runner, ProgressFormatter, DocumentFormatter
 import unittest
 import testslide.dsl
+from .strict_mock import StrictMock
 
 _unittest_testcase_loaded = False
 
@@ -364,6 +365,7 @@ class Cli(object):
                 trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
                 show_testslide_stack_trace=config.show_testslide_stack_trace,
             )
+            StrictMock.TRIM_PATH_PREFIX = config.trim_stack_trace_path_prefix
             if config.list:
                 formatter.discovery_start()
                 for context in Context.all_top_level_contexts:
