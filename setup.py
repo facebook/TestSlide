@@ -30,6 +30,7 @@ setup(
     extras_require = {
         'build': [
             "ipython",
+            "flake8",
             "sphinx",
             "sphinx-autobuild",
             "sphinx_rtd_theme",
