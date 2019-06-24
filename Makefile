@@ -12,7 +12,7 @@ flake8:
 
 .PHONY: black_check
 black_check:
-	if command -v black; then black --check testslide/ tests/ ; fi
+	bash -c "if black --help &>/dev/null ; then exec black --check testslide/ tests/ ; fi"
 
 .PHONY: unittest_tests
 unittest_tests:
@@ -31,7 +31,7 @@ sdist:
 	python setup.py sdist
 
 .PHONY: test
-test: unittest_tests testslide_tests docs flake8 black_check sdist
+test: unittest_tests testslide_tests black_check flake8 docs sdist
 
 .PHONY: install_deps
 install_deps:

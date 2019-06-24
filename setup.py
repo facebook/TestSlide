@@ -29,6 +29,7 @@ setup(
     ],
     extras_require = {
         'build': [
+            'black ; python_version>="3.6"',
             "ipython",
             "flake8",
             "sphinx",
