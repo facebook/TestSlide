@@ -257,9 +257,10 @@ def mock_callable_context(context):
                     with self.assertRaisesWithMessage(
                         UnexpectedCallReceived,
                         (
-                            "{}, {}: Unexpected call received.\n"
-                            "  Expected to receive at most {} calls, "
-                            "but an extra call was made."
+                            "Unexpected call received.\n"
+                            "{}, {}:\n"
+                            "  expected to receive at most {} calls with any arguments "
+                            "  but received an extra call."
                         ).format(
                             repr(self.target_arg), repr(self.callable_arg), self.times
                         ),
