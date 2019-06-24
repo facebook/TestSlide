@@ -586,7 +586,7 @@ def strict_mock(context):
                 strict_mock_copy.attr[self.key] = None
                 self.assertNotEqual(self.strict_mock.attr, strict_mock_copy.attr)
 
-    @context.fsub_context
+    @context.sub_context
     def with_trim_path_prefix(context):
         @context.memoize
         def testslide_root(self):
