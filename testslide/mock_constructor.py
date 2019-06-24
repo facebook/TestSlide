@@ -59,7 +59,7 @@ def mock_constructor(target, class_name):
                 "The class {} at {} was changed after mock_constructor() mocked "
                 "it!".format(class_name, target)
             )
-        callable_mock = getattr(mocked_class, "__new__")
+        callable_mock = mocked_class.__new__
     else:
 
         original_class = getattr(target, class_name)

@@ -15,9 +15,7 @@ import functools
 import inspect
 
 if sys.version_info[0] >= 3:
-    from unittest.mock import create_autospec, _must_skip
-else:
-    from mock import create_autospec
+    from unittest.mock import _must_skip
 
 
 def _add_signature_validation(value, template, attr_name):
@@ -226,7 +224,7 @@ class StrictMock(object):
     def __is_runtime_attr(self, name):
         if sys.version_info[0] >= 3 and self.__template:
             for klass in self.__template.mro():
-                template_init = getattr(klass, "__init__")
+                template_init = klass.__init__
                 if not inspect.isfunction(template_init):
                     continue
                 for instruction in dis.get_instructions(template_init):

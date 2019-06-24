@@ -14,12 +14,12 @@ from contextlib import contextmanager
 from testslide import redirect_stdout, redirect_stderr
 
 if sys.version_info[0] >= 3:
-    from unittest.mock import Mock, call, patch
+    from unittest.mock import patch
 else:
-    from mock import Mock, call, patch
+    from mock import patch
 
-from testslide import Context, AggregatedExceptions, reset
-from testslide.dsl import context, xcontext, fcontext, before_once
+from testslide import Context
+from testslide.dsl import context
 from testslide import cli
 import traceback
 import io

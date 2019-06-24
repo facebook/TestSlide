@@ -690,7 +690,7 @@ class Context(object):
         self.around_functions.append(wrap_test_case)
 
 
-before_once_functions = []  # type: List[function]
+before_once_functions = []
 before_once_executed = False
 
 
