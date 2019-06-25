@@ -116,9 +116,16 @@ class _Runner(object):
         if self.max_calls and self.call_count > self.max_calls:
             raise UnexpectedCallReceived(
                 (
-                    "{}, {}: Unexpected call received.\n"
-                    "  Expected to receive at most {} calls, but an extra call was made."
-                ).format(_format_target(self.target), repr(self.method), self.max_calls)
+                    "Unexpected call received.\n"
+                    "{}, {}:\n"
+                    "  expected to receive at most {} calls with {}"
+                    "  but received an extra call."
+                ).format(
+                    _format_target(self.target),
+                    repr(self.method),
+                    self.max_calls,
+                    self._args_message(),
+                )
             )
 
     def add_accepted_args(self, *args, **kwargs):
@@ -659,8 +666,7 @@ class _MockCallableDSL(object):
         If assertion is for 0 calls, any received call will raise
         UnexpectedCallReceived and also an AssertionError.
         """
-        if not count:
-            self._runner = None
+        if not self._runner:
             self.to_raise(
                 UnexpectedCallReceived(
                     ("{}, {}: Excepted not to be called!").format(
@@ -668,7 +674,6 @@ class _MockCallableDSL(object):
                     )
                 )
             )
-        self._assert_runner()
         self._runner.add_exact_calls_assertion(count)
         return self
 
