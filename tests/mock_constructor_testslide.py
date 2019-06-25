@@ -97,15 +97,17 @@ def mock_constructor(context):
         # We use a wrapper here to validate that the first argument of __new__ is not
         # passed along
         def wrapper(original_callable, *args, **kwargs):
-            self.assertEqual(args, mock_args)
-            self.assertEqual(kwargs, mock_kwargs)
+            instance = original_callable(*args, **kwargs)
+            self.assertTrue(type(instance), original_target_class)
+            self.assertEqual(instance.args, mock_args)
+            self.assertEqual(instance.kwargs, mock_kwargs)
             return "mocked"
 
         self.mock_constructor(self.target_module, target_class_name).for_call(
             *mock_args, **mock_kwargs
         ).with_wrapper(wrapper)
 
-        # And get a reference to the pached class
+        # And get a reference to the patched class
         target_class = getattr(self.target_module, target_class_name)
 
         # Generic calls works (to_call_original)

@@ -11,10 +11,6 @@ from __future__ import unicode_literals
 import inspect
 import six
 
-if six.PY2:
-    from mock import ANY
-else:
-    from unittest.mock import ANY
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
@@ -90,5 +86,5 @@ def mock_constructor(target, class_name):
         "__new__",
         callable_mock=callable_mock,
         original_callable=original_callable,
-        prepend_first_arg=ANY,
+        extra_first_arg=mocked_class,
     )

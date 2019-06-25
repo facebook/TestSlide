@@ -441,13 +441,13 @@ class _MockCallableDSL(object):
         method,
         callable_mock=None,
         original_callable=None,
-        prepend_first_arg=None,
+        extra_first_arg=None,
     ):
         self._original_target = target
         self._method = method
         self._runner = None
         self._next_runner_accepted_args = None
-        self.prepend_first_arg = prepend_first_arg
+        self.extra_first_arg = extra_first_arg
 
         if isinstance(target, six.string_types):
             self._target = testslide._importer(target)
@@ -510,8 +510,8 @@ class _MockCallableDSL(object):
         """
         Filter for only calls like this.
         """
-        if self.prepend_first_arg:
-            args = (self.prepend_first_arg,) + args
+        if self.extra_first_arg:
+            args = (self.extra_first_arg,) + args
         if self._runner:
             self._runner.add_accepted_args(*args, **kwargs)
         else:
@@ -619,12 +619,16 @@ class _MockCallableDSL(object):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if self.prepend_first_arg and args:
+            if self.extra_first_arg and args:
                 assert (
-                    args[0] == self.prepend_first_arg
+                    args[0] == self.extra_first_arg
                 ), "Received unexpected first argument: {}.".format(args[0])
                 args = args[1:]
-            return func(self._original_callable, *args, **kwargs)
+                return func(
+                    self._original_callable, self.extra_first_arg, *args, **kwargs
+                )
+            else:
+                return func(self._original_callable, *args, **kwargs)
 
         self._add_runner(
             _ImplementationRunner(
