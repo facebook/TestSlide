@@ -14,10 +14,15 @@ import contextlib
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
 
-class Target(object):  # noqa
+class BaseTarget(object):
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
+
+class Target(BaseTarget):  # noqa
+    def __init__(self, *args, **kwargs):
+        super(Target, self).__init__(*args, **kwargs)
 
 
 original_target_class = Target

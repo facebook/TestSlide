@@ -79,7 +79,15 @@ def mock_constructor(target, class_name):
         _mocked_classes[mocked_class_id] = (original_class, mocked_class)
 
     def original_callable(_, *args, **kwargs):
-        return original_class(*args, **kwargs)
+        try:
+            # Without this, when the original_class __init__ references
+            # itself with super super(SomeClass, self) it will fail,
+            # because SomeClass will actually be SomeClassMock.
+            setattr(target, class_name, original_class)
+            instance = original_class(*args, **kwargs)
+        finally:
+            setattr(target, class_name, mocked_class)
+        return instance
 
     return _MockCallableDSL(
         mocked_class,
