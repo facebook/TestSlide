@@ -30,6 +30,7 @@ def unpatch_all_constructor_mocks():
 
 
 _mocked_classes = {}
+_skip_init = []
 
 
 def _is_string(obj):
@@ -101,16 +102,45 @@ def mock_constructor(target, class_name):
         callable_mock = _CallableMock(original_class, "__new__")
 
         mocked_class = type(
-            str(original_class.__name__ + "Mock"),
-            (original_class,),
-            {"__new__": callable_mock},
+            str(original_class.__name__ + "MOCK"),
+            tuple(original_class.mro()[1:]),
+            {
+                name: value
+                for name, value in original_class.__dict__.items()
+                if name not in ("__new__", "__init__")
+            },
         )
+        # FIXME __instancecheck__(self, instance)
+        def skip_init(self, *args, **kwargs):
+            """
+            Avoids __init__ being called automatically with different arguments
+            than __new__ after original_callable() returns.
+            """
+            if id(self) in _skip_init:
+                _skip_init.remove(id(self))
+                return
+            super(type(self), self).__init__(*args, **kwargs)
+
+        mocked_class.__init__ = skip_init
+
+        if "__new__" in original_class.__dict__:
+            raise NotImplementedError()
+        else:
+            mocked_class.__new__ = callable_mock
 
         setattr(target, class_name, mocked_class)
         _mocked_classes[mocked_class_id] = (original_class, mocked_class)
 
     def original_callable(cls, *args, **kwargs):
-        return original_class(*args, **kwargs)
+        instance = object.__new__(mocked_class)
+        # We call __init__ here so we can ensure it is called with the correct
+        # arguments, which might have been mangled by a wrapper function...
+        instance.__init__(*args, **kwargs)
+        # ...and block the interpreter from calling __init__ again with
+        # (potentially with different arguments)
+        _skip_init.append(id(instance))
+        return instance
+        # return original_class(*args, **kwargs)
 
     return _MockConstructorDSL(
         target=mocked_class,
