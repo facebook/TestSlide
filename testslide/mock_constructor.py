@@ -12,7 +12,7 @@ import inspect
 import six
 
 import testslide
-from testslide.mock_callable import _MockCallableDSL, _CallableMock, _Runner
+from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
 _unpatchers = []  # type: List[Callable]  # noqa T484
 
@@ -140,7 +140,6 @@ def mock_constructor(target, class_name):
         # (potentially with different arguments)
         _skip_init.append(id(instance))
         return instance
-        # return original_class(*args, **kwargs)
 
     return _MockConstructorDSL(
         target=mocked_class,
