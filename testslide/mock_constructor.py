@@ -40,50 +40,35 @@ def _is_string(obj):
     )
 
 
-def is_cls_mock(cls):
-    return getattr(cls, "__mock", False) == True
+class _MockConstructorDSL(_MockCallableDSL):
+    """
+    Specialized version of _MockCallableDSL to call __new__ with correct args
+    """
 
-
-class _ConstructorRunner(_Runner):
-    def __init__(self, parent_runner):
-        super(_ConstructorRunner, self).__init__(
-            target=parent_runner.target,
-            method="__new__",
-            original_callable=parent_runner.original_callable,
+    def __init__(self, target, method, cls, callable_mock=None, original_callable=None):
+        self.cls = cls
+        super(_MockConstructorDSL, self).__init__(
+            target,
+            method,
+            callable_mock=callable_mock,
+            original_callable=original_callable,
         )
 
-        self.parent = parent_runner
+    def for_call(self, *args, **kwargs):
+        return super(_MockConstructorDSL, self).for_call(
+            *((self.cls,) + args), **kwargs
+        )
 
-    @property
-    def call_count(self):
-        return self.parent.call_count
+    def with_wrapper(self, func):
+        def new_func(original_callable, cls, *args, **kwargs):
+            assert cls == self.cls
 
-    def _set_max_calls(self, times):
-        self.parent._set_max_calls(times)
+            def new_original_callable(*args, **kwargs):
+                return original_callable(cls, *args, **kwargs)
 
-    def add_accepted_args(self, *args, **kwargs):
-        return self.parent.add_accepted_args(*args, **kwargs)
+            return func(new_original_callable, *args, **kwargs)
 
-    def can_accept_args(self, *args, **kwargs):
-        if not args or not is_cls_mock(args[0]):
-            return False
-
-        return self.parent.can_accept_args(*args[1:], **kwargs)
-
-    def run(self, target_cls, *args, **kwargs):
-        assert is_cls_mock(
-            target_cls
-        ), "ConstructorRunner called for non-mock class: {}".format(target_cls)
-
-        return self.parent.run(*args, **kwargs)
-
-
-class _MockConstructorDSL(_MockCallableDSL):
-    """Specialized version of _MockCallableDSL to call __new__ with correct args"""
-
-    def _add_runner(self, runner):
-        wrapped_runner = _ConstructorRunner(runner)
-        return super(_MockConstructorDSL, self)._add_runner(wrapped_runner)
+        return super(_MockConstructorDSL, self).with_wrapper(new_func)
 
 
 def mock_constructor(target, class_name):
@@ -118,16 +103,19 @@ def mock_constructor(target, class_name):
         mocked_class = type(
             str(original_class.__name__ + "Mock"),
             (original_class,),
-            {"__new__": callable_mock, "__mock": True},
+            {"__new__": callable_mock},
         )
-        mocked_class.__mock = True
 
         setattr(target, class_name, mocked_class)
         _mocked_classes[mocked_class_id] = (original_class, mocked_class)
 
+    def original_callable(cls, *args, **kwargs):
+        return original_class(*args, **kwargs)
+
     return _MockConstructorDSL(
-        mocked_class,
-        "__new__",
+        target=mocked_class,
+        method="__new__",
+        cls=mocked_class,
         callable_mock=callable_mock,
-        original_callable=original_class,
+        original_callable=original_callable,
     )
