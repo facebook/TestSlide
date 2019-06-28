@@ -97,6 +97,18 @@ def mock_constructor(context):
             self.assertSequenceEqual(target.args, ("World", "Hello"))
 
     @context.example
+    def registers_call_count_and_args_correctly(self):
+        self.mock_constructor(self.target_module, target_class_name).for_call(
+            "Hello", "World"
+        ).to_return_value(None).and_assert_called_exactly(2)
+
+        t1 = Target("Hello", "World")
+        t2 = Target("Hello", "World")
+
+        self.assertIsNone(t1)
+        self.assertIsNone(t2)
+
+    @context.example
     def it_uses_mock_callable_dsl(self):
         self.assertIsInstance(
             self.mock_constructor(self.target_module, target_class_name),

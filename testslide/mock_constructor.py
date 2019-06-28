@@ -46,26 +46,20 @@ def is_cls_mock(cls):
 
 class _ConstructorRunner(_Runner):
     def __init__(self, parent_runner):
-        # Must come before super constructor or call_count setter will fail
-        # due to uninitialized parent.
-        self.parent = parent_runner
-
         super(_ConstructorRunner, self).__init__(
             target=parent_runner.target,
             method="__new__",
             original_callable=parent_runner.original_callable,
         )
 
+        self.parent = parent_runner
+
     @property
     def call_count(self):
         return self.parent.call_count
 
-    @call_count.setter
-    def call_count(self, times):
-        self.parent.call_count = times
-
     def _set_max_calls(self, times):
-        return self.parent._set_max_calls(times)
+        self.parent._set_max_calls(times)
 
     def add_accepted_args(self, *args, **kwargs):
         return self.parent.add_accepted_args(*args, **kwargs)

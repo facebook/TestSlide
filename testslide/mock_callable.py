@@ -108,12 +108,28 @@ class _Runner(object):
         self.method = method
         self.original_callable = original_callable
         self.accepted_args = None
-        self.call_count = 0
-        self.max_calls = None
+
+        self._call_count = 0
+        self._max_calls = None
 
     def run(self, *args, **kwargs):
-        self.call_count += 1
-        if self.max_calls and self.call_count > self.max_calls:
+        self.inc_call_count()
+
+    @property
+    def call_count(self):
+        return self._call_count
+
+    @property
+    def max_calls(self):
+        return self._max_calls
+
+    def _set_max_calls(self, times):
+        if not self._max_calls or times < self._max_calls:
+            self._max_calls = times
+
+    def inc_call_count(self):
+        self._call_count += 1
+        if self.max_calls and self._call_count > self.max_calls:
             raise UnexpectedCallReceived(
                 (
                     "{}, {}: Unexpected call received.\n"
@@ -140,10 +156,6 @@ class _Runner(object):
             )
         else:
             return "any arguments "
-
-    def _set_max_calls(self, times):
-        if not self.max_calls or (self.max_calls and times < self.max_calls):
-            self.max_calls = times
 
     def add_exact_calls_assertion(self, times):
         self._set_max_calls(times)
