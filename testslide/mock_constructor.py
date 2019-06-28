@@ -102,7 +102,7 @@ def mock_constructor(target, class_name):
         callable_mock = _CallableMock(original_class, "__new__")
 
         mocked_class = type(
-            str(original_class.__name__ + "MOCK"),
+            str(original_class.__name__),
             tuple(original_class.mro()[1:]),
             {
                 name: value
@@ -110,7 +110,7 @@ def mock_constructor(target, class_name):
                 if name not in ("__new__", "__init__")
             },
         )
-        # FIXME __instancecheck__(self, instance)
+
         def skip_init(self, *args, **kwargs):
             """
             Avoids __init__ being called automatically with different arguments
