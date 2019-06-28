@@ -12,6 +12,7 @@ import sys
 import contextlib
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
+from testslide.mock_callable import _MockCallableDSL
 
 
 class Target(object):  # noqa
@@ -78,11 +79,40 @@ def mock_constructor(context):
             with self.assertRaisesWithMessage(ValueError, "Target must be a class."):
                 self.mock_constructor(self.target_module, "dummy")
 
+    @context.sub_context
+    def supports_wrapping(context):
+        def wrapper(original_callable, *args, **kwargs):
+            args = reversed(args)
+            return original_callable(*args, **kwargs)
+
+        @context.before
+        def wrap(self):
+            self.mock_constructor(self.target_module, target_class_name).for_call(
+                "Hello", "World"
+            ).with_wrapper(wrapper).and_assert_called_once()
+
+        @context.example
+        def constructor_is_wrapped(self):
+            target = Target("Hello", "World")
+            self.assertSequenceEqual(target.args, ("World", "Hello"))
+
+    @context.example
+    def registers_call_count_and_args_correctly(self):
+        self.mock_constructor(self.target_module, target_class_name).for_call(
+            "Hello", "World"
+        ).to_return_value(None).and_assert_called_exactly(2)
+
+        t1 = Target("Hello", "World")
+        t2 = Target("Hello", "World")
+
+        self.assertIsNone(t1)
+        self.assertIsNone(t2)
+
     @context.example
     def it_uses_mock_callable_dsl(self):
-        self.assertEqual(
-            type(self.mock_constructor(self.target_module, target_class_name)),
-            type(self.mock_callable(self.target_module, "dummy")),
+        self.assertIsInstance(
+            self.mock_constructor(self.target_module, target_class_name),
+            _MockCallableDSL,
         )
 
     @context.example

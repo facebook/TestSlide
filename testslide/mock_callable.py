@@ -108,12 +108,28 @@ class _Runner(object):
         self.method = method
         self.original_callable = original_callable
         self.accepted_args = None
-        self.call_count = 0
-        self.max_calls = None
+
+        self._call_count = 0
+        self._max_calls = None
 
     def run(self, *args, **kwargs):
-        self.call_count += 1
-        if self.max_calls and self.call_count > self.max_calls:
+        self.inc_call_count()
+
+    @property
+    def call_count(self):
+        return self._call_count
+
+    @property
+    def max_calls(self):
+        return self._max_calls
+
+    def _set_max_calls(self, times):
+        if not self._max_calls or times < self._max_calls:
+            self._max_calls = times
+
+    def inc_call_count(self):
+        self._call_count += 1
+        if self.max_calls and self._call_count > self.max_calls:
             raise UnexpectedCallReceived(
                 (
                     "Unexpected call received.\n"
@@ -147,10 +163,6 @@ class _Runner(object):
             )
         else:
             return "any arguments "
-
-    def _set_max_calls(self, times):
-        if not self.max_calls or (self.max_calls and times < self.max_calls):
-            self.max_calls = times
 
     def add_exact_calls_assertion(self, times):
         self._set_max_calls(times)
@@ -442,19 +454,11 @@ class _MockCallableDSL(object):
 
     CALLABLE_MOCKS = {}  # NOQA T484
 
-    def __init__(
-        self,
-        target,
-        method,
-        callable_mock=None,
-        original_callable=None,
-        prepend_first_arg=None,
-    ):
+    def __init__(self, target, method, callable_mock=None, original_callable=None):
         self._original_target = target
         self._method = method
         self._runner = None
         self._next_runner_accepted_args = None
-        self.prepend_first_arg = prepend_first_arg
 
         if isinstance(target, six.string_types):
             self._target = testslide._importer(target)
@@ -517,8 +521,6 @@ class _MockCallableDSL(object):
         """
         Filter for only calls like this.
         """
-        if self.prepend_first_arg:
-            args = (self.prepend_first_arg,) + args
         if self._runner:
             self._runner.add_accepted_args(*args, **kwargs)
         else:
@@ -626,11 +628,6 @@ class _MockCallableDSL(object):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if self.prepend_first_arg and args:
-                assert (
-                    args[0] == self.prepend_first_arg
-                ), "Received unexpected first argument: {}.".format(args[0])
-                args = args[1:]
             return func(self._original_callable, *args, **kwargs)
 
         self._add_runner(

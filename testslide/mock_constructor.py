@@ -11,12 +11,8 @@ from __future__ import unicode_literals
 import inspect
 import six
 
-if six.PY2:
-    from mock import ANY
-else:
-    from unittest.mock import ANY
 import testslide
-from testslide.mock_callable import _MockCallableDSL, _CallableMock
+from testslide.mock_callable import _MockCallableDSL, _CallableMock, _Runner
 
 _unpatchers = []  # type: List[Callable]  # noqa T484
 
@@ -44,6 +40,52 @@ def _is_string(obj):
     )
 
 
+def is_cls_mock(cls):
+    return getattr(cls, "__mock", False) == True
+
+
+class _ConstructorRunner(_Runner):
+    def __init__(self, parent_runner):
+        super(_ConstructorRunner, self).__init__(
+            target=parent_runner.target,
+            method="__new__",
+            original_callable=parent_runner.original_callable,
+        )
+
+        self.parent = parent_runner
+
+    @property
+    def call_count(self):
+        return self.parent.call_count
+
+    def _set_max_calls(self, times):
+        self.parent._set_max_calls(times)
+
+    def add_accepted_args(self, *args, **kwargs):
+        return self.parent.add_accepted_args(*args, **kwargs)
+
+    def can_accept_args(self, *args, **kwargs):
+        if not args or not is_cls_mock(args[0]):
+            return False
+
+        return self.parent.can_accept_args(*args[1:], **kwargs)
+
+    def run(self, target_cls, *args, **kwargs):
+        assert is_cls_mock(
+            target_cls
+        ), "ConstructorRunner called for non-mock class: {}".format(target_cls)
+
+        return self.parent.run(*args, **kwargs)
+
+
+class _MockConstructorDSL(_MockCallableDSL):
+    """Specialized version of _MockCallableDSL to call __new__ with correct args"""
+
+    def _add_runner(self, runner):
+        wrapped_runner = _ConstructorRunner(runner)
+        return super(_MockConstructorDSL, self)._add_runner(wrapped_runner)
+
+
 def mock_constructor(target, class_name):
     if not _is_string(class_name):
         raise ValueError("Second argument must be a string with the name of the class.")
@@ -61,7 +103,6 @@ def mock_constructor(target, class_name):
             )
         callable_mock = mocked_class.__new__
     else:
-
         original_class = getattr(target, class_name)
         if not inspect.isclass(original_class):
             raise ValueError("Target must be a class.")
@@ -77,18 +118,16 @@ def mock_constructor(target, class_name):
         mocked_class = type(
             str(original_class.__name__ + "Mock"),
             (original_class,),
-            {"__new__": callable_mock},
+            {"__new__": callable_mock, "__mock": True},
         )
+        mocked_class.__mock = True
+
         setattr(target, class_name, mocked_class)
         _mocked_classes[mocked_class_id] = (original_class, mocked_class)
 
-    def original_callable(_, *args, **kwargs):
-        return original_class(*args, **kwargs)
-
-    return _MockCallableDSL(
+    return _MockConstructorDSL(
         mocked_class,
         "__new__",
         callable_mock=callable_mock,
-        original_callable=original_callable,
-        prepend_first_arg=ANY,
+        original_callable=original_class,
     )
