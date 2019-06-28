@@ -15,10 +15,21 @@ from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 from testslide.mock_callable import _MockCallableDSL
 
 
-class Target(object):  # noqa
+class BaseTarget(object):
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
+    def calls_super(self):
+        return "from super"
+
+
+class Target(BaseTarget):
+    def __init__(self, *args, **kwargs):
+        super(Target, self).__init__(*args, **kwargs)
+
+    def calls_super(self):
+        return super(Target, self).calls_super()
 
 
 original_target_class = Target
@@ -81,19 +92,21 @@ def mock_constructor(context):
 
     @context.sub_context
     def supports_wrapping(context):
-        def wrapper(original_callable, *args, **kwargs):
-            args = reversed(args)
-            return original_callable(*args, **kwargs)
-
         @context.before
         def wrap(self):
+            def wrapper(original_callable, *args, **kwargs):
+                args = reversed(args)
+                instance = original_callable(*args, **kwargs)
+                return instance
+
             self.mock_constructor(self.target_module, target_class_name).for_call(
                 "Hello", "World"
             ).with_wrapper(wrapper).and_assert_called_once()
 
         @context.example
         def constructor_is_wrapped(self):
-            target = Target("Hello", "World")
+            target_class = getattr(self.target_module, target_class_name)
+            target = target_class("Hello", "World")
             self.assertSequenceEqual(target.args, ("World", "Hello"))
 
     @context.example
@@ -127,6 +140,11 @@ def mock_constructor(context):
         # We use a wrapper here to validate that the first argument of __new__ is not
         # passed along
         def wrapper(original_callable, *args, **kwargs):
+            instance = original_callable(*args, **kwargs)
+            # self.assertTrue(type(instance), original_target_class)
+            self.assertEqual(instance.args, mock_args)
+            self.assertEqual(instance.kwargs, mock_kwargs)
+            self.assertEqual(instance.calls_super(), "from super")
             self.assertEqual(args, mock_args)
             self.assertEqual(kwargs, mock_kwargs)
             return "mocked"
@@ -139,18 +157,16 @@ def mock_constructor(context):
         target_class = getattr(self.target_module, target_class_name)
 
         # Generic calls works (to_call_original)
-        with self.sub_example():
-            original_args = ("a", "b")
-            original_kwargs = {"c": "d"}
-            original_instance = target_class(*original_args, **original_kwargs)
-            self.assertTrue(issubclass(type(original_instance), original_target_class))
-            self.assertEqual(original_instance.args, original_args)
-            self.assertEqual(original_instance.kwargs, original_kwargs)
+        original_args = ("a", "b")
+        original_kwargs = {"c": "d"}
+        original_instance = target_class(*original_args, **original_kwargs)
+        # self.assertTrue(issubclass(type(original_instance), original_target_class))
+        self.assertEqual(original_instance.args, original_args)
+        self.assertEqual(original_instance.kwargs, original_kwargs)
 
         # for_call registered calls works
-        with self.sub_example():
-            mocked_instance = target_class(*mock_args, **mock_kwargs)
-            self.assertEqual(mocked_instance, "mocked")
+        mocked_instance = target_class(*mock_args, **mock_kwargs)
+        self.assertEqual(mocked_instance, "mocked")
 
     @context.example
     def accepts_module_as_string(self):
