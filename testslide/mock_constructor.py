@@ -10,6 +10,10 @@ from __future__ import unicode_literals
 
 import inspect
 import six
+import sys
+
+if sys.version_info[0] >= 3:
+    import typing
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
@@ -101,9 +105,13 @@ def mock_constructor(target, class_name):
 
         callable_mock = _CallableMock(original_class, "__new__")
 
+        if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+            mro = tuple(c for c in original_class.mro()[1:] if c is not typing.Generic)
+        else:
+            mro = tuple(original_class.mro()[1:])
         mocked_class = type(
             str(original_class.__name__),
-            tuple(original_class.mro()[1:]),
+            mro,
             {
                 name: value
                 for name, value in original_class.__dict__.items()
