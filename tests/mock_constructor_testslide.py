@@ -32,14 +32,13 @@ class Target(BaseTarget):
         return super(Target, self).calls_super()
 
 
-if sys.version_info[0] >= 3:
-    from typing import TypeVar, Generic, List
+if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+    from typing import TypeVar, Generic
 
     SomeType = TypeVar("SomeType")
 
     class GenericTarget(Generic[SomeType]):
-        def __init__(self) -> None:
-            self.items: List[SomeType] = []
+        pass
 
 
 original_target_class = Target
@@ -102,7 +101,7 @@ def mock_constructor(context):
             with self.assertRaisesWithMessage(ValueError, "Target must be a class."):
                 self.mock_constructor(self.target_module, "dummy")
 
-    if sys.version_info[0] >= 3:
+    if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 
         @context.sub_context
         def Generic_classes(context):

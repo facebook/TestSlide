@@ -105,10 +105,10 @@ def mock_constructor(target, class_name):
 
         callable_mock = _CallableMock(original_class, "__new__")
 
-        if sys.version_info[0] >= 3:
+        if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
             mro = tuple(c for c in original_class.mro()[1:] if c is not typing.Generic)
         else:
-            mro = original_class.mro()[1:]
+            mro = tuple(original_class.mro()[1:])
         mocked_class = type(
             str(original_class.__name__),
             mro,
