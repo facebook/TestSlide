@@ -70,7 +70,7 @@ mock_constructor is a way to not only solve this for Python 3, but also provide 
 Internally, mock_constructor will:
 
 * Patch the class at its module with a subclass of it, that is dynamically created.
-* ``__new__`` of this dynamic subclass is handled by mock_callable.
+* This new subclass is essentially a copy of the original class, but overrides its ``__new__`` with a factory that handles `mock_constructor()` interface.
 
 Integration With Other Frameworks
 ---------------------------------
