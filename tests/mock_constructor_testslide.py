@@ -32,6 +32,16 @@ class Target(BaseTarget):
         return super(Target, self).calls_super()
 
 
+if sys.version_info[0] >= 3:
+    from typing import TypeVar, Generic, List
+
+    SomeType = TypeVar("SomeType")
+
+    class GenericTarget(Generic[SomeType]):
+        def __init__(self) -> None:
+            self.items: List[SomeType] = []
+
+
 original_target_class = Target
 target_class_name = original_target_class.__name__
 
@@ -44,10 +54,11 @@ def dummy():
 def mock_constructor(context):
 
     context.memoize("target_module", lambda self: sys.modules[__name__])
+    context.memoize_before("target_class_name", lambda self: target_class_name)
 
     @context.function
     def get_target_class(self):
-        return getattr(self.target_module, target_class_name)
+        return getattr(self.target_module, self.target_class_name)
 
     @context.function
     @contextlib.contextmanager
@@ -91,10 +102,24 @@ def mock_constructor(context):
             with self.assertRaisesWithMessage(ValueError, "Target must be a class."):
                 self.mock_constructor(self.target_module, "dummy")
 
+    if sys.version_info[0] >= 3:
+
+        @context.sub_context
+        def Generic_classes(context):
+            context.memoize_before("target_class_name", lambda self: "GenericTarget")
+
+            @context.example
+            def it_works(self):
+                self.mock_constructor(
+                    self.target_module.__name__, self.target_class_name
+                ).for_call().to_return_value("mocked")
+                mocked_instance = self.get_target_class()()
+                self.assertEqual(mocked_instance, "mocked")
+
     @context.example
     def it_uses_mock_callable_dsl(self):
         self.assertIsInstance(
-            self.mock_constructor(self.target_module, target_class_name),
+            self.mock_constructor(self.target_module, self.target_class_name),
             _MockCallableDSL,
         )
 
@@ -104,9 +129,13 @@ def mock_constructor(context):
         def assertions(context):
             @context.example
             def registers_call_count_and_args_correctly(self):
-                self.mock_constructor(self.target_module, target_class_name).for_call(
-                    "Hello", "World"
-                ).to_return_value(None).and_assert_called_exactly(2)
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).for_call("Hello", "World").to_return_value(
+                    None
+                ).and_assert_called_exactly(
+                    2
+                )
 
                 target_class = self.get_target_class()
                 t1 = target_class("Hello", "World")
@@ -120,7 +149,7 @@ def mock_constructor(context):
             args = (6, 7)
             kwargs = {"8": 9, "10": 11}
             self.mock_constructor(
-                self.target_module.__name__, target_class_name
+                self.target_module.__name__, self.target_class_name
             ).for_call(*args, **kwargs).to_return_value("mocked")
             mocked_instance = self.get_target_class()(*args, **kwargs)
             self.assertEqual(mocked_instance, "mocked")
@@ -132,7 +161,7 @@ def mock_constructor(context):
                 @context.before
                 def setup_wrapper(self):
                     self.mock_constructor(
-                        self.target_module, target_class_name
+                        self.target_module, self.target_class_name
                     ).to_call_original()
 
                     def reverse_args_wrapper(original_callable, *args, **kwargs):
@@ -141,7 +170,7 @@ def mock_constructor(context):
                         return original_callable(*args, **kwargs)
 
                     self.mock_constructor(
-                        self.target_module, target_class_name
+                        self.target_module, self.target_class_name
                     ).for_call("Hello", "World", Hello="World").with_wrapper(
                         reverse_args_wrapper
                     )
@@ -177,7 +206,7 @@ def mock_constructor(context):
                         return "got: {}".format(message)
 
                     self.mock_constructor(
-                        self.target_module, target_class_name
+                        self.target_module, self.target_class_name
                     ).for_call("factory").with_wrapper(factory)
                     target = self.get_target_class()("factory")
                     self.assertEqual(target, "got: factory")
