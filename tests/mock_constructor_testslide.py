@@ -46,8 +46,9 @@ class Target(BaseTarget):
         self.p2_super = False
         super(Target, self).__init__(p2_super=True)
 
-        self.p3_super = False
-        super().__init__(p3_super=True)
+        if sys.version_info[0] >= 3:
+            self.p3_super = False
+            super().__init__(p3_super=True)
 
         super(Target, self).__init__(*args, **kwargs)
 
@@ -68,9 +69,11 @@ class Target(BaseTarget):
     def p2_super_class_method(cls):
         return super(Target, cls).p2_super_class_method()
 
-    @classmethod
-    def p3_super_class_method(cls):
-        return super().p3_super_class_method()
+    if sys.version_info[0] >= 3:
+
+        @classmethod
+        def p3_super_class_method(cls):
+            return super().p3_super_class_method()
 
 
 original_target_class = Target
@@ -293,10 +296,12 @@ def mock_constructor(context):
                         target = self.get_target_class()(p2_super=True)
                         self.assertTrue(target.p2_super)
 
-                    @context.example("super() works")
-                    def p3_super_works(self):
-                        target = self.get_target_class()(p3_super=True)
-                        self.assertTrue(target.p3_super)
+                    if sys.version_info[0] >= 3:
+
+                        @context.example("super() works")
+                        def p3_super_works(self):
+                            target = self.get_target_class()(p3_super=True)
+                            self.assertTrue(target.p3_super)
 
                     @context.example
                     def can_be_called_again(self):
@@ -324,9 +329,11 @@ def mock_constructor(context):
                                 "p2_super_instance_method",
                             )
 
-                        @context.example("super() works")
-                        def p3_super_works(self):
-                            self.assertEqual(
-                                self.target.p3_super_instance_method(),
-                                "p3_super_instance_method",
-                            )
+                        if sys.version_info[0] >= 3:
+
+                            @context.example("super() works")
+                            def p3_super_works(self):
+                                self.assertEqual(
+                                    self.target.p3_super_instance_method(),
+                                    "p3_super_instance_method",
+                                )
