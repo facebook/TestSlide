@@ -298,6 +298,14 @@ def mock_constructor(context):
                         target = self.get_target_class()(p3_super=True)
                         self.assertTrue(target.p3_super)
 
+                    @context.example
+                    def can_be_called_again(self):
+                        new_args = ("new", "args")
+                        new_kwargs = {"new": "kwargs"}
+                        self.target.__init__(*new_args, **new_kwargs)
+                        self.assertEqual(self.target.args, new_args)
+                        self.assertEqual(self.target.kwargs, new_kwargs)
+
                 @context.sub_context
                 def instance_methods(context):
                     @context.example

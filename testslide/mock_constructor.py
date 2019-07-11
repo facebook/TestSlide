@@ -18,11 +18,13 @@ if sys.version_info[0] >= 3:
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
+_DO_NOT_COPY_CLASS_ATTRIBUTES = ("__new__", "__module__", "__doc__", "__new__")
+
 _unpatchers = []
 _mocked_classes = {}
 _restore_dict = {}
-_init_args = None
-_init_kwargs = None
+_init_args_from_original_callable = None
+_init_kwargs_from_original_callable = None
 
 
 def unpatch_all_constructor_mocks():
@@ -76,6 +78,83 @@ class _MockConstructorDSL(_MockCallableDSL):
         return super(_MockConstructorDSL, self).with_wrapper(new_func)
 
 
+def _get_mocked_class(original_class, mocked_class_id, callable_mock):
+    # Extract class attributes from the target class...
+    _restore_dict[mocked_class_id] = {
+        name: value
+        for name, value in original_class.__dict__.items()
+        if name not in _DO_NOT_COPY_CLASS_ATTRIBUTES
+    }
+    for name in _restore_dict[mocked_class_id].keys():
+        if name not in _DO_NOT_COPY_CLASS_ATTRIBUTES:
+            delattr(original_class, name)
+    # ...and reuse them...
+    mocked_class_dict = {"__new__": callable_mock}
+    mocked_class_dict.update(
+        {
+            name: value
+            for name, value in _restore_dict[mocked_class_id].items()
+            if name not in ("__new__", "__init__")
+        }
+    )
+
+    # ...to create the mocked subclass.
+    mocked_class = type(
+        str(original_class.__name__), (original_class,), mocked_class_dict
+    )
+
+    # Because __init__ is called after __new__ unconditionally with the same
+    # arguments, we need to mock it fir this first call, to call the real
+    # __init__ with the correct arguments.
+    def init_with_correct_args(self, *args, **kwargs):
+        global _init_args_from_original_callable, _init_kwargs_from_original_callable
+        assert _init_args_from_original_callable is not None
+        assert _init_kwargs_from_original_callable is not None
+        # If __init__ available at the class __dict__...
+        if "__init__" in _restore_dict[mocked_class_id]:
+            # Use it,
+            init = _restore_dict[mocked_class_id]["__init__"].__get__(
+                self, mocked_class
+            )
+        else:
+            # otherwise, pull from a parent class.
+            init = original_class.__init__.__get__(self, mocked_class)
+        try:
+            init(
+                *_init_args_from_original_callable,
+                **_init_kwargs_from_original_callable
+            )
+        finally:
+            _init_args_from_original_callable = None
+            _init_kwargs_from_original_callable = None
+        # Restore __init__ so subsequent calls can work.
+        setattr(mocked_class, "__init__", init)
+
+    mocked_class.__init__ = init_with_correct_args
+
+    return mocked_class
+
+
+def _patch_and_return_mocked_class(
+    target, class_name, mocked_class_id, original_class, callable_mock
+):
+    mocked_class = _get_mocked_class(original_class, mocked_class_id, callable_mock)
+
+    def unpatcher():
+        for name, value in _restore_dict[mocked_class_id].items():
+            setattr(original_class, name, value)
+        del _restore_dict[mocked_class_id]
+        setattr(target, class_name, original_class)
+        del _mocked_classes[mocked_class_id]
+
+    _unpatchers.append(unpatcher)
+
+    setattr(target, class_name, mocked_class)
+    _mocked_classes[mocked_class_id] = (original_class, mocked_class)
+
+    return mocked_class
+
+
 def mock_constructor(target, class_name):
     if not _is_string(class_name):
         raise ValueError("Second argument must be a string with the name of the class.")
@@ -101,72 +180,19 @@ def mock_constructor(target, class_name):
         if not inspect.isclass(original_class):
             raise ValueError("Target must be a class.")
         callable_mock = _CallableMock(original_class, "__new__")
-
-        EXCLUDED_ATTRS = ("__new__", "__module__", "__doc__", "__new__")
-        _restore_dict[mocked_class_id] = {
-            name: value
-            for name, value in original_class.__dict__.items()
-            if name not in EXCLUDED_ATTRS
-        }
-        for name in _restore_dict[mocked_class_id].keys():
-            if name not in EXCLUDED_ATTRS:
-                delattr(original_class, name)
-
-        def new_mock(cls, *args, **kwargs):
-            global _init_args
-            global _init_kwargs
-
-            assert cls is mocked_class
-
-            _init_args = args
-            _init_kwargs = kwargs
-
-            return object.__new__(cls)
-
-        def init_mock(self, *args, **kwargs):
-            global _init_args
-            global _init_kwargs
-            assert _init_args is not None
-            assert _init_kwargs is not None
-            if "__init__" in _restore_dict[mocked_class_id]:
-                init = _restore_dict[mocked_class_id]["__init__"].__get__(
-                    self, mocked_class
-                )
-            else:
-                init = original_class.__init__.__get__(self, mocked_class)
-            try:
-                init(*_init_args, **_init_kwargs)
-            finally:
-                _init_args = None
-                _init_kwargs = None
-
-        mocked_class_dict = {"__new__": callable_mock, "__init__": init_mock}
-        mocked_class_dict.update(
-            {
-                name: value
-                for name, value in _restore_dict[mocked_class_id].items()
-                if name not in ("__new__", "__init__")
-            }
+        mocked_class = _patch_and_return_mocked_class(
+            target, class_name, mocked_class_id, original_class, callable_mock
         )
-
-        mocked_class = type(
-            str(original_class.__name__) + "Mock", (original_class,), mocked_class_dict
-        )
-
-        def unpatcher():
-            for name, value in _restore_dict[mocked_class_id].items():
-                setattr(original_class, name, value)
-            del _restore_dict[mocked_class_id]
-            setattr(target, class_name, original_class)
-            del _mocked_classes[mocked_class_id]
-
-        _unpatchers.append(unpatcher)
-
-        setattr(target, class_name, mocked_class)
-        _mocked_classes[mocked_class_id] = (original_class, mocked_class)
 
     def original_callable(cls, *args, **kwargs):
-        return new_mock(cls, *args, **kwargs)
+        global _init_args_from_original_callable, _init_kwargs_from_original_callable
+        assert cls is mocked_class
+        # Python unconditionally calls __init__ with the same arguments as
+        # __new__ once it is invoked. We save the correct arguments here,
+        # so that __init__ can use them when invoked for the first time.
+        _init_args_from_original_callable = args
+        _init_kwargs_from_original_callable = kwargs
+        return object.__new__(cls)
 
     return _MockConstructorDSL(
         target=mocked_class,
