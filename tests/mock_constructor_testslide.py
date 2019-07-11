@@ -19,33 +19,65 @@ class BaseTarget(object):
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+        if "p2_super" in kwargs:
+            self.p2_super = kwargs["p2_super"]
+        if "p3_super" in kwargs:
+            self.p3_super = kwargs["p3_super"]
 
-    def calls_super(self):
-        return "from super"
+    def p2_super_instance_method(self):
+        return "p2_super_instance_method"
+
+    def p3_super_instance_method(self):
+        return "p3_super_instance_method"
+
+    @classmethod
+    def p2_super_class_method(cls):
+        return "p2_super_class_method"
+
+    @classmethod
+    def p3_super_class_method(cls):
+        return "p3_super_class_method"
 
 
 class Target(BaseTarget):
+    CLASS_ATTR = "CLASS_ATTR"
+
     def __init__(self, *args, **kwargs):
+        self.p2_super = False
+        super(Target, self).__init__(p2_super=True)
+
+        self.p3_super = False
+        super().__init__(p3_super=True)
+
         super(Target, self).__init__(*args, **kwargs)
 
-    def calls_super(self):
-        return super(Target, self).calls_super()
+    def regular_instance_method(self):
+        return "regular_instance_method"
 
+    def p2_super_instance_method(self):
+        return super(Target, self).p2_super_instance_method()
 
-if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-    from typing import TypeVar, Generic
+    def p3_super_instance_method(self):
+        return super().p3_super_instance_method()
 
-    SomeType = TypeVar("SomeType")
+    @classmethod
+    def regular_class_method(cls):
+        return "regular_class_method"
 
-    class GenericTarget(Generic[SomeType]):
-        pass
+    @classmethod
+    def p2_super_class_method(cls):
+        return super(Target, cls).p2_super_class_method()
+
+    @classmethod
+    def p3_super_class_method(cls):
+        return super().p3_super_class_method()
 
 
 original_target_class = Target
 target_class_name = original_target_class.__name__
 
 
-def dummy():
+def function_at_module():
     pass
 
 
@@ -74,109 +106,159 @@ def mock_constructor(context):
             ),
         )
 
-    @context.before
-    def assert_unpatched(self):
-        self.assertTrue(
-            original_target_class is self.get_target_class(), "Unpatching didn't work."
-        )
-        args = (1, 2)
-        kwargs = {"3": 4, "5": 6}
-        t = Target(*args, **kwargs)
-        self.assertEqual(type(t), original_target_class)
-        self.assertEqual(t.args, args)
-        self.assertEqual(t.kwargs, kwargs)
+    # @context.before
+    # def assert_unpatched(self):
+    #     self.assertTrue(
+    #         original_target_class is self.get_target_class(), "Unpatching didn't work."
+    #     )
+    #     args = (1, 2)
+    #     kwargs = {"3": 4, "5": 6}
+    #     t = Target(*args, **kwargs)
+    #     self.assertEqual(type(t), original_target_class)
+    #     self.assertEqual(t.args, args)
+    #     self.assertEqual(t.kwargs, kwargs)
+
+    @context.shared_context
+    def class_attributes(context):
+        @context.example
+        def attributes_are_not_affected(self):
+            self.assertEqual(self.class_attribute_target.CLASS_ATTR, "CLASS_ATTR")
+
+        @context.sub_context
+        def class_methods(context):
+            @context.example
+            def are_not_affected(self):
+                self.assertEqual(
+                    self.class_attribute_target.regular_class_method(),
+                    "regular_class_method",
+                )
+
+            @context.example("super(Target, cls) works")
+            def p2_super_works(self):
+                self.assertEqual(
+                    self.class_attribute_target.p2_super_class_method(),
+                    "p2_super_class_method",
+                )
+
+            @context.xexample("super() works")
+            def p3_super_works(self):
+                self.assertEqual(
+                    self.class_attribute_target.p3_super_class_method(),
+                    "p3_super_class_method",
+                )
 
     @context.sub_context
     def arguments(context):
-        @context.example
-        def rejects_non_string_class_name(self):
-            with self.assertRaisesWithMessage(
-                ValueError,
-                "Second argument must be a string with the name of the class.",
-            ):
-                self.mock_constructor(self.target_module, original_target_class)
-
-        @context.example
-        def rejects_non_class_targets(self):
-            with self.assertRaisesWithMessage(ValueError, "Target must be a class."):
-                self.mock_constructor(self.target_module, "dummy")
-
-    if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-
         @context.sub_context
-        def Generic_classes(context):
-            context.memoize_before("target_class_name", lambda self: "GenericTarget")
+        def module(context):
+            context.memoize("args", lambda self: (6, 7))
+            context.memoize("kwargs", lambda self: {"8": 9, "10": 11})
 
-            @context.example
-            def it_works(self):
-                self.mock_constructor(
-                    self.target_module.__name__, self.target_class_name
-                ).for_call().to_return_value("mocked")
-                mocked_instance = self.get_target_class()()
+            @context.after
+            def assert_working(self):
+                mocked_instance = self.get_target_class()(*self.args, **self.kwargs)
                 self.assertEqual(mocked_instance, "mocked")
 
-    @context.example
-    def it_uses_mock_callable_dsl(self):
-        self.assertIsInstance(
-            self.mock_constructor(self.target_module, self.target_class_name),
-            _MockCallableDSL,
-        )
+            @context.example
+            def accepts_string(self):
+                self.mock_constructor(
+                    self.target_module.__name__, self.target_class_name
+                ).for_call(*self.args, **self.kwargs).to_return_value("mocked")
+
+            @context.example
+            def accepts_reference(self):
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).for_call(*self.args, **self.kwargs).to_return_value("mocked")
+
+        @context.sub_context("class")
+        def klass(context):
+            @context.example
+            def rejects_non_string_class_name(self):
+                with self.assertRaisesWithMessage(
+                    ValueError,
+                    "Second argument must be a string with the name of the class.",
+                ):
+                    self.mock_constructor(self.target_module, original_target_class)
+
+            @context.example
+            def rejects_non_class_targets(self):
+                with self.assertRaisesWithMessage(
+                    ValueError, "Target must be a class."
+                ):
+                    self.mock_constructor(self.target_module, "function_at_module")
+
+    @context.sub_context
+    def class_attributes_at_the_class(context):
+        @context.memoize
+        def class_attribute_target(self):
+            return self.get_target_class()
+
+        context.merge_context("class attributes")
 
     @context.sub_context("mock_callable() integration")
     def mock_callable_integration(context):
-        @context.sub_context
-        def assertions(context):
-            @context.example
-            def registers_call_count_and_args_correctly(self):
-                self.mock_constructor(
-                    self.target_module, self.target_class_name
-                ).for_call("Hello", "World").to_return_value(
-                    None
-                ).and_assert_called_exactly(
-                    2
-                )
-
-                target_class = self.get_target_class()
-                t1 = target_class("Hello", "World")
-                t2 = target_class("Hello", "World")
-
-                self.assertIsNone(t1)
-                self.assertIsNone(t2)
+        @context.example
+        def it_uses_mock_callable_interface(self):
+            self.assertIsInstance(
+                self.mock_constructor(self.target_module, self.target_class_name),
+                _MockCallableDSL,
+            )
 
         @context.example
-        def accepts_module_as_string(self):
-            args = (6, 7)
-            kwargs = {"8": 9, "10": 11}
-            self.mock_constructor(
-                self.target_module.__name__, self.target_class_name
-            ).for_call(*args, **kwargs).to_return_value("mocked")
-            mocked_instance = self.get_target_class()(*args, **kwargs)
-            self.assertEqual(mocked_instance, "mocked")
+        def registers_call_count_and_args_correctly(self):
+            self.mock_constructor(self.target_module, self.target_class_name).for_call(
+                "Hello", "World"
+            ).to_return_value(None).and_assert_called_exactly(2)
+
+            target_class = self.get_target_class()
+            t1 = target_class("Hello", "World")
+            t2 = target_class("Hello", "World")
+
+            self.assertIsNone(t1)
+            self.assertIsNone(t2)
 
         @context.sub_context
         def behavior(context):
+            @context.example("works with .to_call_original()")
+            def works_with_to_call_original(self):
+                default_args = ("default",)
+                specific_args = ("specific",)
+
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).to_call_original()
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).for_call(*specific_args).to_return_value("mocked_target")
+
+                default_target = self.get_target_class()(*default_args)
+                self.assertEqual(default_target.args, default_args)
+
+                specific_target = self.get_target_class()(*specific_args)
+                self.assertEqual(specific_target, "mocked_target")
+
             @context.sub_context(".with_wrapper()")
             def with_wrapper(context):
-                @context.before
-                def setup_wrapper(self):
-                    self.mock_constructor(
-                        self.target_module, self.target_class_name
-                    ).to_call_original()
-
-                    def reverse_args_wrapper(original_callable, *args, **kwargs):
-                        args = reversed(args)
-                        kwargs = {value: key for key, value in kwargs.items()}
-                        return original_callable(*args, **kwargs)
-
-                    self.mock_constructor(
-                        self.target_module, self.target_class_name
-                    ).for_call("Hello", "World", Hello="World").with_wrapper(
-                        reverse_args_wrapper
-                    )
+                context.memoize("args", lambda self: (1, 2))
+                context.memoize("wrapped_args", lambda self: (3, 4))
+                context.memoize("kwargs", lambda self: {"one": 1, "two": 2})
+                context.memoize("wrapped_kwargs", lambda self: {"three": 3, "four": 4})
 
                 @context.memoize
                 def target(self):
-                    return self.get_target_class()("Hello", "World", Hello="World")
+                    return self.get_target_class()(*self.args, **self.kwargs)
+
+                @context.before
+                def setup_wrapper(self):
+                    def wrapper(original_callable, *args, **kwargs):
+                        return original_callable(
+                            *self.wrapped_args, **self.wrapped_kwargs
+                        )
+
+                    self.mock_constructor(
+                        self.target_module, self.target_class_name
+                    ).with_wrapper(wrapper)
 
                 @context.xexample
                 def wrapped_instance_is_instance_of_original_class(self):
@@ -184,20 +266,8 @@ def mock_constructor(context):
 
                 @context.example
                 def constructor_is_wrapped(self):
-                    self.assertSequenceEqual(self.target.args, ("World", "Hello"))
-                    self.assertSequenceEqual(self.target.kwargs, {"World": "Hello"})
-
-                @context.example("super(Target, self) works")
-                def super_works(self):
-                    self.assertEqual(self.target.calls_super(), "from super")
-
-                @context.example("works with .to_call_original()")
-                def works_with_to_call_original(self):
-                    other_args = (1, 2)
-                    other_kwargs = {"one": 1, "two": 2}
-                    target = self.get_target_class()(*other_args, **other_kwargs)
-                    self.assertSequenceEqual(target.args, other_args)
-                    self.assertSequenceEqual(target.kwargs, other_kwargs)
+                    self.assertSequenceEqual(self.target.args, self.wrapped_args)
+                    self.assertSequenceEqual(self.target.kwargs, self.wrapped_kwargs)
 
                 @context.example
                 def factory_works(self):
@@ -209,3 +279,46 @@ def mock_constructor(context):
                     ).for_call("factory").with_wrapper(factory)
                     target = self.get_target_class()("factory")
                     self.assertEqual(target, "got: factory")
+
+                @context.sub_context
+                def class_attributes_at_the_instance(context):
+                    context.memoize("class_attribute_target", lambda self: self.target)
+
+                    context.merge_context("class attributes")
+
+                @context.sub_context("Target.__init__()")
+                def target_init(context):
+                    @context.xexample("super(Target, self)")
+                    def p2_super_works(self):
+                        target = self.get_target_class()(p2_super=True)
+                        self.assertTrue(target.p2_super)
+
+                    @context.xexample("super() works")
+                    def p3_super_works(self):
+                        target = self.get_target_class()(p3_super=True)
+                        self.assertTrue(target.p3_super)
+
+                @context.sub_context
+                def instance_methods(context):
+                    @context.example
+                    def it_works(self):
+                        self.assertEqual(
+                            self.target.regular_instance_method(),
+                            "regular_instance_method",
+                        )
+
+                    @context.sub_context
+                    def when_it_overloads_parent_method(context):
+                        @context.example("super(Target, self) works")
+                        def p2_super_works(self):
+                            self.assertEqual(
+                                self.target.p2_super_instance_method(),
+                                "p2_super_instance_method",
+                            )
+
+                        @context.xexample("super() works")
+                        def p3_super_works(self):
+                            self.assertEqual(
+                                self.target.p3_super_instance_method(),
+                                "p3_super_instance_method",
+                            )
