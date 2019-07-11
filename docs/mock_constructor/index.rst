@@ -55,7 +55,7 @@ Note how by using mock_constructor, not only you get all **safe by default** goo
 Implementation Details
 ----------------------
 
-In principle, doing:
+``mock_callable()`` should be all you need:
 
 .. code-block:: python
 
@@ -63,14 +63,18 @@ In principle, doing:
     .for_call()\
     .to_return_value(some_class_mock)
 
-Should be all you need. However, as of October 2018, Python 3 has a bug https://bugs.python.org/issue25731 that prevents this from working (it works in Python 2).
+However, as of July 2019, Python 3 has an open bug https://bugs.python.org/issue25731 that prevents this from working. ``mock_constructor`` is a way around this bug.
 
-mock_constructor is a way to not only solve this for Python 3, but also provide the same interface for Python 2.
+Because ``__new__`` can not be patched, we need to handle things elsewhere:
 
-Internally, mock_constructor will:
+* Dynamically create a subclass of the target class, with the same name.
+* Move all ``__dict__`` values from the target class to the subclass (with a few exceptions).
+* In the subclass, add a ``__new__`` that works as a factory, that allows ``mock_callable()`` to work.
+* Do some trickery to fix the arguments passed to ``__init__`` to allow ``.with_wrapper()`` mangle with them (as by default,``__new__`` unconditionally calls ``__init__`` with the same arguments received).
+* Patch the subclass in place of the original target class at its module.
+* Undo all of this when the test finishes.
 
-* Patch the class at its module with a subclass of it, that is dynamically created.
-* This new subclass is essentially a copy of the original class, but overrides its ``__new__`` with a factory that handles `mock_constructor()` interface.
+As this effectively only changes the behavior of ``__new__``, things like class attributes, class methods and ``isinstance()`` are not affected. The only noticeable difference, is that ``mro()`` will show the extra subclass.
 
 Integration With Other Frameworks
 ---------------------------------
