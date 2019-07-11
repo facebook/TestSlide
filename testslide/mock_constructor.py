@@ -10,15 +10,18 @@ from __future__ import unicode_literals
 
 import inspect
 import six
-import sys
-
-if sys.version_info[0] >= 3:
-    import typing
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
-_DO_NOT_COPY_CLASS_ATTRIBUTES = ("__new__", "__module__", "__doc__", "__new__")
+
+_DO_NOT_COPY_CLASS_ATTRIBUTES = (
+    "__dict__",
+    "__doc__",
+    "__module__",
+    "__new__",
+)
+
 
 _unpatchers = []
 _mocked_classes = {}
@@ -80,14 +83,19 @@ class _MockConstructorDSL(_MockCallableDSL):
 
 def _get_mocked_class(original_class, mocked_class_id, callable_mock):
     # Extract class attributes from the target class...
-    _restore_dict[mocked_class_id] = {
+    _restore_dict[mocked_class_id] = {}
+    class_dict_to_copy = {
         name: value
         for name, value in original_class.__dict__.items()
         if name not in _DO_NOT_COPY_CLASS_ATTRIBUTES
     }
-    for name in _restore_dict[mocked_class_id].keys():
-        if name not in _DO_NOT_COPY_CLASS_ATTRIBUTES:
+    for name, value in class_dict_to_copy.items():
+        try:
             delattr(original_class, name)
+        # Safety net against missing items at _DO_NOT_COPY_CLASS_ATTRIBUTES
+        except (AttributeError, TypeError):
+            pass
+        _restore_dict[mocked_class_id][name] = value
     # ...and reuse them...
     mocked_class_dict = {"__new__": callable_mock}
     mocked_class_dict.update(
