@@ -18,7 +18,11 @@ if sys.version_info[0] >= 3:
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
-_unpatchers = []  # type: List[Callable]  # noqa T484
+_unpatchers = []
+_mocked_classes = {}
+_restore_dict = {}
+_init_args = None
+_init_kwargs = None
 
 
 def unpatch_all_constructor_mocks():
@@ -31,10 +35,6 @@ def unpatch_all_constructor_mocks():
             unpatcher()
     finally:
         del _unpatchers[:]
-
-
-_mocked_classes = {}
-_skip_init = []
 
 
 def _is_string(obj):
@@ -94,60 +94,79 @@ def mock_constructor(target, class_name):
         callable_mock = mocked_class.__new__
     else:
         original_class = getattr(target, class_name)
+        if "__new__" in original_class.__dict__:
+            raise NotImplementedError(
+                "Usage with classes that define __new__() is currently not supported."
+            )
         if not inspect.isclass(original_class):
             raise ValueError("Target must be a class.")
+        callable_mock = _CallableMock(original_class, "__new__")
+
+        EXCLUDED_ATTRS = ("__new__", "__module__", "__doc__", "__new__")
+        _restore_dict[mocked_class_id] = {
+            name: value
+            for name, value in original_class.__dict__.items()
+            if name not in EXCLUDED_ATTRS
+        }
+        for name in _restore_dict[mocked_class_id].keys():
+            if name not in EXCLUDED_ATTRS:
+                delattr(original_class, name)
+
+        def new_mock(cls, *args, **kwargs):
+            global _init_args
+            global _init_kwargs
+
+            assert cls is mocked_class
+
+            _init_args = args
+            _init_kwargs = kwargs
+
+            return object.__new__(cls)
+
+        def init_mock(self, *args, **kwargs):
+            global _init_args
+            global _init_kwargs
+            assert _init_args is not None
+            assert _init_kwargs is not None
+            if "__init__" in _restore_dict[mocked_class_id]:
+                init = _restore_dict[mocked_class_id]["__init__"].__get__(
+                    self, mocked_class
+                )
+            else:
+                init = original_class.__init__.__get__(self, mocked_class)
+            try:
+                init(*_init_args, **_init_kwargs)
+            finally:
+                _init_args = None
+                _init_kwargs = None
+
+        mocked_class_dict = {"__new__": callable_mock, "__init__": init_mock}
+        mocked_class_dict.update(
+            {
+                name: value
+                for name, value in _restore_dict[mocked_class_id].items()
+                if name not in ("__new__", "__init__")
+            }
+        )
+
+        mocked_class = type(
+            str(original_class.__name__) + "Mock", (original_class,), mocked_class_dict
+        )
 
         def unpatcher():
+            for name, value in _restore_dict[mocked_class_id].items():
+                setattr(original_class, name, value)
+            del _restore_dict[mocked_class_id]
             setattr(target, class_name, original_class)
             del _mocked_classes[mocked_class_id]
 
         _unpatchers.append(unpatcher)
 
-        callable_mock = _CallableMock(original_class, "__new__")
-
-        if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-            mro = tuple(c for c in original_class.mro()[1:] if c is not typing.Generic)
-        else:
-            mro = tuple(original_class.mro()[1:])
-        mocked_class = type(
-            str(original_class.__name__),
-            mro,
-            {
-                name: value
-                for name, value in original_class.__dict__.items()
-                if name not in ("__new__", "__init__")
-            },
-        )
-
-        def skip_init(self, *args, **kwargs):
-            """
-            Avoids __init__ being called automatically with different arguments
-            than __new__ after original_callable() returns.
-            """
-            if id(self) in _skip_init:
-                _skip_init.remove(id(self))
-                return
-            super(type(self), self).__init__(*args, **kwargs)
-
-        mocked_class.__init__ = skip_init
-
-        if "__new__" in original_class.__dict__:
-            raise NotImplementedError()
-        else:
-            mocked_class.__new__ = callable_mock
-
         setattr(target, class_name, mocked_class)
         _mocked_classes[mocked_class_id] = (original_class, mocked_class)
 
     def original_callable(cls, *args, **kwargs):
-        instance = object.__new__(mocked_class)
-        # We call __init__ here so we can ensure it is called with the correct
-        # arguments, which might have been mangled by a wrapper function...
-        instance.__init__(*args, **kwargs)
-        # ...and block the interpreter from calling __init__ again with
-        # (potentially with different arguments)
-        _skip_init.append(id(instance))
-        return instance
+        return new_mock(cls, *args, **kwargs)
 
     return _MockConstructorDSL(
         target=mocked_class,

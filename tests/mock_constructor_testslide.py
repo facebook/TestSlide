@@ -106,17 +106,17 @@ def mock_constructor(context):
             ),
         )
 
-    # @context.before
-    # def assert_unpatched(self):
-    #     self.assertTrue(
-    #         original_target_class is self.get_target_class(), "Unpatching didn't work."
-    #     )
-    #     args = (1, 2)
-    #     kwargs = {"3": 4, "5": 6}
-    #     t = Target(*args, **kwargs)
-    #     self.assertEqual(type(t), original_target_class)
-    #     self.assertEqual(t.args, args)
-    #     self.assertEqual(t.kwargs, kwargs)
+    @context.before
+    def assert_unpatched(self):
+        self.assertTrue(
+            original_target_class is self.get_target_class(), "Unpatching didn't work."
+        )
+        args = (1, 2)
+        kwargs = {"3": 4, "5": 6}
+        t = Target(*args, **kwargs)
+        self.assertEqual(type(t), original_target_class)
+        self.assertEqual(t.args, args)
+        self.assertEqual(t.kwargs, kwargs)
 
     @context.shared_context
     def class_attributes(context):
@@ -140,7 +140,7 @@ def mock_constructor(context):
                     "p2_super_class_method",
                 )
 
-            @context.xexample("super() works")
+            @context.example("super() works")
             def p3_super_works(self):
                 self.assertEqual(
                     self.class_attribute_target.p3_super_class_method(),
@@ -260,7 +260,7 @@ def mock_constructor(context):
                         self.target_module, self.target_class_name
                     ).with_wrapper(wrapper)
 
-                @context.xexample
+                @context.example
                 def wrapped_instance_is_instance_of_original_class(self):
                     self.assertIsInstance(self.target, original_target_class)
 
@@ -288,12 +288,12 @@ def mock_constructor(context):
 
                 @context.sub_context("Target.__init__()")
                 def target_init(context):
-                    @context.xexample("super(Target, self)")
+                    @context.example("super(Target, self)")
                     def p2_super_works(self):
                         target = self.get_target_class()(p2_super=True)
                         self.assertTrue(target.p2_super)
 
-                    @context.xexample("super() works")
+                    @context.example("super() works")
                     def p3_super_works(self):
                         target = self.get_target_class()(p3_super=True)
                         self.assertTrue(target.p3_super)
@@ -316,7 +316,7 @@ def mock_constructor(context):
                                 "p2_super_instance_method",
                             )
 
-                        @context.xexample("super() works")
+                        @context.example("super() works")
                         def p3_super_works(self):
                             self.assertEqual(
                                 self.target.p3_super_instance_method(),
