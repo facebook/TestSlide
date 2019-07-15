@@ -13,9 +13,10 @@ import contextlib
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 from testslide.mock_callable import _MockCallableDSL
+from testslide.strict_mock import StrictMock
 
 
-class BaseTarget(object):
+class TargetParent(object):
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
@@ -39,7 +40,7 @@ class BaseTarget(object):
         return "p3_super_class_method"
 
 
-class Target(BaseTarget):
+class Target(TargetParent):
     CLASS_ATTR = "CLASS_ATTR"
 
     def __init__(self, *args, **kwargs):
@@ -149,6 +150,22 @@ def mock_constructor(context):
                     self.class_attribute_target.p3_super_class_method(),
                     "p3_super_class_method",
                 )
+
+    @context.example
+    def it_works_with_StrictMock_and_mock_callable(self):
+        """
+        Make sure this usual idiom is supported.
+        """
+        target_mock = StrictMock(template=self.get_target_class())
+        self.mock_constructor(
+            self.target_module, self.target_class_name
+        ).for_call().to_return_value(target_mock)
+        self.mock_callable(
+            target_mock, "regular_instance_method"
+        ).for_call().to_return_value("mocked")
+        target = self.get_target_class()()
+        self.assertIs(target, target_mock)
+        self.assertEqual(target.regular_instance_method(), "mocked")
 
     @context.sub_context
     def arguments(context):
