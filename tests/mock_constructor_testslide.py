@@ -153,10 +153,19 @@ def mock_constructor(context):
                     "p3_super_class_method",
                 )
 
+    @context.example
+    def rejects_attribute_access_at_the_original_class(self):
+        self.mock_constructor(self.target_module, self.target_class_name)
+        with self.assertRaisesWithMessageInException(
+            RuntimeError,
+            "mock_constructor() requires old references to the class not to be used, please get a new reference to it.",
+        ):
+            original_target_class.CLASS_ATTR
+
     @context.sub_context
     def arguments(context):
         @context.example
-        def refuses_to_mock_if_instances_exists(self):
+        def refuses_to_mock_if_instances_exist(self):
             target_instance = self.get_target_class()()
             with self.assertRaisesWithMessageInException(
                 RuntimeError,
