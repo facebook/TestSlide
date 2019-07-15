@@ -423,13 +423,13 @@ def _patch(target, method, new_value):
         original_callable = getattr(target, method)
         if not callable(original_callable):
             raise ValueError(
-                "mock_callable() can only be used with callable attributes, got: {}".format(
+                "mock_callable() can only be used with callable attributes and {} is not.".format(
                     repr(original_callable)
                 )
             )
         if type(original_callable) is type:
             raise ValueError(
-                "mock_callable() can not be used with functions and methods, got: {}".format(
+                "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
                     repr(original_callable)
                 )
             )
