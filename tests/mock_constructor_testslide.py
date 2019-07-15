@@ -99,13 +99,13 @@ def mock_constructor(context):
 
     @context.function
     @contextlib.contextmanager
-    def assertRaisesWithMessage(self, exception, msg):
+    def assertRaisesWithMessageInException(self, exception, msg):
         with self.assertRaises(exception) as cm:
             yield
         ex_msg = str(cm.exception)
-        self.assertEqual(
-            ex_msg,
+        self.assertIn(
             msg,
+            ex_msg,
             "Expected exception {}.{} message "
             "to be\n{}\nbut got\n{}.".format(
                 exception.__module__, exception.__name__, repr(msg), repr(ex_msg)
@@ -155,6 +155,15 @@ def mock_constructor(context):
 
     @context.sub_context
     def arguments(context):
+        @context.example
+        def refuses_to_mock_if_instances_exists(self):
+            target_instance = self.get_target_class()()
+            with self.assertRaisesWithMessageInException(
+                RuntimeError,
+                "mock_constructor() can not be used after instances of Target were created: ",
+            ):
+                self.mock_constructor(self.target_module, self.target_class_name)
+
         @context.sub_context
         def module(context):
             context.memoize("args", lambda self: (6, 7))
@@ -181,7 +190,7 @@ def mock_constructor(context):
         def klass(context):
             @context.example
             def rejects_non_string_class_name(self):
-                with self.assertRaisesWithMessage(
+                with self.assertRaisesWithMessageInException(
                     ValueError,
                     "Second argument must be a string with the name of the class.",
                 ):
@@ -189,7 +198,7 @@ def mock_constructor(context):
 
             @context.example
             def rejects_non_class_targets(self):
-                with self.assertRaisesWithMessage(
+                with self.assertRaisesWithMessageInException(
                     ValueError, "Target must be a class."
                 ):
                     self.mock_constructor(self.target_module, "function_at_module")

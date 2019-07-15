@@ -8,6 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import gc
 import inspect
 import six
 
@@ -202,10 +203,25 @@ def mock_constructor(target, class_name):
         callable_mock = mocked_class.__new__
     else:
         original_class = getattr(target, class_name)
+
         if "__new__" in original_class.__dict__:
             raise NotImplementedError(
                 "Usage with classes that define __new__() is currently not supported."
             )
+
+        gc.collect()
+        instances = [
+            obj
+            for obj in gc.get_referrers(original_class)
+            if type(obj) is original_class
+        ]
+        if instances:
+            raise RuntimeError(
+                "mock_constructor() can not be used after instances of {} were created: {}".format(
+                    class_name, instances
+                )
+            )
+
         if not inspect.isclass(original_class):
             raise ValueError("Target must be a class.")
         callable_mock = _CallableMock(original_class, "__new__")
