@@ -132,7 +132,7 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
 
     # ...to create the mocked subclass.
     mocked_class = type(
-        str(original_class.__name__) + "Mock", (original_class,), mocked_class_dict
+        str(original_class.__name__), (original_class,), mocked_class_dict
     )
 
     # Because __init__ is called after __new__ unconditionally with the same
