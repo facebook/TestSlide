@@ -57,7 +57,7 @@ Caveats
 
 Because of the way ``mock_constructor()`` must be implemented (see next section), its usage must respect these rules:
 
-- References to the mocked class, saved prior to ``mock_constructor()`` invocation **can not be used**.
+- References to the mocked class saved prior to ``mock_constructor()`` invocation **can not be used**, including previously created instances.
 - Access to the class must happen exclusively via attribute access (eg: ``getattr(some_module, "SomeClass")``).
 
 A simple easy way to ensure this is to always:
