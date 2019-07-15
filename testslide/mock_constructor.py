@@ -140,7 +140,7 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
             _init_args_from_original_callable = None
             _init_kwargs_from_original_callable = None
         # Restore __init__ so subsequent calls can work.
-        setattr(mocked_class, "__init__", init)
+        mocked_class.__init__ = init
 
     mocked_class.__init__ = init_with_correct_args
 
