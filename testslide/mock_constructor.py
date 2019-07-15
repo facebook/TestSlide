@@ -24,9 +24,10 @@ _restore_dict = {}
 _init_args_from_original_callable = None
 _init_kwargs_from_original_callable = None
 _mocked_class_by_id = {}
+_target_class_id_by_class = {}
 
 
-def _get_template(klass):
+def _get_class_or_mock(klass):
     """
     If given class was not a target for mock_constructor, return it.
     Otherwise, return the mocked subclass.
@@ -85,7 +86,22 @@ class _MockConstructorDSL(_MockCallableDSL):
         return super(_MockConstructorDSL, self).with_wrapper(new_func)
 
 
+def _get_original_init(original_class, instance, owner):
+    target_class_id = _target_class_id_by_class[id(original_class)]
+    # If __init__ available at the class __dict__...
+    if "__init__" in _restore_dict[target_class_id]:
+        # Use it,
+        return _restore_dict[target_class_id]["__init__"].__get__(instance, owner)
+    else:
+        # otherwise, pull from a parent class.
+        return original_class.__init__.__get__(instance, owner)
+
+
 def _get_mocked_class(original_class, target_class_id, callable_mock):
+    if target_class_id in _target_class_id_by_class:
+        raise RuntimeError("Can not mock the same class at two different modules!")
+    else:
+        _target_class_id_by_class[id(original_class)] = target_class_id
     # Extract class attributes from the target class...
     _restore_dict[target_class_id] = {}
     class_dict_to_copy = {
@@ -122,17 +138,11 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
         global _init_args_from_original_callable, _init_kwargs_from_original_callable
         assert _init_args_from_original_callable is not None
         assert _init_kwargs_from_original_callable is not None
-        # If __init__ available at the class __dict__...
-        if "__init__" in _restore_dict[target_class_id]:
-            # Use it,
-            init = _restore_dict[target_class_id]["__init__"].__get__(
-                self, mocked_class
-            )
-        else:
-            # otherwise, pull from a parent class.
-            init = original_class.__init__.__get__(self, mocked_class)
+        original_init = _get_original_init(
+            original_class, instance=self, owner=mocked_class
+        )
         try:
-            init(
+            original_init(
                 *_init_args_from_original_callable,
                 **_init_kwargs_from_original_callable
             )
@@ -140,7 +150,7 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
             _init_args_from_original_callable = None
             _init_kwargs_from_original_callable = None
         # Restore __init__ so subsequent calls can work.
-        mocked_class.__init__ = init
+        mocked_class.__init__ = original_init
 
     mocked_class.__init__ = init_with_correct_args
 
@@ -159,6 +169,7 @@ def _patch_and_return_mocked_class(
         setattr(target, class_name, original_class)
         del _mocked_target_classes[target_class_id]
         del _mocked_class_by_id[id(original_class)]
+        del _target_class_id_by_class[id(original_class)]
 
     _unpatchers.append(unpatcher)
 

@@ -211,10 +211,14 @@ class StrictMock(object):
 
     @property
     def __template(self):
-        # Import here to avoid cyclic dependencies during import
-        from testslide.mock_constructor import _get_template
+        import testslide.mock_constructor  # Avoid cyclic dependencies
 
-        return _get_template(self.__dict__["__template"])
+        # If the template class was mocked with mock_constructor(), this will
+        # return the mocked subclass, which contains all attributes we need for
+        # introspection.
+        return testslide.mock_constructor._get_class_or_mock(
+            self.__dict__["__template"]
+        )
 
     @property
     def __template_name(self):
@@ -224,10 +228,25 @@ class StrictMock(object):
     def __runtime_attrs(self):
         return self.__dict__["__runtime_attrs"]
 
+    def __get_class_init(self, klass):
+        import testslide.mock_constructor  # Avoid cyclic dependencies
+
+        original_class = self.__dict__["__template"]
+        mocked_class = testslide.mock_constructor._get_class_or_mock(original_class)
+        if original_class is mocked_class or klass is not mocked_class:
+            return klass.__init__
+        else:
+            # If klass is the mocked subclass, pull the original version of
+            # __init__ so we can introspect into its implementation (and
+            # not the __init__ wrapper at the mocked class).
+            return testslide.mock_constructor._get_original_init(
+                original_class, instance=None, owner=mocked_class
+            )
+
     def __is_runtime_attr(self, name):
         if sys.version_info[0] >= 3 and self.__template:
             for klass in self.__template.mro():
-                template_init = klass.__init__
+                template_init = self.__get_class_init(klass)
                 if not inspect.isfunction(template_init):
                     continue
                 for instruction in dis.get_instructions(template_init):

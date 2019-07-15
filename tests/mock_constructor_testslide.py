@@ -165,8 +165,9 @@ def mock_constructor(context):
         self.mock_callable(
             target_mock, "regular_instance_method"
         ).for_call().to_return_value("mocked")
-        # Test that dynamic attributes can be read from the template
-        target_mock.dynamic_attr = "mocked_attr"
+        if sys.version_info[0] >= 3:
+            # Test that dynamic attributes can be read from the template
+            target_mock.dynamic_attr = "mocked_attr"
         target = self.get_target_class()()
         self.assertIs(target, target_mock, "mock_constructor() patching did not work")
         self.assertEqual(
@@ -174,7 +175,8 @@ def mock_constructor(context):
             "mocked",
             "mock_callable() patching did not work.",
         )
-        self.assertEqual(target.dynamic_attr, "mocked_attr")
+        if sys.version_info[0] >= 3:
+            self.assertEqual(target.dynamic_attr, "mocked_attr")
 
     @context.sub_context
     def arguments(context):
