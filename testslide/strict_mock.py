@@ -126,8 +126,6 @@ class _MethodProxy(object):
         self.__dict__["_call"] = call
 
     def __getattr__(self, name):
-        # print(self.__dict__["_original_method"])
-        # print(dir(self.__dict__["_original_method"]))
         return getattr(self.__dict__["_original_method"], name)
 
     def __setattr__(self, name, value):
@@ -231,17 +229,17 @@ class StrictMock(object):
     def __get_class_init(self, klass):
         import testslide.mock_constructor  # Avoid cyclic dependencies
 
-        original_class = self.__dict__["__template"]
-        mocked_class = testslide.mock_constructor._get_class_or_mock(original_class)
-        if original_class is mocked_class or klass is not mocked_class:
-            return klass.__init__
-        else:
+        if testslide.mock_constructor._is_mocked_class(klass):
             # If klass is the mocked subclass, pull the original version of
             # __init__ so we can introspect into its implementation (and
             # not the __init__ wrapper at the mocked class).
+            mocked_class = klass
+            original_class = mocked_class.mro()[1]
             return testslide.mock_constructor._get_original_init(
                 original_class, instance=None, owner=mocked_class
             )
+        else:
+            return klass.__init__
 
     def __is_runtime_attr(self, name):
         if sys.version_info[0] >= 3 and self.__template:

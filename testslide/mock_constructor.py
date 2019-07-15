@@ -23,16 +23,20 @@ _mocked_target_classes = {}
 _restore_dict = {}
 _init_args_from_original_callable = None
 _init_kwargs_from_original_callable = None
-_mocked_class_by_id = {}
-_target_class_id_by_class = {}
+_mocked_class_by_original_class_id = {}
+_target_class_id_by_original_class_id = {}
 
 
-def _get_class_or_mock(klass):
+def _get_class_or_mock(original_class):
     """
     If given class was not a target for mock_constructor, return it.
     Otherwise, return the mocked subclass.
     """
-    return _mocked_class_by_id.get(id(klass), klass)
+    return _mocked_class_by_original_class_id.get(id(original_class), original_class)
+
+
+def _is_mocked_class(klass):
+    return id(klass) in [id(k) for k in _mocked_class_by_original_class_id.values()]
 
 
 def unpatch_all_constructor_mocks():
@@ -87,7 +91,7 @@ class _MockConstructorDSL(_MockCallableDSL):
 
 
 def _get_original_init(original_class, instance, owner):
-    target_class_id = _target_class_id_by_class[id(original_class)]
+    target_class_id = _target_class_id_by_original_class_id[id(original_class)]
     # If __init__ available at the class __dict__...
     if "__init__" in _restore_dict[target_class_id]:
         # Use it,
@@ -98,10 +102,10 @@ def _get_original_init(original_class, instance, owner):
 
 
 def _get_mocked_class(original_class, target_class_id, callable_mock):
-    if target_class_id in _target_class_id_by_class:
+    if target_class_id in _target_class_id_by_original_class_id:
         raise RuntimeError("Can not mock the same class at two different modules!")
     else:
-        _target_class_id_by_class[id(original_class)] = target_class_id
+        _target_class_id_by_original_class_id[id(original_class)] = target_class_id
     # Extract class attributes from the target class...
     _restore_dict[target_class_id] = {}
     class_dict_to_copy = {
@@ -128,7 +132,7 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
 
     # ...to create the mocked subclass.
     mocked_class = type(
-        str(original_class.__name__), (original_class,), mocked_class_dict
+        str(original_class.__name__) + "Mock", (original_class,), mocked_class_dict
     )
 
     # Because __init__ is called after __new__ unconditionally with the same
@@ -168,14 +172,14 @@ def _patch_and_return_mocked_class(
         del _restore_dict[target_class_id]
         setattr(target, class_name, original_class)
         del _mocked_target_classes[target_class_id]
-        del _mocked_class_by_id[id(original_class)]
-        del _target_class_id_by_class[id(original_class)]
+        del _mocked_class_by_original_class_id[id(original_class)]
+        del _target_class_id_by_original_class_id[id(original_class)]
 
     _unpatchers.append(unpatcher)
 
     setattr(target, class_name, mocked_class)
     _mocked_target_classes[target_class_id] = (original_class, mocked_class)
-    _mocked_class_by_id[id(original_class)] = mocked_class
+    _mocked_class_by_original_class_id[id(original_class)] = mocked_class
 
     return mocked_class
 
