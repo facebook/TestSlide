@@ -48,12 +48,34 @@ The question now is: how to put ``self.storage_mock`` inside ``Backup.__init__``
         .and_assert_called_once()
       Backup().delete('/file/to/delete')
 
-mock_constructor makes ``storage.Client(timeout=60)`` return ``self.storage_mock``. It is similar to :doc:`../mock_callable/index`, accepting the same call, behavior and assertion definitions. Similarly, it will also fail if ``storage.Client()`` (missing timeout) is called.
+``mock_constructor()`` makes ``storage.Client(timeout=60)`` return ``self.storage_mock``. It is similar to :doc:`../mock_callable/index`, accepting the same call, behavior and assertion definitions. Similarly, it will also fail if ``storage.Client()`` (missing timeout) is called.
 
-Note how by using mock_constructor, not only you get all **safe by default** goodies, but also **totally decouples** your test from the code. This means that, no matter how ``Backup`` is refactored, the test remains the same.
+Note how by using ``mock_constructor()``, not only you get all **safe by default** goodies, but also **totally decouples** your test from the code. This means that, no matter how ``Backup`` is refactored, the test remains the same.
+
+Caveats
+-------
+
+Because of the way ``mock_constructor()`` must be implemented (see next section), its usage must respect these rules:
+
+- References to the mocked class, saved prior to ``mock_constructor()`` invocation **can not be used**.
+- Access to the class must happen exclusively via attribute access (eg: ``getattr(some_module, "SomeClass")``).
+
+A simple easy way to ensure this is to always:
+
+.. code-block:: python
+
+  # Do this:
+  import some_module
+  some_module.SomeClass
+  # Never do:
+  from some_module import SomeClass
+
+.. note::
+
+  Not respecting these rules will break ``mock_constructor()`` and can lead to unpredicted behavior!
 
 Implementation Details
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 ``mock_callable()`` should be all you need:
 
@@ -63,18 +85,22 @@ Implementation Details
     .for_call()\
     .to_return_value(some_class_mock)
 
-However, as of July 2019, Python 3 has an open bug https://bugs.python.org/issue25731 that prevents this from working. ``mock_constructor`` is a way around this bug.
+However, as of July 2019, Python 3 has an open bug https://bugs.python.org/issue25731 that prevents ``__new__`` from being patched. ``mock_constructor()`` is a way around this bug.
 
-Because ``__new__`` can not be patched, we need to handle things elsewhere:
+Because ``__new__`` can not be patched, we need to handle things elsewhere. The trick is to dynamically create a subclass of the target class, make the changes to ``__new__`` there (so we don't touch ``__new__`` at the target class), and patch it at the module in place of the original class.
 
-* Dynamically create a subclass of the target class, with the same name.
-* Move all ``__dict__`` values from the target class to the subclass (with a few exceptions).
-* In the subclass, add a ``__new__`` that works as a factory, that allows ``mock_callable()`` to work.
-* Do some trickery to fix the arguments passed to ``__init__`` to allow ``.with_wrapper()`` mangle with them (as by default,``__new__`` unconditionally calls ``__init__`` with the same arguments received).
+This works when ``__new__`` simply returns a mocked value, but creates issues when used with ``.with_wrapper()`` or ``.to_call_original()`` as both requires calling the original ``__new__``. This will return an instance of the original class, but the new subclass is already patched at the module, thus ``super()`` / ``super(Class, self)`` breaks. If we make them call ``__new__`` from the subclass, the call comes from... ``__new__`` and we get an infinite loop. Also, ``__new__`` calls ``__init__`` unconditionally, not allowing ``.with_wrapper()`` to mangle with the arguments.
+
+The way around this, is to keep the original class where it is and move all its attributes to the child class:
+
+* Dynamically create the subclass of the target class, with the same name.
+* Move all ``__dict__`` values from the target class to the subclass (with a few exceptions, such as ``__new__`` and ``__module__``).
+* At the subclass, add a ``__new__`` that works as a factory, that allows ``mock_callable()`` interface to work.
+* Do some trickery to fix the arguments passed to ``__init__`` to allow ``.with_wrapper()`` mangle with them.
 * Patch the subclass in place of the original target class at its module.
 * Undo all of this when the test finishes.
 
-As this effectively only changes the behavior of ``__new__``, things like class attributes, class methods and ``isinstance()`` are not affected. The only noticeable difference, is that ``mro()`` will show the extra subclass.
+This essentially creates a "copy" of the class, at the subclass, but with ``__new__`` implementing the behavior required. All things such as class attributes/methods and ``isinstance()`` are not affected. The only noticeable difference, is that ``mro()`` will show the extra subclass.
 
 Integration With Other Frameworks
 ---------------------------------
