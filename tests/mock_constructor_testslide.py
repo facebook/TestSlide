@@ -153,31 +153,6 @@ def mock_constructor(context):
                     "p3_super_class_method",
                 )
 
-    @context.example
-    def it_works_with_StrictMock_and_mock_callable(self):
-        """
-        Make sure this usual idiom is supported.
-        """
-        target_mock = StrictMock(template=self.get_target_class())
-        self.mock_constructor(
-            self.target_module, self.target_class_name
-        ).for_call().to_return_value(target_mock)
-        self.mock_callable(
-            target_mock, "regular_instance_method"
-        ).for_call().to_return_value("mocked")
-        if sys.version_info[0] >= 3:
-            # Test that dynamic attributes can be read from the template
-            target_mock.dynamic_attr = "mocked_attr"
-        target = self.get_target_class()()
-        self.assertIs(target, target_mock, "mock_constructor() patching did not work")
-        self.assertEqual(
-            target.regular_instance_method(),
-            "mocked",
-            "mock_callable() patching did not work.",
-        )
-        if sys.version_info[0] >= 3:
-            self.assertEqual(target.dynamic_attr, "mocked_attr")
-
     @context.sub_context
     def arguments(context):
         @context.sub_context
@@ -365,3 +340,52 @@ def mock_constructor(context):
                                     self.target.p3_super_instance_method(),
                                     "p3_super_instance_method",
                                 )
+
+    @context.sub_context
+    def StrictMock_integration(context):
+        @context.shared_context
+        def StrictMock_tests(context):
+            @context.before
+            def setup(self):
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).for_call().to_return_value(self.target_mock)
+                self.target = self.get_target_class()()
+
+            @context.example
+            def patching_works(self):
+                self.assertIs(self.target, self.target_mock)
+
+            @context.example("mock_callable() works")
+            def mock_callable_works(self):
+                self.mock_callable(
+                    self.target_mock, "regular_instance_method"
+                ).for_call().to_return_value("mocked")
+                self.assertEqual(self.target.regular_instance_method(), "mocked")
+
+            if sys.version_info[0] >= 3:
+
+                @context.example
+                def dynamic_attributes_work(self):
+                    self.target_mock.dynamic_attr = "mocked_attr"
+                    self.assertEqual(self.target.dynamic_attr, "mocked_attr")
+
+        @context.function
+        def get_target_mock(self):
+            return StrictMock(template=self.get_target_class())
+
+        @context.sub_context
+        def with_target_mock_memoized_before(context):
+            @context.memoize_before
+            def target_mock(self):
+                return self.get_target_mock()
+
+            context.merge_context("StrictMock tests")
+
+        @context.sub_context
+        def with_target_mock_memoized(context):
+            @context.memoize
+            def target_mock(self):
+                return self.get_target_mock()
+
+            context.merge_context("StrictMock tests")
