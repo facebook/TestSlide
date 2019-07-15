@@ -15,19 +15,23 @@ import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
 
-_DO_NOT_COPY_CLASS_ATTRIBUTES = (
-    "__dict__",
-    "__doc__",
-    "__module__",
-    "__new__",
-)
+_DO_NOT_COPY_CLASS_ATTRIBUTES = ("__dict__", "__doc__", "__module__", "__new__")
 
 
 _unpatchers = []
-_mocked_classes = {}
+_mocked_target_classes = {}
 _restore_dict = {}
 _init_args_from_original_callable = None
 _init_kwargs_from_original_callable = None
+_mocked_class_by_id = {}
+
+
+def _get_template(klass):
+    """
+    If given class was not a target for mock_constructor, return it.
+    Otherwise, return the mocked subclass.
+    """
+    return _mocked_class_by_id.get(id(klass), klass)
 
 
 def unpatch_all_constructor_mocks():
@@ -81,9 +85,9 @@ class _MockConstructorDSL(_MockCallableDSL):
         return super(_MockConstructorDSL, self).with_wrapper(new_func)
 
 
-def _get_mocked_class(original_class, mocked_class_id, callable_mock):
+def _get_mocked_class(original_class, target_class_id, callable_mock):
     # Extract class attributes from the target class...
-    _restore_dict[mocked_class_id] = {}
+    _restore_dict[target_class_id] = {}
     class_dict_to_copy = {
         name: value
         for name, value in original_class.__dict__.items()
@@ -95,13 +99,13 @@ def _get_mocked_class(original_class, mocked_class_id, callable_mock):
         # Safety net against missing items at _DO_NOT_COPY_CLASS_ATTRIBUTES
         except (AttributeError, TypeError):
             pass
-        _restore_dict[mocked_class_id][name] = value
+        _restore_dict[target_class_id][name] = value
     # ...and reuse them...
     mocked_class_dict = {"__new__": callable_mock}
     mocked_class_dict.update(
         {
             name: value
-            for name, value in _restore_dict[mocked_class_id].items()
+            for name, value in _restore_dict[target_class_id].items()
             if name not in ("__new__", "__init__")
         }
     )
@@ -119,9 +123,9 @@ def _get_mocked_class(original_class, mocked_class_id, callable_mock):
         assert _init_args_from_original_callable is not None
         assert _init_kwargs_from_original_callable is not None
         # If __init__ available at the class __dict__...
-        if "__init__" in _restore_dict[mocked_class_id]:
+        if "__init__" in _restore_dict[target_class_id]:
             # Use it,
-            init = _restore_dict[mocked_class_id]["__init__"].__get__(
+            init = _restore_dict[target_class_id]["__init__"].__get__(
                 self, mocked_class
             )
         else:
@@ -144,21 +148,23 @@ def _get_mocked_class(original_class, mocked_class_id, callable_mock):
 
 
 def _patch_and_return_mocked_class(
-    target, class_name, mocked_class_id, original_class, callable_mock
+    target, class_name, target_class_id, original_class, callable_mock
 ):
-    mocked_class = _get_mocked_class(original_class, mocked_class_id, callable_mock)
+    mocked_class = _get_mocked_class(original_class, target_class_id, callable_mock)
 
     def unpatcher():
-        for name, value in _restore_dict[mocked_class_id].items():
+        for name, value in _restore_dict[target_class_id].items():
             setattr(original_class, name, value)
-        del _restore_dict[mocked_class_id]
+        del _restore_dict[target_class_id]
         setattr(target, class_name, original_class)
-        del _mocked_classes[mocked_class_id]
+        del _mocked_target_classes[target_class_id]
+        del _mocked_class_by_id[id(original_class)]
 
     _unpatchers.append(unpatcher)
 
     setattr(target, class_name, mocked_class)
-    _mocked_classes[mocked_class_id] = (original_class, mocked_class)
+    _mocked_target_classes[target_class_id] = (original_class, mocked_class)
+    _mocked_class_by_id[id(original_class)] = mocked_class
 
     return mocked_class
 
@@ -169,10 +175,10 @@ def mock_constructor(target, class_name):
     if _is_string(target):
         target = testslide._importer(target)
 
-    mocked_class_id = (id(target), class_name)
+    target_class_id = (id(target), class_name)
 
-    if mocked_class_id in _mocked_classes:
-        original_class, mocked_class = _mocked_classes[mocked_class_id]
+    if target_class_id in _mocked_target_classes:
+        original_class, mocked_class = _mocked_target_classes[target_class_id]
         if not getattr(target, class_name) is mocked_class:
             raise AssertionError(
                 "The class {} at {} was changed after mock_constructor() mocked "
@@ -189,7 +195,7 @@ def mock_constructor(target, class_name):
             raise ValueError("Target must be a class.")
         callable_mock = _CallableMock(original_class, "__new__")
         mocked_class = _patch_and_return_mocked_class(
-            target, class_name, mocked_class_id, original_class, callable_mock
+            target, class_name, target_class_id, original_class, callable_mock
         )
 
     def original_callable(cls, *args, **kwargs):

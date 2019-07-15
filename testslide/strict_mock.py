@@ -211,7 +211,10 @@ class StrictMock(object):
 
     @property
     def __template(self):
-        return self.__dict__["__template"]
+        # Import here to avoid cyclic dependencies during import
+        from testslide.mock_constructor import _get_template
+
+        return _get_template(self.__dict__["__template"])
 
     @property
     def __template_name(self):
