@@ -421,6 +421,14 @@ def _patch(target, method, new_value):
         original_callable = None
     else:
         original_callable = getattr(target, method)
+        if not callable(original_callable):
+            raise ValueError(
+                "mock_callable() can only be used with callable attributes!"
+            )
+        if type(original_callable) is type:
+            raise ValueError(
+                "mock_callable() can not be used with functions and methods!"
+            )
 
     new_value = _add_signature_validation(new_value, target, method)
     restore_value = target.__dict__.get(method, None)
