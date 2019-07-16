@@ -206,21 +206,21 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
     # __init__ with the correct arguments.
     def init_with_correct_args(self, *args, **kwargs):
         global _init_args_from_original_callable, _init_kwargs_from_original_callable
-        assert _init_args_from_original_callable is not None
-        assert _init_kwargs_from_original_callable is not None
+        if None not in [
+            _init_args_from_original_callable,
+            _init_kwargs_from_original_callable,
+        ]:
+            args = _init_args_from_original_callable
+            kwargs = _init_kwargs_from_original_callable
+
         original_init = _get_original_init(
             original_class, instance=self, owner=mocked_class
         )
         try:
-            original_init(
-                *_init_args_from_original_callable,
-                **_init_kwargs_from_original_callable
-            )
+            original_init(*args, **kwargs)
         finally:
             _init_args_from_original_callable = None
             _init_kwargs_from_original_callable = None
-        # Restore __init__ so subsequent calls can work.
-        mocked_class.__init__ = original_init
 
     mocked_class.__init__ = init_with_correct_args
 

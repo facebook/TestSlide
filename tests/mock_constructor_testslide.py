@@ -164,7 +164,7 @@ def mock_constructor(context):
                 )
 
     @context.sub_context
-    def patching_mechanism_protection(context):
+    def patching_mechanism(context):
         @context.example
         def can_not_mock_constructor_with_existing_instances(self):
             original_target = original_target_class()
@@ -177,6 +177,25 @@ def mock_constructor(context):
                 self.mock_constructor(
                     self.target_module, self.target_class_name
                 ).to_call_original()
+
+        @context.example
+        def works_with_composition(self):
+            self.mock_constructor(self.target_module, self.target_class_name).for_call(
+                1
+            ).with_wrapper(
+                lambda original_callable, *args, **kwargs: original_callable("one")
+            )
+            self.mock_constructor(self.target_module, self.target_class_name).for_call(
+                2
+            ).with_wrapper(
+                lambda original_callable, *args, **kwargs: original_callable("two")
+            )
+
+            target_one = self.get_target_class()(1)
+            self.assertEqual(target_one.args, ("one",))
+
+            target_two = self.get_target_class()(2)
+            self.assertEqual(target_two.args, ("two",))
 
         @context.sub_context
         def origianl_class_attribute_access(context):
