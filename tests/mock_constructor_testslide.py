@@ -153,14 +153,46 @@ def mock_constructor(context):
                     "p3_super_class_method",
                 )
 
-    @context.example
-    def rejects_attribute_access_at_the_original_class(self):
-        self.mock_constructor(self.target_module, self.target_class_name)
-        with self.assertRaisesWithMessageInException(
-            RuntimeError,
-            "mock_constructor() requires old references to the class not to be used, please get a new reference to it.",
-        ):
-            original_target_class.CLASS_ATTR
+    @context.sub_context
+    def patching_mechanism_protection(context):
+        @context.example
+        def can_not_mock_constructor_with_existing_instances(self):
+            original_target = original_target_class()
+            with self.assertRaisesWithMessageInException(
+                RuntimeError,
+                "mock_constructor() can not be used after instances of Target were created: {}".format(
+                    [original_target]
+                ),
+            ):
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).to_call_original()
+
+        @context.sub_context
+        def original_class_access_is_forbidden(context):
+            @context.memoize
+            def invalid_access_mesasge(self):
+                return "invalid access"
+
+            @context.before
+            def mock_constructor(self):
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).to_call_original()
+
+            @context.xexample
+            def for_class_attributes(self):
+                with self.assertRaisesWithMessageInException(
+                    BaseException, self.invalid_access_mesasge
+                ):
+                    self.get_target_class().CLASS_ATTR
+
+            @context.xexample
+            def for_class_methods(self):
+                with self.assertRaisesWithMessageInException(
+                    BaseException, self.invalid_access_mesasge
+                ):
+                    self.get_target_class().regular_class_method()
 
     @context.sub_context
     def arguments(context):
