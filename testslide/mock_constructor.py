@@ -119,7 +119,7 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
             delattr(original_class, name)
         # Safety net against missing items at _DO_NOT_COPY_CLASS_ATTRIBUTES
         except (AttributeError, TypeError):
-            pass
+            continue
         _restore_dict[target_class_id][name] = value
     # ...and reuse them...
     mocked_class_dict = {"__new__": callable_mock}
