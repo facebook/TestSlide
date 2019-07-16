@@ -24,7 +24,7 @@ def _add_signature_validation(value, template, attr_name):
 
     if isinstance(template, StrictMock):
         if "__template" in template.__dict__:
-            template = template.__dict__["__template"]
+            template = template.__template
         else:
             return value
 

@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 import gc
 import inspect
 import six
+import sys
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
@@ -102,6 +103,62 @@ def _get_original_init(original_class, instance, owner):
         return original_class.__init__.__get__(instance, owner)
 
 
+class AttrAccessValidation(object):
+    EXCEPTION_MESSAGE = (
+        "Attribute {} after the class has been used with mock_constructor() "
+        "is not supported! After using mock_constructor() you must get a "
+        "pointer to the new mocked class (eg: {}.{})."
+    )
+
+    def __init__(self, name, original_class, mocked_class):
+        self.name = name
+        self.original_class = original_class
+        self.mocked_class = mocked_class
+
+    def __get__(self, instance, owner):
+        mro = owner.mro()
+        # If owner is a subclass, allow it
+        if mro.index(owner) < mro.index(self.original_class):
+            parent_class = mro[mro.index(self.original_class) + 1]
+            # and return the parent's value
+            attr = getattr(parent_class, self.name)
+            if hasattr(attr, "__get__"):
+                return attr.__get__(instance, parent_class)
+            else:
+                return attr
+        # For class level attributes & methods, we can make it work...
+        elif instance is None and owner is self.original_class:
+            # ...by returning the original value from the mocked class
+            attr = getattr(self.mocked_class, self.name)
+            if hasattr(attr, "__get__") and sys.version_info[0] >= 3:
+                return attr.__get__(instance, self.mocked_class)
+            else:
+                return attr
+        # Disallow for others
+        else:
+            raise BaseException(
+                self.EXCEPTION_MESSAGE.format(
+                    "getting",
+                    self.original_class.__module__,
+                    self.original_class.__name__,
+                )
+            )
+
+    def __set__(self, instance, value):
+        raise BaseException(
+            self.EXCEPTION_MESSAGE.format(
+                "setting", self.original_class.__module__, self.original_class.__name__
+            )
+        )
+
+    def __delete__(self, instance):
+        raise BaseException(
+            self.EXCEPTION_MESSAGE.format(
+                "deleting", self.original_class.__module__, self.original_class.__name__
+            )
+        )
+
+
 def _get_mocked_class(original_class, target_class_id, callable_mock):
     if target_class_id in _target_class_id_by_original_class_id:
         raise RuntimeError("Can not mock the same class at two different modules!")
@@ -131,10 +188,18 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
         }
     )
 
-    # ...to create the mocked subclass.
+    # ...to create the mocked subclass...
     mocked_class = type(
         str(original_class.__name__), (original_class,), mocked_class_dict
     )
+
+    # ...and deal with forbidden access to the original class
+    for name in _restore_dict[target_class_id].keys():
+        setattr(
+            original_class,
+            name,
+            AttrAccessValidation(name, original_class, mocked_class),
+        )
 
     # Because __init__ is called after __new__ unconditionally with the same
     # arguments, we need to mock it fir this first call, to call the real
