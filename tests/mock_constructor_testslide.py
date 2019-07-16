@@ -64,6 +64,10 @@ class Target(TargetParent):
     def p3_super_instance_method(self):
         return super().p3_super_instance_method()
 
+    @staticmethod
+    def static_method():
+        return "static_method"
+
     @classmethod
     def regular_class_method(cls):
         return "regular_class_method"
@@ -169,36 +173,43 @@ def mock_constructor(context):
                 ).to_call_original()
 
         @context.sub_context
-        def original_class_access_is_forbidden(context):
-            @context.memoize
-            def invalid_access_mesasge(self):
-                return "invalid access"
-
+        def origianl_class_attribute_access(context):
             @context.before
             def mock_constructor(self):
                 self.mock_constructor(
                     self.target_module, self.target_class_name
                 ).to_call_original()
 
-            @context.xexample
-            def for_class_attributes(self):
+            @context.example
+            def can_not_create_new_instances(self):
                 with self.assertRaisesWithMessageInException(
-                    BaseException, self.invalid_access_mesasge
+                    BaseException,
+                    "Attribute getting after the class has been used with mock_constructor() is not supported!",
                 ):
-                    self.get_target_class().CLASS_ATTR
+                    original_target_class()
 
-            @context.xexample
-            def for_class_methods(self):
-                with self.assertRaisesWithMessageInException(
-                    BaseException, self.invalid_access_mesasge
-                ):
-                    self.get_target_class().regular_class_method()
+            @context.example
+            def can_access_class_attributes(self):
+                self.assertEqual(original_target_class.CLASS_ATTR, "CLASS_ATTR")
+
+            @context.example
+            def can_call_class_methods(self):
+                for name in [
+                    "regular_class_method",
+                    "p2_super_class_method",
+                    "p3_super_class_method",
+                ]:
+                    self.assertEqual(getattr(original_target_class, name)(), name)
+
+            @context.example
+            def can_call_static_methods(self):
+                self.assertEqual(original_target_class.static_method(), "static_method")
 
     @context.sub_context
     def arguments(context):
         @context.example
         def refuses_to_mock_if_instances_exist(self):
-            target_instance = self.get_target_class()()
+            target_instance = self.get_target_class()()  # noqa F841
             with self.assertRaisesWithMessageInException(
                 RuntimeError,
                 "mock_constructor() can not be used after instances of Target were created: ",
