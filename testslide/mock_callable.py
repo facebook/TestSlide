@@ -427,7 +427,7 @@ def _patch(target, method, new_value):
                     repr(original_callable)
                 )
             )
-        if type(original_callable) is type:
+        if inspect.isclass(original_callable):
             raise ValueError(
                 "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
                     repr(original_callable)
