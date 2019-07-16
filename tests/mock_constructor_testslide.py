@@ -134,6 +134,12 @@ def mock_constructor(context):
         def attributes_are_not_affected(self):
             self.assertEqual(self.class_attribute_target.CLASS_ATTR, "CLASS_ATTR")
 
+        @context.example
+        def static_methods_are_not_affected(self):
+            self.assertEqual(
+                self.class_attribute_target.static_method(), "static_method"
+            )
+
         @context.sub_context
         def class_methods(context):
             @context.example
