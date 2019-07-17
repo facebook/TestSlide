@@ -1554,6 +1554,22 @@ class TestDSLAroundHook(TestDSLBase):
             mock.mock_calls, [call("around"), call("before"), call("example")]
         )
 
+    def test_fails_if_example_not_called(self):
+        @context
+        def top(context):
+            @context.around
+            def broken_around(self, example):
+                pass  # without calling example()
+
+            @context.example
+            def whatever(self):
+                pass
+
+        with self.assertRaisesRegex(
+            RuntimeError, "Around hook .*broken_around.* did not execute example code"
+        ):
+            self.run_first_context_first_example()
+
 
 class TestExample(TestDSLBase):
     def test_can_be_named_from_decorator(self):

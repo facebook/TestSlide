@@ -239,23 +239,6 @@ class Example(object):
         """
         return any([self.context.focus, self.__dict__["focus"]])
 
-    @contextmanager
-    def execute_around_hooks(self, context_data):
-        around_generators = [
-            around(context_data) for around in self.context.all_around_functions
-        ]
-
-        for around_generator in reversed(around_generators):
-            next(around_generator)
-
-        yield
-
-        for around_generator in around_generators:
-            try:
-                next(around_generator)
-            except StopIteration:
-                pass
-
     def _example_runner(self, context_data):
         """
         Execute before hooks, example and after hooks.
@@ -274,20 +257,34 @@ class Example(object):
         if aggregated_exceptions.exceptions:
             aggregated_exceptions.raise_correct_exception()
 
-    def _run_example(self, around_functions, context_data):
+    def _run_example(self, context_data, around_functions=None):
         """
         Run example, including all hooks.
         """
+        if around_functions is None:
+            around_functions = list(reversed(self.context.all_around_functions))
+
         _run_before_once_hooks()
+
         if not around_functions:
             self._example_runner(context_data)
             return
         around = around_functions.pop()
 
+        wrapped_called = []
+
         def wrapped():
-            self._run_example(around_functions, context_data)
+            wrapped_called.append(True)
+            self._run_example(context_data, around_functions)
 
         around(context_data, wrapped)
+
+        if not wrapped_called:
+            raise RuntimeError(
+                "Around hook {} did not execute example code!".format(
+                    repr(around.__name__)
+                )
+            )
 
     def __call__(self):
         """
@@ -298,9 +295,7 @@ class Example(object):
                 raise Skip()
             context_data = _ContextData(self.context)
             with _add_traceback_context_manager():
-                self._run_example(
-                    list(reversed(self.context.all_around_functions)), context_data
-                )
+                self._run_example(context_data)
         finally:
             sys.stdout.flush()
             sys.stderr.flush()
