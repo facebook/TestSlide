@@ -434,7 +434,8 @@ def _patch(target, method, new_value):
                 )
             )
 
-    new_value = _add_signature_validation(new_value, target, method)
+    if not isinstance(target, StrictMock):
+        new_value = _add_signature_validation(new_value, target, method)
     restore_value = target.__dict__.get(method, None)
 
     if inspect.isclass(target):

@@ -24,7 +24,7 @@ def _add_signature_validation(value, template, attr_name):
 
     if isinstance(template, StrictMock):
         if "__template" in template.__dict__:
-            template = template.__dict__["__template"]
+            template = template.__template
         else:
             return value
 
@@ -126,8 +126,6 @@ class _MethodProxy(object):
         self.__dict__["_call"] = call
 
     def __getattr__(self, name):
-        # print(self.__dict__["_original_method"])
-        # print(dir(self.__dict__["_original_method"]))
         return getattr(self.__dict__["_original_method"], name)
 
     def __setattr__(self, name, value):
@@ -211,7 +209,14 @@ class StrictMock(object):
 
     @property
     def __template(self):
-        return self.__dict__["__template"]
+        import testslide.mock_constructor  # Avoid cyclic dependencies
+
+        # If the template class was mocked with mock_constructor(), this will
+        # return the mocked subclass, which contains all attributes we need for
+        # introspection.
+        return testslide.mock_constructor._get_class_or_mock(
+            self.__dict__["__template"]
+        )
 
     @property
     def __template_name(self):
@@ -221,10 +226,25 @@ class StrictMock(object):
     def __runtime_attrs(self):
         return self.__dict__["__runtime_attrs"]
 
+    def __get_class_init(self, klass):
+        import testslide.mock_constructor  # Avoid cyclic dependencies
+
+        if testslide.mock_constructor._is_mocked_class(klass):
+            # If klass is the mocked subclass, pull the original version of
+            # __init__ so we can introspect into its implementation (and
+            # not the __init__ wrapper at the mocked class).
+            mocked_class = klass
+            original_class = mocked_class.mro()[1]
+            return testslide.mock_constructor._get_original_init(
+                original_class, instance=None, owner=mocked_class
+            )
+        else:
+            return klass.__init__
+
     def __is_runtime_attr(self, name):
         if sys.version_info[0] >= 3 and self.__template:
             for klass in self.__template.mro():
-                template_init = klass.__init__
+                template_init = self.__get_class_init(klass)
                 if not inspect.isfunction(template_init):
                     continue
                 for instruction in dis.get_instructions(template_init):
