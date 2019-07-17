@@ -239,23 +239,6 @@ class Example(object):
         """
         return any([self.context.focus, self.__dict__["focus"]])
 
-    @contextmanager
-    def execute_around_hooks(self, context_data):
-        around_generators = [
-            around(context_data) for around in self.context.all_around_functions
-        ]
-
-        for around_generator in reversed(around_generators):
-            next(around_generator)
-
-        yield
-
-        for around_generator in around_generators:
-            try:
-                next(around_generator)
-            except StopIteration:
-                pass
-
     def _example_runner(self, context_data):
         """
         Execute before hooks, example and after hooks.
