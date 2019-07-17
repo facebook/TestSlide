@@ -39,7 +39,7 @@ You can use ``--list`` to run test discovery and list all tests found:
 
 .. code-block:: none
 
-  $ testslide backup_test.py
+  $ testslide --list backup_test.py
   backup_test.TestBackupDelete: test_delete_from_storage
 
 Multiple Failures Report
