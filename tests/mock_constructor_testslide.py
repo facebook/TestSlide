@@ -42,6 +42,7 @@ class TargetParent(object):
 
 class Target(TargetParent):
     CLASS_ATTR = "CLASS_ATTR"
+    __slots__ = ("args", "kwargs", "p2_super", "p3_super")
 
     def __init__(self, *args, **kwargs):
         self.p2_super = False
