@@ -198,7 +198,7 @@ def mock_constructor(context):
             self.assertEqual(target_two.args, ("two",))
 
         @context.sub_context
-        def origianl_class_attribute_access(context):
+        def original_class_attribute_access(context):
             @context.before
             def mock_constructor(self):
                 self.mock_constructor(
