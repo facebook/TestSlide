@@ -17,7 +17,13 @@ import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 
 
-_DO_NOT_COPY_CLASS_ATTRIBUTES = ("__dict__", "__doc__", "__module__", "__new__")
+_DO_NOT_COPY_CLASS_ATTRIBUTES = (
+    "__dict__",
+    "__doc__",
+    "__module__",
+    "__new__",
+    "__slots__",
+)
 
 
 _unpatchers = []
