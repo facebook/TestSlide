@@ -295,7 +295,7 @@ def mock_constructor(target, class_name):
 
         if not inspect.isclass(original_class):
             raise ValueError("Target must be a class.")
-        elif type(original_class) is not type:
+        elif not issubclass(original_class, object):
             raise ValueError("Old style classes are not supported.")
         callable_mock = _CallableMock(original_class, "__new__")
         mocked_class = _patch_and_return_mocked_class(
