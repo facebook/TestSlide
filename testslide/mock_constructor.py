@@ -97,6 +97,13 @@ class _MockConstructorDSL(_MockCallableDSL):
 
         return super(_MockConstructorDSL, self).with_wrapper(new_func)
 
+    def with_implementation(self, func):
+        def new_func(cls, *args, **kwargs):
+            assert cls == self.cls
+            return func(*args, **kwargs)
+
+        return super(_MockConstructorDSL, self).with_implementation(new_func)
+
 
 def _get_original_init(original_class, instance, owner):
     target_class_id = _target_class_id_by_original_class_id[id(original_class)]
