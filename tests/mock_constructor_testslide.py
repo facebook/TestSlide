@@ -313,8 +313,8 @@ def mock_constructor(context):
 
         @context.sub_context
         def behavior(context):
-            @context.example("works with .to_call_original()")
-            def works_with_to_call_original(self):
+            @context.example(".to_call_original() works")
+            def to_call_original_works(self):
                 default_args = ("default",)
                 specific_args = ("specific",)
 
@@ -330,6 +330,22 @@ def mock_constructor(context):
 
                 specific_target = self.get_target_class()(*specific_args)
                 self.assertEqual(specific_target, "mocked_target")
+
+            @context.example(".with_implementation() works")
+            def with_implementation_works(self):
+                args = (1, 2)
+                kwargs = {"one": 1, "two": 2}
+
+                def implementation(*received_args, **received_kwargs):
+                    self.assertEqual(received_args, args)
+                    self.assertEqual(received_kwargs, kwargs)
+                    return "mock"
+
+                self.mock_constructor(
+                    self.target_module, self.target_class_name
+                ).with_implementation(implementation)
+
+                self.assertEqual(self.get_target_class()(*args, **kwargs), "mock")
 
             @context.sub_context(".with_wrapper()")
             def with_wrapper(context):
