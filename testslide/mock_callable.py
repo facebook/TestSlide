@@ -29,19 +29,7 @@ def mock_callable(target, method):
 _unpatchers = []  # type: List[Callable]  # noqa T484
 
 
-def unpatch_all_callable_mocks():
-    """
-    This method must be called after every test unconditionally to remove all
-    active mock_callable() patches.
-    """
-    try:
-        for unpatcher in _unpatchers:
-            unpatcher()
-    finally:
-        del _unpatchers[:]
-
-
-def register_assertion(assertion):
+def _register_assertion(assertion):
     """
     This method must be redefined by the test framework using mock_callable().
     It will be called when a new assertion is defined, passing a callable as an
@@ -49,6 +37,28 @@ def register_assertion(assertion):
     must be called after the test code ends, and before the test finishes.
     """
     raise NotImplementedError("This method must be redefined by the test framework")
+
+
+register_assertion = _register_assertion
+
+
+def unpatch_all_callable_mocks():
+    """
+    This method must be called after every test unconditionally to remove all
+    active mock_callable() patches.
+    """
+    global register_assertion, _register_assertion
+    register_assertion = _register_assertion
+    try:
+        for unpatcher in _unpatchers:
+            unpatcher()
+    finally:
+        del _unpatchers[:]
+
+
+def _is_setup():
+    global register_assertion, _register_assertion
+    return register_assertion is not _register_assertion
 
 
 def _format_target(target):
@@ -468,6 +478,12 @@ class _MockCallableDSL(object):
     CALLABLE_MOCKS = {}  # NOQA T484
 
     def __init__(self, target, method, callable_mock=None, original_callable=None):
+        if not _is_setup():
+            raise RuntimeError(
+                "mock_callable() was not setup correctly before usage. "
+                "Please refer to the documentation at http://testslide.readthedocs.io/ "
+                "to learn how to properly do that."
+            )
         self._original_target = target
         self._method = method
         self._runner = None
