@@ -97,10 +97,13 @@ class _DSLContext(object):
 
     @_require_context("create example")
     def _create_example(self, name, example_code, skip, focus):
+        if name is None:
+            name = self._name_from_function(example_code)
         self.current_context.add_example(name, example_code, skip=skip, focus=focus)
         return self._not_callable
 
-    def example(self, arg, skip=False, focus=False):
+    def example(self, arg=None, skip=False, focus=False, skip_unless=True):
+        skip = skip or not skip_unless
         if callable(arg):
             example_code = arg
             name = self._name_from_function(example_code)

@@ -1622,10 +1622,28 @@ class TestExample(TestDSLBase):
         @context
         def top_context(context):
             @context.xexample
-            def skipped(_):
+            def skip_with_xexample(_):
                 pass
 
-        self.assertTrue(Context.all_top_level_contexts[0].examples[0].skip)
+            @context.example(skip=True)
+            def skip_with_skip_arg(_):
+                pass
+
+            @context.example("skip_with_name_and_skip_arg", skip=True)
+            def skip_with_name_and_skip_arg(_):
+                pass
+
+            @context.example(skip_unless=False)
+            def skip_with_skip_unless_arg(_):
+                pass
+
+            @context.example("skip_with_name_and_skip_unless_arg", skip_unless=False)
+            def skip_with_name_and_skip_unless_arg(_):
+                pass
+
+        self.assertTrue(Context.all_top_level_contexts[0].examples)
+        for example in Context.all_top_level_contexts[0].examples:
+            self.assertTrue(example.skip)
 
     def test_inherits_skip_from_xcontext(self):
         """
