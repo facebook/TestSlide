@@ -119,7 +119,7 @@ class Formatter(object):
         """
         self.results["fail"].append({"example": example, "exception": exception})
 
-    def skip(self, example):
+    def skip(self, example, reason):
         """
         Called when an example had the execution skipped.
         """
@@ -176,8 +176,8 @@ class ProgressFormatter(Formatter):
         Formatter.fail(self, example, exception)
         self.print_red("F", end="")
 
-    def skip(self, example):
-        Formatter.skip(self, example)
+    def skip(self, example, reason):
+        Formatter.skip(self, example, reason)
         self.print_yellow("S", end="")
 
     def finish(self, not_executed_examples):
@@ -223,14 +223,15 @@ class DocumentFormatter(Formatter):
             )
         )
 
-    def skip(self, example):
-        Formatter.skip(self, example)
+    def skip(self, example, reason):
+        Formatter.skip(self, example, reason)
         self.print_yellow(
-            "{indent}{focus}{example}{skip_text}".format(
+            "{indent}{focus}{example}{skip_text}{reason}".format(
                 indent="  " * (example.context.depth + 1),
                 focus="*" if example.focus else "",
                 example=example,
                 skip_text="" if self._color_output() else ": SKIP",
+                reason=": {}".format(reason) if reason else "",
             )
         )
 
@@ -361,8 +362,8 @@ class Runner(object):
             sys.stderr.flush()
             try:
                 self._run_example(example)
-            except Skip:
-                self.formatter.skip(example)
+            except Skip as skip:
+                self.formatter.skip(example, reason=skip.reason)
             except BaseException as exception:
                 self.formatter.fail(example, exception)
                 exit_code = 1

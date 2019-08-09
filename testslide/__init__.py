@@ -198,7 +198,9 @@ class Skip(Exception):
     Raised by an example when it is skipped
     """
 
-    pass
+    def __init__(self, reason=None):
+        super(Skip, self).__init__()
+        self.reason = reason
 
 
 class UnexpectedSuccess(Exception):
