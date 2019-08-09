@@ -70,6 +70,14 @@ Skipping works just the same, but you have to use a ``x``:
     def skipped_example(self):
       pass
   
+    @context.xexample(skip=True)
+    def skipped_example_from_arg(self):
+      pass
+  
+    @context.xexample(skip_unless=False)
+    def skipped_example_from_unless_arg(self):
+      pass
+  
     @context.sub_context
     def Not_skipped_subcontext(context):
   
@@ -89,6 +97,8 @@ Skipping works just the same, but you have to use a ``x``:
   Skipping
     not skipped example: PASS
     skipped example: SKIP
+    skipped example from arg: SKIP
+    skipped example from unless arg: SKIP
     Not skipped subcontext
       not skipped example: PASS
     Focused context
