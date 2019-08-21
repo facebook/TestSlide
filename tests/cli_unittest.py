@@ -345,6 +345,17 @@ class TestCliDocumentation(TestCliBase):
         ):
             self.execute()
 
+    def test_fail_if_focus(self):
+        """
+        Fail because there are focused tests and --fail-if-focused
+        """
+        self.argv.append("--fail-if-focused")
+        with self.assert_in_stdout(
+            "Focused example not allowed with --fail-if-focused."
+            " Please remove the focus to allow the test to run."
+        ):
+            self.execute(expected_return_value=1)
+
     def test_fail_fast(self):
         """
         Stop execution when first example fails.

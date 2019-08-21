@@ -308,6 +308,7 @@ class Runner(object):
         seed=None,
         focus=False,
         fail_fast=False,
+        fail_if_focused=False,
         names_text_filter=None,
         names_regex_filter=None,
         names_regex_exclude=None,
@@ -319,12 +320,19 @@ class Runner(object):
         self.seed = seed
         self.focus = focus
         self.fail_fast = fail_fast
+        self.fail_if_focused = fail_if_focused
         self.names_text_filter = names_text_filter
         self.names_regex_filter = names_regex_filter
         self.names_regex_exclude = names_regex_exclude
         self.quiet = quiet
 
     def _run_example(self, example):
+        if example.focus and self.fail_if_focused:
+            with _add_traceback_context_manager():
+                raise AssertionError(
+                    "Focused example not allowed with --fail-if-focused"
+                    ". Please remove the focus to allow the test to run."
+                )
         if self.quiet:
             stdout = six.StringIO()
             stderr = six.StringIO()

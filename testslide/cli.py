@@ -197,6 +197,11 @@ class Cli(object):
             help="Only executed focused examples, or all if none focused",
         )
         parser.add_argument(
+            "--fail-if-focused",
+            action="store_true",
+            help="Raise an error if an example is focused. Useful when running tests in a continuous integration environment.",
+        )
+        parser.add_argument(
             "--fail-fast",
             action="store_true",
             help="Stop execution when an example fails",
@@ -324,6 +329,7 @@ class Cli(object):
         config.list = parsed_args.list
         config.seed = parsed_args.seed[0] if parsed_args.seed else None
         config.focus = parsed_args.focus
+        config.fail_if_focused = parsed_args.fail_if_focused
         config.fail_fast = parsed_args.fail_fast
         config.names_text_filter = (
             parsed_args.filter_text[0] if parsed_args.filter_text else None
@@ -380,6 +386,7 @@ class Cli(object):
                     seed=config.seed,
                     focus=config.focus,
                     fail_fast=config.fail_fast,
+                    fail_if_focused=config.fail_if_focused,
                     names_text_filter=config.names_text_filter,
                     names_regex_filter=config.names_regex_filter,
                     names_regex_exclude=config.names_regex_exclude,

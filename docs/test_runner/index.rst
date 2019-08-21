@@ -114,6 +114,9 @@ And then run your tests with ``--focus``:
 
 Only ``ftest`` tests will be executed. Note that it also tells you how many tests were not executed.
 
+When you are committing tests to a continuous integration system, focusing tests may not be the best choice. You can
+use the cli option ``--fail-if-focused`` which will cause TestSlide to fail if any focused examples are run.
+
 Similarly, you can skip a test with ``x``:
 
 .. code-block:: python
