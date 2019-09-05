@@ -70,11 +70,11 @@ Skipping works just the same, but you have to use a ``x``:
     def skipped_example(self):
       pass
   
-    @context.xexample(skip=True)
+    @context.example(skip=True)
     def skipped_example_from_arg(self):
       pass
   
-    @context.xexample(skip_unless=False)
+    @context.example(skip_unless=False)
     def skipped_example_from_unless_arg(self):
       pass
   
