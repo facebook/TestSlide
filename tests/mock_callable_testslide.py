@@ -123,6 +123,10 @@ def mock_callable_context(context):
 
         @context.function
         def no_behavior_msg(self):
+            if self.call_args:
+                args_msg = "    {}\n".format(self.call_args)
+            else:
+                args_msg = ""
             if self.call_kwargs:
                 kwargs_msg = (
                     "    {\n"
@@ -133,11 +137,11 @@ def mock_callable_context(context):
                     + "    }\n"
                 )
             else:
-                kwargs_msg = "    {}\n"
+                kwargs_msg = ""
             return str(
                 "{}, {}:\n".format(repr(self.target_arg), repr(self.callable_arg))
                 + "  Received call:\n"
-                + "    {}\n".format(self.call_args)
+                + args_msg
                 + kwargs_msg
                 + "  But no behavior was defined for it."
             )

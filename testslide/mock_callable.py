@@ -72,14 +72,17 @@ def _format_target(target):
 
 def _format_args(indent, *args, **kwargs):
     indentation = "  " * indent
-    s = ("{}{}\n" "{}").format(indentation, args, indentation)
-    s += "{"
+    s = ""
+    if args:
+        s += ("{}{}\n").format(indentation, args)
     if kwargs:
-        s += "\n"
-        for k in sorted(kwargs.keys()):
-            s += "{}  {}={},\n".format(indentation, k, kwargs[k])
-        s += "{}".format(indentation)
-    s += "}\n"
+        s += indentation + "{"
+        if kwargs:
+            s += "\n"
+            for k in sorted(kwargs.keys()):
+                s += "{}  {}={},\n".format(indentation, k, kwargs[k])
+            s += "{}".format(indentation)
+        s += "}\n"
     return s
 
 
