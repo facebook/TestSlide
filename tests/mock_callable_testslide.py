@@ -168,22 +168,22 @@ def mock_callable_context(context):
             with self.assertRaisesWithMessage(
                 AssertionError,
                 "calls did not match assertion.\n"
-                "\n"
-                "These calls were expected to have happened in order:\n"
-                "\n"
-                "  target1, 'f1' with arguments:\n"
-                "    ('step 1',)\n"
-                "  target1, 'f2' with any arguments\n"
-                "  target2, 'f1' with arguments:\n"
-                "    ('step 3',)\n"
-                "\n"
-                "but these calls were made:\n"
-                "\n"
-                "  target1, 'f2' with any arguments\n"
-                "  target2, 'f1' with arguments:\n"
-                "    ('step 3',)\n"
-                "  target1, 'f1' with arguments:\n"
-                "    ('step 1',)",
+                + "\n"
+                + "These calls were expected to have happened in order:\n"
+                + "\n"
+                + "  target1, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 1",)))
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 3",)))
+                + "\n"
+                + "but these calls were made:\n"
+                + "\n"
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 3",)))
+                + "  target1, {} with arguments:\n".format(repr("f1"))
+                + "    {}".format(repr(("step 1",))),
             ):
                 self.assert_all()
 
@@ -194,20 +194,20 @@ def mock_callable_context(context):
             with self.assertRaisesWithMessage(
                 AssertionError,
                 "calls did not match assertion.\n"
-                "\n"
-                "These calls were expected to have happened in order:\n"
-                "\n"
-                "  target1, 'f1' with arguments:\n"
-                "    ('step 1',)\n"
-                "  target1, 'f2' with any arguments\n"
-                "  target2, 'f1' with arguments:\n"
-                "    ('step 3',)\n"
-                "\n"
-                "but these calls were made:\n"
-                "\n"
-                "  target1, 'f2' with any arguments\n"
-                "  target2, 'f1' with arguments:\n"
-                "    ('step 3',)",
+                + "\n"
+                + "These calls were expected to have happened in order:\n"
+                + "\n"
+                + "  target1, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 1",)))
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 3",)))
+                + "\n"
+                + "but these calls were made:\n"
+                + "\n"
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}".format(repr(("step 3",))),
             ):
                 self.assert_all()
 
