@@ -188,6 +188,30 @@ def mock_callable_context(context):
                 self.assert_all()
 
         @context.example
+        def it_fails_with_partial_calls(self):
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            with self.assertRaisesWithMessage(
+                AssertionError,
+                "calls did not match assertion.\n"
+                "\n"
+                "These calls were expected to have happened in order:\n"
+                "\n"
+                "  target1, 'f1' with arguments:\n"
+                "    ('step 1',)\n"
+                "  target1, 'f2' with any arguments\n"
+                "  target2, 'f1' with arguments:\n"
+                "    ('step 3',)\n"
+                "\n"
+                "but these calls were made:\n"
+                "\n"
+                "  target1, 'f2' with any arguments\n"
+                "  target2, 'f1' with arguments:\n"
+                "    ('step 3',)",
+            ):
+                self.assert_all()
+
+        @context.example
         def other_mocks_do_not_interfere(self):
             self.mock_callable(self.target1, "f1").for_call(
                 "unrelated 1"
