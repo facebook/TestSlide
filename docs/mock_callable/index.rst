@@ -268,7 +268,12 @@ You can achieve the opposite (specific call goes through, mocked general case) w
 Defining Call Assertions
 ------------------------
 
-When dealing with external dependencies, it is useful to assert on calls to them **when they have side-effects**. mock_callable allows you to do this:
+When dealing with external dependencies, it is useful to assert on calls to them **when they have side-effects**. ``mock_callable()`` allows the easy assertion on such calls, as many times as needed within the same test.
+
+Number of Calls
+^^^^^^^^^^^^^^^
+
+This will assert that the call was made exactly one time:
 
 .. code-block:: python
 
@@ -277,7 +282,7 @@ When dealing with external dependencies, it is useful to assert on calls to them
       .to_return_value(None)\
       .and_assert_called_once()
 
-Here's a list of all assertions you can define:
+Alternatively you may define an arbitrary exact number of calls, minimum, maximum or that no call should happen:
 
 .. code-block:: python
 
@@ -289,7 +294,31 @@ Here's a list of all assertions you can define:
   .and_assert_called()
   .and_assert_not_called()
 
-Within the same test, you can define as many assertions as needed.
+Call Order
+^^^^^^^^^^
+
+Frequently the order in which calls happen does not matter, but there are cases where this is desirable.
+
+For example, let's say we want to ensure that some asset is first deleted from a storage index and then removed from the backend, thus avoiding the window of it being indexed, but unavailable at the backend. Here's how to do it:
+
+.. code-block:: python
+
+  self.mock_callable(storage_index, "delete")\
+    .for_call_(asset_id)\
+    .and_assert_called_ordered()
+  self.mock_callable(storage_backend, "delete")\
+    .for_call_(asset_id)\
+    .and_assert_called_ordered()
+
+
+For this test to pass, these calls must happen exactly in this order:
+
+.. code-block:: python
+
+  storage_index.delete(asset_id)
+  storage_backend.delete(asset_id)
+
+The test will fail if these calls are made in a different order or if they don't happen at all.
 
 Cheat Sheet
 -----------
@@ -316,6 +345,7 @@ It is a good idea to keep this at hand when using mock_callable:
     .and_assert_called_at_least(times)
     .and_assert_called_at_most(times)
     .and_assert_called()
+    .and_assert_called_ordered()
     .and_assert_not_called()
 
 Magic Methods
