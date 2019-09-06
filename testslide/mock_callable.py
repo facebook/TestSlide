@@ -29,7 +29,7 @@ def mock_callable(target, method):
 _unpatchers = []  # type: List[Callable]  # noqa T484
 
 
-def _register_assertion(assertion):
+def _default_register_assertion(assertion):
     """
     This method must be redefined by the test framework using mock_callable().
     It will be called when a new assertion is defined, passing a callable as an
@@ -39,7 +39,10 @@ def _register_assertion(assertion):
     raise NotImplementedError("This method must be redefined by the test framework")
 
 
-register_assertion = _register_assertion
+register_assertion = _default_register_assertion
+_call_order_assertion_registered = False
+_received_ordered_calls = []
+_expected_ordered_calls = []
 
 
 def unpatch_all_callable_mocks():
@@ -47,18 +50,29 @@ def unpatch_all_callable_mocks():
     This method must be called after every test unconditionally to remove all
     active mock_callable() patches.
     """
-    global register_assertion, _register_assertion
-    register_assertion = _register_assertion
-    try:
-        for unpatcher in _unpatchers:
+    global register_assertion, _default_register_assertion, _call_order_assertion_registered, _received_ordered_calls, _expected_ordered_calls
+
+    register_assertion = _default_register_assertion
+    _call_order_assertion_registered = False
+    del _received_ordered_calls[:]
+    del _expected_ordered_calls[:]
+
+    unpatch_exceptions = []
+    for unpatcher in _unpatchers:
+        try:
             unpatcher()
-    finally:
-        del _unpatchers[:]
+        except Exception as e:
+            unpatch_exceptions.append(e)
+    del _unpatchers[:]
+    if unpatch_exceptions:
+        raise RuntimeError(
+            "Exceptions raised when unpatching: {}".format(unpatch_exceptions)
+        )
 
 
 def _is_setup():
-    global register_assertion, _register_assertion
-    return register_assertion is not _register_assertion
+    global register_assertion, _default_register_assertion
+    return register_assertion is not _default_register_assertion
 
 
 def _format_target(target):
@@ -124,8 +138,14 @@ class _Runner(object):
 
         self._call_count = 0
         self._max_calls = None
+        self._has_order_assertion = False
 
     def run(self, *args, **kwargs):
+        global _received_ordered_calls
+
+        if self._has_order_assertion:
+            _received_ordered_calls.append((self.target, self.method, self))
+
         self.inc_call_count()
 
     @property
@@ -240,6 +260,54 @@ class _Runner(object):
                 )
 
         register_assertion(assertion)
+
+    def add_call_order_assertion(self):
+        global _call_order_assertion_registered, _received_ordered_calls, _expected_ordered_calls
+
+        if not _call_order_assertion_registered:
+
+            def assertion():
+                if _received_ordered_calls != _expected_ordered_calls:
+                    raise AssertionError(
+                        (
+                            "calls did not match assertion.\n"
+                            "\n"
+                            "These calls were expected to have happened in order:\n"
+                            "\n"
+                            "{}\n"
+                            "\n"
+                            "but these calls were made:\n"
+                            "\n"
+                            "{}"
+                        ).format(
+                            "\n".join(
+                                (
+                                    "  {}, {} with {}".format(
+                                        _format_target(target),
+                                        repr(method),
+                                        runner._args_message().rstrip(),
+                                    )
+                                    for target, method, runner in _expected_ordered_calls
+                                )
+                            ),
+                            "\n".join(
+                                (
+                                    "  {}, {} with {}".format(
+                                        _format_target(target),
+                                        repr(method),
+                                        runner._args_message().rstrip(),
+                                    )
+                                    for target, method, runner in _received_ordered_calls
+                                )
+                            ),
+                        )
+                    )
+
+            register_assertion(assertion)
+            _call_order_assertion_registered = True
+
+        _expected_ordered_calls.append((self.target, self.method, self))
+        self._has_order_assertion = True
 
 
 class _ReturnValueRunner(_Runner):
@@ -749,3 +817,15 @@ class _MockCallableDSL(object):
         Short for self.and_assert_called_at_least(1).
         """
         return self.and_assert_called_at_least(1)
+
+    def and_assert_called_ordered(self):
+        """
+        Assert that multiple calls, potentially to different mock_callable()
+        targets, happened in the order defined.
+        """
+        if not self._runner:
+            raise ValueError(
+                "Can not define call assertion without a behavior defined."
+            )
+        self._runner.add_call_order_assertion()
+        return self

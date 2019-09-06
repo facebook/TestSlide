@@ -57,6 +57,20 @@ class Target(ParentTarget):
         raise RuntimeError("Should not be accessed")
 
 
+class CallOrderTarget(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return self.name
+
+    def f1(self, arg):
+        return "f1: {}".format(repr(arg))
+
+    def f2(self, arg):
+        return "f2: {}".format(repr(arg))
+
+
 @context("mock_callable(target, callable)")  # noqa: C901
 def mock_callable_context(context):
 
@@ -105,6 +119,95 @@ def mock_callable_context(context):
             ),
         )
 
+    @context.function
+    def assert_all(self):
+        try:
+            for assertion in self.assertions:
+                assertion()
+        finally:
+            del self.assertions[:]
+
+    ##
+    ## General tests
+    ##
+
+    @context.sub_context
+    def call_order_assertion(context):
+        @context.memoize
+        def target1(self):
+            return CallOrderTarget("target1")
+
+        @context.memoize
+        def target2(self):
+            return CallOrderTarget("target2")
+
+        @context.before
+        def define_assertions(self):
+            self.mock_callable(self.target1, "f1").for_call("step 1").to_return_value(
+                "step 1 return"
+            ).and_assert_called_ordered()
+            self.mock_callable(self.target1, "f2").to_return_value(
+                "step 2 return"
+            ).and_assert_called_ordered()
+            self.mock_callable(self.target2, "f1").for_call("step 3").to_return_value(
+                "step 3 return"
+            ).and_assert_called_ordered()
+
+        @context.example
+        def it_passes_with_ordered_calls(self):
+            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            self.assert_all()
+
+        @context.example
+        def it_fails_with_unordered_calls(self):
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
+            with self.assertRaisesWithMessage(
+                AssertionError,
+                "calls did not match assertion.\n"
+                "\n"
+                "These calls were expected to have happened in order:\n"
+                "\n"
+                "  target1, 'f1' with arguments:\n"
+                "    ('step 1',)\n"
+                "  target1, 'f2' with any arguments\n"
+                "  target2, 'f1' with arguments:\n"
+                "    ('step 3',)\n"
+                "\n"
+                "but these calls were made:\n"
+                "\n"
+                "  target1, 'f2' with any arguments\n"
+                "  target2, 'f1' with arguments:\n"
+                "    ('step 3',)\n"
+                "  target1, 'f1' with arguments:\n"
+                "    ('step 1',)",
+            ):
+                self.assert_all()
+
+        @context.example
+        def other_mocks_do_not_interfere(self):
+            self.mock_callable(self.target1, "f1").for_call(
+                "unrelated 1"
+            ).to_return_value("unrelated 1 return").and_assert_called_once()
+
+            self.assertEqual(self.target1.f1("unrelated 1"), "unrelated 1 return")
+
+            self.mock_callable(self.target2, "f1").for_call(
+                "unrelated 3"
+            ).to_return_value("unrelated 3 return")
+
+            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            self.assert_all()
+
+    ##
+    ## Target type tests
+    ##
+
     @context.shared_context
     def examples_for_target(
         context,
@@ -113,14 +216,6 @@ def mock_callable_context(context):
         can_yield=True,
         validate_signature=True,
     ):
-        @context.function
-        def assert_all(self):
-            try:
-                for assertion in self.assertions:
-                    assertion()
-            finally:
-                del self.assertions[:]
-
         @context.function
         def no_behavior_msg(self):
             if self.call_args:
@@ -785,10 +880,6 @@ def mock_callable_context(context):
                         )
                         with self.assertRaises(AssertionError):
                             self.assert_all()
-
-    ##
-    ## Target types
-    ##
 
     @context.sub_context
     def When_target_is_function_of_a_module(context):
