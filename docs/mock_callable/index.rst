@@ -414,7 +414,7 @@ Integration comes out of the box for :doc:`../testslide_dsl/index`: you can simp
 Python Unittest
 ^^^^^^^^^^^^^^^
 
-``testslide.TestCase`` is provided with of the shelf integration ready:
+``testslide.TestCase`` is provided with off the shelf integration ready:
 
 - Inherit your ``unittest.TestCase`` from it.
 - If you overload ``unittest.TestCase.setUp``, make **sure** to call ``super().setUp()`` before using ``mock_callable()``.
