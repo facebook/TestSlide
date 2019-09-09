@@ -403,10 +403,26 @@ This is particularly helpful when changes are introduced to the code: if a mocke
 
   This feature is **not** available in Python 2!
 
-Integration With Other Frameworks
----------------------------------
+Test Framework Integration
+--------------------------
 
-mock_callable comes out of the box with support for Python`s unittest (via ``testslide.TestCase``) and :doc:`../testslide_dsl/index`. You can easily integrate it with any other test framework you prefer:
+TestSlide's DSL
+^^^^^^^^^^^^^^^
+
+Integration comes out of the box for :doc:`../testslide_dsl/index`: you can simply do ``self.mock_callable()`` from inside examples or hooks.
+
+Python Unittest
+^^^^^^^^^^^^^^^
+
+``testslide.TestCase`` is provided with off the shelf integration ready:
+
+- Inherit your ``unittest.TestCase`` from it.
+- If you overload ``unittest.TestCase.setUp``, make **sure** to call ``super().setUp()`` before using ``mock_callable()``.
+
+Any Test Framework
+^^^^^^^^^^^^^^^^^^
+
+You must follow these steps for **each** test executed that uses ``mock_callable()``:
 
 * mock_callable calls ``testslide.mock_callable.register_assertion`` passing a callable object whenever an assertion is defined. You must set it to a function that will execute the assertion **after** the test code finishes. Eg: for Python's unittest: ``testslide.mock_callable.register_assertion = lambda assertion: self.addCleanup(assertion)``.
 * After each test execution, you must **unconditionally** call ``testslide.mock_callable.unpatch_all_callable_mocks``. This will undo all patches, so the next test is not affected by them. Eg: for Python's unittest: ``self.addCleanup(testslide.mock_callable.unpatch_all_callable_mocks)``.

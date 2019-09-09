@@ -102,11 +102,27 @@ The way around this, is to keep the original class where it is and move all its 
 
 This essentially creates a "copy" of the class, at the subclass, but with ``__new__`` implementing the behavior required. All things such as class attributes/methods and ``isinstance()`` are not affected. The only noticeable difference, is that ``mro()`` will show the extra subclass.
 
-Integration With Other Frameworks
----------------------------------
+Test Framework Integration
+--------------------------
 
-mock_constructor comes out of the box with support for Python`s unittest (via ``testslide.TestCase``) and :doc:`../testslide_dsl/index`. You can easily integrate it with any other test framework you prefer:
+TestSlide's DSL
+^^^^^^^^^^^^^^^
 
-* Integrate :doc:`../mock_callable/index` (used by mock_constructor under the hook).
+Integration comes out of the box for :doc:`../testslide_dsl/index`: you can simply do ``self.mock_constructor()`` from inside examples or hooks.
+
+Python Unittest
+^^^^^^^^^^^^^^^
+
+``testslide.TestCase`` is provided with off the shelf integration ready:
+
+- Inherit your ``unittest.TestCase`` from it.
+- If you overload ``unittest.TestCase.setUp``, make **sure** to call ``super().setUp()`` before using ``mock_constructor()``.
+
+Any Test Framework
+^^^^^^^^^^^^^^^^^^
+
+You must follow these steps for **each** test executed that uses ``mock_constructor()``:
+
+* Integrate :doc:`../mock_callable/index` (used by mock_constructor under the hood).
 * After each test execution, you must **unconditionally** call ``testslide.mock_constructor.unpatch_all_callable_mocks``. This will undo all patches, so the next test is not affected by them. Eg: for Python's unittest: ``self.addCleanup(testslide.mock_constructor.unpatch_all_callable_mocks)``.
 * You can then call ``testslide.mock_constructor.mock_constructor`` directly from your tests.
