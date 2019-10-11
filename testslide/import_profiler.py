@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import inspect
+import sys
 import time
 
 
@@ -12,10 +14,12 @@ class ImportedModule(object):
     A module that was imported with __import__.
     """
 
-    def __init__(self, name, globals, level, parent=None):
+    def __init__(self, name, globals, level, filename, lineno, parent=None):
         self.name = name
         self.globals = globals
         self.level = level
+        self.filename = filename
+        self.lineno = lineno
         self.parent = parent
         self.children = []
         self.time = None
@@ -94,13 +98,22 @@ class ImportProfiler(object):
         self.total_time = time.time() - self._start_time
         __builtins__["__import__"] = self._original_import
 
-    # def _profiled_import(self, name, globals=None, locals=None, fromlist=(), level=0):
     def _profiled_import(self, name, globals=None, locals=None, fromlist=(), level=0):
-        # print('Importing {}'.format(repr(name)))
+        if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+            frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
+            filename = frameinfo.filename
+            lineno = frameinfo.lineno
+        else:
+            frame = inspect.stack()[1][0]
+            filename = inspect.getsourcefile(frame) or inspect.getfile(frame)
+            lineno = inspect.getframeinfo(frame).lineno
+
         imp_mod = ImportedModule(
             name=name,
             globals=globals,
             level=level,
+            filename=filename,
+            lineno=lineno,
             parent=self._import_stack[-1] if self._import_stack else None,
         )
         if not self._import_stack:
@@ -112,7 +125,7 @@ class ImportProfiler(object):
             finally:
                 self._import_stack.pop()
 
-    def print_stats(self, threshold_ms=0):
+    def print_stats(self, threshold_ms=0, trim_path_prefix=None):
         def print_imp_mod(imp_mod, indent=0):
             own_ms = int(imp_mod.own_time * 1000)
             if own_ms >= threshold_ms or any(
@@ -120,7 +133,16 @@ class ImportProfiler(object):
                 for child in imp_mod.all_children
                 if child.own_time * 1000 >= threshold_ms
             ):
-                print("{}{}: {}ms".format("  " * indent, imp_mod, own_ms))
+                path = imp_mod.filename
+                if trim_path_prefix:
+                    split = path.split(trim_path_prefix)
+                    if len(split) == 2 and not split[0]:
+                        path = split[1]
+                print(
+                    "{}{}: {}ms ({}:{})".format(
+                        "  " * indent, imp_mod, own_ms, path, imp_mod.lineno
+                    )
+                )
             for child_imp_mod in imp_mod.children:
                 print_imp_mod(child_imp_mod, indent + 1)
 

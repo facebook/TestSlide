@@ -277,7 +277,9 @@ class Cli(object):
         self._modules = modules
 
     @staticmethod
-    def _do_imports(import_module_names, profile_threshold_ms=None):
+    def _do_imports(
+        import_module_names, profile_threshold_ms=None, trim_path_prefix=None
+    ):
         def import_all():
             for module_name in import_module_names:
                 __import__(module_name, level=0)
@@ -290,7 +292,9 @@ class Cli(object):
                 import_all()
                 end_time = time()
 
-            import_profiler.print_stats(profile_threshold_ms)
+            import_profiler.print_stats(
+                threshold_ms=profile_threshold_ms, trim_path_prefix=trim_path_prefix
+            )
 
         else:
             start_time = time()
@@ -354,7 +358,9 @@ class Cli(object):
 
         if config.profile_threshold_ms is not None:
             import_secs = self._do_imports(
-                config.import_module_names, config.profile_threshold_ms
+                config.import_module_names,
+                config.profile_threshold_ms,
+                config.trim_stack_trace_path_prefix,
             )
             return 0
         else:
