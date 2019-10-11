@@ -33,6 +33,10 @@ sdist:
 .PHONY: test
 test: unittest_tests testslide_tests black_check flake8 docs sdist
 
+.PHONY: install_local
+install_local:
+	pip install -e
+
 .PHONY: install_deps
 install_deps:
 	pip install -e .[test,build]
