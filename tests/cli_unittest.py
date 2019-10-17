@@ -3,27 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import unittest
-import sys
-from contextlib import contextmanager
-from testslide import redirect_stdout, redirect_stderr
-
-if sys.version_info[0] >= 3:
-    from unittest.mock import patch
-else:
-    from mock import patch
-
-from testslide import Context
-from testslide.dsl import context
-from testslide import cli
-import traceback
 import io
 import os
+import sys
+import traceback
+import unittest
+from contextlib import contextmanager
+from unittest.mock import patch
+
+from testslide import Context, cli, redirect_stderr, redirect_stdout
+from testslide.dsl import context
 
 
 class SimulatedFailure(Exception):
@@ -310,22 +299,13 @@ class TestCliDocumentation(TestCliBase):
         self.argv.append("--shuffle")
         self.argv.append("--seed")
         self.argv.append("33")
-        if sys.version_info[0] >= 3:
-            expected_stdout = "top context\n"
-            "  skipped example: SKIP\n"
-            "  passing example: PASS\n"
-            "  *focused example: PASS\n"
-            "  failing example: FAIL: SimulatedFailure: test failure (extra)\n"
-            "  nested context\n"
-            "    passing nested example: PASS\n\n"
-        else:
-            expected_stdout = "top context\n"
-            "  failing example: FAIL: SimulatedFailure: test failure (extra)\n"
-            "  passing example: PASS\n"
-            "  skipped example: SKIP\n"
-            "  nested context\n"
-            "    passing nested example: PASS\n"
-            "  *focused example: PASS\n\n"
+        expected_stdout = "top context\n"
+        "  skipped example: SKIP\n"
+        "  passing example: PASS\n"
+        "  *focused example: PASS\n"
+        "  failing example: FAIL: SimulatedFailure: test failure (extra)\n"
+        "  nested context\n"
+        "    passing nested example: PASS\n\n"
 
         with self.assert_in_stdout(
             expected_stdout

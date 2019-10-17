@@ -24,7 +24,7 @@ testslide_tests:
 
 .PHONY: docs
 docs:
-	cd docs && if python -c 'import sys ; sys.exit(1 if sys.version.startswith("2.") else 0)' ; then make html ; fi
+	cd docs && if python -c 'import sys ; sys.exit(1 if sys.version.startswith("3.7") else 0)' ; then make html ; fi
 
 .PHONY: sdist
 sdist:

@@ -3,18 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import six
-import inspect
 import functools
-from typing import List, Callable  # noqa
+import inspect
+from typing import Callable, List  # noqa
+
 import testslide
-from testslide.strict_mock import StrictMock
-from testslide.strict_mock import _add_signature_validation
+from testslide.strict_mock import StrictMock, _add_signature_validation
 
 
 def mock_callable(target, method):
@@ -351,9 +345,6 @@ class _YieldValuesRunner(_Runner):
         self.index += 1
         return item
 
-    if six.PY2:
-        next = __next__
-
     def run(self, *args, **kwargs):
         super(_YieldValuesRunner, self).run(*args, **kwargs)
         return self
@@ -391,7 +382,7 @@ class _CallableMock(object):
         self.method = method
         self.runners = []
 
-    def __call__(self, *args, **kwargs):
+    def _real_call(self, *args, **kwargs):
         for runner in self.runners:
             if runner.can_accept_args(*args, **kwargs):
                 return runner.run(*args, **kwargs)
@@ -414,6 +405,18 @@ class _CallableMock(object):
             )
             raise UnexpectedCallArguments(ex_msg)
         raise UndefinedBehaviorForCall(ex_msg)
+
+    def __call__(self, *args, **kwargs):
+        if self.original_callable and inspect.iscoroutinefunction(
+            self.original_callable
+        ):
+
+            async def async_callable_mock(*args, **kwargs):
+                return self._real_call(*args, **kwargs)
+
+            return async_callable_mock(*args, **kwargs)
+        else:
+            return self._real_call(*args, **kwargs)
 
     @property
     def _registered_calls(self):
@@ -495,7 +498,7 @@ def _mock_instance_attribute(instance, attr, value):
 
 
 def _patch(target, method, new_value):
-    if isinstance(target, six.string_types):
+    if isinstance(target, str):
         target = testslide._importer(target)
 
     if isinstance(target, StrictMock):
@@ -560,7 +563,7 @@ class _MockCallableDSL(object):
         self._runner = None
         self._next_runner_accepted_args = None
 
-        if isinstance(target, six.string_types):
+        if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
             self._target = target
@@ -740,7 +743,7 @@ class _MockCallableDSL(object):
     def to_call_original(self):
         """
         Calls the original callable implementation, instead of mocking it. This is
-        useful for example, if you want to by default call the original implementation,
+        useful for example, if you want to call the original implementation by default,
         but for a specific calls, mock the result.
         """
         if not self._original_callable:

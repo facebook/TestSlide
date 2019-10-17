@@ -3,22 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-from testslide.strict_mock import StrictMock, UndefinedBehavior, NoSuchAttribute
-
 import contextlib
 import copy
 import functools
 import inspect
-import sys
-import re
 import os
+import re
+import sys
 
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+from testslide.strict_mock import NoSuchAttribute, StrictMock, UndefinedBehavior
 
 
 def extra_arg(f):
@@ -29,7 +23,7 @@ def extra_arg(f):
     return wrapper
 
 
-class TemplateParent(object):
+class TemplateParent:
     def __init__(self):
         self.parent_runtime_attr_from_init = True
 
@@ -55,21 +49,19 @@ class Template(TemplateParent):
     def class_method(cls, message):
         return "class_method: {}".format(message)
 
-    if sys.version_info[0] >= 3:
+    @extra_arg
+    def instance_method_extra(self, extra, message):
+        return "instance_method: {}".format(message)
 
-        @extra_arg
-        def instance_method_extra(self, extra, message):
-            return "instance_method: {}".format(message)
+    @extra_arg
+    @staticmethod
+    def static_method_extra(extra, message):
+        return "static_method: {}".format(message)
 
-        @extra_arg
-        @staticmethod
-        def static_method_extra(extra, message):
-            return "static_method: {}".format(message)
-
-        @extra_arg
-        @classmethod
-        def class_method_extra(cls, extra, message):
-            return "class_method: {}".format(message)
+    @extra_arg
+    @classmethod
+    def class_method_extra(cls, extra, message):
+        return "class_method: {}".format(message)
 
 
 class ContextManagerTemplate(Template):
@@ -88,9 +80,6 @@ def strict_mock(context):
         with self.assertRaises(exception) as cm:
             yield
         ex_msg = str(cm.exception)
-        if sys.version_info[0] == 2:
-            ex_msg = unicode(ex_msg)  # noqa: F821
-            msg = unicode(msg)  # noqa: F821
         self.assertEqual(
             ex_msg,
             msg,
@@ -189,8 +178,6 @@ def strict_mock(context):
             @context.before
             def before(self):
                 self.runtime_attr = "some_runtime_attr"
-                if sys.version_info[0] == 2:
-                    self.runtime_attr = self.runtime_attr.encode("utf-8")
 
             @context.shared_context
             def non_callable_attributes(context):
@@ -245,23 +232,19 @@ def strict_mock(context):
                     self.strict_mock.non_callable = new_value
                     self.assertEqual(self.strict_mock.non_callable, new_value)
 
-                if sys.version_info[0] >= 3:
+                @context.example
+                def allows_init_set_attributes_to_be_set(self):
+                    new_value = "new value"
+                    self.strict_mock.runtime_attr_from_init = new_value
+                    self.assertEqual(self.strict_mock.runtime_attr_from_init, new_value)
 
-                    @context.example
-                    def allows_init_set_attributes_to_be_set(self):
-                        new_value = "new value"
-                        self.strict_mock.runtime_attr_from_init = new_value
-                        self.assertEqual(
-                            self.strict_mock.runtime_attr_from_init, new_value
-                        )
-
-                    @context.example
-                    def allows_parent_init_set_attributes_to_be_set(self):
-                        new_value = "new value"
-                        self.strict_mock.parent_runtime_attr_from_init = new_value
-                        self.assertEqual(
-                            self.strict_mock.parent_runtime_attr_from_init, new_value
-                        )
+                @context.example
+                def allows_parent_init_set_attributes_to_be_set(self):
+                    new_value = "new value"
+                    self.strict_mock.parent_runtime_attr_from_init = new_value
+                    self.assertEqual(
+                        self.strict_mock.parent_runtime_attr_from_init, new_value
+                    )
 
                 @context.example
                 def can_set_runtime_attrs(self):
@@ -342,34 +325,30 @@ def strict_mock(context):
                         ):
                             self.strict_mock.non_existing_method = self.mock_function
 
-                    if sys.version_info[0] != 2:
+                    @context.sub_context
+                    def signature_validation(context):
+                        @context.example
+                        def fails_on_wrong_signature_call(self):
+                            setattr(
+                                self.strict_mock,
+                                self.test_method_name,
+                                lambda message, extra: None,
+                            )
+                            with self.assertRaises(TypeError):
+                                getattr(self.strict_mock, self.test_method_name)(
+                                    "message", "extra"
+                                )
 
-                        @context.sub_context
-                        def signature_validation(context):
-                            @context.example
-                            def fails_on_wrong_signature_call(self):
-                                setattr(
-                                    self.strict_mock,
-                                    self.test_method_name,
-                                    lambda message, extra: None,
-                                )
-                                with self.assertRaises(TypeError):
-                                    getattr(self.strict_mock, self.test_method_name)(
-                                        "message", "extra"
-                                    )
-
-                            @context.example
-                            def works_with_wraps(self):
-                                test_method_name = "{}_extra".format(
-                                    self.test_method_name
-                                )
-                                setattr(
-                                    self.strict_mock,
-                                    test_method_name,
-                                    lambda message: "mock: {}".format(message),
-                                )
-                                method = getattr(self.strict_mock, test_method_name)
-                                self.assertEqual(method("hello"), "mock: hello")
+                        @context.example
+                        def works_with_wraps(self):
+                            test_method_name = "{}_extra".format(self.test_method_name)
+                            setattr(
+                                self.strict_mock,
+                                test_method_name,
+                                lambda message: "mock: {}".format(message),
+                            )
+                            method = getattr(self.strict_mock, test_method_name)
+                            self.assertEqual(method("hello"), "mock: hello")
 
                 @context.sub_context
                 def success(context):
@@ -407,7 +386,7 @@ def strict_mock(context):
 
                         @context.example
                         def can_mock_with_instancemethod(self):
-                            class SomeClass(object):
+                            class SomeClass:
                                 def mock_method(self, message):
                                     return "mock: {}".format(message)
 

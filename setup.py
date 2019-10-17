@@ -8,7 +8,7 @@ from io import open
 
 setup(
     name="TestSlide",
-    version="1.7.0",
+    version="2.0.0",
     packages=["testslide"],
     maintainer="Fabio Pugliese Ornellas",
     maintainer_email="fabio.ornellas@gmail.com",
@@ -22,27 +22,22 @@ setup(
         "\n"
         "Full documentation at https://testslide.readthedocs.io/."
     ),
-    install_requires=[
-        "six",
-        'typing ; python_version<"3"',
-        'mock ; python_version<"3"',
-    ],
-    extras_require = {
-        'build': [
-            'black ; python_version>="3.6"',
+    install_requires=[],
+    extras_require={
+        "build": [
+            "black",
             "ipython",
             "flake8",
             "sphinx",
             "sphinx-autobuild",
             "sphinx_rtd_theme",
-        ],
+        ]
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Testing",
         "Topic :: Software Development :: Testing :: Acceptance",

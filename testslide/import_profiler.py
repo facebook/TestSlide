@@ -7,7 +7,7 @@
 import time
 
 
-class ImportedModule(object):
+class ImportedModule:
     """
     A module that was imported with __import__.
     """
@@ -60,7 +60,7 @@ class ImportedModule(object):
         self.time = time.time() - self._start_time
 
 
-class ImportProfiler(object):
+class ImportProfiler:
     """
     Experimental!
 

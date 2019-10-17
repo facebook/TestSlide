@@ -3,54 +3,38 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import sys
 import contextlib
+import sys
 
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
 from testslide.mock_callable import _MockCallableDSL
 from testslide.strict_mock import StrictMock
 
 
-class TargetParent(object):
+class TargetParent:
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        if "p2_super" in kwargs:
-            self.p2_super = kwargs["p2_super"]
-        if "p3_super" in kwargs:
-            self.p3_super = kwargs["p3_super"]
+        if "super" in kwargs:
+            self.super = kwargs["super"]
 
-    def p2_super_instance_method(self):
-        return "p2_super_instance_method"
-
-    def p3_super_instance_method(self):
-        return "p3_super_instance_method"
+    def super_instance_method(self):
+        return "super_instance_method"
 
     @classmethod
-    def p2_super_class_method(cls):
-        return "p2_super_class_method"
-
-    @classmethod
-    def p3_super_class_method(cls):
-        return "p3_super_class_method"
+    def super_class_method(cls):
+        return "super_class_method"
 
 
 class Target(TargetParent):
     CLASS_ATTR = "CLASS_ATTR"
-    __slots__ = ("args", "kwargs", "p2_super", "p3_super")
+    __slots__ = ("args", "kwargs", "super")
 
     def __init__(self, *args, **kwargs):
-        self.p2_super = False
-        super(Target, self).__init__(p2_super=True)
+        super(Target, self).__init__()
 
-        if sys.version_info[0] >= 3:
-            self.p3_super = False
-            super().__init__(p3_super=True)
+        self.super = False
+        super().__init__(super=True)
 
         super(Target, self).__init__(*args, **kwargs)
 
@@ -59,11 +43,8 @@ class Target(TargetParent):
     def regular_instance_method(self):
         return "regular_instance_method"
 
-    def p2_super_instance_method(self):
-        return super(Target, self).p2_super_instance_method()
-
-    def p3_super_instance_method(self):
-        return super().p3_super_instance_method()
+    def super_instance_method(self):
+        return super().super_instance_method()
 
     @staticmethod
     def static_method():
@@ -74,14 +55,8 @@ class Target(TargetParent):
         return "regular_class_method"
 
     @classmethod
-    def p2_super_class_method(cls):
-        return super(Target, cls).p2_super_class_method()
-
-    if sys.version_info[0] >= 3:
-
-        @classmethod
-        def p3_super_class_method(cls):
-            return super().p3_super_class_method()
+    def super_class_method(cls):
+        return super().super_class_method()
 
 
 original_target_class = Target
@@ -150,18 +125,11 @@ def mock_constructor(context):
                     "regular_class_method",
                 )
 
-            @context.example("super(Target, cls) works")
-            def p2_super_works(self):
-                self.assertEqual(
-                    self.class_attribute_target.p2_super_class_method(),
-                    "p2_super_class_method",
-                )
-
             @context.example("super() works")
-            def p3_super_works(self):
+            def super_works(self):
                 self.assertEqual(
-                    self.class_attribute_target.p3_super_class_method(),
-                    "p3_super_class_method",
+                    self.class_attribute_target.super_class_method(),
+                    "super_class_method",
                 )
 
     @context.sub_context
@@ -220,11 +188,7 @@ def mock_constructor(context):
 
             @context.example
             def can_call_class_methods(self):
-                for name in [
-                    "regular_class_method",
-                    "p2_super_class_method",
-                    "p3_super_class_method",
-                ]:
+                for name in ["regular_class_method", "super_class_method"]:
                     self.assertEqual(getattr(original_target_class, name)(), name)
 
             @context.example
@@ -397,17 +361,10 @@ def mock_constructor(context):
 
                 @context.sub_context("Target.__init__()")
                 def target_init(context):
-                    @context.example("super(Target, self)")
-                    def p2_super_works(self):
-                        target = self.get_target_class()(p2_super=True)
-                        self.assertTrue(target.p2_super)
-
-                    if sys.version_info[0] >= 3:
-
-                        @context.example("super() works")
-                        def p3_super_works(self):
-                            target = self.get_target_class()(p3_super=True)
-                            self.assertTrue(target.p3_super)
+                    @context.example("super() works")
+                    def super_works(self):
+                        target = self.get_target_class()(super=True)
+                        self.assertTrue(target.super)
 
                     @context.example
                     def can_be_called_again(self):
@@ -428,21 +385,12 @@ def mock_constructor(context):
 
                     @context.sub_context
                     def when_it_overloads_parent_method(context):
-                        @context.example("super(Target, self) works")
-                        def p2_super_works(self):
+                        @context.example("super() works")
+                        def super_works(self):
                             self.assertEqual(
-                                self.target.p2_super_instance_method(),
-                                "p2_super_instance_method",
+                                self.target.super_instance_method(),
+                                "super_instance_method",
                             )
-
-                        if sys.version_info[0] >= 3:
-
-                            @context.example("super() works")
-                            def p3_super_works(self):
-                                self.assertEqual(
-                                    self.target.p3_super_instance_method(),
-                                    "p3_super_instance_method",
-                                )
 
     @context.sub_context
     def StrictMock_integration(context):

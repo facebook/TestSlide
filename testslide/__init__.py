@@ -3,14 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from contextlib import contextmanager
 
-from typing import List  # noqa
+from typing import List
 import sys
 import unittest
 import re
@@ -20,7 +15,7 @@ import testslide.mock_callable
 import testslide.mock_constructor
 from testslide.strict_mock import StrictMock  # noqa
 
-if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+if sys.version_info.minor >= 5:
     from contextlib import redirect_stdout, redirect_stderr
 else:
 
@@ -43,23 +38,6 @@ else:
             sys.stderr = original
 
 
-@contextmanager
-def _add_traceback_context_manager():
-    """
-    Add __traceback__ to exceptions raised within the block, to give Python
-    2 compatibility.
-    """
-    if sys.version_info[0] == 2:
-        try:
-            yield
-        except BaseException as e:
-            _exc_type, _exc_value, exc_traceback = sys.exc_info()
-            e.__dict__["__traceback__"] = exc_traceback
-            raise e
-    else:
-        yield
-
-
 def _importer(target):
     components = target.split(".")
     import_path = components.pop(0)
@@ -78,7 +56,7 @@ def _importer(target):
     return thing
 
 
-class _ContextData(object):
+class _ContextData:
     """
     To be used as a repository of context specific data, used during each
     example execution.
@@ -169,8 +147,7 @@ class AggregatedExceptions(Exception):
     @contextmanager
     def catch(self):
         try:
-            with _add_traceback_context_manager():
-                yield
+            yield
         except BaseException as exception:
             self.append_exception(exception)
 
@@ -207,7 +184,7 @@ class UnexpectedSuccess(Exception):
     """
 
 
-class Example(object):
+class Example:
     """
     Individual example.
     """
@@ -294,8 +271,7 @@ class Example(object):
             if self.skip:
                 raise Skip()
             context_data = _ContextData(self.context)
-            with _add_traceback_context_manager():
-                self._run_example(context_data)
+            self._run_example(context_data)
         finally:
             sys.stdout.flush()
             sys.stderr.flush()
@@ -317,10 +293,7 @@ class _TestSlideTestResult(unittest.TestResult):
         self.aggregated_exceptions = AggregatedExceptions()
 
     def _add_exception(self, err):
-        exc_type, exc_value, exc_traceback = err
-        # Decorate __traceback__ for Python 2 compatibility
-        if sys.version_info[0] == 2:
-            exc_value.__dict__["__traceback__"] = err[2]
+        _, exc_value, _ = err
         self.aggregated_exceptions.append_exception(exc_value)
 
     def addError(self, test, err):
@@ -358,7 +331,7 @@ class _TestSlideTestResult(unittest.TestResult):
             self._add_exception(err)
 
 
-class Context(object):
+class Context:
     """
     Container for example contexts.
     """
@@ -366,7 +339,7 @@ class Context(object):
     _SAME_CONTEXT_NAME_ERROR = "A context with the same name is already defined"
 
     # List of all top level contexts created
-    all_top_level_contexts = []  # type: List[Context]
+    all_top_level_contexts: List["Context"] = []
 
     def _setup_mock_callable(self):
         def _mock_callable(self, *args, **kwargs):
@@ -661,16 +634,9 @@ class Context(object):
 
             # Build a child class of given TestCase, with a defined test that
             # will run TestSlide example.
-            if sys.version_info[0] == 2:
-                test_slide_test_case = type(
-                    str("TestSlideTestCase"),
-                    (test_case,),
-                    {"test_test_slide": test_test_slide},
-                )
-            else:
-                test_slide_test_case = types.new_class(
-                    "TestSlideTestCase", bases=(test_case,), exec_body=exec_body
-                )
+            test_slide_test_case = types.new_class(
+                "TestSlideTestCase", bases=(test_case,), exec_body=exec_body
+            )
 
             # This suite will only contain TestSlide's example test.
             test_suite = unittest.TestLoader().loadTestsFromName(
@@ -693,9 +659,8 @@ def _run_before_once_hooks():
     global before_once_executed
     if not before_once_executed:
         global before_once_functions
-        with _add_traceback_context_manager():
-            for code in before_once_functions:
-                code()
+        for code in before_once_functions:
+            code()
         before_once_executed = True
 
 
@@ -703,15 +668,9 @@ def reset():
     """
     Clear all defined contexts and hooks.
     """
-    if sys.version_info[0] >= 3:
-        Context.all_top_level_contexts.clear()
-    else:
-        Context.all_top_level_contexts[:] = []
+    Context.all_top_level_contexts[:] = []
     global before_once_functions
-    if sys.version_info[0] >= 3:
-        before_once_functions.clear()
-    else:
-        before_once_functions[:] = []
+    before_once_functions[:] = []
     global before_once_executed
     before_once_executed = False
 
