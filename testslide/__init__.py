@@ -3,11 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from contextlib import contextmanager
 
 from typing import List  # noqa
@@ -41,23 +36,6 @@ else:
             yield
         finally:
             sys.stderr = original
-
-
-@contextmanager
-def _add_traceback_context_manager():
-    """
-    Add __traceback__ to exceptions raised within the block, to give Python
-    2 compatibility.
-    """
-    if sys.version_info[0] == 2:
-        try:
-            yield
-        except BaseException as e:
-            _exc_type, _exc_value, exc_traceback = sys.exc_info()
-            e.__dict__["__traceback__"] = exc_traceback
-            raise e
-    else:
-        yield
 
 
 def _importer(target):
@@ -169,8 +147,7 @@ class AggregatedExceptions(Exception):
     @contextmanager
     def catch(self):
         try:
-            with _add_traceback_context_manager():
-                yield
+            yield
         except BaseException as exception:
             self.append_exception(exception)
 
@@ -294,8 +271,7 @@ class Example(object):
             if self.skip:
                 raise Skip()
             context_data = _ContextData(self.context)
-            with _add_traceback_context_manager():
-                self._run_example(context_data)
+            self._run_example(context_data)
         finally:
             sys.stdout.flush()
             sys.stderr.flush()
@@ -318,9 +294,6 @@ class _TestSlideTestResult(unittest.TestResult):
 
     def _add_exception(self, err):
         exc_type, exc_value, exc_traceback = err
-        # Decorate __traceback__ for Python 2 compatibility
-        if sys.version_info[0] == 2:
-            exc_value.__dict__["__traceback__"] = err[2]
         self.aggregated_exceptions.append_exception(exc_value)
 
     def addError(self, test, err):
@@ -661,16 +634,9 @@ class Context(object):
 
             # Build a child class of given TestCase, with a defined test that
             # will run TestSlide example.
-            if sys.version_info[0] == 2:
-                test_slide_test_case = type(
-                    str("TestSlideTestCase"),
-                    (test_case,),
-                    {"test_test_slide": test_test_slide},
-                )
-            else:
-                test_slide_test_case = types.new_class(
-                    "TestSlideTestCase", bases=(test_case,), exec_body=exec_body
-                )
+            test_slide_test_case = types.new_class(
+                "TestSlideTestCase", bases=(test_case,), exec_body=exec_body
+            )
 
             # This suite will only contain TestSlide's example test.
             test_suite = unittest.TestLoader().loadTestsFromName(
@@ -693,25 +659,18 @@ def _run_before_once_hooks():
     global before_once_executed
     if not before_once_executed:
         global before_once_functions
-        with _add_traceback_context_manager():
-            for code in before_once_functions:
-                code()
-        before_once_executed = True
+        for code in before_once_functions:
+            code()
+    before_once_executed = True
 
 
 def reset():
     """
     Clear all defined contexts and hooks.
     """
-    if sys.version_info[0] >= 3:
-        Context.all_top_level_contexts.clear()
-    else:
-        Context.all_top_level_contexts[:] = []
+    Context.all_top_level_contexts.clear()
     global before_once_functions
-    if sys.version_info[0] >= 3:
-        before_once_functions.clear()
-    else:
-        before_once_functions[:] = []
+    before_once_functions.clear()
     global before_once_executed
     before_once_executed = False
 

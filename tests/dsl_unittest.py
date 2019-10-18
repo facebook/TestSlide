@@ -3,18 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import unittest
-import sys
 
-if sys.version_info[0] >= 3:
-    from unittest.mock import Mock, call, patch
-else:
-    from mock import Mock, call, patch
+from unittest.mock import Mock, call, patch
 
 from testslide import Context, AggregatedExceptions, reset
 from testslide.dsl import context, xcontext, fcontext, before_once
@@ -101,8 +92,6 @@ class SimulatedFailure(Exception):
 class TestDSLBase(unittest.TestCase):
     def setUp(self):
         reset()
-        if sys.version_info[0] == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def run_first_context_first_example(self):
         Context.all_top_level_contexts[0].all_examples[0]()

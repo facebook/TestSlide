@@ -3,14 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import gc
 import inspect
-import six
 import sys
 
 import testslide
@@ -57,14 +51,6 @@ def unpatch_all_constructor_mocks():
             unpatcher()
     finally:
         del _unpatchers[:]
-
-
-def _is_string(obj):
-    return any(
-        string_type
-        for string_type in six.string_types
-        if issubclass(type(obj), string_type)
-    )
 
 
 class _MockConstructorDSL(_MockCallableDSL):
@@ -264,9 +250,9 @@ def _patch_and_return_mocked_class(
 
 
 def mock_constructor(target, class_name):
-    if not _is_string(class_name):
+    if not isinstance(class_name, str):
         raise ValueError("Second argument must be a string with the name of the class.")
-    if _is_string(target):
+    if isinstance(target, str):
         target = testslide._importer(target)
 
     target_class_id = (id(target), class_name)

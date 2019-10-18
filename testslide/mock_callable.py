@@ -3,12 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import six
 import inspect
 import functools
 from typing import List, Callable  # noqa
@@ -351,9 +345,6 @@ class _YieldValuesRunner(_Runner):
         self.index += 1
         return item
 
-    if six.PY2:
-        next = __next__
-
     def run(self, *args, **kwargs):
         super(_YieldValuesRunner, self).run(*args, **kwargs)
         return self
@@ -495,7 +486,7 @@ def _mock_instance_attribute(instance, attr, value):
 
 
 def _patch(target, method, new_value):
-    if isinstance(target, six.string_types):
+    if isinstance(target, str):
         target = testslide._importer(target)
 
     if isinstance(target, StrictMock):
@@ -560,7 +551,7 @@ class _MockCallableDSL(object):
         self._runner = None
         self._next_runner_accepted_args = None
 
-        if isinstance(target, six.string_types):
+        if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
             self._target = target
