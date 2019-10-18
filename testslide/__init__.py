@@ -38,6 +38,10 @@ else:
             sys.stderr = original
 
 
+if sys.version_info[0] < 3:
+    raise RuntimeError("Python >=3 required.")
+
+
 def _importer(target):
     components = target.split(".")
     import_path = components.pop(0)
