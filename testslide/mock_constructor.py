@@ -5,7 +5,6 @@
 
 import gc
 import inspect
-import sys
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock

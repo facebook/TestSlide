@@ -14,7 +14,6 @@ from testslide.mock_callable import (
 )
 import contextlib
 from testslide.strict_mock import StrictMock
-import sys
 import time
 import os
 
