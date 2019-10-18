@@ -266,7 +266,7 @@ def mock_callable_context(context):
             def works_for_matching_signature(self):
                 self.callable_target(*self.call_args, **self.call_kwargs),
 
-            if validate_signature and sys.version_info[0] != 2:
+            if validate_signature:
 
                 @context.example
                 def raises_TypeError_for_mismatching_signature(self):

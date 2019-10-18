@@ -129,7 +129,7 @@ class AttrAccessValidation(object):
         elif instance is None and owner is self.original_class:
             # ...by returning the original value from the mocked class
             attr = getattr(self.mocked_class, self.name)
-            if hasattr(attr, "__get__") and sys.version_info[0] >= 3:
+            if hasattr(attr, "__get__"):
                 return attr.__get__(instance, self.mocked_class)
             else:
                 return attr
