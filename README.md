@@ -81,7 +81,7 @@ There's a lot more that TestSlide can offer, please check the full documentation
 ## Requirements
 
 * Linux
-* Python 2 / 3
+* Python 3
 
 ## Join the TestSlide community
 

@@ -104,10 +104,6 @@ StrictMock will introspect at the template class code, to detect attributes that
   
   In [4]: mock.dynamic = 'something else'
 
-.. note::
-
-  This feature is **not** available in Python 2!
-
 The detection mechanism can only detect attributes defined from ``__init__``. If you have attributes defined at other places, you will need to inform them explicitly:
 
 .. code-block:: python
@@ -135,10 +131,6 @@ StrictMock also ensures that method signatures match the ones from the template 
   In [5]: mock.is_odd(2, 'invalid')
   (...)
   TypeError: too many positional arguments
-
-.. note::
-
-  This feature is **not** available in Python 2!
 
 Magic Methods
 -------------

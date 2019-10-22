@@ -3,25 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sys
 import dis
 import copy
 import functools
 import inspect
 
-if sys.version_info[0] >= 3:
-    from unittest.mock import _must_skip
+from unittest.mock import _must_skip
 
 
 def _add_signature_validation(value, template, attr_name):
-    if sys.version_info[0] == 2:
-        return value
-
     if isinstance(template, StrictMock):
         if "__template" in template.__dict__:
             template = template.__template
@@ -242,7 +233,7 @@ class StrictMock(object):
             return klass.__init__
 
     def __is_runtime_attr(self, name):
-        if sys.version_info[0] >= 3 and self.__template:
+        if self.__template:
             for klass in self.__template.mro():
                 template_init = self.__get_class_init(klass)
                 if not inspect.isfunction(template_init):

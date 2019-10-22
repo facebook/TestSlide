@@ -3,11 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import testslide
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
@@ -19,7 +14,6 @@ from testslide.mock_callable import (
 )
 import contextlib
 from testslide.strict_mock import StrictMock
-import sys
 import time
 import os
 
@@ -271,7 +265,7 @@ def mock_callable_context(context):
             def works_for_matching_signature(self):
                 self.callable_target(*self.call_args, **self.call_kwargs),
 
-            if validate_signature and sys.version_info[0] != 2:
+            if validate_signature:
 
                 @context.example
                 def raises_TypeError_for_mismatching_signature(self):

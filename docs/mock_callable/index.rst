@@ -399,10 +399,6 @@ mock_callable implements signature validation. When you use it, the mock will ra
 
 This is particularly helpful when changes are introduced to the code: if a mocked method changes the signature, even when mocked, mock_callable will give you the signal that there's something broken.
 
-.. note::
-
-  This feature is **not** available in Python 2!
-
 Test Framework Integration
 --------------------------
 

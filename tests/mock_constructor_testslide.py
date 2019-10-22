@@ -3,11 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sys
 import contextlib
 
@@ -48,9 +43,8 @@ class Target(TargetParent):
         self.p2_super = False
         super(Target, self).__init__(p2_super=True)
 
-        if sys.version_info[0] >= 3:
-            self.p3_super = False
-            super().__init__(p3_super=True)
+        self.p3_super = False
+        super().__init__(p3_super=True)
 
         super(Target, self).__init__(*args, **kwargs)
 
@@ -77,11 +71,9 @@ class Target(TargetParent):
     def p2_super_class_method(cls):
         return super(Target, cls).p2_super_class_method()
 
-    if sys.version_info[0] >= 3:
-
-        @classmethod
-        def p3_super_class_method(cls):
-            return super().p3_super_class_method()
+    @classmethod
+    def p3_super_class_method(cls):
+        return super().p3_super_class_method()
 
 
 original_target_class = Target
@@ -402,12 +394,10 @@ def mock_constructor(context):
                         target = self.get_target_class()(p2_super=True)
                         self.assertTrue(target.p2_super)
 
-                    if sys.version_info[0] >= 3:
-
-                        @context.example("super() works")
-                        def p3_super_works(self):
-                            target = self.get_target_class()(p3_super=True)
-                            self.assertTrue(target.p3_super)
+                    @context.example("super() works")
+                    def p3_super_works(self):
+                        target = self.get_target_class()(p3_super=True)
+                        self.assertTrue(target.p3_super)
 
                     @context.example
                     def can_be_called_again(self):
@@ -435,14 +425,12 @@ def mock_constructor(context):
                                 "p2_super_instance_method",
                             )
 
-                        if sys.version_info[0] >= 3:
-
-                            @context.example("super() works")
-                            def p3_super_works(self):
-                                self.assertEqual(
-                                    self.target.p3_super_instance_method(),
-                                    "p3_super_instance_method",
-                                )
+                        @context.example("super() works")
+                        def p3_super_works(self):
+                            self.assertEqual(
+                                self.target.p3_super_instance_method(),
+                                "p3_super_instance_method",
+                            )
 
     @context.sub_context
     def StrictMock_integration(context):
@@ -466,12 +454,10 @@ def mock_constructor(context):
                 ).for_call().to_return_value("mocked")
                 self.assertEqual(self.target.regular_instance_method(), "mocked")
 
-            if sys.version_info[0] >= 3:
-
-                @context.example
-                def dynamic_attributes_work(self):
-                    self.target_mock.dynamic_attr = "mocked_attr"
-                    self.assertEqual(self.target.dynamic_attr, "mocked_attr")
+            @context.example
+            def dynamic_attributes_work(self):
+                self.target_mock.dynamic_attr = "mocked_attr"
+                self.assertEqual(self.target.dynamic_attr, "mocked_attr")
 
         @context.function
         def get_target_mock(self):

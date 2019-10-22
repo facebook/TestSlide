@@ -3,25 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import random
+import io
 from time import time
 import traceback
-import six
 import sys
 import os
 
-from . import (
-    AggregatedExceptions,
-    Skip,
-    redirect_stdout,
-    redirect_stderr,
-    _add_traceback_context_manager,
-)
+from . import AggregatedExceptions, Skip, redirect_stdout, redirect_stderr
 
 
 class Formatter(object):
@@ -142,10 +131,7 @@ class Formatter(object):
                 **kwargs
             )
         else:
-            if sys.version_info[0] >= 3:
-                print(*values, **kwargs)
-            else:
-                print(*[unicode(v) for v in values], **kwargs)  # noqa: F821
+            print(*values, **kwargs)
 
     def print_white(self, *values, **kwargs):
         self._print_attrs("1", *values, **kwargs)
@@ -328,19 +314,17 @@ class Runner(object):
 
     def _run_example(self, example):
         if example.focus and self.fail_if_focused:
-            with _add_traceback_context_manager():
-                raise AssertionError(
-                    "Focused example not allowed with --fail-if-focused"
-                    ". Please remove the focus to allow the test to run."
-                )
+            raise AssertionError(
+                "Focused example not allowed with --fail-if-focused"
+                ". Please remove the focus to allow the test to run."
+            )
         if self.quiet:
-            stdout = six.StringIO()
-            stderr = six.StringIO()
+            stdout = io.StringIO()
+            stderr = io.StringIO()
             example_exception = None
             with redirect_stdout(stdout), redirect_stderr(stderr):
                 try:
-                    with _add_traceback_context_manager():
-                        example()
+                    example()
                 except BaseException as ex:
                     example_exception = ex
             if example_exception:
