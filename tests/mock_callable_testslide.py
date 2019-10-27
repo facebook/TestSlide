@@ -941,10 +941,11 @@ def mock_callable_context(context):
 
     @context.sub_context
     def When_target_is_async(context):
-
         @context.example
         def async_function_can_be_patched(self):
-            mock_async_callable(__name__, "get_me_a_response").to_return_value("mocked_response")
+            mock_async_callable(__name__, "get_me_a_response").to_return_value(
+                "mocked_response"
+            )
             loop = asyncio.get_event_loop()
             ret = loop.run_until_complete(get_me_a_response())
             self.assertEqual(ret, "mocked_response")
