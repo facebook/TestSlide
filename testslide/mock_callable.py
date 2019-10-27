@@ -20,6 +20,15 @@ def mock_callable(target, method):
     return _MockCallableDSL(target, method)
 
 
+def mock_async_callable(target, method):
+    if method == "__new__":
+        raise ValueError(
+            "Mocking __new__ is not allowed with mock_callable(), please use "
+            "mock_constructor()."
+        )
+    return _MockAsyncCallableDSL(target, method)
+
+
 _unpatchers = []  # type: List[Callable]  # noqa T484
 
 
@@ -411,6 +420,16 @@ class _CallableMock(object):
         return [runner.accepted_args for runner in self.runners if runner.accepted_args]
 
 
+class _CallableAsyncMock(_CallableMock):
+    def __call__(self, *args, **kwargs):
+        _super = super(_CallableAsyncMock, self)
+
+        async def coro_call():
+            return _super.__call__(*args, **kwargs)
+
+        return coro_call()
+
+
 class _DescriptorProxy(object):
     def __init__(self, original_class_attr, attr_name):
         self.original_class_attr = original_class_attr
@@ -538,6 +557,7 @@ def _patch(target, method, new_value):
 class _MockCallableDSL(object):
 
     CALLABLE_MOCKS = {}  # NOQA T484
+    CALLABLE_MOCK_CLS = _CallableMock
 
     def __init__(self, target, method, callable_mock=None, original_callable=None):
         if not _is_setup():
@@ -561,7 +581,9 @@ class _MockCallableDSL(object):
         if target_method_id not in self.CALLABLE_MOCKS:
             if not callable_mock:
                 patch = True
-                callable_mock = _CallableMock(self._original_target, self._method)
+                callable_mock = self.CALLABLE_MOCK_CLS(
+                    self._original_target, self._method
+                )
             else:
                 patch = False
             self.CALLABLE_MOCKS[target_method_id] = callable_mock
@@ -820,3 +842,7 @@ class _MockCallableDSL(object):
             )
         self._runner.add_call_order_assertion()
         return self
+
+
+class _MockAsyncCallableDSL(_MockCallableDSL):
+    CALLABLE_MOCK_CLS = _CallableAsyncMock

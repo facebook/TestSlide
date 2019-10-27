@@ -700,6 +700,10 @@ class TestCase(unittest.TestCase):
     def mock_constructor(target, class_name):
         return testslide.mock_constructor.mock_constructor(target, class_name)
 
+    @staticmethod
+    def mock_async_callable(target, method):
+        return testslide.mock_callable.mock_async_callable(target, method)
+
 
 def _test_function(arg1, arg2, kwarg1=None, kwarg2=None):
     "This function is used by some unit tests only"
