@@ -8,20 +8,14 @@ from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
 from testslide.mock_callable import (
     mock_callable,
-    mock_async_callable,
     UndefinedBehaviorForCall,
     UnexpectedCallReceived,
     UnexpectedCallArguments,
 )
-import asyncio
 import contextlib
 from testslide.strict_mock import StrictMock
 import time
 import os
-
-
-async def get_me_a_response():
-    return "original async response"
 
 
 class TargetStr(object):
@@ -938,17 +932,6 @@ def mock_callable_context(context):
             self.assertFalse(alternative_target_module.exists("not_found"))
             testslide.mock_callable.unpatch_all_callable_mocks()
             self.assertEqual(os.path.exists, original_function, "Unpatch did not work")
-
-    @context.sub_context
-    def When_target_is_async(context):
-        @context.example
-        def async_function_can_be_patched(self):
-            mock_async_callable(__name__, "get_me_a_response").to_return_value(
-                "mocked_response"
-            )
-            loop = asyncio.get_event_loop()
-            ret = loop.run_until_complete(get_me_a_response())
-            self.assertEqual(ret, "mocked_response")
 
     @context.sub_context
     def When_target_is_a_builtin(context):

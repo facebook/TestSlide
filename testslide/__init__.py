@@ -3,6 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
+import inspect
 from contextlib import contextmanager
 
 from typing import List  # noqa
@@ -227,14 +229,23 @@ class Example(object):
         aggregated_exceptions = AggregatedExceptions()
         with aggregated_exceptions.catch():
             for before in self.context.all_before_functions:
-                before(context_data)
-            self.code(context_data)
+                before_ret = before(context_data)
+                if inspect.iscoroutine(before_ret):
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(before_ret)
+            code_ret = self.code(context_data)
+            if inspect.iscoroutine(code_ret):
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(code_ret)
         after_functions = []
         after_functions.extend(self.context.all_after_functions)
         after_functions.extend(context_data.after_functions)
         for after in reversed(after_functions):
             with aggregated_exceptions.catch():
-                after(context_data)
+                after_ret = after(context_data)
+                if inspect.iscoroutine(after_ret):
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(after_ret)
         if aggregated_exceptions.exceptions:
             aggregated_exceptions.raise_correct_exception()
 
@@ -366,6 +377,12 @@ class Context(object):
 
         self.add_function("mock_constructor", _mock_constructor, skip_if_exists=True)
 
+    def _setup_mock_async_callable(self):
+        def _mock_async_callable(self, *args, **kwargs):
+            return testslide.mock_callable.mock_async_callable(*args, **kwargs)
+
+        self.add_function("mock_async_callable", _mock_async_callable, skip_if_exists=True)
+
     # Constructor
 
     def __init__(
@@ -403,6 +420,7 @@ class Context(object):
         if not self.parent_context:
             self._setup_mock_callable()
             self._setup_mock_constructor()
+            self._setup_mock_async_callable()
 
     # Properties
 
