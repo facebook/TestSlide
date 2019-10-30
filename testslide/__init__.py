@@ -16,9 +16,7 @@ import testslide.mock_constructor
 from testslide.strict_mock import StrictMock  # noqa
 
 
-if sys.version_info[0] < 3 or (
-    sys.version_info.major == 3 and sys.version_info.minor < 6
-):
+if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
 
 

@@ -5,8 +5,7 @@
 
 import unittest
 import sys
-from contextlib import contextmanager
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import contextmanager, redirect_stdout, redirect_stderr
 
 from unittest.mock import patch
 
