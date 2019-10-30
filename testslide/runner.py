@@ -10,7 +10,8 @@ import traceback
 import sys
 import os
 
-from . import AggregatedExceptions, Skip, redirect_stdout, redirect_stderr
+from . import AggregatedExceptions, Skip
+from contextlib import redirect_stdout, redirect_stderr
 
 
 class Formatter(object):

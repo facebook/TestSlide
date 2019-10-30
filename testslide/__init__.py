@@ -15,31 +15,9 @@ import testslide.mock_callable
 import testslide.mock_constructor
 from testslide.strict_mock import StrictMock  # noqa
 
-if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
-    from contextlib import redirect_stdout, redirect_stderr
-else:
 
-    @contextmanager
-    def redirect_stdout(target):
-        original = sys.stdout
-        sys.stdout = target
-        try:
-            yield
-        finally:
-            sys.stdout = original
-
-    @contextmanager
-    def redirect_stderr(target):
-        original = sys.stderr
-        sys.stderr = target
-        try:
-            yield
-        finally:
-            sys.stderr = original
-
-
-if sys.version_info[0] < 3:
-    raise RuntimeError("Python >=3 required.")
+if sys.version_info < (3, 6):
+    raise RuntimeError("Python >=3.6 required.")
 
 
 def _importer(target):
