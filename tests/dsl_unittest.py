@@ -1153,26 +1153,40 @@ class TestDSLAfterHook(TestDSLBase):
         After hooks can be declared with @self.after decorator from an example.
         They will be called in the order defined after each example.
         """
-        mock = Mock()
+        order = []
 
         @context
         def top(context):
+            @context.after
+            def first(self):
+                order.append("context after first")
+
+            @context.after
+            def second(self):
+                order.append("context after second")
+
             @context.example
             def with_after_hook(self):
                 @self.after
-                def first_after_hook(self):
-                    mock("first after")
+                def first(self):
+                    order.append("example after first")
 
                 @self.after
-                def second_after_hook(self):
-                    mock("second after")
+                def second(self):
+                    order.append("example after second")
 
-                mock("example")
+                order.append("example")
 
         self.run_first_context_first_example()
         self.assertEqual(
-            mock.mock_calls,
-            [call("example"), call("second after"), call("first after")],
+            order,
+            [
+                "example",
+                "example after second",
+                "example after first",
+                "context after second",
+                "context after first",
+            ],
         )
 
     def test_after_hook_fail(self):
@@ -1664,6 +1678,84 @@ class TestExample(TestDSLBase):
             self.assertTrue(exfinal in e.exceptions)
         else:
             raise AssertionError("Expected test to fail")
+
+
+class SmokeTestAsync(TestDSLBase):
+    def test_can_run_async_example_and_hooks(self):
+        order = []
+
+        @context
+        def top(context):
+            @context.around
+            async def around(self, wrapped):
+                order.append("around before")
+                await wrapped()
+                order.append("around after")
+
+            @context.before
+            async def before(self):
+                order.append("before")
+
+            @context.after
+            async def after(self):
+                order.append("after")
+
+            @context.example
+            async def example(self):
+                order.append("example")
+
+        self.run_first_context_first_example()
+        self.assertEqual(
+            order, ["around before", "before", "example", "after", "around after"]
+        )
+
+    def test_can_not_mix_async_hooks_with_sync_example(self):
+        @context
+        def top(context):
+            @context.around
+            async def around(self, wrapped):
+                await wrapped()
+
+            @context.before
+            async def before(self):
+                pass
+
+            @context.after
+            async def after(self):
+                pass
+
+            @context.example
+            def sync_example(self):
+                pass
+
+        with self.assertRaisesRegex(
+            ValueError, "Function can not be a coroutine function"
+        ):
+            self.run_first_context_first_example()
+
+    def test_can_not_mix_sync_hooks_with_async_example(self):
+        @context
+        def top(context):
+            @context.around
+            def around(self, wrapped):
+                wrapped()
+
+            @context.before
+            def before(self):
+                pass
+
+            @context.after
+            def after(self):
+                pass
+
+            @context.example
+            async def async_example(self):
+                pass
+
+        with self.assertRaisesRegex(
+            ValueError, "Function must be a coroutine function"
+        ):
+            self.run_first_context_first_example()
 
 
 class TestMockCallableIntegration(TestDSLBase):

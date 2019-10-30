@@ -3,9 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import csv
 import testslide
 import unittest
-import logging
 
 
 class Dummy(object):
@@ -25,8 +25,9 @@ class TestSlideTestCaseIntegration(testslide.TestCase):
         self.assertEqual(dummy.do_something(), 42)
 
     def test_has_mock_constructor(self):
-        logger = testslide.StrictMock(logging.Logger)
-        self.mock_constructor(logging, "Logger").for_call(level=0).to_return_value(
-            logger
+        dict_reader = testslide.StrictMock(csv.DictReader)
+        path = "/meh"
+        self.mock_constructor(csv, "DictReader").for_call(path).to_return_value(
+            dict_reader
         )
-        self.assertTrue(id(logger), id(logging.Logger(level=0)))
+        self.assertTrue(id(dict_reader), id(csv.DictReader(path)))

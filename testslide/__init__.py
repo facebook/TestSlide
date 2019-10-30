@@ -10,6 +10,8 @@ import sys
 import unittest
 import re
 import types
+import asyncio
+import inspect
 
 import testslide.mock_callable
 import testslide.mock_constructor
@@ -44,20 +46,42 @@ class _ContextData(object):
     example execution.
     """
 
-    def __init__(self, context):
-        self.context = context
-        self.after_functions = []
-        # The use of methodName parameter is required as a placeholder for
-        # Python 2 compatibility only.
-        method_name = "assertEqual"
-        self._test_case = unittest.TestCase(methodName=method_name)
+    def _init_sub_example(self):
         self._sub_examples_agg_ex = AggregatedExceptions()
 
-        def assert_sub_examples(self):
+        def real_assert_sub_examples(self):
             if self._sub_examples_agg_ex.exceptions:
                 self._sub_examples_agg_ex.raise_correct_exception()
 
+        if self._example.is_async:
+
+            async def assert_sub_examples(self):
+                real_assert_sub_examples(self)
+
+        else:
+
+            def assert_sub_examples(self):
+                real_assert_sub_examples(self)
+
         self.after(assert_sub_examples)
+
+    def _init_mock_callable_and_constructor(self):
+        self.mock_callable = testslide.mock_callable.mock_callable
+        self.mock_constructor = testslide.mock_constructor.mock_constructor
+        self._mock_callable_after_functions = []
+
+        def register_assertion(assertion):
+            self._mock_callable_after_functions.append(lambda _: assertion())
+
+        testslide.mock_callable.register_assertion = register_assertion
+
+    def __init__(self, example):
+        self._example = example
+        self._context = example.context
+        self._after_functions = []
+        self._test_case = unittest.TestCase()
+        self._init_sub_example()
+        self._init_mock_callable_and_constructor()
 
     @staticmethod
     def _not_callable(self):
@@ -65,11 +89,11 @@ class _ContextData(object):
 
     @property
     def _all_methods(self):
-        return self.context.all_context_data_methods
+        return self._context.all_context_data_methods
 
     @property
     def _all_attributes(self):
-        return self.context.all_context_data_memoizable_attributes
+        return self._context.all_context_data_memoizable_attributes
 
     def __getattr__(self, name):
         if name in self._all_methods.keys():
@@ -89,7 +113,7 @@ class _ContextData(object):
             if re.match("^assert", name) and hasattr(self._test_case, name):
                 return getattr(self._test_case, name)
             raise AttributeError(
-                "Context '{}' has no attribute '{}'".format(self.context, name)
+                "Context '{}' has no attribute '{}'".format(self._context, name)
             )
 
     def after(self, after_code):
@@ -97,7 +121,7 @@ class _ContextData(object):
         Use this to decorate a function to be registered to be executed after
         the example code.
         """
-        self.after_functions.append(after_code)
+        self._after_functions.append(after_code)
         return self._not_callable
 
     @contextmanager
@@ -134,7 +158,9 @@ class AggregatedExceptions(Exception):
             self.append_exception(exception)
 
     def __str__(self):
-        return "{} failures.".format(len(self.exceptions))
+        return "{} failures:\n".format(len(self.exceptions)) + "\n".join(
+            f"{type(e)}: {str(e)}" for e in self.exceptions
+        )
 
     def raise_correct_exception(self):
         if not self.exceptions:
@@ -166,6 +192,157 @@ class UnexpectedSuccess(Exception):
     """
 
 
+class _ExampleRunner:
+    def __init__(self, example):
+        self.example = example
+
+    @staticmethod
+    async def _fail_if_not_coroutine_function(func, *args, **kwargs):
+        if not inspect.iscoroutinefunction(func):
+            raise ValueError(f"Function must be a coroutine function: {repr(func)}")
+        return await func(*args, **kwargs)
+
+    async def _real_async_run_all_hooks_and_example(
+        self, context_data, around_functions=None
+    ):
+        """
+        ***********************************************************************
+        ***********************************************************************
+                                    WARNING
+        ***********************************************************************
+        ***********************************************************************
+
+        This function **MUST** be keep the exact same execution flow of
+        _sync_run_all_hooks_and_example()!!!
+        """
+        if around_functions is None:
+            around_functions = list(reversed(self.example.context.all_around_functions))
+
+        if not around_functions:
+            aggregated_exceptions = AggregatedExceptions()
+            with aggregated_exceptions.catch():
+                for before_code in self.example.context.all_before_functions:
+                    await self._fail_if_not_coroutine_function(
+                        before_code, context_data
+                    )
+                await self._fail_if_not_coroutine_function(
+                    self.example.code, context_data
+                )
+            after_functions = []
+            after_functions.extend(context_data._mock_callable_after_functions)
+            after_functions.extend(self.example.context.all_after_functions)
+            after_functions.extend(context_data._after_functions)
+            for after_code in reversed(after_functions):
+                with aggregated_exceptions.catch():
+                    await self._fail_if_not_coroutine_function(after_code, context_data)
+            if aggregated_exceptions.exceptions:
+                aggregated_exceptions.raise_correct_exception()
+            return
+        around_code = around_functions.pop()
+
+        wrapped_called = []
+
+        async def async_wrapped():
+            wrapped_called.append(True)
+            await self._real_async_run_all_hooks_and_example(
+                context_data, around_functions
+            )
+
+        await self._fail_if_not_coroutine_function(
+            around_code, context_data, async_wrapped
+        )
+
+        if not wrapped_called:
+            raise RuntimeError(
+                "Around hook "
+                + repr(around_code.__name__)
+                + " did not execute example code!"
+            )
+
+    def _async_run_all_hooks_and_example(self, context_data):
+        coro = self._real_async_run_all_hooks_and_example(context_data)
+        if sys.version_info < (3, 7):
+            loop = asyncio.events.new_event_loop()
+            try:
+                loop.set_debug(True)
+                loop.run_until_complete(coro)
+            finally:
+                try:
+                    loop.run_until_complete(loop.shutdown_asyncgens())
+                finally:
+                    loop.close()
+        else:
+            asyncio.run(coro, debug=True)
+
+    @staticmethod
+    def _fail_if_coroutine_function(func, *args, **kwargs):
+        if inspect.iscoroutinefunction(func):
+            raise ValueError(f"Function can not be a coroutine function: {repr(func)}")
+        return func(*args, **kwargs)
+
+    def _sync_run_all_hooks_and_example(self, context_data, around_functions=None):
+        """
+        ***********************************************************************
+        ***********************************************************************
+                                    WARNING
+        ***********************************************************************
+        ***********************************************************************
+
+        This function **MUST** be keep the exact same execution flow of
+        _real_async_run_all_hooks_and_example()!!!
+        """
+        if around_functions is None:
+            around_functions = list(reversed(self.example.context.all_around_functions))
+
+        if not around_functions:
+            aggregated_exceptions = AggregatedExceptions()
+            with aggregated_exceptions.catch():
+                for before_code in self.example.context.all_before_functions:
+                    self._fail_if_coroutine_function(before_code, context_data)
+                self._fail_if_coroutine_function(self.example.code, context_data)
+            after_functions = []
+            after_functions.extend(context_data._mock_callable_after_functions)
+            after_functions.extend(self.example.context.all_after_functions)
+            after_functions.extend(context_data._after_functions)
+            for after_code in reversed(after_functions):
+                with aggregated_exceptions.catch():
+                    self._fail_if_coroutine_function(after_code, context_data)
+            if aggregated_exceptions.exceptions:
+                aggregated_exceptions.raise_correct_exception()
+            return
+        around_code = around_functions.pop()
+
+        wrapped_called = []
+
+        def wrapped():
+            wrapped_called.append(True)
+            self._sync_run_all_hooks_and_example(context_data, around_functions)
+
+        self._fail_if_coroutine_function(around_code, context_data, wrapped)
+
+        if not wrapped_called:
+            raise RuntimeError(
+                "Around hook "
+                + repr(around_code.__name__)
+                + " did not execute example code!"
+            )
+
+    def run(self):
+        try:
+            if self.example.skip:
+                raise Skip()
+            context_data = _ContextData(self.example)
+            if self.example.is_async:
+                self._async_run_all_hooks_and_example(context_data)
+            else:
+                self._sync_run_all_hooks_and_example(context_data)
+        finally:
+            sys.stdout.flush()
+            sys.stderr.flush()
+            testslide.mock_callable.unpatch_all_callable_mocks()
+            testslide.mock_constructor.unpatch_all_constructor_mocks()
+
+
 class Example(object):
     """
     Individual example.
@@ -174,6 +351,7 @@ class Example(object):
     def __init__(self, name, code, context, skip=False, focus=False):
         self.name = name
         self.code = code
+        self.is_async = inspect.iscoroutinefunction(self.code)
         self.context = context
         self.__dict__["skip"] = skip
         self.__dict__["focus"] = focus
@@ -198,65 +376,11 @@ class Example(object):
         """
         return any([self.context.focus, self.__dict__["focus"]])
 
-    def _example_runner(self, context_data):
-        """
-        Execute before hooks, example and after hooks.
-        """
-        aggregated_exceptions = AggregatedExceptions()
-        with aggregated_exceptions.catch():
-            for before in self.context.all_before_functions:
-                before(context_data)
-            self.code(context_data)
-        after_functions = []
-        after_functions.extend(self.context.all_after_functions)
-        after_functions.extend(context_data.after_functions)
-        for after in reversed(after_functions):
-            with aggregated_exceptions.catch():
-                after(context_data)
-        if aggregated_exceptions.exceptions:
-            aggregated_exceptions.raise_correct_exception()
-
-    def _run_example(self, context_data, around_functions=None):
-        """
-        Run example, including all hooks.
-        """
-        if around_functions is None:
-            around_functions = list(reversed(self.context.all_around_functions))
-
-        if not around_functions:
-            self._example_runner(context_data)
-            return
-        around = around_functions.pop()
-
-        wrapped_called = []
-
-        def wrapped():
-            wrapped_called.append(True)
-            self._run_example(context_data, around_functions)
-
-        around(context_data, wrapped)
-
-        if not wrapped_called:
-            raise RuntimeError(
-                "Around hook {} did not execute example code!".format(
-                    repr(around.__name__)
-                )
-            )
-
     def __call__(self):
         """
         Run the example, including all around, before and after hooks.
         """
-        try:
-            if self.skip:
-                raise Skip()
-            context_data = _ContextData(self.context)
-            self._run_example(context_data)
-        finally:
-            sys.stdout.flush()
-            sys.stderr.flush()
-            testslide.mock_callable.unpatch_all_callable_mocks()
-            testslide.mock_constructor.unpatch_all_constructor_mocks()
+        _ExampleRunner(self).run()
 
     def __str__(self):
         return self.name
@@ -321,27 +445,6 @@ class Context(object):
     # List of all top level contexts created
     all_top_level_contexts = []  # type: List[Context]
 
-    def _setup_mock_callable(self):
-        def _mock_callable(self, *args, **kwargs):
-            return testslide.mock_callable.mock_callable(*args, **kwargs)
-
-        self.add_function("mock_callable", _mock_callable, skip_if_exists=True)
-
-        def set_register_assertion(context_data, example):
-            def register_assertion(assertion):
-                self.after_functions.insert(0, lambda _: assertion())
-
-            testslide.mock_callable.register_assertion = register_assertion
-            example()
-
-        self.around_functions.append(set_register_assertion)
-
-    def _setup_mock_constructor(self):
-        def _mock_constructor(self, *args, **kwargs):
-            return testslide.mock_constructor.mock_constructor(*args, **kwargs)
-
-        self.add_function("mock_constructor", _mock_constructor, skip_if_exists=True)
-
     # Constructor
 
     def __init__(
@@ -375,10 +478,6 @@ class Context(object):
 
         if not self.parent_context and not self.shared:
             self.all_top_level_contexts.append(self)
-
-        if not self.parent_context:
-            self._setup_mock_callable()
-            self._setup_mock_constructor()
 
     # Properties
 
@@ -550,19 +649,20 @@ class Context(object):
 
         return self.examples[-1]
 
-    def _context_data_has_attr(self, name):
+    def has_attribute(self, name):
         return any(
             [
                 name in self.context_data_methods.keys(),
                 name in self.context_data_memoizable_attributes.keys(),
+                name in self._runtime_attributes,
             ]
         )
 
-    def add_function(self, name, function_code, skip_if_exists=False):
+    def add_function(self, name, function_code):
         """
         Add given function to example execution scope.
         """
-        if not skip_if_exists and self._context_data_has_attr(name):
+        if self.has_attribute(name):
             raise AttributeError(
                 'Attribute "{}" already set for context "{}"'.format(name, self)
             )
@@ -584,7 +684,7 @@ class Context(object):
         Add given attribute name to execution scope, by lazily memoizing the return
         value of memoizable_code().
         """
-        if self._context_data_has_attr(name):
+        if self.has_attribute(name):
             raise AttributeError(
                 'Attribute "{}" already set for context "{}"'.format(name, self)
             )
