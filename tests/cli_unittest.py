@@ -3,25 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import unittest
-import sys
-
-# from contextlib import contextmanager
-# from testslide import redirect_stdout, redirect_stderr
-
-# from unittest.mock import patch
-
-# from testslide import Context
-# from testslide.dsl import context
-# from testslide import cli
-# import traceback
-# import io
-import subprocess
+import copy
 import os
 import os.path
-import copy
-import threading
 import pty
+import subprocess
+import sys
+import threading
+import unittest
 
 
 class TestCliBase(unittest.TestCase):
