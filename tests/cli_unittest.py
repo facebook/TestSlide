@@ -6,7 +6,7 @@
 import unittest
 import sys
 from contextlib import contextmanager
-from testslide import redirect_stdout, redirect_stderr
+from contextlib import redirect_stdout, redirect_stderr
 
 from unittest.mock import patch
 
