@@ -7,8 +7,6 @@ import functools
 from re import sub as _sub
 
 from . import Context as _Context
-from . import before_once_functions as _before_once_functions  # noqa: F401
-
 from . import Skip  # noqa: F401
 
 
@@ -218,7 +216,3 @@ context = _DSLContext()
 xcontext = _DSLContext(skip=True)
 
 fcontext = _DSLContext(focus=True)
-
-
-def before_once(code):
-    _before_once_functions.append(code)

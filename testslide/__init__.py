@@ -223,8 +223,6 @@ class Example(object):
         if around_functions is None:
             around_functions = list(reversed(self.context.all_around_functions))
 
-        _run_before_once_hooks()
-
         if not around_functions:
             self._example_runner(context_data)
             return
@@ -633,28 +631,11 @@ class Context(object):
         self.around_functions.append(wrap_test_case)
 
 
-before_once_functions = []
-before_once_executed = False
-
-
-def _run_before_once_hooks():
-    global before_once_executed
-    if not before_once_executed:
-        global before_once_functions
-        for code in before_once_functions:
-            code()
-    before_once_executed = True
-
-
 def reset():
     """
     Clear all defined contexts and hooks.
     """
     Context.all_top_level_contexts.clear()
-    global before_once_functions
-    before_once_functions.clear()
-    global before_once_executed
-    before_once_executed = False
 
 
 class TestCase(unittest.TestCase):
