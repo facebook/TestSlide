@@ -83,3 +83,4 @@ As the ``Backup`` class grows, it is easy to nest new contexts, and reuse what's
    context_attributes_and_functions/index.rst
    skip_and_focus/index.rst
    unittest_testcase_integration/index.rst
+   async_support/index.rst
