@@ -1714,6 +1714,10 @@ class SmokeTestAsync(TestDSLBase):
             async def second_after(self):
                 order.append("second_after")
 
+            @context.function
+            async def function(self):
+                return "function"
+
             @context.example
             async def example(self):
                 @self.after
@@ -1724,6 +1728,7 @@ class SmokeTestAsync(TestDSLBase):
                 async def example_second_after(self):
                     order.append("example_second_after")
 
+                assert "function" == await self.function()
                 order.append("example")
 
         self.run_first_context_first_example()

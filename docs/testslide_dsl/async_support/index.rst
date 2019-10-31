@@ -8,6 +8,7 @@ For that, you must declare all of these as async:
 - Hooks: around, before and after.
 - Examples.
 - Memoize before.
+- Functions.
 
 like this:
 
@@ -32,10 +33,15 @@ like this:
     @context.memoize_before
     async def memoize_before(self):
       return "memoize_before"
+
+    @context.function
+    async def function(self):
+      return "function"
   
     @context.example
     async def example(self):
       assert self.memoize_before == "memoize_before"
+      assert self.function == "function"
 
 The test runner will create a new event look to execute each example.
 
