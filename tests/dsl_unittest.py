@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import Mock, call, patch
 
 from testslide import Context, AggregatedExceptions, reset
-from testslide.dsl import context, xcontext, fcontext, before_once
+from testslide.dsl import context, xcontext, fcontext
 import os
 import subprocess
 
@@ -1099,96 +1099,6 @@ class TestDSLBeforeHook(TestDSLBase):
             @context.before
             def not_allowed(self):
                 pass
-
-
-class TestDSLBeforeOnceHook(TestDSLBase):
-    def test_execution_order(self):
-        """
-        Before once hooks must be called only one time before all examples.
-        """
-        mock = Mock()
-
-        @before_once
-        def first_before_once():
-            mock("first_before_once")
-
-        @before_once
-        def second_before_once():
-            mock("second_before_once")
-
-        @context
-        def top(context):
-            @context.before
-            def before_hook(self):
-                mock("before_hook")
-
-            @context.example
-            def first_example(self):
-                mock("first_example")
-
-            @context.example
-            def second_example(self):
-                mock("second_example")
-
-        self.run_first_context_all_examples()
-        self.assertEqual(
-            mock.mock_calls,
-            [
-                call("first_before_once"),
-                call("second_before_once"),
-                call("before_hook"),
-                call("first_example"),
-                call("before_hook"),
-                call("second_example"),
-            ],
-        )
-
-    def test_before_once_as_lambda(self):
-        """
-        Before one can accept lambdas.
-        """
-        mock = Mock()
-
-        before_once(lambda: mock("before_once"))
-
-        @context
-        def top(context):
-            @context.before
-            def before_hook(self):
-                mock("before_hook")
-
-            @context.example
-            def example(self):
-                mock("example")
-
-        self.run_first_context_all_examples()
-        self.assertEqual(
-            mock.mock_calls, [call("before_once"), call("before_hook"), call("example")]
-        )
-
-    def test_before_once_failure(self):
-        """
-        Stop execution if before once hook fails.
-        """
-        mock = Mock()
-
-        @before_once
-        def first_before_once_fail():
-            raise RuntimeError("first_before_once_fail")
-
-        before_once(lambda: mock("second_before_hook_does_not_run"))
-
-        @context
-        def top(context):
-            @context.example
-            def with_before_hook(self):
-                mock("example")
-
-        try:
-            self.run_first_context_first_example()
-        except RuntimeError:
-            pass
-        self.assertEqual(mock.mock_calls, [])
 
 
 class TestDSLAfterHook(TestDSLBase):
