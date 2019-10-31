@@ -1687,26 +1687,61 @@ class SmokeTestAsync(TestDSLBase):
         @context
         def top(context):
             @context.around
-            async def around(self, wrapped):
-                order.append("around before")
+            async def first_around(self, wrapped):
+                order.append("first_around before")
                 await wrapped()
-                order.append("around after")
+                order.append("first_around after")
+
+            @context.around
+            async def second_around(self, wrapped):
+                order.append("second_around before")
+                await wrapped()
+                order.append("second_around after")
 
             @context.before
-            async def before(self):
-                order.append("before")
+            async def first_before(self):
+                order.append("first_before")
+
+            @context.before
+            async def second_before(self):
+                order.append("second_before")
 
             @context.after
-            async def after(self):
-                order.append("after")
+            async def first_after(self):
+                order.append("first_after")
+
+            @context.after
+            async def second_after(self):
+                order.append("second_after")
 
             @context.example
             async def example(self):
+                @self.after
+                async def example_first_after(self):
+                    order.append("example_first_after")
+
+                @self.after
+                async def example_second_after(self):
+                    order.append("example_second_after")
+
                 order.append("example")
 
         self.run_first_context_first_example()
         self.assertEqual(
-            order, ["around before", "before", "example", "after", "around after"]
+            order,
+            [
+                "first_around before",
+                "second_around before",
+                "first_before",
+                "second_before",
+                "example",
+                "example_second_after",
+                "example_first_after",
+                "second_after",
+                "first_after",
+                "second_around after",
+                "first_around after",
+            ],
         )
 
     def test_can_not_mix_async_hooks_with_sync_example(self):
