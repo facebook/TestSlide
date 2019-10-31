@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import inspect
 import functools
 from re import sub as _sub
 
@@ -183,10 +184,19 @@ class _DSLContext(object):
 
         self.current_context.register_runtime_attribute(name)
 
-        def materialize_attribute(self):
-            setattr(self, name, memoizable_code(self))
+        if inspect.iscoroutinefunction(memoizable_code):
 
-        self.before(materialize_attribute)
+            async def async_materialize_attribute(self):
+                setattr(self, name, await memoizable_code(self))
+
+            self.before(async_materialize_attribute)
+        else:
+
+            def materialize_attribute(self):
+                setattr(self, name, memoizable_code(self))
+
+            self.before(materialize_attribute)
+
         return self._not_callable
 
     # Hooks

@@ -104,7 +104,12 @@ class _ContextData(object):
             self.__dict__[name] = static
 
         if name in self._all_attributes.keys():
-            self.__dict__[name] = self._all_attributes[name](self)
+            attribute_code = self._all_attributes[name]
+            if self._example.is_async and inspect.iscoroutinefunction(attribute_code):
+                raise ValueError(
+                    f"Function can not be a coroutine function: {repr(attribute_code)}"
+                )
+            self.__dict__[name] = attribute_code(self)
 
         try:
             return self.__dict__[name]

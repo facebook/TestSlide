@@ -1792,6 +1792,44 @@ class SmokeTestAsync(TestDSLBase):
         ):
             self.run_first_context_first_example()
 
+    def test_async_memoize_before(self):
+        order = []
+
+        @context
+        def top(context):
+            @context.before
+            async def first_before(self):
+                order.append("first_before")
+
+            @context.memoize_before
+            async def memoize_before(self):
+                order.append("memoize_before")
+                return "memoize_before"
+
+            @context.example
+            async def example(self):
+                assert self.memoize_before == "memoize_before"
+                order.append("example")
+
+        self.run_first_context_first_example()
+        self.assertEqual(order, ["first_before", "memoize_before", "example"])
+
+    def test_can_not_async_memoize(self):
+        @context
+        def top(context):
+            @context.memoize
+            async def memoize(self):
+                pass
+
+            @context.example
+            async def example(self):
+                self.memoize
+
+        with self.assertRaisesRegex(
+            ValueError, "Function can not be a coroutine function"
+        ):
+            self.run_first_context_first_example()
+
 
 class TestMockCallableIntegration(TestDSLBase):
     def test_mock_callable_integration(self):
