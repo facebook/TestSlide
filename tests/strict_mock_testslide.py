@@ -39,6 +39,9 @@ class TemplateParent(object):
     def __abs__(self):
         return 33
 
+    def __len__(self):
+        return 2341
+
 
 class Template(TemplateParent):
 
@@ -414,10 +417,23 @@ def strict_mock(context):
                                 abs(self.strict_mock)
 
                         @context.example
-                        def can_define_magic_methods(self):
+                        def can_set_magic_methods(self):
                             value = 23412
                             self.strict_mock.__abs__ = lambda: value
                             self.assertEqual(abs(self.strict_mock), value)
+
+                        @context.example("bool() works")
+                        def bool_works(self):
+                            with self.assertRaisesWithRegexMessage(
+                                UndefinedAttribute,
+                                f"'__len__' is not set.\n"
+                                f"{self.strict_mock_rgx} must have a value set "
+                                "for this attribute if it is going to be accessed.",
+                            ):
+                                bool(self.strict_mock)
+
+                            self.strict_mock.__len__ = lambda: 0
+                            self.assertEqual(bool(self.strict_mock), False)
 
                         @context.sub_context
                         def context_manager(context):
