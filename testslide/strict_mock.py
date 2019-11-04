@@ -106,6 +106,30 @@ class NonCallableValue(BaseException):
         )
 
 
+class UnsupportedMagic(BaseException):
+    """
+    Raised when trying to set an unsupported magic attribute to a StrictMock
+    instance.
+    """
+
+    def __init__(self, strict_mock, name):
+        super().__init__(strict_mock, name)
+        self.strict_mock = strict_mock
+        self.name = name
+
+    def __str__(self):
+        return f"setting '{self.name}' is not supported."
+
+
+class _DefaultMagic:
+    def __init__(self, strict_mock, name):
+        self.strict_mock = strict_mock
+        self.name = name
+
+    def __call__(self, *args, **kwargs):
+        raise UndefinedAttribute(self.strict_mock, self.name)
+
+
 class StrictMock(object):
     """
     Mock object that won't allow any attribute access or method call, unless its
@@ -129,6 +153,136 @@ class StrictMock(object):
     """
 
     TRIM_PATH_PREFIX = ""
+
+    _SETTABLE_MAGICS = [
+        "__abs__",
+        "__add__",
+        "__and__",
+        "__bool__",
+        "__bytes__",
+        "__call__",
+        "__ceil__",
+        "__complex__",
+        "__contains__",
+        "__delete__",
+        "__delitem__",
+        "__divmod__",
+        "__enter__",
+        "__enter__",
+        "__eq__",
+        "__exit__",
+        "__exit__",
+        "__float__",
+        "__floor__",
+        "__floordiv__",
+        "__format__",
+        "__ge__",
+        "__get__",
+        "__getformat__",
+        "__getinitargs__",
+        "__getitem__",
+        "__getnewargs__",
+        "__getnewargs_ex__",
+        "__getstate__",
+        "__gt__",
+        "__iadd__",
+        "__iand__",
+        "__ifloordiv__",
+        "__ilshift__",
+        "__imatmul__",
+        "__imod__",
+        "__imul__",
+        "__index__",
+        "__instancecheck__",
+        "__int__",
+        "__invert__",
+        "__ior__",
+        "__ipow__",
+        "__irshift__",
+        "__isub__",
+        "__iter__",
+        "__iter__",
+        "__iter__",
+        "__itruediv__",
+        "__ixor__",
+        "__le__",
+        "__len__",
+        "__length_hint__",
+        "__lshift__",
+        "__lt__",
+        "__matmul__",
+        "__missing__",
+        "__mod__",
+        "__mul__",
+        "__name__",
+        "__ne__",
+        "__neg__",
+        "__next__",
+        "__or__",
+        "__pos__",
+        "__pow__",
+        "__qualname__",
+        "__radd__",
+        "__rand__",
+        "__rdivmod__",
+        "__reduce__",
+        "__reduce_ex__",
+        "__repr__",
+        "__reversed__",
+        "__rfloordiv__",
+        "__rlshift__",
+        "__rmatmul__",
+        "__rmod__",
+        "__rmul__",
+        "__ror__",
+        "__round__",
+        "__rpow__",
+        "__rrshift__",
+        "__rshift__",
+        "__rsub__",
+        "__rtruediv__",
+        "__rxor__",
+        "__set__",
+        "__set_name__",
+        "__setformat__",
+        "__setitem__",
+        "__setstate__",
+        "__sizeof__",
+        "__str__",
+        "__sub__",
+        "__subclasscheck__",
+        "__truediv__",
+        "__trunc__",
+        "__xor__",
+        # TODO
+        # "__await__",
+        # "__aiter__",
+        # "__anext__",
+        # "__aenter__",
+        # "__aexit__",
+    ]
+
+    _UNSETTABLE_MAGICS = [
+        "__bases__",
+        "__class__",
+        "__class_getitem__",
+        "__copy__",
+        "__deepcopy__",
+        "__del__",
+        "__delattr__",
+        "__dict__",
+        "__dir__",
+        "__getattr__",
+        "__getattribute__",
+        "__hash__",
+        "__init__",
+        "__init_subclass__",
+        "__mro__",
+        "__new__",
+        "__setattr__",
+        "__slots__",
+        "__subclasses__",
+    ]
 
     def __new__(
         cls, template=None, runtime_attrs=None, name=None, default_context_manager=True
@@ -175,6 +329,23 @@ class StrictMock(object):
             self.__dict__["__caller"] = "{}:{}".format(filename, lineno)
         else:
             self.__dict__["__caller"] = None
+
+        # Populate all template's magic methods with expected default behavior.
+        # This is important as things such as bool() depend on they existing
+        # on the object's class __dict__.
+        # https://github.com/facebookincubator/TestSlide/issues/23
+        if template:
+            for klass in template.mro():
+                if klass is object:
+                    continue
+                for name in klass.__dict__:
+                    if (
+                        callable(klass.__dict__[name])
+                        and name in self._SETTABLE_MAGICS
+                        and name not in self._UNSETTABLE_MAGICS
+                        and name not in StrictMock.__dict__
+                    ):
+                        setattr(self, name, _DefaultMagic(self, name))
 
         if (
             self.__template
@@ -242,6 +413,14 @@ class StrictMock(object):
         )
 
     def __setattr__(self, name, value):
+        if name.startswith("__") and name.endswith("__"):
+            if name in self._UNSETTABLE_MAGICS or name in StrictMock.__dict__:
+                raise UnsupportedMagic(self, name)
+            if name not in self._SETTABLE_MAGICS:
+                raise NotImplementedError(
+                    f"StrictMock does not implement support for {name}"
+                )
+
         mock_value = value
         if self.__template:
             if not self.__template_has_attr(name):
@@ -264,13 +443,10 @@ class StrictMock(object):
         setattr(type(self), name, mock_value)
 
     def __getattr__(self, name):
-        if name in type(self).__dict__:
-            return type(self).__dict__
+        if self.__template and self.__template_has_attr(name):
+            raise UndefinedAttribute(self, name)
         else:
-            if self.__template and self.__template_has_attr(name):
-                raise UndefinedAttribute(self, name)
-            else:
-                raise AttributeError(f"'{name}' was not set for {self}.")
+            raise AttributeError(f"'{name}' was not set for {self}.")
 
     def __delattr__(self, name):
         if name in type(self).__dict__:
@@ -299,14 +475,29 @@ class StrictMock(object):
             id(self), name=name_str, template=template_str, caller=caller_str
         )
 
+    def __str__(self):
+        return self.__repr__()
+
+    def __get_copyable_attrs(self, self_copy):
+        attrs = []
+        for name in type(self).__dict__:
+            if name not in self_copy.__dict__:
+                if (
+                    name.startswith("__")
+                    and name.endswith("__")
+                    and not name in self._SETTABLE_MAGICS
+                ):
+                    continue
+                attrs.append(name)
+        return attrs
+
     def __copy__(self):
         self_copy = type(self)(
             template=self.__template, runtime_attrs=self.__runtime_attrs
         )
 
-        for name in type(self).__dict__:
-            if name not in self_copy.__dict__:
-                setattr(self_copy, name, type(self).__dict__[name])
+        for name in self.__get_copyable_attrs(self_copy):
+            setattr(self_copy, name, type(self).__dict__[name])
 
         return self_copy
 
@@ -317,7 +508,7 @@ class StrictMock(object):
             template=self.__template, runtime_attrs=self.__runtime_attrs
         )
         memo[id(self)] = self_copy
-        for name in type(self).__dict__:
-            if name not in self_copy.__dict__:
-                setattr(self_copy, name, copy.deepcopy(type(self).__dict__[name], memo))
+
+        for name in self.__get_copyable_attrs(self_copy):
+            setattr(self_copy, name, copy.deepcopy(type(self).__dict__[name], memo))
         return self_copy
