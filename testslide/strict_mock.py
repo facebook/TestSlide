@@ -3,11 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 import dis
 import copy
 import functools
 import inspect
+import os.path
 
 from unittest.mock import _must_skip
 
@@ -47,86 +47,63 @@ def _add_signature_validation(value, template, attr_name):
     return with_sig_check
 
 
-class UndefinedBehavior(BaseException):
+class UndefinedAttribute(BaseException):
     """
     Tentative access of an attribute from a StrictMock that is not defined yet.
     Inherits from BaseException to avoid being caught by tested code.
     """
 
-    __slots__ = ["strict_mock", "attr", "message"]
-
-    def __init__(self, strict_mock, attr, message):
-        super(UndefinedBehavior, self).__init__(strict_mock, attr, message)
+    def __init__(self, strict_mock, name):
+        super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
-        self.attr = attr
-        self.message = message
+        self.name = name
 
     def __str__(self):
         return (
-            "{}:\n"
-            "  Attribute '{}' has no behavior defined.\n"
-            "  You can define behavior by assigning a value to it."
-        ).format(repr(self.strict_mock), self.attr)
+            f"'{self.name}' is not set.\n"
+            f"{self.strict_mock} must have a value set for this attribute "
+            "if it is going to be accessed."
+        )
 
 
-class NoSuchAttribute(BaseException):
+class NonExistentAttribute(BaseException):
     """
     Tentative of setting of an attribute from a StrictMock that is not present
     at the template class.
     Inherits from BaseException to avoid being caught by tested code.
     """
 
-    __slots__ = ["strict_mock", "attr", "message"]
-
-    def __init__(self, strict_mock, attr, message):
-        super(NoSuchAttribute, self).__init__(strict_mock, attr, message)
+    def __init__(self, strict_mock, name):
+        super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
-        self.attr = attr
-        self.message = message
+        self.name = name
 
     def __str__(self):
-        return ("{}:\n" "  No such attribute '{}'.\n" "  {}").format(
-            repr(self.strict_mock), self.attr, self.message
+        return (
+            f"'{self.name}' can not be set.\n"
+            f"{self.strict_mock} template class does not have this attribute "
+            "so the mock can not have it as well.\n"
+            "See also: 'runtime_attrs' at StrictMock.__init__."
         )
 
 
-class _DescriptorProxy(object):
-    def __init__(self, name):
+class NonCallableValue(BaseException):
+    """
+    Raised when trying to set a non callable value to a callable attribute of
+    a StrictMock instance.
+    """
+
+    def __init__(self, strict_mock, name):
+        super().__init__(strict_mock, name)
+        self.strict_mock = strict_mock
         self.name = name
-        self.attrs = {}
 
-    def __get__(self, instance, _owner):
-        if instance in self.attrs:
-            return self.attrs[instance]
-        else:
-            raise AttributeError(
-                "{}:\n  Object has no attribute '{}'".format(repr(instance), self.name)
-            )
-
-    def __set__(self, instance, value):
-        self.attrs[instance] = value
-
-    def __delete__(self, instance):
-        if instance in self.attrs:
-            del self.attrs[instance]
-
-
-class _MethodProxy(object):
-    def __init__(self, original_method, call):
-        self.__dict__["_original_method"] = original_method
-        self.__dict__["_call"] = call
-
-    def __getattr__(self, name):
-        return getattr(self.__dict__["_original_method"], name)
-
-    def __setattr__(self, name, value):
-        return setattr(self.__dict__["_original_method"], name, value)
-
-    def __delattr__(self, name):
-        return delattr(self.__dict__["_original_method"], name)
-
-    def __call__(self, *args, **kwargs):
-        return self.__dict__["_call"](*args, **kwargs)
+    def __str__(self):
+        return (
+            f"'{self.name}' can not be set with a non-callable value.\n"
+            f"{self.strict_mock} template class requires this attribute to "
+            "be callable."
+        )
 
 
 class StrictMock(object):
@@ -153,41 +130,55 @@ class StrictMock(object):
 
     TRIM_PATH_PREFIX = ""
 
-    def __init__(self, template=None, runtime_attrs=None, name=None):
+    def __new__(
+        cls, template=None, runtime_attrs=None, name=None, default_context_manager=True
+    ):
+        if template:
+            name = f"{template.__name__}{cls.__name__}"
+        else:
+            name = cls.__name__
+        # Using a subclass per instance, we can use its dictionary to store
+        # all instance attributes, so both regular and magic methods can
+        # work.
+        strict_mock_subclass = type(name, (cls,), {})
+        strict_mock_instance = object.__new__(strict_mock_subclass)
+        return strict_mock_instance
+
+    def __init__(
+        self, template=None, runtime_attrs=None, name=None, default_context_manager=True
+    ):
         """
-        template: Template class to be used as a template for the mock. If the
-        template class implements a context manager, empty mocks for __enter__()
-        and __exit__() will be setup automatically.
+        template: Template class to be used as a template for the mock.
         runtime_attrs: Often attributes are created within an instance's
         lifecycle, typically from __init__(). To allow mocking such attributes,
         specify their names here.
         name: an optional name for this mock instance.
+        default_context_manager: If the template class is a context manager,
+        setup a mock for __enter__ that yields itself and an empty function
+        for __exit__.
         """
-        if template:
-            assert inspect.isclass(template), "Template must be a class."
-
-        # avoid __getattr_ recursion
+        if template and not inspect.isclass(template):
+            raise ValueError("Template must be a class.")
         self.__dict__["__template"] = template
+
         self.__dict__["__runtime_attrs"] = runtime_attrs or []
         self.__dict__["__name"] = name
 
-        if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-            frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
-            filename = frameinfo.filename
-            lineno = frameinfo.lineno
-        else:
-            frame = inspect.stack()[1][0]
-            filename = inspect.getsourcefile(frame) or inspect.getfile(frame)
-            lineno = inspect.getframeinfo(frame).lineno
-
+        frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
+        filename = frameinfo.filename
+        lineno = frameinfo.lineno
         if self.TRIM_PATH_PREFIX:
             split = filename.split(self.TRIM_PATH_PREFIX)
             if len(split) == 2 and not split[0]:
                 filename = split[1]
-        self.__dict__["__caller"] = "{}:{}".format(filename, lineno)
+        if os.path.exists(filename):
+            self.__dict__["__caller"] = "{}:{}".format(filename, lineno)
+        else:
+            self.__dict__["__caller"] = None
 
         if (
             self.__template
+            and default_context_manager
             and hasattr(self.__template, "__enter__")
             and hasattr(self.__template, "__exit__")
         ):
@@ -210,167 +201,123 @@ class StrictMock(object):
         )
 
     @property
-    def __template_name(self):
-        return self.__template.__name__ if self.__template else "None"
-
-    @property
     def __runtime_attrs(self):
         return self.__dict__["__runtime_attrs"]
 
-    def __get_class_init(self, klass):
-        import testslide.mock_constructor  # Avoid cyclic dependencies
+    def __template_has_attr(self, name):
+        def get_class_init(klass):
+            import testslide.mock_constructor  # Avoid cyclic dependencies
 
-        if testslide.mock_constructor._is_mocked_class(klass):
-            # If klass is the mocked subclass, pull the original version of
-            # __init__ so we can introspect into its implementation (and
-            # not the __init__ wrapper at the mocked class).
-            mocked_class = klass
-            original_class = mocked_class.mro()[1]
-            return testslide.mock_constructor._get_original_init(
-                original_class, instance=None, owner=mocked_class
-            )
-        else:
-            return klass.__init__
+            if testslide.mock_constructor._is_mocked_class(klass):
+                # If klass is the mocked subclass, pull the original version of
+                # __init__ so we can introspect into its implementation (and
+                # not the __init__ wrapper at the mocked class).
+                mocked_class = klass
+                original_class = mocked_class.mro()[1]
+                return testslide.mock_constructor._get_original_init(
+                    original_class, instance=None, owner=mocked_class
+                )
+            else:
+                return klass.__init__
 
-    def __is_runtime_attr(self, name):
-        if self.__template:
-            for klass in self.__template.mro():
-                template_init = self.__get_class_init(klass)
-                if not inspect.isfunction(template_init):
-                    continue
-                for instruction in dis.get_instructions(template_init):
-                    if (
-                        instruction.opname == "STORE_ATTR"
-                        and name == instruction.argval
-                    ):
-                        return True
-        return False
+        def is_runtime_attr():
+            if self.__template:
+                for klass in self.__template.mro():
+                    template_init = get_class_init(klass)
+                    if not inspect.isfunction(template_init):
+                        continue
+                    for instruction in dis.get_instructions(template_init):
+                        if (
+                            instruction.opname == "STORE_ATTR"
+                            and name == instruction.argval
+                        ):
+                            return True
+            return False
 
-    def __can_mock_attr(self, name):
-        if not self.__template:
-            return True
         return (
             hasattr(self.__template, name)
             or name in self.__runtime_attrs
             or name in getattr(self.__template, "__slots__", [])
-            or self.__is_runtime_attr(name)
+            or is_runtime_attr()
         )
 
-    def __get_mock_value(self, name, value):
-        if hasattr(self.__template, name):
-            # If we are working with a callable we need to actually
-            # set the side effect of the callable, not directly assign
-            # the value to the callable
-            if callable(getattr(self.__template, name)):
-                if not callable(value):
-                    raise ValueError(
-                        "{}: Template class attribute '{}' attribute is callable and {} is not.".format(
-                            repr(self), name, repr(value)
-                        )
-                    )
-                value = _MethodProxy(
-                    original_method=value,
-                    call=_add_signature_validation(value, self.__template, name),
-                )
-        return value
-
     def __setattr__(self, name, value):
-        if self.__can_mock_attr(name):
-            if name in type(self).__dict__:
-                type(self).__dict__[name].__set__(
-                    self, self.__get_mock_value(name, value)
-                )
-            else:
-                setattr(type(self), name, _DescriptorProxy(name))
-                self.__setattr__(name, value)
-        else:
-            # If the template class has the attribute and we haven't yet defined its
-            # behavior we use a different exception than when the attribute
-            # doesn't event exist in the template class
+        mock_value = value
+        if self.__template:
+            if not self.__template_has_attr(name):
+                raise NonExistentAttribute(self, name)
+
             if hasattr(self.__template, name):
-                raise UndefinedBehavior(
-                    self,
-                    name,
-                    "The attribute {} is defined in the template class "
-                    "{}, but its behavior is not yet defined in this "
-                    "StrictMock".format(self.__template_name),
-                )
-            else:
-                raise NoSuchAttribute(
-                    self,
-                    name,
-                    "Can not set attribute {} that is neither "
-                    "part of template class {} or runtime_attrs={}.".format(
-                        name, self.__template_name, self.__runtime_attrs
-                    ),
-                )
-
-    def __getattr__(self, attr):
-        if attr in type(self).__dict__:
-            try:
-                return type(self).__dict__[attr].__get__(self, type(self))
-            except AttributeError:
-                pass
-
-        if self.__can_mock_attr(attr):
-            raise UndefinedBehavior(
-                self,
-                attr,
-                "Can not getattr() an undefined StrictMock "
-                "attribute. Use setattr() to define it.",
-            )
+                # If we are working with a callable we need to actually
+                # set the side effect of the callable, not directly assign
+                # the value to the callable
+                if callable(getattr(self.__template, name)):
+                    if not callable(value):
+                        raise NonCallableValue(self, name)
+                    mock_value = staticmethod(
+                        _add_signature_validation(value, self.__template, name)
+                    )
         else:
-            raise AttributeError(
-                "{}: Can not getattr() an attribute '{}' that is neither part of "
-                "template class {} or runtime_attrs={}.".format(
-                    repr(self), attr, self.__template_name, self.__runtime_attrs
-                )
-            )
+            if callable(value):
+                mock_value = staticmethod(value)
 
-    def __delattr__(self, attr):
-        if attr in type(self).__dict__:
-            type(self).__dict__[attr].__delete__(self)
+        setattr(type(self), name, mock_value)
+
+    def __getattr__(self, name):
+        if name in type(self).__dict__:
+            return type(self).__dict__
+        else:
+            if self.__template and self.__template_has_attr(name):
+                raise UndefinedAttribute(self, name)
+            else:
+                raise AttributeError(f"'{name}' was not set for {self}.")
+
+    def __delattr__(self, name):
+        if name in type(self).__dict__:
+            delattr(type(self), name)
 
     def __repr__(self):
-        template = (
+        template_str = (
             " template={}.{}".format(
                 self.__template.__module__, self.__template.__name__
             )
             if self.__template
             else ""
         )
+
         if self.__dict__["__name"]:
-            name = " name={}".format(repr(self.__dict__["__name"]))
+            name_str = " name={}".format(repr(self.__dict__["__name"]))
         else:
-            name = ""
-        return "<StrictMock 0x{:02X}{name}{template} {caller}>".format(
-            id(self), name=name, template=template, caller=self.__dict__["__caller"]
+            name_str = ""
+
+        if self.__dict__["__caller"]:
+            caller_str = " {}".format(self.__dict__["__caller"])
+        else:
+            caller_str = ""
+
+        return "<StrictMock 0x{:02X}{name}{template}{caller}>".format(
+            id(self), name=name_str, template=template_str, caller=caller_str
         )
 
-    def __get_copy(self):
-        return type(self)(template=self.__template, runtime_attrs=self.__runtime_attrs)
-
-    def __get_instance_attr_items(self):
-        items = []
-        for name in type(self).__dict__:
-            descriptor_proxy = type(self).__dict__[name]
-            if type(descriptor_proxy) is not _DescriptorProxy:
-                continue
-            if self in descriptor_proxy.attrs:
-                items.append((name, descriptor_proxy.attrs[self]))
-        return items
-
     def __copy__(self):
-        self_copy = self.__get_copy()
-        for name, value in self.__get_instance_attr_items():
-            setattr(self_copy, name, value)
+        self_copy = type(self)(
+            template=self.__template, runtime_attrs=self.__runtime_attrs
+        )
+
+        for name in type(self).__dict__:
+            if name not in self_copy.__dict__:
+                setattr(self_copy, name, type(self).__dict__[name])
+
         return self_copy
 
     def __deepcopy__(self, memo=None):
         if memo is None:
             memo = {}
-        self_copy = self.__get_copy()
+        self_copy = type(self)(
+            template=self.__template, runtime_attrs=self.__runtime_attrs
+        )
         memo[id(self)] = self_copy
-        for name, value in self.__get_instance_attr_items():
-            setattr(self_copy, name, copy.deepcopy(value, memo))
+        for name in type(self).__dict__:
+            if name not in self_copy.__dict__:
+                setattr(self_copy, name, copy.deepcopy(type(self).__dict__[name], memo))
         return self_copy

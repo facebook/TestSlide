@@ -34,20 +34,20 @@ StrictMock is **safe by default**: it only has configure behavior:
 
 .. code-block:: ipython
 
-  In [1]: from testslide import StrictMock
+  In [1]: from testslide import StrictMock                                                      
   
-  In [2]: class Calculator:
-     ...:   def is_odd(self, x):
-     ...:     return bool(x % 2)
-     ...:   
+  In [2]: class Calculator: 
+     ...:     def is_odd(self, x): 
+     ...:         return bool(x % 2) 
+     ...:                                                                                       
   
-  In [3]: mock = StrictMock(Calculator)
+  In [3]: mock = StrictMock(template=Calculator)                                                
   
-  In [4]: mock.is_odd(2)
+  In [4]: mock.is_odd(2)                                                                        
   (...)
-  UndefinedBehavior: <StrictMock 0x7F290A3DD860 template=__main__.Calculator>:
-    Attribute 'is_odd' has no behavior defined.
-    You can define behavior by assigning a value to it.
+  UndefinedAttribute: 'is_odd' is not defined.
+  <StrictMock 0x7F17E06C7310 template=__main__.Calculator> must have a value defined for this attribute if it is going to be accessed.
+
 
 Instead of guessing what ``is_odd`` should return, StrictMock clearly tells you it was not told what to do with it. In this case, the mock is clearly missing the behavior, that we can trivially add:
 
@@ -70,20 +70,20 @@ You won't be allowed to set an attribute to a StrictMock if the given template c
 
 .. code-block:: ipython
 
-  In [1]: from testslide import StrictMock
+  In [1]: from testslide import StrictMock                                                      
   
-  In [2]: class Calculator:
-     ...:   def is_odd(self, x):
-     ...:     return bool(x % 2)
-     ...:   
+  In [2]: class Calculator: 
+     ...:   def is_odd(self, x): 
+     ...:     return bool(x % 2) 
+     ...:                                                                                       
   
-  In [3]: mock = StrictMock(Calculator)
+  In [3]: mock = StrictMock(template=Calculator)                                                
   
-  In [4]: mock.invalid = 'whatever'
+  In [4]: mock.invalid = "whatever"                                                             
   (...)
-  NoSuchAttribute: <StrictMock 0x7F7821920780 template=__main__.Calculator>:
-    No such attribute 'invalid'.
-    Can not set attribute invalid that is neither part of template class Calculator or runtime_attrs=[].
+  CanNotSetNonExistentAttribute: 'invalid' can not be set.
+  <StrictMock 0x7F4C62423F10 template=__main__.Calculator> template class does not have this attribute so the mock can not have it as well.
+  See also: 'runtime_attrs' at StrictMock.__init__.
 
 Dynamic Attributes
 """"""""""""""""""
@@ -176,9 +176,8 @@ It is recommended to use StrictMock giving it a template class, so you can lever
   
   In [3]: mock.whatever
   (...)
-  UndefinedBehavior: <StrictMock 0x7FED1C724C18>:
-    Attribute 'whatever' has no behavior defined.
-    You can define behavior by assigning a value to it.
+  UndefinedAttribute: 'whatever' is not defined.
+  <StrictMock 0x7FED1C724C18> must have a value defined for this attribute if it is going to be accessed.
   
   In [4]: mock.whatever = 'something'
   
