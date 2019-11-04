@@ -414,7 +414,9 @@ class StrictMock(object):
 
     def __setattr__(self, name, value):
         if name.startswith("__") and name.endswith("__"):
-            if name in self._UNSETTABLE_MAGICS or name in StrictMock.__dict__:
+            if name in self._UNSETTABLE_MAGICS or (
+                name in StrictMock.__dict__ and name not in self._SETTABLE_MAGICS
+            ):
                 raise UnsupportedMagic(self, name)
             if name not in self._SETTABLE_MAGICS:
                 raise NotImplementedError(
