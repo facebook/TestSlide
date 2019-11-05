@@ -277,7 +277,6 @@ class StrictMock(object):
         "__trunc__",
         "__xor__",
         # TODO
-        # "__await__",
         # "__aiter__",
         # "__anext__",
         # "__aenter__",
