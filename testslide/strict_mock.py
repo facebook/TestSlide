@@ -106,6 +106,27 @@ class NonCallableValue(BaseException):
         )
 
 
+class NonAwaitableReturn(BaseException):
+    """
+    Raised when a coroutine method at a StrictMock is assigned a not coroutine
+    callable function.
+    """
+
+    def __init__(self, strict_mock, name):
+        super().__init__(strict_mock, name)
+        self.strict_mock = strict_mock
+        self.name = name
+
+    def __str__(self):
+        return (
+            f"'{self.name}' can not be set with a callable that does not "
+            "return an awaitable.\n"
+            f"{self.strict_mock} template class requires this attribute to "
+            "be a callable that returns an awaitable (eg: a 'async def' "
+            "function)."
+        )
+
+
 class UnsupportedMagic(BaseException):
     """
     Raised when trying to set an unsupported magic attribute to a StrictMock
@@ -158,6 +179,7 @@ class StrictMock(object):
         "__abs__",
         "__add__",
         "__and__",
+        "__await__",
         "__bool__",
         "__bytes__",
         "__call__",
@@ -429,15 +451,24 @@ class StrictMock(object):
                 raise NonExistentAttribute(self, name)
 
             if hasattr(self.__template, name):
-                # If we are working with a callable we need to actually
-                # set the side effect of the callable, not directly assign
-                # the value to the callable
-                if callable(getattr(self.__template, name)):
+                template_value = getattr(self.__template, name)
+                if callable(template_value):
                     if not callable(value):
                         raise NonCallableValue(self, name)
-                    mock_value = staticmethod(
-                        _add_signature_validation(value, self.__template, name)
+                    value_with_sig_val = _add_signature_validation(
+                        value, self.__template, name
                     )
+                    if inspect.iscoroutinefunction(template_value):
+
+                        async def validate_awaitable_return(*args, **kwargs):
+                            return_value = value_with_sig_val(*args, **kwargs)
+                            if not inspect.isawaitable(return_value):
+                                raise NonAwaitableReturn(self, name)
+                            return await return_value
+
+                        mock_value = staticmethod(validate_awaitable_return)
+                    else:
+                        mock_value = staticmethod(value_with_sig_val)
         else:
             if callable(value):
                 mock_value = staticmethod(value)

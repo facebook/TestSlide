@@ -4,10 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 from testslide.strict_mock import (
+    NonAwaitableReturn,
+    NonCallableValue,
+    NonExistentAttribute,
     StrictMock,
     UndefinedAttribute,
-    NonExistentAttribute,
-    NonCallableValue,
 )
 
 import contextlib
@@ -56,13 +57,24 @@ class Template(TemplateParent):
     def instance_method(self, message):
         return "instance_method: {}".format(message)
 
+    async def async_instance_method(self, message):
+        return "async_instance_method: {}".format(message)
+
     @staticmethod
     def static_method(message):
         return "static_method: {}".format(message)
 
+    @staticmethod
+    async def async_static_method(message):
+        return "async_static_method: {}".format(message)
+
     @classmethod
     def class_method(cls, message):
         return "class_method: {}".format(message)
+
+    @classmethod
+    async def async_class_method(cls, message):
+        return "async_class_method: {}".format(message)
 
     @extra_arg
     def instance_method_extra(self, extra, message):
@@ -251,7 +263,7 @@ def strict_mock(context):
                     self.assertEqual(getattr(self.strict_mock, "slot_attribute"), value)
 
             @context.shared_context
-            def callable_attributes(context):
+            def callable_attribute_tests(context):
                 @context.sub_context
                 def failures(context):
                     @context.example
@@ -386,7 +398,7 @@ def strict_mock(context):
                         def before(self):
                             self.test_method_name = "instance_method"
 
-                        context.merge_context("callable attributes")
+                        context.merge_context("callable attribute tests")
 
                     @context.sub_context
                     def static_methods(context):
@@ -394,7 +406,7 @@ def strict_mock(context):
                         def before(self):
                             self.test_method_name = "static_method"
 
-                        context.merge_context("callable attributes")
+                        context.merge_context("callable attribute tests")
 
                     @context.sub_context
                     def class_methods(context):
@@ -402,7 +414,7 @@ def strict_mock(context):
                         def before(self):
                             self.test_method_name = "class_method"
 
-                        context.merge_context("callable attributes")
+                        context.merge_context("callable attribute tests")
 
                     @context.sub_context
                     def magic_methods(context):
@@ -631,3 +643,83 @@ def strict_mock(context):
             return filename
 
         context.merge_context("all tests")
+
+    @context.sub_context
+    def async_methods(context):
+        @context.memoize_before
+        async def strict_mock(self):
+            return StrictMock(template=Template)
+
+        @context.shared_context
+        def async_method_tests(context):
+            @context.example
+            async def raises_when_setting_a_non_callable_value(self):
+                with self.assertRaisesWithRegexMessage(
+                    NonCallableValue,
+                    f"'{self.method_name}' can not be set with a "
+                    "non-callable value.\n"
+                    f"<StrictMock .+> template class requires "
+                    "this attribute to be callable.",
+                ):
+                    setattr(self.strict_mock, self.method_name, "not callable")
+
+            @context.example
+            async def raises_when_non_async_function_assigned(self):
+                def sync_mock(msg):
+                    return "mock"
+
+                setattr(self.strict_mock, self.method_name, sync_mock)
+
+                with self.assertRaisesWithRegexMessage(
+                    NonAwaitableReturn,
+                    f"'{self.method_name}' can not be set with a callable "
+                    "that does not return an awaitable.\n"
+                    "<StrictMock .+> template class requires this attribute to "
+                    "be a callable that returns an awaitable \(eg: a 'async "
+                    "def' function\).",
+                ):
+                    await getattr(self.strict_mock, self.method_name)("hello")
+
+            @context.example
+            async def fails_on_wrong_signature_call(self):
+                async def mock(msg):
+                    return "mock "
+
+                setattr(self.strict_mock, self.method_name, mock)
+                with self.assertRaises(TypeError):
+                    await getattr(self.strict_mock, self.method_name)("hello", "wrong")
+
+            @context.example
+            async def can_mock_with_async_function(self):
+                async def mock(msg):
+                    return "mock " + msg
+
+                setattr(self.strict_mock, self.method_name, mock)
+                self.assertEqual(
+                    await getattr(self.strict_mock, self.method_name)("hello"),
+                    "mock hello",
+                )
+
+        @context.sub_context
+        def instance_methods(context):
+            @context.memoize_before
+            async def method_name(self):
+                return "async_instance_method"
+
+            context.merge_context("async method tests")
+
+        @context.sub_context
+        def static_methods(context):
+            @context.memoize_before
+            async def method_name(self):
+                return "async_static_method"
+
+            context.merge_context("async method tests")
+
+        @context.sub_context
+        def class_methods(context):
+            @context.memoize_before
+            async def method_name(self):
+                return "async_class_method"
+
+            context.merge_context("async method tests")
