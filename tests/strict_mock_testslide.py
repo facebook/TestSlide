@@ -49,8 +49,14 @@ class TemplateParent(object):
 
     async def __anext__(self):
         if self.values:
-            return values.pop()
+            return self.values.pop()
         raise StopAsyncIteration
+
+    async def __aenter__(self):
+        pass
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
 
 
 class Template(TemplateParent):
@@ -762,3 +768,46 @@ def strict_mock(context):
                 async for v in self.strict_mock:
                     yielded_values.append(v)
                 self.assertEqual(expected_values, list(reversed(yielded_values)))
+
+        @context.sub_context
+        def async_context_manager(context):
+            @context.sub_context("default_context_manager=False")
+            def default_context_manager_False(context):
+                @context.memoize_before
+                async def strict_mock(self):
+                    return StrictMock(template=Template, default_context_manager=False)
+
+                @context.example
+                async def default_raises_UndefinedAttribute(self):
+                    with self.assertRaisesWithRegexMessage(
+                        UndefinedAttribute,
+                        f"'__aenter__' is not set.\n"
+                        f"<StrictMock .+> must have a value set "
+                        "for this attribute if it is going to be accessed.",
+                    ):
+                        async with self.strict_mock:
+                            pass
+
+                @context.example
+                async def can_mock_async_context_manager(self):
+                    async def aenter():
+                        return "yielded"
+
+                    async def aexit(exc_type, exc_value, traceback):
+                        pass
+
+                    self.strict_mock.__aenter__ = aenter
+                    self.strict_mock.__aexit__ = aexit
+                    async with self.strict_mock as m:
+                        assert m == "yielded"
+
+            @context.sub_context("default_context_manager=True")
+            def default_context_manager_True(context):
+                @context.memoize_before
+                async def strict_mock(self):
+                    return StrictMock(template=Template, default_context_manager=True)
+
+                @context.example
+                async def it_works(self):
+                    async with self.strict_mock as m:
+                        assert id(self.strict_mock) == id(m)

@@ -179,7 +179,11 @@ If the template class is a context manager, ``default_context_manager`` can be u
      ...:   assert id(mock) == id(m)
      ...:
 
-Note that the mock itself will be yielded.
+The mock itself is yielded.
+
+.. note::
+
+  This also works for `asynchronous context managers <https://docs.python.org/3/reference/datamodel.html#asynchronous-context-managers>`_.
 
 You can also disable this:
 

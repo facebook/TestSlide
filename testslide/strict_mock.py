@@ -178,6 +178,8 @@ class StrictMock(object):
     _SETTABLE_MAGICS = [
         "__abs__",
         "__add__",
+        "__aenter__",
+        "__aexit__",
         "__aiter__",
         "__and__",
         "__anext__",
@@ -278,9 +280,6 @@ class StrictMock(object):
         "__truediv__",
         "__trunc__",
         "__xor__",
-        # TODO
-        # "__aenter__",
-        # "__aexit__",
     ]
 
     _UNSETTABLE_MAGICS = [
@@ -368,14 +367,24 @@ class StrictMock(object):
                     ):
                         setattr(self, name, _DefaultMagic(self, name))
 
-        if (
-            self.__template
-            and default_context_manager
-            and hasattr(self.__template, "__enter__")
-            and hasattr(self.__template, "__exit__")
-        ):
-            self.__enter__ = lambda: self
-            self.__exit__ = lambda exc_type, exc_value, traceback: None
+        if self.__template and default_context_manager:
+            if hasattr(self.__template, "__enter__") and hasattr(
+                self.__template, "__exit__"
+            ):
+                self.__enter__ = lambda: self
+                self.__exit__ = lambda exc_type, exc_value, traceback: None
+            if hasattr(self.__template, "__aenter__") and hasattr(
+                self.__template, "__aexit__"
+            ):
+
+                async def aenter():
+                    return self
+
+                async def aexit(exc_type, exc_value, traceback):
+                    pass
+
+                self.__aenter__ = aenter
+                self.__aexit__ = aexit
 
     @property
     def __class__(self):
