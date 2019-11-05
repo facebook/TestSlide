@@ -178,7 +178,9 @@ class StrictMock(object):
     _SETTABLE_MAGICS = [
         "__abs__",
         "__add__",
+        "__aiter__",
         "__and__",
+        "__anext__",
         "__await__",
         "__bool__",
         "__bytes__",
@@ -277,8 +279,6 @@ class StrictMock(object):
         "__trunc__",
         "__xor__",
         # TODO
-        # "__aiter__",
-        # "__anext__",
         # "__aenter__",
         # "__aexit__",
     ]

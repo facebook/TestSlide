@@ -33,6 +33,7 @@ def extra_arg(f):
 class TemplateParent(object):
     def __init__(self):
         self.parent_runtime_attr_from_init = True
+        self.values = [1, 2, 3]
 
     def __str__(self):
         return "original __str__"
@@ -42,6 +43,14 @@ class TemplateParent(object):
 
     def __len__(self):
         return 2341
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.values:
+            return values.pop()
+        raise StopAsyncIteration
 
 
 class Template(TemplateParent):
@@ -723,3 +732,33 @@ def strict_mock(context):
                 return "async_class_method"
 
             context.merge_context("async method tests")
+
+        @context.sub_context
+        def async_iterator(context):
+            @context.example
+            async def default_raises_UndefinedAttribute(self):
+                with self.assertRaisesWithRegexMessage(
+                    UndefinedAttribute,
+                    f"'__aiter__' is not set.\n"
+                    f"<StrictMock .+> must have a value set "
+                    "for this attribute if it is going to be accessed.",
+                ):
+                    async for _ in self.strict_mock:
+                        pass
+
+            @context.example
+            async def can_mock_async_iterator(self):
+                self.strict_mock.__aiter__ = lambda: self.strict_mock
+                expected_values = [3, 4, 5]
+                mock_values = copy.copy(expected_values)
+
+                async def mock():
+                    if mock_values:
+                        return mock_values.pop()
+                    raise StopAsyncIteration
+
+                self.strict_mock.__anext__ = mock
+                yielded_values = []
+                async for v in self.strict_mock:
+                    yielded_values.append(v)
+                self.assertEqual(expected_values, list(reversed(yielded_values)))
