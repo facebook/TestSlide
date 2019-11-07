@@ -1153,26 +1153,40 @@ class TestDSLAfterHook(TestDSLBase):
         After hooks can be declared with @self.after decorator from an example.
         They will be called in the order defined after each example.
         """
-        mock = Mock()
+        order = []
 
         @context
         def top(context):
+            @context.after
+            def first(self):
+                order.append("context after first")
+
+            @context.after
+            def second(self):
+                order.append("context after second")
+
             @context.example
             def with_after_hook(self):
                 @self.after
-                def first_after_hook(self):
-                    mock("first after")
+                def first(self):
+                    order.append("example after first")
 
                 @self.after
-                def second_after_hook(self):
-                    mock("second after")
+                def second(self):
+                    order.append("example after second")
 
-                mock("example")
+                order.append("example")
 
         self.run_first_context_first_example()
         self.assertEqual(
-            mock.mock_calls,
-            [call("example"), call("second after"), call("first after")],
+            order,
+            [
+                "example",
+                "example after second",
+                "example after first",
+                "context after second",
+                "context after first",
+            ],
         )
 
     def test_after_hook_fail(self):
@@ -1664,6 +1678,162 @@ class TestExample(TestDSLBase):
             self.assertTrue(exfinal in e.exceptions)
         else:
             raise AssertionError("Expected test to fail")
+
+
+class SmokeTestAsync(TestDSLBase):
+    def test_can_run_async_example_and_hooks(self):
+        order = []
+
+        @context
+        def top(context):
+            @context.around
+            async def first_around(self, wrapped):
+                order.append("first_around before")
+                await wrapped()
+                order.append("first_around after")
+
+            @context.around
+            async def second_around(self, wrapped):
+                order.append("second_around before")
+                await wrapped()
+                order.append("second_around after")
+
+            @context.before
+            async def first_before(self):
+                order.append("first_before")
+
+            @context.before
+            async def second_before(self):
+                order.append("second_before")
+
+            @context.after
+            async def first_after(self):
+                order.append("first_after")
+
+            @context.after
+            async def second_after(self):
+                order.append("second_after")
+
+            @context.function
+            async def function(self):
+                return "function"
+
+            @context.example
+            async def example(self):
+                @self.after
+                async def example_first_after(self):
+                    order.append("example_first_after")
+
+                @self.after
+                async def example_second_after(self):
+                    order.append("example_second_after")
+
+                assert "function" == await self.function()
+                order.append("example")
+
+        self.run_first_context_first_example()
+        self.assertEqual(
+            order,
+            [
+                "first_around before",
+                "second_around before",
+                "first_before",
+                "second_before",
+                "example",
+                "example_second_after",
+                "example_first_after",
+                "second_after",
+                "first_after",
+                "second_around after",
+                "first_around after",
+            ],
+        )
+
+    def test_can_not_mix_async_hooks_with_sync_example(self):
+        @context
+        def top(context):
+            @context.around
+            async def around(self, wrapped):
+                await wrapped()
+
+            @context.before
+            async def before(self):
+                pass
+
+            @context.after
+            async def after(self):
+                pass
+
+            @context.example
+            def sync_example(self):
+                pass
+
+        with self.assertRaisesRegex(
+            ValueError, "Function can not be a coroutine function"
+        ):
+            self.run_first_context_first_example()
+
+    def test_can_not_mix_sync_hooks_with_async_example(self):
+        @context
+        def top(context):
+            @context.around
+            def around(self, wrapped):
+                wrapped()
+
+            @context.before
+            def before(self):
+                pass
+
+            @context.after
+            def after(self):
+                pass
+
+            @context.example
+            async def async_example(self):
+                pass
+
+        with self.assertRaisesRegex(
+            ValueError, "Function must be a coroutine function"
+        ):
+            self.run_first_context_first_example()
+
+    def test_async_memoize_before(self):
+        order = []
+
+        @context
+        def top(context):
+            @context.before
+            async def first_before(self):
+                order.append("first_before")
+
+            @context.memoize_before
+            async def memoize_before(self):
+                order.append("memoize_before")
+                return "memoize_before"
+
+            @context.example
+            async def example(self):
+                assert self.memoize_before == "memoize_before"
+                order.append("example")
+
+        self.run_first_context_first_example()
+        self.assertEqual(order, ["first_before", "memoize_before", "example"])
+
+    def test_can_not_async_memoize(self):
+        @context
+        def top(context):
+            @context.memoize
+            async def memoize(self):
+                pass
+
+            @context.example
+            async def example(self):
+                self.memoize
+
+        with self.assertRaisesRegex(
+            ValueError, "Function can not be a coroutine function"
+        ):
+            self.run_first_context_first_example()
 
 
 class TestMockCallableIntegration(TestDSLBase):
