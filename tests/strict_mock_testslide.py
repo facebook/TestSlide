@@ -4,10 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 from testslide.strict_mock import (
+    NonAwaitableReturn,
+    NonCallableValue,
+    NonExistentAttribute,
     StrictMock,
     UndefinedAttribute,
-    NonExistentAttribute,
-    NonCallableValue,
 )
 
 import contextlib
@@ -32,6 +33,7 @@ def extra_arg(f):
 class TemplateParent(object):
     def __init__(self):
         self.parent_runtime_attr_from_init = True
+        self.values = [1, 2, 3]
 
     def __str__(self):
         return "original __str__"
@@ -41,6 +43,20 @@ class TemplateParent(object):
 
     def __len__(self):
         return 2341
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.values:
+            return self.values.pop()
+        raise StopAsyncIteration
+
+    async def __aenter__(self):
+        pass
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
 
 
 class Template(TemplateParent):
@@ -56,13 +72,24 @@ class Template(TemplateParent):
     def instance_method(self, message):
         return "instance_method: {}".format(message)
 
+    async def async_instance_method(self, message):
+        return "async_instance_method: {}".format(message)
+
     @staticmethod
     def static_method(message):
         return "static_method: {}".format(message)
 
+    @staticmethod
+    async def async_static_method(message):
+        return "async_static_method: {}".format(message)
+
     @classmethod
     def class_method(cls, message):
         return "class_method: {}".format(message)
+
+    @classmethod
+    async def async_class_method(cls, message):
+        return "async_class_method: {}".format(message)
 
     @extra_arg
     def instance_method_extra(self, extra, message):
@@ -251,7 +278,7 @@ def strict_mock(context):
                     self.assertEqual(getattr(self.strict_mock, "slot_attribute"), value)
 
             @context.shared_context
-            def callable_attributes(context):
+            def callable_attribute_tests(context):
                 @context.sub_context
                 def failures(context):
                     @context.example
@@ -386,7 +413,7 @@ def strict_mock(context):
                         def before(self):
                             self.test_method_name = "instance_method"
 
-                        context.merge_context("callable attributes")
+                        context.merge_context("callable attribute tests")
 
                     @context.sub_context
                     def static_methods(context):
@@ -394,7 +421,7 @@ def strict_mock(context):
                         def before(self):
                             self.test_method_name = "static_method"
 
-                        context.merge_context("callable attributes")
+                        context.merge_context("callable attribute tests")
 
                     @context.sub_context
                     def class_methods(context):
@@ -402,7 +429,7 @@ def strict_mock(context):
                         def before(self):
                             self.test_method_name = "class_method"
 
-                        context.merge_context("callable attributes")
+                        context.merge_context("callable attribute tests")
 
                     @context.sub_context
                     def magic_methods(context):
@@ -631,3 +658,156 @@ def strict_mock(context):
             return filename
 
         context.merge_context("all tests")
+
+    @context.sub_context
+    def async_methods(context):
+        @context.memoize_before
+        async def strict_mock(self):
+            return StrictMock(template=Template)
+
+        @context.shared_context
+        def async_method_tests(context):
+            @context.example
+            async def raises_when_setting_a_non_callable_value(self):
+                with self.assertRaisesWithRegexMessage(
+                    NonCallableValue,
+                    f"'{self.method_name}' can not be set with a "
+                    "non-callable value.\n"
+                    f"<StrictMock .+> template class requires "
+                    "this attribute to be callable.",
+                ):
+                    setattr(self.strict_mock, self.method_name, "not callable")
+
+            @context.example
+            async def raises_when_non_async_function_assigned(self):
+                def sync_mock(msg):
+                    return "mock"
+
+                setattr(self.strict_mock, self.method_name, sync_mock)
+
+                with self.assertRaisesWithRegexMessage(
+                    NonAwaitableReturn,
+                    f"'{self.method_name}' can not be set with a callable "
+                    "that does not return an awaitable.\n"
+                    "<StrictMock .+> template class requires this attribute to "
+                    "be a callable that returns an awaitable \(eg: a 'async "
+                    "def' function\).",
+                ):
+                    await getattr(self.strict_mock, self.method_name)("hello")
+
+            @context.example
+            async def fails_on_wrong_signature_call(self):
+                async def mock(msg):
+                    return "mock "
+
+                setattr(self.strict_mock, self.method_name, mock)
+                with self.assertRaises(TypeError):
+                    await getattr(self.strict_mock, self.method_name)("hello", "wrong")
+
+            @context.example
+            async def can_mock_with_async_function(self):
+                async def mock(msg):
+                    return "mock " + msg
+
+                setattr(self.strict_mock, self.method_name, mock)
+                self.assertEqual(
+                    await getattr(self.strict_mock, self.method_name)("hello"),
+                    "mock hello",
+                )
+
+        @context.sub_context
+        def instance_methods(context):
+            @context.memoize_before
+            async def method_name(self):
+                return "async_instance_method"
+
+            context.merge_context("async method tests")
+
+        @context.sub_context
+        def static_methods(context):
+            @context.memoize_before
+            async def method_name(self):
+                return "async_static_method"
+
+            context.merge_context("async method tests")
+
+        @context.sub_context
+        def class_methods(context):
+            @context.memoize_before
+            async def method_name(self):
+                return "async_class_method"
+
+            context.merge_context("async method tests")
+
+        @context.sub_context
+        def async_iterator(context):
+            @context.example
+            async def default_raises_UndefinedAttribute(self):
+                with self.assertRaisesWithRegexMessage(
+                    UndefinedAttribute,
+                    f"'__aiter__' is not set.\n"
+                    f"<StrictMock .+> must have a value set "
+                    "for this attribute if it is going to be accessed.",
+                ):
+                    async for _ in self.strict_mock:
+                        pass
+
+            @context.example
+            async def can_mock_async_iterator(self):
+                self.strict_mock.__aiter__ = lambda: self.strict_mock
+                expected_values = [3, 4, 5]
+                mock_values = copy.copy(expected_values)
+
+                async def mock():
+                    if mock_values:
+                        return mock_values.pop()
+                    raise StopAsyncIteration
+
+                self.strict_mock.__anext__ = mock
+                yielded_values = []
+                async for v in self.strict_mock:
+                    yielded_values.append(v)
+                self.assertEqual(expected_values, list(reversed(yielded_values)))
+
+        @context.sub_context
+        def async_context_manager(context):
+            @context.sub_context("default_context_manager=False")
+            def default_context_manager_False(context):
+                @context.memoize_before
+                async def strict_mock(self):
+                    return StrictMock(template=Template, default_context_manager=False)
+
+                @context.example
+                async def default_raises_UndefinedAttribute(self):
+                    with self.assertRaisesWithRegexMessage(
+                        UndefinedAttribute,
+                        f"'__aenter__' is not set.\n"
+                        f"<StrictMock .+> must have a value set "
+                        "for this attribute if it is going to be accessed.",
+                    ):
+                        async with self.strict_mock:
+                            pass
+
+                @context.example
+                async def can_mock_async_context_manager(self):
+                    async def aenter():
+                        return "yielded"
+
+                    async def aexit(exc_type, exc_value, traceback):
+                        pass
+
+                    self.strict_mock.__aenter__ = aenter
+                    self.strict_mock.__aexit__ = aexit
+                    async with self.strict_mock as m:
+                        assert m == "yielded"
+
+            @context.sub_context("default_context_manager=True")
+            def default_context_manager_True(context):
+                @context.memoize_before
+                async def strict_mock(self):
+                    return StrictMock(template=Template, default_context_manager=True)
+
+                @context.example
+                async def it_works(self):
+                    async with self.strict_mock as m:
+                        assert id(self.strict_mock) == id(m)
