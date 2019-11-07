@@ -27,13 +27,27 @@ class ParentTarget(TargetStr):
     def instance_method(self, arg1, arg2, kwarg1=None, kwarg2=None):
         return "original response"
 
+    async def async_instance_method(self, arg1, arg2, kwarg1=None, kwarg2=None):
+        return "async original response"
+
     @staticmethod
     def static_method(arg1, arg2, kwarg1=None, kwarg2=None):
         return "original response"
 
+    @staticmethod
+    async def async_static_method(arg1, arg2, kwarg1=None, kwarg2=None):
+        return "async original response"
+
     @classmethod
     def class_method(cls, arg1, arg2, kwarg1=None, kwarg2=None):
         return "original response"
+
+    @classmethod
+    async def async_class_method(cls, arg1, arg2, kwarg1=None, kwarg2=None):
+        return "async original response"
+
+    async def __aiter__(self):
+        return self
 
 
 class Target(ParentTarget):
@@ -822,6 +836,42 @@ def mock_callable_context(context):
                 "original response",
             )
 
+    @context.shared_context
+    def can_not_mock_async_callable(context):
+        @context.example
+        def can_not_mock(self):
+            with self.assertRaisesRegex(
+                ValueError,
+                "mock_callable\(\) can not be used with coroutine functions\.",
+            ):
+                mock_callable(self.target_arg, self.callable_arg)
+
+    @context.shared_context
+    def async_methods_examples(context):
+        @context.sub_context
+        def and_callable_is_an_async_instance_method(context):
+            context.memoize("callable_arg", lambda _: "async_instance_method")
+
+            context.merge_context("can not mock async callable")
+
+        @context.sub_context
+        def and_callable_is_an_async_class_method(context):
+            context.memoize("callable_arg", lambda _: "async_class_method")
+
+            context.merge_context("can not mock async callable")
+
+        @context.sub_context
+        def and_callable_is_an_async_static_method(context):
+            context.memoize("callable_arg", lambda _: "async_static_method")
+
+            context.merge_context("can not mock async callable")
+
+        @context.sub_context
+        def and_callable_is_an_async_magic_method(context):
+            context.memoize("callable_arg", lambda _: "__aiter__")
+
+            context.merge_context("can not mock async callable")
+
     ##
     ## Contexts
     ##
@@ -962,12 +1012,20 @@ def mock_callable_context(context):
 
             context.merge_context("examples for target")
 
+        @context.sub_context
+        def and_callable_is_an_async_function(context):
+            context.memoize("callable_arg", lambda _: "async_test_function")
+
+            context.merge_context("can not mock async callable")
+
     @context.sub_context
     def when_target_is_a_class(context):
         @context.before
         def before(self):
             self.real_target = Target
             self.target_arg = Target
+
+        context.merge_context("async methods examples")
 
         @context.sub_context
         def and_callable_is_an_instance_method(context):
@@ -1016,6 +1074,8 @@ def mock_callable_context(context):
             target = Target()
             self.real_target = target
             self.target_arg = target
+
+        context.merge_context("async methods examples")
 
         @context.shared_context
         def other_instances_are_not_mocked(context):
@@ -1125,6 +1185,15 @@ def mock_callable_context(context):
 
     @context.sub_context
     def when_target_is_a_StrictMock(context):
+        @context.before
+        def before(self):
+            target = StrictMock(template=Target)
+            self.original_callable = None
+            self.real_target = target
+            self.target_arg = target
+
+        context.merge_context("async methods examples")
+
         @context.shared_context
         def other_instances_are_not_mocked(context, runtime_attrs=[]):
             @context.example
@@ -1157,14 +1226,10 @@ def mock_callable_context(context):
             def that_is_statically_defined_at_the_class(context):
                 @context.before
                 def before(self):
-                    target = StrictMock(template=Target)
-                    self.original_callable = None
-                    self.real_target = target
-                    self.target_arg = target
                     self.mock_callable_dsl = mock_callable(
                         self.target_arg, self.callable_arg
                     )
-                    self.callable_target = target.instance_method
+                    self.callable_target = self.real_target.instance_method
 
                 context.merge_context(
                     "examples for target", has_original_callable=False
@@ -1203,15 +1268,11 @@ def mock_callable_context(context):
         def and_callable_is_a_class_method(context):
             @context.before
             def before(self):
-                target = StrictMock(template=Target)
-                self.original_callable = None
-                self.real_target = target
-                self.target_arg = target
                 self.callable_arg = "class_method"
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = target.class_method
+                self.callable_target = self.real_target.class_method
 
             context.merge_context("examples for target", has_original_callable=False)
             context.merge_context("other instances are not mocked")
@@ -1221,15 +1282,11 @@ def mock_callable_context(context):
         def and_callable_is_a_static_method(context):
             @context.before
             def before(self):
-                target = StrictMock(template=Target)
-                self.original_callable = None
-                self.real_target = target
-                self.target_arg = target
                 self.callable_arg = "static_method"
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = target.static_method
+                self.callable_target = self.real_target.static_method
 
             context.merge_context("examples for target", has_original_callable=False)
             context.merge_context("other instances are not mocked")
@@ -1242,15 +1299,11 @@ def mock_callable_context(context):
 
             @context.before
             def before(self):
-                target = StrictMock(template=Target)
-                self.original_callable = None
-                self.real_target = target
-                self.target_arg = target
                 self.callable_arg = "__str__"
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = lambda: str(target)
+                self.callable_target = lambda: str(self.real_target)
 
             context.merge_context(
                 "examples for target",
