@@ -3,7 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from testslide.strict_mock import StrictMock, UndefinedBehavior, NoSuchAttribute
+from testslide.strict_mock import (
+    StrictMock,
+    UndefinedAttribute,
+    NonExistentAttribute,
+    NonCallableValue,
+)
 
 import contextlib
 import copy
@@ -27,6 +32,15 @@ def extra_arg(f):
 class TemplateParent(object):
     def __init__(self):
         self.parent_runtime_attr_from_init = True
+
+    def __str__(self):
+        return "original __str__"
+
+    def __abs__(self):
+        return 33
+
+    def __len__(self):
+        return 2341
 
 
 class Template(TemplateParent):
@@ -122,21 +136,12 @@ def strict_mock(context):
                 self.value = 2341234123
 
             @context.example
-            def isinstance_differs(self):
-                self.assertFalse(isinstance(self.strict_mock, Template))
-
-            @context.example
             def raises_when_an_undefined_attribute_is_accessed(self):
-                attr_name = "undefined_attribute"
+                name = "undefined_attribute"
                 with self.assertRaisesWithRegexMessage(
-                    UndefinedBehavior,
-                    "{}:\n  ".format(self.strict_mock_rgx)
-                    + re.escape(
-                        "Attribute '{}' has no behavior defined.\n  ".format(attr_name)
-                    )
-                    + "You can define behavior by assigning a value to it.",
+                    AttributeError, f"'{name}' was not set for {self.strict_mock}."
                 ):
-                    getattr(self.strict_mock, attr_name)
+                    getattr(self.strict_mock, name)
 
             @context.example
             def allows_mocking_any_attribute(self):
@@ -150,10 +155,7 @@ def strict_mock(context):
                 self.assertTrue(hasattr(self.strict_mock, name))
                 delattr(self.strict_mock, name)
                 with self.assertRaisesWithRegexMessage(
-                    UndefinedBehavior,
-                    "{}:\n  ".format(self.strict_mock_rgx)
-                    + "Attribute '{}' has no behavior defined.\n  ".format(name)
-                    + "You can define behavior by assigning a value to it.",
+                    AttributeError, f"'{name}' was not set for {self.strict_mock}."
                 ):
                     getattr(self.strict_mock, name)
 
@@ -186,12 +188,10 @@ def strict_mock(context):
                 def raises_when_an_undefined_attribute_is_accessed(self):
                     attr_name = "non_callable"
                     with self.assertRaisesWithRegexMessage(
-                        UndefinedBehavior,
-                        "{}:\n  ".format(self.strict_mock_rgx)
-                        + "Attribute '{}' has no behavior defined.\n  ".format(
-                            attr_name
-                        )
-                        + "You can define behavior by assigning a value to it.",
+                        UndefinedAttribute,
+                        f"'{attr_name}' is not set.\n"
+                        f"{self.strict_mock_rgx} must have a value set "
+                        "for this attribute if it is going to be accessed.",
                     ):
                         getattr(self.strict_mock, attr_name)
 
@@ -200,14 +200,7 @@ def strict_mock(context):
                     attr_name = "non_existing_attr"
                     with self.assertRaisesWithRegexMessage(
                         AttributeError,
-                        "{}: ".format(self.strict_mock_rgx)
-                        + re.escape(
-                            "Can not getattr() an attribute '{}' ".format(attr_name)
-                        )
-                        + "that is neither part of template class Template or "
-                        + re.escape(
-                            "runtime_attrs=[{}].".format(repr(self.runtime_attr))
-                        ),
+                        f"'{attr_name}' was not set for {self.strict_mock_rgx}.",
                     ):
                         getattr(self.strict_mock, attr_name)
 
@@ -215,15 +208,11 @@ def strict_mock(context):
                 def raises_when_setting_non_existing_attributes(self):
                     attr_name = "non_existing_attr"
                     with self.assertRaisesWithRegexMessage(
-                        NoSuchAttribute,
-                        "{}:\n  ".format(self.strict_mock_rgx)
-                        + "No such attribute '{}'.\n  ".format(attr_name)
-                        + "Can not set attribute non_existing_attr that is neither "
-                        + re.escape(
-                            "part of template class Template or runtime_attrs=[{}].".format(
-                                repr(self.runtime_attr)
-                            )
-                        ),
+                        NonExistentAttribute,
+                        f"'{attr_name}' can not be set.\n"
+                        f"{self.strict_mock_rgx} template class does not have "
+                        "this attribute so the mock can not have it as well.\n"
+                        "See also: 'runtime_attrs' at StrictMock.__init__.",
                     ):
                         setattr(self.strict_mock, attr_name, "whatever")
 
@@ -267,14 +256,12 @@ def strict_mock(context):
                 def failures(context):
                     @context.example
                     def raises_when_setting_a_non_callable_value(self):
-                        non_callable = "non callable"
                         with self.assertRaisesWithRegexMessage(
-                            ValueError,
-                            "{}: ".format(self.strict_mock_rgx)
-                            + "Template class attribute '{}' attribute is ".format(
-                                self.test_method_name
-                            )
-                            + "callable and {} is not.".format(repr(non_callable)),
+                            NonCallableValue,
+                            f"'{self.test_method_name}' can not be set with a "
+                            "non-callable value.\n"
+                            f"{self.strict_mock_rgx} template class requires "
+                            "this attribute to be callable.",
                         ):
                             setattr(
                                 self.strict_mock, self.test_method_name, "non callable"
@@ -283,12 +270,10 @@ def strict_mock(context):
                     @context.example
                     def raises_when_an_undefined_method_is_accessed(self):
                         with self.assertRaisesWithRegexMessage(
-                            UndefinedBehavior,
-                            "{}:\n  ".format(self.strict_mock_rgx)
-                            + "Attribute '{}' has no behavior defined.\n  ".format(
-                                self.test_method_name
-                            )
-                            + "You can define behavior by assigning a value to it.",
+                            UndefinedAttribute,
+                            f"'{self.test_method_name}' is not set.\n"
+                            f"{self.strict_mock_rgx} must have a value set "
+                            "for this attribute if it is going to be accessed.",
                         ):
                             getattr(self.strict_mock, self.test_method_name)
 
@@ -297,14 +282,8 @@ def strict_mock(context):
                         attr_name = "non_existing_method"
                         with self.assertRaisesWithRegexMessage(
                             AttributeError,
-                            "{}: ".format(self.strict_mock_rgx)
-                            + re.escape(
-                                "Can not getattr() an attribute '{}' ".format(attr_name)
-                            )
-                            + "that is neither part of template class Template or "
-                            + re.escape(
-                                "runtime_attrs=['{}'].".format(self.runtime_attr)
-                            ),
+                            f"'{attr_name}' was not set for "
+                            f"{self.strict_mock_rgx}.",
                         ):
                             getattr(self.strict_mock, attr_name)
 
@@ -312,17 +291,12 @@ def strict_mock(context):
                     def raises_when_setting_non_existing_methods(self):
                         attr_name = "non_existing_method"
                         with self.assertRaisesWithRegexMessage(
-                            NoSuchAttribute,
-                            "{}:\n  ".format(self.strict_mock_rgx)
-                            + "No such attribute '{}'.\n  ".format(attr_name)
-                            + "Can not set attribute {} that is neither part of ".format(
-                                attr_name
-                            )
-                            + re.escape(
-                                "template class Template or runtime_attrs=['{}'].".format(
-                                    self.runtime_attr
-                                )
-                            ),
+                            NonExistentAttribute,
+                            f"'{attr_name}' can not be set.\n"
+                            f"{self.strict_mock_rgx} template class does not "
+                            "have this attribute so the mock can not have it "
+                            "as well.\n"
+                            "See also: 'runtime_attrs' at StrictMock.__init__.",
                         ):
                             self.strict_mock.non_existing_method = self.mock_function
 
@@ -355,8 +329,10 @@ def strict_mock(context):
                 def success(context):
                     @context.example
                     def isinstance_is_true_for_template(self):
-                        self.assertTrue(isinstance(self.strict_mock, Template))
-                        self.assertTrue(isinstance(self.strict_mock, TemplateParent))
+                        self.assertTrue(isinstance(self.strict_mock, self.template))
+                        self.assertTrue(
+                            isinstance(self.strict_mock, self.template.mro()[1])
+                        )
 
                     @context.sub_context
                     def method_mocking(context):
@@ -397,36 +373,6 @@ def strict_mock(context):
                                 SomeClass().mock_method,
                             )
 
-                        @context.example
-                        def can_access_attributes(self):
-                            self.mock_function.attribute = "value"
-                            setattr(
-                                self.strict_mock,
-                                self.test_method_name,
-                                self.mock_function,
-                            )
-                            mocked_metod = getattr(
-                                self.strict_mock, self.test_method_name
-                            )
-                            self.assertEqual(
-                                getattr(mocked_metod, "attribute"), "value"
-                            )
-                            setattr(mocked_metod, "new_attribute", "new_value")
-                            self.assertEqual(
-                                getattr(mocked_metod, "new_attribute"), "new_value"
-                            )
-                            delattr(mocked_metod, "new_attribute")
-                            self.assertFalse(hasattr(mocked_metod, "new_attribute"))
-
-                    @context.sub_context
-                    def when_template_has_context_manager_methods(context):
-                        @context.example
-                        def context_management_mocked_by_default(self):
-                            with self.context_manager_strict_mock as target:
-                                self.assertTrue(
-                                    target is self.context_manager_strict_mock
-                                )
-
             @context.shared_context
             def instance_attributes(context):
 
@@ -458,29 +404,103 @@ def strict_mock(context):
 
                         context.merge_context("callable attributes")
 
+                    @context.sub_context
+                    def magic_methods(context):
+                        @context.example
+                        def raises_when_an_undefined_magic_method_is_accessed(self):
+                            with self.assertRaisesWithRegexMessage(
+                                UndefinedAttribute,
+                                f"'__abs__' is not set.\n"
+                                f"{self.strict_mock_rgx} must have a value set "
+                                "for this attribute if it is going to be accessed.",
+                            ):
+                                abs(self.strict_mock)
+
+                        @context.example
+                        def can_set_magic_methods(self):
+                            value = 23412
+                            self.strict_mock.__abs__ = lambda: value
+                            self.assertEqual(abs(self.strict_mock), value)
+
+                        @context.example("bool() works")
+                        def bool_works(self):
+                            with self.assertRaisesWithRegexMessage(
+                                UndefinedAttribute,
+                                f"'__len__' is not set.\n"
+                                f"{self.strict_mock_rgx} must have a value set "
+                                "for this attribute if it is going to be accessed.",
+                            ):
+                                bool(self.strict_mock)
+
+                            self.strict_mock.__len__ = lambda: 0
+                            self.assertEqual(bool(self.strict_mock), False)
+
+                        @context.sub_context
+                        def context_manager(context):
+                            @context.memoize
+                            def template(self):
+                                return ContextManagerTemplate
+
+                            @context.sub_context("with default_context_manager=True")
+                            def with_default_context_manager_True(context):
+                                @context.memoize
+                                def strict_mock(self):
+                                    return StrictMock(template=self.template)
+
+                                @context.example
+                                def context_manager_works(self):
+                                    with self.strict_mock as target:
+                                        self.assertTrue(target is self.strict_mock)
+
+                            @context.sub_context("with default_context_manager=False")
+                            def with_default_context_manager_False(context):
+                                @context.memoize
+                                def strict_mock(self):
+                                    return StrictMock(
+                                        template=self.template,
+                                        default_context_manager=False,
+                                    )
+
+                                @context.example
+                                def context_manager_raises_UndefinedAttribute(self):
+                                    with self.assertRaisesWithRegexMessage(
+                                        UndefinedAttribute,
+                                        f"'__enter__' is not set.\n"
+                                        f"{self.strict_mock_rgx} must have a value set "
+                                        "for this attribute if it is going to be accessed.",
+                                    ):
+                                        with self.strict_mock:
+                                            pass
+
             @context.sub_context
             def mock_instance_after_a_class_as_template(context):
-                @context.before
-                def before(self):
-                    self.strict_mock = StrictMock(
-                        Template, runtime_attrs=[self.runtime_attr]
-                    )
-                    self.strict_mock_rgx = (
+                @context.memoize
+                def template(self):
+                    return Template
+
+                @context.memoize
+                def strict_mock(self):
+                    return StrictMock(self.template, runtime_attrs=[self.runtime_attr])
+
+                @context.memoize
+                def strict_mock_rgx(self):
+                    return (
                         "<StrictMock 0x{:02X} template={} ".format(
                             id(self.strict_mock),
-                            "{}.Template".format(Template.__module__),
+                            "{}.{}".format(
+                                self.template.__module__, self.template.__name__
+                            ),
                         )
                         + re.escape(self.caller_filename)
                         + ":\d+>"
                     )
-                    self.context_manager_strict_mock = StrictMock(
-                        ContextManagerTemplate
-                    )
 
+                @context.memoize
+                def mock_function(self):
                     def mock_function(message):
                         return "mock: {}".format(message)
 
-                    self.mock_function = mock_function
+                    return mock_function
 
                 context.merge_context("instance attributes")
 
@@ -490,8 +510,10 @@ def strict_mock(context):
                     Covers a case where StrictMock would fail if mock_callable() was used on a
                     class method.
                     """
-                    self.mock_callable(Template, "class_method").to_return_value(None)
-                    strict_mock2 = StrictMock(Template)
+                    self.mock_callable(self.template, "class_method").to_return_value(
+                        None
+                    )
+                    strict_mock2 = StrictMock(self.template)
                     strict_mock2.instance_method = lambda *args, **kwargs: None
 
             # @context.xsub_context
