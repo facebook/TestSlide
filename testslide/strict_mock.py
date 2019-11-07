@@ -175,6 +175,10 @@ class StrictMock(object):
 
     TRIM_PATH_PREFIX = ""
 
+    # All of these magic should be OK to be set at the mock and they are
+    # expected to work as they should. If implemented by the template class,
+    # they will have default values assigned to them, that raise
+    # UndefinedAttribute until configured.
     _SETTABLE_MAGICS = [
         "__abs__",
         "__add__",
@@ -282,6 +286,8 @@ class StrictMock(object):
         "__xor__",
     ]
 
+    # These magics either won't work or makes no sense to be set for mock after
+    # an instance of a class. Trying to set them will raise UnsupportedMagic.
     _UNSETTABLE_MAGICS = [
         "__bases__",
         "__class__",
@@ -307,16 +313,60 @@ class StrictMock(object):
     def __new__(
         cls, template=None, runtime_attrs=None, name=None, default_context_manager=True
     ):
+        """
+        For every new instance of StrictMock we dynamically create a subclass of
+        StrictMock and return an instance of it. This allows us to use this new
+        subclass dictionary for all attributes, including magic ones, that must
+        be defined at the class to work.
+        """
         if template:
             name = f"{template.__name__}{cls.__name__}"
         else:
             name = cls.__name__
-        # Using a subclass per instance, we can use its dictionary to store
-        # all instance attributes, so both regular and magic methods can
-        # work.
         strict_mock_subclass = type(name, (cls,), {})
         strict_mock_instance = object.__new__(strict_mock_subclass)
         return strict_mock_instance
+
+    def _setup_magic_methods(self):
+        """
+        Populate all template's magic methods with expected default behavior.
+        This is important as things such as bool() depend on they existing
+        on the object's class __dict__.
+        https://github.com/facebookincubator/TestSlide/issues/23
+        """
+        if not self.__template:
+            return
+        for klass in self.__template.mro():
+            if klass is object:
+                continue
+            for name in klass.__dict__:
+                if (
+                    callable(klass.__dict__[name])
+                    and name in self._SETTABLE_MAGICS
+                    and name not in self._UNSETTABLE_MAGICS
+                    and name not in StrictMock.__dict__
+                ):
+                    setattr(self, name, _DefaultMagic(self, name))
+
+    def _setup_default_context_manager(self, default_context_manager):
+        if self.__template and default_context_manager:
+            if hasattr(self.__template, "__enter__") and hasattr(
+                self.__template, "__exit__"
+            ):
+                self.__enter__ = lambda: self
+                self.__exit__ = lambda exc_type, exc_value, traceback: None
+            if hasattr(self.__template, "__aenter__") and hasattr(
+                self.__template, "__aexit__"
+            ):
+
+                async def aenter():
+                    return self
+
+                async def aexit(exc_type, exc_value, traceback):
+                    pass
+
+                self.__aenter__ = aenter
+                self.__aexit__ = aexit
 
     def __init__(
         self, template=None, runtime_attrs=None, name=None, default_context_manager=True
@@ -328,8 +378,8 @@ class StrictMock(object):
         specify their names here.
         name: an optional name for this mock instance.
         default_context_manager: If the template class is a context manager,
-        setup a mock for __enter__ that yields itself and an empty function
-        for __exit__.
+        setup a mock for __enter__/__aenter__ that yields itself and an empty function
+        for __exit__/__aexit__.
         """
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
@@ -350,41 +400,9 @@ class StrictMock(object):
         else:
             self.__dict__["__caller"] = None
 
-        # Populate all template's magic methods with expected default behavior.
-        # This is important as things such as bool() depend on they existing
-        # on the object's class __dict__.
-        # https://github.com/facebookincubator/TestSlide/issues/23
-        if template:
-            for klass in template.mro():
-                if klass is object:
-                    continue
-                for name in klass.__dict__:
-                    if (
-                        callable(klass.__dict__[name])
-                        and name in self._SETTABLE_MAGICS
-                        and name not in self._UNSETTABLE_MAGICS
-                        and name not in StrictMock.__dict__
-                    ):
-                        setattr(self, name, _DefaultMagic(self, name))
+        self._setup_magic_methods()
 
-        if self.__template and default_context_manager:
-            if hasattr(self.__template, "__enter__") and hasattr(
-                self.__template, "__exit__"
-            ):
-                self.__enter__ = lambda: self
-                self.__exit__ = lambda exc_type, exc_value, traceback: None
-            if hasattr(self.__template, "__aenter__") and hasattr(
-                self.__template, "__aexit__"
-            ):
-
-                async def aenter():
-                    return self
-
-                async def aexit(exc_type, exc_value, traceback):
-                    pass
-
-                self.__aenter__ = aenter
-                self.__aexit__ = aexit
+        self._setup_default_context_manager(default_context_manager)
 
     @property
     def __class__(self):
@@ -443,11 +461,14 @@ class StrictMock(object):
         )
 
     def __setattr__(self, name, value):
+        # If magic...
         if name.startswith("__") and name.endswith("__"):
+            # ...check whether we're allowed to mock...
             if name in self._UNSETTABLE_MAGICS or (
                 name in StrictMock.__dict__ and name not in self._SETTABLE_MAGICS
             ):
                 raise UnsupportedMagic(self, name)
+            # ...or if it is something unsupported.
             if name not in self._SETTABLE_MAGICS:
                 raise NotImplementedError(
                     f"StrictMock does not implement support for {name}"
