@@ -151,6 +151,32 @@ class _DefaultMagic:
         raise UndefinedAttribute(self.strict_mock, self.name)
 
 
+class _MethodProxy(object):
+    """
+    When setting callable attributes, the new value is wrapped by another
+    function that does signature and async validations. We then need this proxy
+    around it, so that when the attribute is called, the mock value is called
+    (the wrapper function which then calls the new value) but all attribute
+    access is forwarded to the new value.
+    """
+
+    def __init__(self, mock_value, value):
+        self.__dict__["_mock_value"] = mock_value
+        self.__dict__["_value"] = value
+
+    def __getattr__(self, name):
+        return getattr(self.__dict__["_value"], name)
+
+    def __setattr__(self, name, value):
+        return setattr(self.__dict__["_value"], name, value)
+
+    def __delattr__(self, name):
+        return delattr(self.__dict__["_value"], name)
+
+    def __call__(self, *args, **kwargs):
+        return self.__dict__["_mock_value"](*args, **kwargs)
+
+
 class StrictMock(object):
     """
     Mock object that won't allow any attribute access or method call, unless its
@@ -495,12 +521,14 @@ class StrictMock(object):
                                 raise NonAwaitableReturn(self, name)
                             return await return_value
 
-                        mock_value = staticmethod(validate_awaitable_return)
+                        mock_value = _MethodProxy(validate_awaitable_return, value)
                     else:
-                        mock_value = staticmethod(value_with_sig_val)
+                        mock_value = _MethodProxy(value_with_sig_val, value)
         else:
             if callable(value):
-                mock_value = staticmethod(value)
+                # We don't really need the proxy here, but it server the
+                # double purpose of swallowing self / cls when needed.
+                mock_value = _MethodProxy(value, value)
 
         setattr(type(self), name, mock_value)
 

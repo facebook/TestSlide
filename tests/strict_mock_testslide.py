@@ -149,18 +149,39 @@ def strict_mock(context):
             )
 
     @context.shared_context
+    def can_access_attributes(context):
+        @context.example
+        def can_access_attributes(self):
+            self.mock_function.attribute = "value"
+            self.assertEqual(getattr(self.mock_function, "attribute"), "value")
+            setattr(self.strict_mock, self.test_method_name, self.mock_function)
+            mocked_metod = getattr(self.strict_mock, self.test_method_name)
+            self.assertEqual(getattr(mocked_metod, "attribute"), "value")
+            setattr(mocked_metod, "new_attribute", "new_value")
+            self.assertEqual(getattr(mocked_metod, "new_attribute"), "new_value")
+            delattr(mocked_metod, "new_attribute")
+            self.assertFalse(hasattr(mocked_metod, "new_attribute"))
+
+    @context.shared_context
     def all_tests(context):
         @context.sub_context
         def without_template(context):
-            @context.before
-            def before(self):
-                self.strict_mock = StrictMock()
-                self.strict_mock_rgx = (
+            context.memoize("strict_mock", lambda _: StrictMock())
+
+            @context.memoize
+            def strict_mock_rgx(self):
+                return (
                     "<StrictMock 0x{:02X} ".format(id(self.strict_mock))
                     + re.escape(self.caller_filename)
                     + ":\d+>"
                 )
-                self.value = 2341234123
+
+            context.memoize("value", lambda _: 3241234123)
+
+            context.memoize("test_method_name", lambda _: "some_method")
+            context.memoize("mock_function", lambda _: lambda: None)
+
+            context.merge_context("can access attributes")
 
             @context.example
             def raises_when_an_undefined_attribute_is_accessed(self):
@@ -363,6 +384,9 @@ def strict_mock(context):
 
                     @context.sub_context
                     def method_mocking(context):
+
+                        context.merge_context("can access attributes")
+
                         @context.after
                         def after(self):
                             self.assertEqual(
