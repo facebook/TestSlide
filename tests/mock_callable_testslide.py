@@ -14,8 +14,8 @@ from testslide.mock_callable import (
 )
 import contextlib
 from testslide.strict_mock import StrictMock
-import time
 import os
+from . import sample_module
 
 
 class TargetStr(object):
@@ -65,11 +65,11 @@ class CallOrderTarget(object):
         return "f2: {}".format(repr(arg))
 
 
-@context("mock_callable(target, callable)")  # noqa: C901
+@context("mock_callable(target, attribute)")
 def mock_callable_context(context):
 
     ##
-    ## Common mock_callable setup
+    ## Attributes
     ##
 
     context.memoize("assertions", lambda _: [])
@@ -84,19 +84,17 @@ def mock_callable_context(context):
     def specific_call_kwargs(self):
         return {k: "specific {}".format(v) for k, v in self.call_kwargs.items()}
 
-    @context.before
-    def register_assertions(self):
-        def register_assertion(assertion):
-            self.assertions.append(assertion)
+    ##
+    ## Functions
+    ##
 
-        testslide.mock_callable.register_assertion = register_assertion
-
-    @context.after
-    def cleanup_patches(self):
-        # Unpatch before assertions, to make sure it is done if assertion fails.
-        testslide.mock_callable.unpatch_all_callable_mocks()
-        for assertion in self.assertions:
-            assertion()
+    @context.function
+    def assert_all(self):
+        try:
+            for assertion in self.assertions:
+                assertion()
+        finally:
+            del self.assertions[:]
 
     @context.function
     @contextlib.contextmanager
@@ -113,117 +111,26 @@ def mock_callable_context(context):
             ),
         )
 
-    @context.function
-    def assert_all(self):
-        try:
-            for assertion in self.assertions:
-                assertion()
-        finally:
-            del self.assertions[:]
-
     ##
-    ## General tests
+    ## Hooks
     ##
 
-    @context.sub_context
-    def call_order_assertion(context):
-        @context.memoize
-        def target1(self):
-            return CallOrderTarget("target1")
+    @context.before
+    def register_assertions(self):
+        def register_assertion(assertion):
+            self.assertions.append(assertion)
 
-        @context.memoize
-        def target2(self):
-            return CallOrderTarget("target2")
+        testslide.mock_callable.register_assertion = register_assertion
 
-        @context.before
-        def define_assertions(self):
-            self.mock_callable(self.target1, "f1").for_call("step 1").to_return_value(
-                "step 1 return"
-            ).and_assert_called_ordered()
-            self.mock_callable(self.target1, "f2").to_return_value(
-                "step 2 return"
-            ).and_assert_called_ordered()
-            self.mock_callable(self.target2, "f1").for_call("step 3").to_return_value(
-                "step 3 return"
-            ).and_assert_called_ordered()
-
-        @context.example
-        def it_passes_with_ordered_calls(self):
-            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
-            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
-            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
-            self.assert_all()
-
-        @context.example
-        def it_fails_with_unordered_calls(self):
-            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
-            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
-            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
-            with self.assertRaisesWithMessage(
-                AssertionError,
-                "calls did not match assertion.\n"
-                + "\n"
-                + "These calls were expected to have happened in order:\n"
-                + "\n"
-                + "  target1, {} with arguments:\n".format(repr("f1"))
-                + "    {}\n".format(repr(("step 1",)))
-                + "  target1, {} with any arguments\n".format(repr("f2"))
-                + "  target2, {} with arguments:\n".format(repr("f1"))
-                + "    {}\n".format(repr(("step 3",)))
-                + "\n"
-                + "but these calls were made:\n"
-                + "\n"
-                + "  target1, {} with any arguments\n".format(repr("f2"))
-                + "  target2, {} with arguments:\n".format(repr("f1"))
-                + "    {}\n".format(repr(("step 3",)))
-                + "  target1, {} with arguments:\n".format(repr("f1"))
-                + "    {}".format(repr(("step 1",))),
-            ):
-                self.assert_all()
-
-        @context.example
-        def it_fails_with_partial_calls(self):
-            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
-            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
-            with self.assertRaisesWithMessage(
-                AssertionError,
-                "calls did not match assertion.\n"
-                + "\n"
-                + "These calls were expected to have happened in order:\n"
-                + "\n"
-                + "  target1, {} with arguments:\n".format(repr("f1"))
-                + "    {}\n".format(repr(("step 1",)))
-                + "  target1, {} with any arguments\n".format(repr("f2"))
-                + "  target2, {} with arguments:\n".format(repr("f1"))
-                + "    {}\n".format(repr(("step 3",)))
-                + "\n"
-                + "but these calls were made:\n"
-                + "\n"
-                + "  target1, {} with any arguments\n".format(repr("f2"))
-                + "  target2, {} with arguments:\n".format(repr("f1"))
-                + "    {}".format(repr(("step 3",))),
-            ):
-                self.assert_all()
-
-        @context.example
-        def other_mocks_do_not_interfere(self):
-            self.mock_callable(self.target1, "f1").for_call(
-                "unrelated 1"
-            ).to_return_value("unrelated 1 return").and_assert_called_once()
-
-            self.assertEqual(self.target1.f1("unrelated 1"), "unrelated 1 return")
-
-            self.mock_callable(self.target2, "f1").for_call(
-                "unrelated 3"
-            ).to_return_value("unrelated 3 return")
-
-            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
-            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
-            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
-            self.assert_all()
+    @context.after
+    def cleanup_patches(self):
+        # Unpatch before assertions, to make sure it is done if assertion fails.
+        testslide.mock_callable.unpatch_all_callable_mocks()
+        for assertion in self.assertions:
+            assertion()
 
     ##
-    ## Target type tests
+    ## Shared Contexts
     ##
 
     @context.shared_context
@@ -899,18 +806,127 @@ def mock_callable_context(context):
                         with self.assertRaises(AssertionError):
                             self.assert_all()
 
-    @context.sub_context
-    def When_target_is_function_of_a_module(context):
-        @context.before
-        def before(self):
-            self.original_callable = testslide._test_function
-            self.real_target = testslide
-            self.target_arg = "testslide"
-            self.callable_arg = "_test_function"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = testslide._test_function
+    @context.shared_context
+    def class_is_not_mocked(context):
+        @context.example
+        def class_is_not_mocked(self):
+            mock_callable(self.target_arg, self.callable_arg).to_return_value(
+                "mocked value"
+            )
+            self.assertEqual(
+                self.callable_target(*self.call_args, **self.call_kwargs),
+                "mocked value",
+            )
+            self.assertEqual(
+                getattr(Target, self.callable_arg)(*self.call_args, **self.call_kwargs),
+                "original response",
+            )
 
-        context.merge_context("examples for target")
+    ##
+    ## Contexts
+    ##
+
+    @context.sub_context
+    def call_order_assertion(context):
+        @context.memoize
+        def target1(self):
+            return CallOrderTarget("target1")
+
+        @context.memoize
+        def target2(self):
+            return CallOrderTarget("target2")
+
+        @context.before
+        def define_assertions(self):
+            self.mock_callable(self.target1, "f1").for_call("step 1").to_return_value(
+                "step 1 return"
+            ).and_assert_called_ordered()
+            self.mock_callable(self.target1, "f2").to_return_value(
+                "step 2 return"
+            ).and_assert_called_ordered()
+            self.mock_callable(self.target2, "f1").for_call("step 3").to_return_value(
+                "step 3 return"
+            ).and_assert_called_ordered()
+
+        @context.example
+        def it_passes_with_ordered_calls(self):
+            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            self.assert_all()
+
+        @context.example
+        def it_fails_with_unordered_calls(self):
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
+            with self.assertRaisesWithMessage(
+                AssertionError,
+                "calls did not match assertion.\n"
+                + "\n"
+                + "These calls were expected to have happened in order:\n"
+                + "\n"
+                + "  target1, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 1",)))
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 3",)))
+                + "\n"
+                + "but these calls were made:\n"
+                + "\n"
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 3",)))
+                + "  target1, {} with arguments:\n".format(repr("f1"))
+                + "    {}".format(repr(("step 1",))),
+            ):
+                self.assert_all()
+
+        @context.example
+        def it_fails_with_partial_calls(self):
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            with self.assertRaisesWithMessage(
+                AssertionError,
+                "calls did not match assertion.\n"
+                + "\n"
+                + "These calls were expected to have happened in order:\n"
+                + "\n"
+                + "  target1, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 1",)))
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}\n".format(repr(("step 3",)))
+                + "\n"
+                + "but these calls were made:\n"
+                + "\n"
+                + "  target1, {} with any arguments\n".format(repr("f2"))
+                + "  target2, {} with arguments:\n".format(repr("f1"))
+                + "    {}".format(repr(("step 3",))),
+            ):
+                self.assert_all()
+
+        @context.example
+        def other_mocks_do_not_interfere(self):
+            self.mock_callable(self.target1, "f1").for_call(
+                "unrelated 1"
+            ).to_return_value("unrelated 1 return").and_assert_called_once()
+
+            self.assertEqual(self.target1.f1("unrelated 1"), "unrelated 1 return")
+
+            self.mock_callable(self.target2, "f1").for_call(
+                "unrelated 3"
+            ).to_return_value("unrelated 3 return")
+
+            self.assertEqual(self.target1.f1("step 1"), "step 1 return")
+            self.assertEqual(self.target1.f2("step 2"), "step 2 return")
+            self.assertEqual(self.target2.f1("step 3"), "step 3 return")
+            self.assert_all()
+
+    @context.sub_context
+    def when_target_is_a_module(context):
+        context.memoize("target_arg", lambda _: "tests.sample_module")
+        context.memoize("real_target", lambda _: sample_module)
 
         @context.example
         def works_with_alternative_module_names(self):
@@ -933,183 +949,182 @@ def mock_callable_context(context):
             testslide.mock_callable.unpatch_all_callable_mocks()
             self.assertEqual(os.path.exists, original_function, "Unpatch did not work")
 
-    @context.sub_context
-    def When_target_is_a_builtin(context):
-        context.memoize("call_args", lambda _: (0,))
-        context.memoize("call_kwargs", lambda _: {})
-        context.memoize("specific_call_args", lambda _: (0.000000001,))
-        context.memoize("specific_call_kwargs", lambda _: {})
-
-        @context.before
-        def before(self):
-            self.original_callable = time.sleep
-            self.real_target = time
-            self.target_arg = "time"
-            self.callable_arg = "sleep"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = time.sleep
-
-        context.merge_context("examples for target", validate_signature=False)
-
-    @context.sub_context
-    def When_target_is_instance_method_at_a_class(context):
-        @context.example
-        def it_is_not_allowed(self):
-            with self.assertRaises(ValueError):
-                mock_callable(Target, "instance_method")
-
-    @context.sub_context
-    def When_target_is_class_method_at_a_class(context):
-        @context.before
-        def before(self):
-            self.original_callable = Target.class_method
-            self.real_target = Target
-            self.target_arg = Target
-            self.callable_arg = "class_method"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = Target.class_method
-
-        context.merge_context("examples for target")
-
-    @context.sub_context
-    def When_target_is_static_method_at_a_class(context):
-        @context.before
-        def before(self):
-            self.original_callable = Target.static_method
-            self.real_target = Target
-            self.target_arg = Target
-            self.callable_arg = "static_method"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = Target.static_method
-
-        context.merge_context("examples for target")
-
-    @context.shared_context
-    def other_instances_are_not_mocked(context):
-        @context.example
-        def other_instances_are_not_mocked(self):
-            mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mocked value"
-            )
-            self.assertEqual(
-                self.callable_target(*self.call_args, **self.call_kwargs),
-                "mocked value",
-            )
-            self.assertEqual(
-                getattr(Target(), self.callable_arg)(
-                    *self.call_args, **self.call_kwargs
-                ),
-                "original response",
-            )
-
-    @context.sub_context
-    def When_target_is_instance_method_at_an_instance(context):
-
-        context.memoize("callable_arg", lambda _: "instance_method")
-
-        @context.before
-        def before(self):
-            target = Target()
-            self.original_callable = target.instance_method
-            self.real_target = target
-            self.target_arg = target
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.instance_method
-
-        context.merge_context("examples for target")
-        context.merge_context("other instances are not mocked")
-
-    @context.sub_context
-    def When_target_is_magic_instance_method_at_an_instance(context):
-
-        context.memoize("call_args", lambda _: ())
-        context.memoize("call_kwargs", lambda _: {})
-
-        @context.shared_context
-        def magic_method_tests(context):
+        @context.sub_context
+        def and_callable_is_a_function(context):
             @context.before
             def before(self):
-                self.original_callable = self.target.__str__
-                self.real_target = self.target
-                self.target_arg = self.target
-                self.callable_arg = "__str__"
+                self.callable_arg = "test_function"
+                self.original_callable = getattr(self.real_target, self.callable_arg)
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = lambda: str(self.target)
+                self.callable_target = getattr(self.real_target, self.callable_arg)
 
-            context.merge_context(
-                "examples for target", callable_accepts_no_args=True, can_yield=False
-            )
+            context.merge_context("examples for target")
 
+    @context.sub_context
+    def when_target_is_a_class(context):
+        @context.before
+        def before(self):
+            self.real_target = Target
+            self.target_arg = Target
+
+        @context.sub_context
+        def and_callable_is_an_instance_method(context):
+            @context.example
+            def it_is_not_allowed(self):
+                with self.assertRaises(ValueError):
+                    mock_callable(Target, "instance_method")
+
+        @context.sub_context
+        def and_callable_is_a_class_method(context):
+            @context.before
+            def before(self):
+                self.original_callable = Target.class_method
+                self.callable_arg = "class_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = Target.class_method
+
+            context.merge_context("examples for target")
+
+        @context.sub_context
+        def and_callable_is_a_static_method(context):
+            @context.before
+            def before(self):
+                self.original_callable = Target.static_method
+                self.callable_arg = "static_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = Target.static_method
+
+            context.merge_context("examples for target")
+
+        @context.sub_context
+        def and_callable_is_a_magic_method(context):
+            @context.example
+            def it_is_not_allowed(self):
+                with self.assertRaises(ValueError):
+                    mock_callable(Target, "__str__")
+
+    @context.sub_context
+    def an_instance(context):
+        @context.before
+        def before(self):
+            target = Target()
+            self.real_target = target
+            self.target_arg = target
+
+        @context.shared_context
+        def other_instances_are_not_mocked(context):
             @context.example
             def other_instances_are_not_mocked(self):
                 mock_callable(self.target_arg, self.callable_arg).to_return_value(
                     "mocked value"
                 )
-                self.assertEqual(self.callable_target(), "mocked value")
-                self.assertEqual(str(Target()), "original response")
+                self.assertEqual(
+                    self.callable_target(*self.call_args, **self.call_kwargs),
+                    "mocked value",
+                )
+                self.assertEqual(
+                    getattr(Target(), self.callable_arg)(
+                        *self.call_args, **self.call_kwargs
+                    ),
+                    "original response",
+                )
 
         @context.sub_context
-        def with_magic_method_defined_on_class(context):
-            context.memoize("target", lambda self: ParentTarget())
-            context.merge_context("magic method tests")
+        def and_callable_is_an_instance_method(context):
+
+            context.memoize("callable_arg", lambda _: "instance_method")
+
+            @context.before
+            def before(self):
+                self.original_callable = self.real_target.instance_method
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = self.real_target.instance_method
+
+            context.merge_context("examples for target")
+            context.merge_context("other instances are not mocked")
 
         @context.sub_context
-        def with_magic_method_defined_on_parent_class(context):
-            context.memoize("target", lambda self: Target())
-            context.merge_context("magic method tests")
+        def and_callable_is_a_class_method(context):
+            @context.before
+            def before(self):
+                self.original_callable = self.real_target.class_method
+                self.callable_arg = "class_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = self.real_target.class_method
 
-    @context.shared_context
-    def class_is_not_mocked(context):
-        @context.example
-        def class_is_not_mocked(self):
-            mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mocked value"
-            )
-            self.assertEqual(
-                self.callable_target(*self.call_args, **self.call_kwargs),
-                "mocked value",
-            )
-            self.assertEqual(
-                getattr(Target, self.callable_arg)(*self.call_args, **self.call_kwargs),
-                "original response",
-            )
+            context.merge_context("examples for target")
+            context.merge_context("other instances are not mocked")
+            context.merge_context("class is not mocked")
+
+        @context.sub_context
+        def and_callable_is_a_static_method(context):
+            @context.before
+            def before(self):
+                self.original_callable = self.real_target.static_method
+                self.callable_arg = "static_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = self.real_target.static_method
+
+            context.merge_context("examples for target")
+            context.merge_context("other instances are not mocked")
+            context.merge_context("class is not mocked")
+
+        @context.sub_context
+        def and_callable_is_a_magic_method(context):
+            context.memoize("call_args", lambda _: ())
+            context.memoize("call_kwargs", lambda _: {})
+
+            @context.shared_context
+            def magic_method_tests(context):
+                @context.before
+                def before(self):
+                    self.original_callable = self.target.__str__
+                    self.real_target = self.target
+                    self.target_arg = self.target
+                    self.callable_arg = "__str__"
+                    self.mock_callable_dsl = mock_callable(
+                        self.target_arg, self.callable_arg
+                    )
+                    self.callable_target = lambda: str(self.target)
+
+                context.merge_context(
+                    "examples for target",
+                    callable_accepts_no_args=True,
+                    can_yield=False,
+                )
+
+                @context.example
+                def other_instances_are_not_mocked(self):
+                    mock_callable(self.target_arg, self.callable_arg).to_return_value(
+                        "mocked value"
+                    )
+                    self.assertEqual(self.callable_target(), "mocked value")
+                    self.assertEqual(str(Target()), "original response")
+
+            @context.sub_context
+            def with_magic_method_defined_on_class(context):
+                context.memoize("target", lambda self: ParentTarget())
+                context.merge_context("magic method tests")
+
+            @context.sub_context
+            def with_magic_method_defined_on_parent_class(context):
+                context.memoize("target", lambda self: Target())
+                context.merge_context("magic method tests")
 
     @context.sub_context
-    def When_target_is_class_method_at_an_instance(context):
-        @context.before
-        def before(self):
-            target = Target()
-            self.original_callable = target.class_method
-            self.real_target = target
-            self.target_arg = target
-            self.callable_arg = "class_method"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.class_method
-
-        context.merge_context("examples for target")
-        context.merge_context("other instances are not mocked")
-        context.merge_context("class is not mocked")
-
-    @context.sub_context
-    def When_target_is_static_method_at_an_instance(context):
-        @context.before
-        def before(self):
-            target = Target()
-            self.original_callable = target.static_method
-            self.real_target = target
-            self.target_arg = target
-            self.callable_arg = "static_method"
-            self.mock_callable_dsl = mock_callable(self.target_arg, self.callable_arg)
-            self.callable_target = target.static_method
-
-        context.merge_context("examples for target")
-        context.merge_context("other instances are not mocked")
-        context.merge_context("class is not mocked")
-
-    @context.sub_context
-    def When_target_is_a_StrictMock_instance(context):
+    def when_target_is_a_StrictMock(context):
         @context.shared_context
         def other_instances_are_not_mocked(context, runtime_attrs=[]):
             @context.example
@@ -1135,28 +1150,93 @@ def mock_callable_context(context):
                 )
 
         @context.sub_context
-        def And_attribute_is_a_instance_method(context):
-
+        def and_callable_is_an_instance_method(context):
             context.memoize("callable_arg", lambda _: "instance_method")
 
+            @context.sub_context
+            def that_is_statically_defined_at_the_class(context):
+                @context.before
+                def before(self):
+                    target = StrictMock(template=Target)
+                    self.original_callable = None
+                    self.real_target = target
+                    self.target_arg = target
+                    self.mock_callable_dsl = mock_callable(
+                        self.target_arg, self.callable_arg
+                    )
+                    self.callable_target = target.instance_method
+
+                context.merge_context(
+                    "examples for target", has_original_callable=False
+                )
+
+                context.merge_context("other instances are not mocked")
+
+            @context.sub_context
+            def that_is_dynamically_defined_by_the_instance(context):
+
+                context.memoize("callable_arg", lambda _: "dynamic_instance_method")
+
+                @context.before
+                def before(self):
+                    target = StrictMock(
+                        template=Target, runtime_attrs=["dynamic_instance_method"]
+                    )
+                    self.original_callable = None
+                    self.real_target = target
+                    self.target_arg = target
+                    self.mock_callable_dsl = mock_callable(
+                        self.target_arg, self.callable_arg
+                    )
+                    self.callable_target = target.dynamic_instance_method
+
+                context.merge_context(
+                    "examples for target", has_original_callable=False
+                )
+
+                context.merge_context(
+                    "other instances are not mocked",
+                    runtime_attrs=["dynamic_instance_method"],
+                )
+
+        @context.sub_context
+        def and_callable_is_a_class_method(context):
             @context.before
             def before(self):
                 target = StrictMock(template=Target)
                 self.original_callable = None
                 self.real_target = target
                 self.target_arg = target
+                self.callable_arg = "class_method"
                 self.mock_callable_dsl = mock_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = target.instance_method
+                self.callable_target = target.class_method
 
             context.merge_context("examples for target", has_original_callable=False)
-
             context.merge_context("other instances are not mocked")
+            context.merge_context("class is not mocked")
 
         @context.sub_context
-        def And_attribute_is_a_magic_instance_method(context):
+        def and_callable_is_a_static_method(context):
+            @context.before
+            def before(self):
+                target = StrictMock(template=Target)
+                self.original_callable = None
+                self.real_target = target
+                self.target_arg = target
+                self.callable_arg = "static_method"
+                self.mock_callable_dsl = mock_callable(
+                    self.target_arg, self.callable_arg
+                )
+                self.callable_target = target.static_method
 
+            context.merge_context("examples for target", has_original_callable=False)
+            context.merge_context("other instances are not mocked")
+            context.merge_context("class is not mocked")
+
+        @context.sub_context
+        def and_callable_is_a_magic_method(context):
             context.memoize("call_args", lambda _: ())
             context.memoize("call_kwargs", lambda _: {})
 
@@ -1178,66 +1258,4 @@ def mock_callable_context(context):
                 has_original_callable=False,
                 can_yield=False,
             )
-
             context.merge_context("other instances are not mocked")
-
-        @context.sub_context
-        def And_attribute_is_a_dynamic_instance_method(context):
-
-            context.memoize("callable_arg", lambda _: "dynamic_instance_method")
-
-            @context.before
-            def before(self):
-                target = StrictMock(
-                    template=Target, runtime_attrs=["dynamic_instance_method"]
-                )
-                self.original_callable = None
-                self.real_target = target
-                self.target_arg = target
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
-                )
-                self.callable_target = target.dynamic_instance_method
-
-            context.merge_context("examples for target", has_original_callable=False)
-
-            context.merge_context(
-                "other instances are not mocked",
-                runtime_attrs=["dynamic_instance_method"],
-            )
-
-        @context.sub_context
-        def And_attribute_is_a_class_method(context):
-            @context.before
-            def before(self):
-                target = StrictMock(template=Target)
-                self.original_callable = None
-                self.real_target = target
-                self.target_arg = target
-                self.callable_arg = "class_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
-                )
-                self.callable_target = target.class_method
-
-            context.merge_context("examples for target", has_original_callable=False)
-            context.merge_context("other instances are not mocked")
-            context.merge_context("class is not mocked")
-
-        @context.sub_context
-        def And_attribute_is_a_static_method(context):
-            @context.before
-            def before(self):
-                target = StrictMock(template=Target)
-                self.original_callable = None
-                self.real_target = target
-                self.target_arg = target
-                self.callable_arg = "static_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
-                )
-                self.callable_target = target.static_method
-
-            context.merge_context("examples for target", has_original_callable=False)
-            context.merge_context("other instances are not mocked")
-            context.merge_context("class is not mocked")
