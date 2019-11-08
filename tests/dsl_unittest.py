@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
 import asyncio
 import unittest
 
@@ -1836,15 +1837,19 @@ class SmokeTestAsync(TestDSLBase):
         ):
             self.run_first_context_first_example()
 
-    def test_fail_if_coroutine_not_awaited(self):
-        @context
-        def top(context):
-            @context.example
-            async def example(self):
-                asyncio.sleep(0.1)
+    if sys.version_info >= (3, 7):
 
-        with self.assertRaisesRegex(RuntimeWarning, "coroutine '.+' was never awaited"):
-            self.run_first_context_first_example()
+        def test_fail_if_coroutine_not_awaited(self):
+            @context
+            def top(context):
+                @context.example
+                async def example(self):
+                    asyncio.sleep(0.1)
+
+            with self.assertRaisesRegex(
+                RuntimeWarning, "coroutine '.+' was never awaited"
+            ):
+                self.run_first_context_first_example()
 
 
 class TestMockCallableIntegration(TestDSLBase):

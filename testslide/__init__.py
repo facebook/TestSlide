@@ -267,6 +267,9 @@ class _ExampleRunner:
 
     @contextlib.contextmanager
     def _raise_if_asyncio_warnings(self, context_data):
+        if sys.version_info < (3, 7):
+            yield
+            return
         original_showwarning = warnings.showwarning
         caught_failures = []
 
