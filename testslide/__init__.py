@@ -280,8 +280,10 @@ class _ExampleRunner:
             warning_class = type(message)
             pattern = failure_warning_messages.get(warning_class, None)
             if pattern and re.compile(pattern).match(str(message)):
+                print("Caught!")
                 caught_failures.append(message)
             else:
+                print("Original")
                 original_showwarning(message, category, filename, lineno, file, line)
 
         warnings.showwarning = showwarning
