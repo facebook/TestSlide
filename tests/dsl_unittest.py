@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import unittest
 
 from unittest.mock import Mock, call, patch
@@ -1833,6 +1834,16 @@ class SmokeTestAsync(TestDSLBase):
         with self.assertRaisesRegex(
             ValueError, "Function can not be a coroutine function"
         ):
+            self.run_first_context_first_example()
+
+    def test_fail_if_coroutine_not_awaited(self):
+        @context
+        def top(context):
+            @context.example
+            async def example(self):
+                asyncio.sleep(0.1)
+
+        with self.assertRaisesRegex(RuntimeWarning, "coroutine '.+' was never awaited"):
             self.run_first_context_first_example()
 
 
