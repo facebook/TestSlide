@@ -6,6 +6,7 @@
 import sys
 import asyncio
 import unittest
+import time
 
 from unittest.mock import Mock, call, patch
 
@@ -1849,6 +1850,16 @@ class SmokeTestAsync(TestDSLBase):
             with self.assertRaisesRegex(
                 RuntimeWarning, "coroutine '.+' was never awaited"
             ):
+                self.run_first_context_first_example()
+
+        def test_fail_if_slow_task(self):
+            @context
+            def top(context):
+                @context.example
+                async def example(self):
+                    time.sleep(0.1)
+
+            with self.assertRaisesRegex(RuntimeError, "^Executing .+ took .+ seconds$"):
                 self.run_first_context_first_example()
 
 
