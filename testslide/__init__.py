@@ -5,13 +5,15 @@
 
 from contextlib import contextmanager
 
-from typing import List  # noqa
 import sys
+import asyncio.log
 import unittest
+import contextlib
 import re
 import types
 import asyncio
 import inspect
+import warnings
 
 import testslide.mock_callable
 import testslide.mock_constructor
@@ -240,8 +242,7 @@ class _ExampleRunner:
             for after_code in reversed(after_functions):
                 with aggregated_exceptions.catch():
                     await self._fail_if_not_coroutine_function(after_code, context_data)
-            if aggregated_exceptions.exceptions:
-                aggregated_exceptions.raise_correct_exception()
+            aggregated_exceptions.raise_correct_exception()
             return
         around_code = around_functions.pop()
 
@@ -264,20 +265,53 @@ class _ExampleRunner:
                 + " did not execute example code!"
             )
 
+    @contextlib.contextmanager
+    def _raise_if_asyncio_warnings(self, context_data):
+        if sys.version_info < (3, 7):
+            yield
+            return
+        original_showwarning = warnings.showwarning
+        caught_failures = []
+
+        def showwarning(message, category, filename, lineno, file=None, line=None):
+            failure_warning_messages = {
+                RuntimeWarning: "^coroutine '.+' was never awaited"
+            }
+            warning_class = type(message)
+            pattern = failure_warning_messages.get(warning_class, None)
+            if pattern and re.compile(pattern).match(str(message)):
+                caught_failures.append(message)
+            else:
+                original_showwarning(message, category, filename, lineno, file, line)
+
+        warnings.showwarning = showwarning
+        aggregated_exceptions = AggregatedExceptions()
+
+        try:
+            with aggregated_exceptions.catch():
+                yield
+        finally:
+            warnings.showwarning = original_showwarning
+            for failure in caught_failures:
+                with aggregated_exceptions.catch():
+                    raise failure
+            aggregated_exceptions.raise_correct_exception()
+
     def _async_run_all_hooks_and_example(self, context_data):
         coro = self._real_async_run_all_hooks_and_example(context_data)
-        if sys.version_info < (3, 7):
-            loop = asyncio.events.new_event_loop()
-            try:
-                loop.set_debug(True)
-                loop.run_until_complete(coro)
-            finally:
+        with self._raise_if_asyncio_warnings(context_data):
+            if sys.version_info < (3, 7):
+                loop = asyncio.events.new_event_loop()
                 try:
-                    loop.run_until_complete(loop.shutdown_asyncgens())
+                    loop.set_debug(True)
+                    loop.run_until_complete(coro)
                 finally:
-                    loop.close()
-        else:
-            asyncio.run(coro, debug=True)
+                    try:
+                        loop.run_until_complete(loop.shutdown_asyncgens())
+                    finally:
+                        loop.close()
+            else:
+                asyncio.run(coro, debug=True)
 
     @staticmethod
     def _fail_if_coroutine_function(func, *args, **kwargs):
@@ -312,8 +346,7 @@ class _ExampleRunner:
             for after_code in reversed(after_functions):
                 with aggregated_exceptions.catch():
                     self._fail_if_coroutine_function(after_code, context_data)
-            if aggregated_exceptions.exceptions:
-                aggregated_exceptions.raise_correct_exception()
+            aggregated_exceptions.raise_correct_exception()
             return
         around_code = around_functions.pop()
 
@@ -448,7 +481,7 @@ class Context(object):
     _SAME_CONTEXT_NAME_ERROR = "A context with the same name is already defined"
 
     # List of all top level contexts created
-    all_top_level_contexts = []  # type: List[Context]
+    all_top_level_contexts = []
 
     # Constructor
 
