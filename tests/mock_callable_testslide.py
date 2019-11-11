@@ -1341,6 +1341,25 @@ def mock_callable_tests(context):
 def mock_async_callable_tests(context):
 
     ##
+    ## Functions
+    ##
+
+    @context.function
+    @contextlib.contextmanager
+    def assertRaisesWithMessage(self, exception, msg):
+        with self.assertRaises(exception) as cm:
+            yield
+        ex_msg = str(cm.exception)
+        self.assertEqual(
+            ex_msg,
+            msg,
+            "Expected exception {}.{} message "
+            "to be\n{}\nbut got\n{}.".format(
+                exception.__module__, exception.__name__, repr(msg), repr(ex_msg)
+            ),
+        )
+
+    ##
     ## Shared Contexts
     ##
 
@@ -1373,25 +1392,70 @@ def mock_async_callable_tests(context):
         can_yield=False,
         has_original_callable=True,
     ):
-        @context.xexample(".for_call()")
+        @context.example
+        async def default_behavior(self):
+            mock_async_callable(self.target_arg, self.callable_arg)
+            with self.assertRaises(UndefinedBehaviorForCall):
+                await self.callable_target(*self.call_args, **self.call_kwargs)
+
+        @context.example(".for_call()")
         async def for_call(self):
-            pass
+            mock_args = tuple(f"mock {str(arg)}" for arg in self.call_args)
+            mock_kwargs = {k: f"mock {str(v)}" for k, v in self.call_kwargs.items()}
+            mock_async_callable(self.target_arg, self.callable_arg).for_call(
+                *mock_args, **mock_kwargs
+            ).to_return_value("mock")
+            self.assertEqual(
+                await self.callable_target(*mock_args, **mock_kwargs), "mock"
+            )
+            if mock_args or mock_kwargs:
+                with self.assertRaises(UnexpectedCallArguments):
+                    await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.xexample(".to_return_value(value)")
+        @context.example(".to_return_value(value)")
         async def to_return_value(self):
-            pass
+            mock_async_callable(self.target_arg, self.callable_arg).to_return_value(
+                "mock"
+            )
+            self.assertEqual(
+                await self.callable_target(*self.call_args, **self.call_kwargs), "mock"
+            )
 
-        @context.xexample(".to_return_values(value_list)")
+        @context.example(".to_return_values(value_list)")
         async def to_return_values(self):
-            pass
+            mock_async_callable(self.target_arg, self.callable_arg).to_return_values(
+                ["mock1", "mock2"]
+            )
+            self.assertEqual(
+                await self.callable_target(*self.call_args, **self.call_kwargs), "mock1"
+            )
+            self.assertEqual(
+                await self.callable_target(*self.call_args, **self.call_kwargs), "mock2"
+            )
+            with self.assertRaisesRegex(
+                UndefinedBehaviorForCall, "No more values to return!"
+            ):
+                await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.xexample(".to_raise(exception)")
+        @context.example(".to_raise(exception)")
         async def to_raise(self):
-            pass
+            mock_async_callable(self.target_arg, self.callable_arg).to_raise(
+                RuntimeError("mock")
+            )
+            with self.assertRaisesWithMessage(RuntimeError, "mock"):
+                await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.xexample(".with_implementation(func)")
+        @context.example(".with_implementation(func)")
         async def with_implementation(self):
-            pass
+            async def implementation_mock(*args, **kwargs):
+                return "mock"
+
+            mock_async_callable(self.target_arg, self.callable_arg).with_implementation(
+                implementation_mock
+            )
+            self.assertEqual(
+                await self.callable_target(*self.call_args, **self.call_kwargs), "mock"
+            )
 
         @context.xexample(".with_wrapper(func)")
         async def with_wrapper(self):
@@ -1499,6 +1563,8 @@ def mock_async_callable_tests(context):
                     self.target_arg, self.callable_arg
                 )
                 self.callable_target = getattr(self.real_target, self.callable_arg)
+                self.call_args = ("1", "2")
+                self.call_kwargs = {"kwarg1": "1", "kwarg2": "2"}
 
             context.merge_context("mock configuration examples")
 
@@ -1508,6 +1574,8 @@ def mock_async_callable_tests(context):
         async def before(self):
             self.real_target = Target
             self.target_arg = Target
+            self.call_args = ("1", "2")
+            self.call_kwargs = {"kwarg1": "1", "kwarg2": "2"}
 
         context.merge_context(
             "sync methods examples", not_in_class_instance_method=True
@@ -1531,12 +1599,12 @@ def mock_async_callable_tests(context):
         def and_callable_is_an_async_class_method(context):
             @context.before
             async def before(self):
-                self.original_callable = Target.class_method
                 self.callable_arg = "async_class_method"
+                self.original_callable = getattr(self.real_target, self.callable_arg)
                 self.mock_async_callable_dsl = mock_async_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = Target.class_method
+                self.callable_target = getattr(self.real_target, self.callable_arg)
 
             context.merge_context("mock configuration examples")
 
@@ -1544,12 +1612,12 @@ def mock_async_callable_tests(context):
         def and_callable_is_an_async_static_method(context):
             @context.before
             async def before(self):
-                self.original_callable = Target.static_method
                 self.callable_arg = "async_static_method"
+                self.original_callable = getattr(self.real_target, self.callable_arg)
                 self.mock_async_callable_dsl = mock_async_callable(
                     self.target_arg, self.callable_arg
                 )
-                self.callable_target = Target.static_method
+                self.callable_target = getattr(self.real_target, self.callable_arg)
 
             context.merge_context("mock configuration examples")
 
@@ -1574,6 +1642,8 @@ def mock_async_callable_tests(context):
             target = Target()
             self.real_target = target
             self.target_arg = target
+            self.call_args = ("1", "2")
+            self.call_kwargs = {"kwarg1": "1", "kwarg2": "2"}
 
         context.merge_context("sync methods examples")
 
@@ -1621,20 +1691,16 @@ def mock_async_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_magic_method(context):
-            context.memoize_before("call_args", lambda _: ())
-            context.memoize_before("call_kwargs", lambda _: {})
-
             @context.before
             async def before(self):
                 self.callable_arg = "__aiter__"
-                self.real_target = self.target
-                self.target_arg = self.real_target
                 self.original_callable = getattr(self.real_target, self.callable_arg)
                 self.mock_async_callable_dsl = mock_async_callable(
                     self.target_arg, self.callable_arg
                 )
-                raise NotImplementedError
-                # self.callable_target = lambda: aiter(self.target)
+                self.callable_target = getattr(self.real_target, self.callable_arg)
+                self.call_args = ()
+                self.call_kwargs = {}
 
             context.merge_context(
                 "mock configuration examples",
@@ -1649,15 +1715,16 @@ def mock_async_callable_tests(context):
             self.original_callable = None
             self.real_target = StrictMock(template=Target)
             self.target_arg = self.real_target
+            self.call_args = ("1", "2")
+            self.call_kwargs = {"kwarg1": "1", "kwarg2": "2"}
 
         context.merge_context("sync methods examples")
 
         @context.sub_context
         def and_callable_is_an_async_instance_method(context):
-            context.memoize_before("callable_arg", lambda _: "async_instance_method")
-
             @context.before
             async def before(self):
+                self.callable_arg = "async_instance_method"
                 self.mock_async_callable_dsl = mock_async_callable(
                     self.target_arg, self.callable_arg
                 )
@@ -1684,7 +1751,7 @@ def mock_async_callable_tests(context):
         @context.sub_context
         def and_callable_is_a_async_static_method(context):
             @context.before
-            def before(self):
+            async def before(self):
                 self.callable_arg = "async_static_method"
                 self.mock_async_callable_dsl = mock_async_callable(
                     self.target_arg, self.callable_arg
@@ -1697,17 +1764,15 @@ def mock_async_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_magic_method(context):
-            context.memoize_before("call_args", lambda _: ())
-            context.memoize_before("call_kwargs", lambda _: {})
-
             @context.before
             async def before(self):
                 self.callable_arg = "__aiter__"
                 self.mock_async_callable_dsl = mock_async_callable(
                     self.target_arg, self.callable_arg
                 )
-                raise NotImplementedError
-                # self.callable_target = lambda: aiter(self.real_target)
+                self.callable_target = getattr(self.real_target, self.callable_arg)
+                self.call_args = ()
+                self.call_kwargs = {}
 
             context.merge_context(
                 "mock configuration examples",

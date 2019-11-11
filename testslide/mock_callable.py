@@ -93,6 +93,11 @@ def _format_args(indent, *args, **kwargs):
     return s
 
 
+##
+## Exceptions
+##
+
+
 class UndefinedBehaviorForCall(BaseException):
     """
     Raised when a mock receives a call for which no behavior was defined.
@@ -118,11 +123,11 @@ class UnexpectedCallArguments(BaseException):
 
 
 ##
-## Behavior
+## Runners
 ##
 
 
-class _Runner(object):
+class _BaseRunner:
     def __init__(self, target, method, original_callable):
         self.target = target
         self.method = method
@@ -133,7 +138,7 @@ class _Runner(object):
         self._max_calls = None
         self._has_order_assertion = False
 
-    def run(self, *args, **kwargs):
+    def register_call(self, *args, **kwargs):
         global _received_ordered_calls
 
         if self._has_order_assertion:
@@ -303,13 +308,23 @@ class _Runner(object):
         self._has_order_assertion = True
 
 
+class _Runner(_BaseRunner):
+    def run(self, *args, **kwargs):
+        super().register_call(*args, **kwargs)
+
+
+class _AsyncRunner(_BaseRunner):
+    async def run(self, *args, **kwargs):
+        super().register_call(*args, **kwargs)
+
+
 class _ReturnValueRunner(_Runner):
     def __init__(self, target, method, original_callable, value):
-        super(_ReturnValueRunner, self).__init__(target, method, original_callable)
+        super().__init__(target, method, original_callable)
         self.return_value = value
 
     def run(self, *args, **kwargs):
-        super(_ReturnValueRunner, self).run(*args, **kwargs)
+        super().run(*args, **kwargs)
         return self.return_value
 
 
@@ -369,22 +384,58 @@ class _ImplementationRunner(_Runner):
         return self.new_implementation(*args, **kwargs)
 
 
+class _AsyncImplementationRunner(_AsyncRunner):
+    def __init__(self, target, method, original_callable, new_implementation):
+        super().__init__(target, method, original_callable)
+        self.new_implementation = new_implementation
+
+    async def run(self, *args, **kwargs):
+        await super().run(*args, **kwargs)
+        return await self.new_implementation(*args, **kwargs)
+
+
 class _CallOriginalRunner(_Runner):
     def run(self, *args, **kwargs):
         super(_CallOriginalRunner, self).run(*args, **kwargs)
         return self.original_callable(*args, **kwargs)
 
 
+##
+## Callable Mocks
+##
+
+
 class _CallableMock(object):
-    def __init__(self, target, method):
+    def __init__(self, target, method, is_async=False):
         self.target = target
         self.method = method
         self.runners = []
+        self.is_async = is_async
 
-    def __call__(self, *args, **kwargs):
+    def _get_runner(self, *args, **kwargs):
         for runner in self.runners:
             if runner.can_accept_args(*args, **kwargs):
-                return runner.run(*args, **kwargs)
+                return runner
+        return None
+
+    def __call__(self, *args, **kwargs):
+        runner = self._get_runner(*args, **kwargs)
+        if runner:
+            if isinstance(runner, _AsyncRunner):
+
+                async def await_runner(*args, **kwargs):
+                    return await runner.run(*args, **kwargs)
+
+                return await_runner(*args, **kwargs)
+            else:
+                if self.is_async:
+
+                    async def sync_wrapper(*args, **kwargs):
+                        return runner.run(*args, **kwargs)
+
+                    return sync_wrapper(*args, **kwargs)
+                else:
+                    return runner.run(*args, **kwargs)
         ex_msg = (
             "{}, {}:\n"
             "  Received call:\n"
@@ -408,6 +459,11 @@ class _CallableMock(object):
     @property
     def _registered_calls(self):
         return [runner.accepted_args for runner in self.runners if runner.accepted_args]
+
+
+##
+## Support
+##
 
 
 class _DescriptorProxy(object):
@@ -595,6 +651,9 @@ class _MockCallableDSL(object):
 
         return original_callable, unpatcher
 
+    def _get_callable_mock(self):
+        return _CallableMock(self._original_target, self._method)
+
     def __init__(self, target, method, callable_mock=None, original_callable=None):
         if not _is_setup():
             raise RuntimeError(
@@ -617,7 +676,7 @@ class _MockCallableDSL(object):
         if target_method_id not in self.CALLABLE_MOCKS:
             if not callable_mock:
                 patch = True
-                callable_mock = _CallableMock(self._original_target, self._method)
+                callable_mock = self._get_callable_mock()
             else:
                 patch = False
             self.CALLABLE_MOCKS[target_method_id] = callable_mock
@@ -890,3 +949,19 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             coroutine_function=True,
             callable_returns_coroutine=self._callable_returns_coroutine,
         )
+
+    def _get_callable_mock(self):
+        return _CallableMock(self._original_target, self._method, is_async=True)
+
+    def with_implementation(self, func):
+        """
+        Replace callable by given function.
+        """
+        if not callable(func):
+            raise ValueError("{} must be callable.".format(func))
+        self._add_runner(
+            _AsyncImplementationRunner(
+                self._original_target, self._method, self._original_callable, func
+            )
+        )
+        return self
