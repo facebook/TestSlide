@@ -15,6 +15,10 @@ def mock_callable(target, method):
     return _MockCallableDSL(target, method)
 
 
+def mock_async_callable(target, method):
+    return _MockAsyncCallableDSL(target, method)
+
+
 _unpatchers = []  # type: List[Callable]  # noqa T484
 
 
@@ -484,45 +488,78 @@ class _MockCallableDSL(object):
 
     CALLABLE_MOCKS = {}  # NOQA T484
 
-    def _validate_patch(self):
+    def _validate_patch(
+        self,
+        name="mock_callable",
+        other_name="mock_async_callable",
+        coroutine_function=False,
+    ):
         if self._method == "__new__":
             raise ValueError(
-                "Mocking __new__ is not allowed with mock_callable(), please use "
+                f"Mocking __new__ is not allowed with {name}(), please use "
                 "mock_constructor()."
             )
 
         if isinstance(self._target, StrictMock):
             template_value = getattr(self._target._template, self._method, None)
-            if (
-                template_value
-                and callable(template_value)
-                and inspect.iscoroutinefunction(template_value)
+            if template_value and callable(template_value):
+                if not coroutine_function and inspect.iscoroutinefunction(
+                    template_value
+                ):
+                    raise ValueError(
+                        f"{name}() can not be used with coroutine functions.\n"
+                        f"The attribute '{self._method}' of the template class "
+                        f"of {self._target} is a coroutine function. You can "
+                        f"use {other_name}() instead."
+                    )
+                if coroutine_function and not inspect.iscoroutinefunction(
+                    template_value
+                ):
+                    raise ValueError(
+                        f"{name}() can not be used with non coroutine "
+                        "functions.\n"
+                        f"The attribute '{self._method}' of the template class "
+                        f"of {self._target} is not a coroutine function. You "
+                        f"can use {other_name}() instead."
+                    )
+        else:
+            if inspect.isclass(self._target) and _is_instance_method(
+                self._target, self._method
             ):
                 raise ValueError(
-                    "mock_callable() can not be used with coroutine functions.\n"
-                    f"The attribute '{self._method}' of the template class of "
-                    "{self._target} is a coroutine function. You can use "
-                    "mock_async_callable() instead."
+                    "Patching an instance method at the class is not supported: "
+                    "bugs are easy to introduce, as patch is not scoped for an "
+                    "instance, which can potentially even break class behavior; "
+                    "assertions on calls are ambiguous (for every instance or one "
+                    "global assertion?)."
                 )
-        else:
             original_callable = getattr(self._target, self._method)
             if not callable(original_callable):
                 raise ValueError(
-                    "mock_callable() can only be used with callable attributes and {} is not.".format(
-                        repr(original_callable)
-                    )
+                    f"{name}() can only be used with callable attributes and "
+                    f"{repr(original_callable)} is not."
                 )
             if inspect.isclass(original_callable):
                 raise ValueError(
-                    "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
-                        repr(original_callable)
-                    )
+                    f"{name}() can not be used with with classes: "
+                    f"{repr(original_callable)}. Perhaps you want to use "
+                    "mock_constructor() instead."
                 )
-            if inspect.iscoroutinefunction(original_callable):
+            if not coroutine_function and inspect.iscoroutinefunction(
+                original_callable
+            ):
                 raise ValueError(
-                    "mock_callable() can not be used with coroutine functions.\n"
+                    f"{name}() can not be used with coroutine functions.\n"
                     f"{original_callable} is a coroutine function. You can use "
-                    "mock_async_callable() instead."
+                    f"{other_name}() instead."
+                )
+            if coroutine_function and not inspect.iscoroutinefunction(
+                original_callable
+            ):
+                raise ValueError(
+                    f"{name}() can not be used with non coroutine functions.\n"
+                    f"{original_callable} is not a coroutine function. You can "
+                    f"use {other_name}() instead."
                 )
 
     def _patch(self, new_value):
@@ -538,14 +575,6 @@ class _MockCallableDSL(object):
         restore_value = self._target.__dict__.get(self._method, None)
 
         if inspect.isclass(self._target):
-            if _is_instance_method(self._target, self._method):
-                raise ValueError(
-                    "Patching an instance method at the class is not supported: "
-                    "bugs are easy to introduce, as patch is not scoped for an "
-                    "instance, which can potentially even break class behavior; "
-                    "assertions on calls are ambiguous (for every instance or one "
-                    "global assertion?)."
-                )
             new_value = staticmethod(new_value)
 
         if _is_instance_method(self._target, self._method):
@@ -842,3 +871,12 @@ class _MockCallableDSL(object):
             )
         self._runner.add_call_order_assertion()
         return self
+
+
+class _MockAsyncCallableDSL(_MockCallableDSL):
+    def _validate_patch(self):
+        return super()._validate_patch(
+            name="mock_async_callable",
+            other_name="mock_callable",
+            coroutine_function=True,
+        )
