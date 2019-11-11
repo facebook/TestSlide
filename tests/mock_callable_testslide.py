@@ -1453,7 +1453,7 @@ def mock_async_callable_tests(context):
         def and_callable_is_a_sync_magic_method(context):
             @context.memoize_before
             async def callable_arg(self):
-                return "__aiter__"
+                return "__str__"
 
             if not_in_class_instance_method:
 
@@ -1519,10 +1519,13 @@ def mock_async_callable_tests(context):
             async def callable_arg(self):
                 return "async_instance_method"
 
-            @context.xexample
+            @context.example
             async def it_is_not_allowed(self):
-                with self.assertRaises(ValueError):
-                    mock_async_callable(Target, self.callable_arg)
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "Patching an instance method at the class is not supported",
+                ):
+                    mock_async_callable(self.target_arg, self.callable_arg)
 
         @context.sub_context
         def and_callable_is_an_async_class_method(context):
@@ -1552,12 +1555,19 @@ def mock_async_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_magic_method(context):
-            @context.xexample
-            async def it_is_not_allowed(self):
-                with self.assertRaises(ValueError):
-                    mock_async_callable(Target, "__aiter__")
+            @context.memoize_before
+            async def callable_arg(self):
+                return "__aiter__"
 
-    @context.xsub_context
+            @context.example
+            async def it_is_not_allowed(self):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "Patching an instance method at the class is not supported",
+                ):
+                    mock_async_callable(self.target_arg, self.callable_arg)
+
+    @context.sub_context
     def an_instance(context):
         @context.before
         async def before(self):
@@ -1632,14 +1642,13 @@ def mock_async_callable_tests(context):
                 can_yield=False,
             )
 
-    @context.xsub_context
+    @context.sub_context
     def when_target_is_a_StrictMock(context):
         @context.before
-        def before(self):
-            target = StrictMock(template=Target)
+        async def before(self):
             self.original_callable = None
-            self.real_target = target
-            self.target_arg = target
+            self.real_target = StrictMock(template=Target)
+            self.target_arg = self.real_target
 
         context.merge_context("sync methods examples")
 
