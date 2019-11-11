@@ -490,7 +490,7 @@ def _patch(target, method, new_value):
         target = testslide._importer(target)
 
     if isinstance(target, StrictMock):
-        template_value = getattr(target.__template, method, None)
+        template_value = getattr(target._template, method, None)
         if (
             template_value
             and callable(template_value)
