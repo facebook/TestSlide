@@ -7,6 +7,7 @@ import testslide
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
 from testslide.mock_callable import (
+    mock_async_callable,
     mock_callable,
     UndefinedBehaviorForCall,
     UnexpectedCallReceived,
@@ -1354,7 +1355,11 @@ def callable_mocks(context):
         def mock_async_callable_with_sync_exapmles(context):
             @context.xexample
             async def can_not_mock(self):
-                pass
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "mock_async_callable\(\) can not be used with non coroutine functions\.",
+                ):
+                    mock_async_callable(self.target_arg, self.callable_arg)
 
             @context.xexample
             async def can_mock_with_flag(self):
@@ -1466,12 +1471,12 @@ def callable_mocks(context):
             @context.sub_context
             def and_callable_is_an_async_function(context):
                 @context.before
-                def before(self):
+                async def before(self):
                     self.callable_arg = "async_test_function"
                     self.original_callable = getattr(
                         self.real_target, self.callable_arg
                     )
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1504,7 +1509,7 @@ def callable_mocks(context):
                 async def before(self):
                     self.original_callable = Target.class_method
                     self.callable_arg = "async_class_method"
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = Target.class_method
@@ -1517,7 +1522,7 @@ def callable_mocks(context):
                 async def before(self):
                     self.original_callable = Target.static_method
                     self.callable_arg = "async_static_method"
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = Target.static_method
@@ -1552,7 +1557,7 @@ def callable_mocks(context):
                     self.original_callable = getattr(
                         self.real_target, self.callable_arg
                     )
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1567,7 +1572,7 @@ def callable_mocks(context):
                     self.original_callable = getattr(
                         self.real_target, self.callable_arg
                     )
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1582,7 +1587,7 @@ def callable_mocks(context):
                     self.original_callable = getattr(
                         self.real_target, self.callable_arg
                     )
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1602,10 +1607,11 @@ def callable_mocks(context):
                     self.original_callable = getattr(
                         self.real_target, self.callable_arg
                     )
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
-                    self.callable_target = lambda: aiter(self.target)
+                    raise NotImplementedError
+                    # self.callable_target = lambda: aiter(self.target)
 
                 context.merge_context(
                     "mock configuration examples",
@@ -1632,7 +1638,7 @@ def callable_mocks(context):
 
                 @context.before
                 async def before(self):
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1646,7 +1652,7 @@ def callable_mocks(context):
                 @context.before
                 async def before(self):
                     self.callable_arg = "async_class_method"
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1660,7 +1666,7 @@ def callable_mocks(context):
                 @context.before
                 def before(self):
                     self.callable_arg = "async_static_method"
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
                     self.callable_target = getattr(self.real_target, self.callable_arg)
@@ -1677,10 +1683,11 @@ def callable_mocks(context):
                 @context.before
                 async def before(self):
                     self.callable_arg = "__aiter__"
-                    self.mock_callable_dsl = mock_async_callable(
+                    self.mock_async_callable_dsl = mock_async_callable(
                         self.target_arg, self.callable_arg
                     )
-                    self.callable_target = lambda: aiter(self.real_target)
+                    raise NotImplementedError
+                    # self.callable_target = lambda: aiter(self.real_target)
 
                 context.merge_context(
                     "mock configuration examples",
