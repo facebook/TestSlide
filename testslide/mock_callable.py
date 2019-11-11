@@ -15,8 +15,8 @@ def mock_callable(target, method):
     return _MockCallableDSL(target, method)
 
 
-def mock_async_callable(target, method):
-    return _MockAsyncCallableDSL(target, method)
+def mock_async_callable(target, method, callable_returns_coroutine=False):
+    return _MockAsyncCallableDSL(target, method, callable_returns_coroutine)
 
 
 _unpatchers = []  # type: List[Callable]  # noqa T484
@@ -493,6 +493,7 @@ class _MockCallableDSL(object):
         name="mock_callable",
         other_name="mock_async_callable",
         coroutine_function=False,
+        callable_returns_coroutine=False,
     ):
         if self._method == "__new__":
             raise ValueError(
@@ -512,8 +513,10 @@ class _MockCallableDSL(object):
                         f"of {self._target} is a coroutine function. You can "
                         f"use {other_name}() instead."
                     )
-                if coroutine_function and not inspect.iscoroutinefunction(
-                    template_value
+                if (
+                    coroutine_function
+                    and not inspect.iscoroutinefunction(template_value)
+                    and not callable_returns_coroutine
                 ):
                     raise ValueError(
                         f"{name}() can not be used with non coroutine "
@@ -553,8 +556,10 @@ class _MockCallableDSL(object):
                     f"{original_callable} is a coroutine function. You can use "
                     f"{other_name}() instead."
                 )
-            if coroutine_function and not inspect.iscoroutinefunction(
-                original_callable
+            if (
+                coroutine_function
+                and not inspect.iscoroutinefunction(original_callable)
+                and not callable_returns_coroutine
             ):
                 raise ValueError(
                     f"{name}() can not be used with non coroutine functions.\n"
@@ -874,9 +879,14 @@ class _MockCallableDSL(object):
 
 
 class _MockAsyncCallableDSL(_MockCallableDSL):
+    def __init__(self, target, method, callable_returns_coroutine):
+        self._callable_returns_coroutine = callable_returns_coroutine
+        super().__init__(target, method)
+
     def _validate_patch(self):
         return super()._validate_patch(
             name="mock_async_callable",
             other_name="mock_callable",
             coroutine_function=True,
+            callable_returns_coroutine=self._callable_returns_coroutine,
         )

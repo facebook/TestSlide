@@ -1345,7 +1345,7 @@ def mock_async_callable_tests(context):
     ##
 
     @context.shared_context
-    def mock_async_callable_with_sync_exapmles(context):
+    def mock_async_callable_with_sync_exapmles(context, can_mock_with_flag=True):
         @context.example
         async def can_not_mock(self):
             with self.assertRaisesRegex(
@@ -1358,9 +1358,13 @@ def mock_async_callable_tests(context):
             ):
                 mock_async_callable(self.target_arg, self.callable_arg)
 
-        @context.xexample
-        async def can_mock_with_flag(self):
-            pass
+        if can_mock_with_flag:
+
+            @context.example
+            async def can_mock_with_flag(self):
+                mock_async_callable(
+                    self.target_arg, self.callable_arg, callable_returns_coroutine=True
+                )
 
     @context.shared_context
     def mock_configuration_examples(
@@ -1423,7 +1427,11 @@ def mock_async_callable_tests(context):
                 async def exception_regex_message(self):
                     return "Patching an instance method at the class is not supported"
 
-            context.merge_context("mock async callable with sync exapmles")
+                context.merge_context(
+                    "mock async callable with sync exapmles", can_mock_with_flag=False
+                )
+            else:
+                context.merge_context("mock async callable with sync exapmles")
 
         @context.sub_context
         def and_callable_is_a_sync_class_method(context):
@@ -1453,7 +1461,11 @@ def mock_async_callable_tests(context):
                 async def exception_regex_message(self):
                     return "Patching an instance method at the class is not supported"
 
-            context.merge_context("mock async callable with sync exapmles")
+                context.merge_context(
+                    "mock async callable with sync exapmles", can_mock_with_flag=False
+                )
+            else:
+                context.merge_context("mock async callable with sync exapmles")
 
     ##
     ## Contexts
