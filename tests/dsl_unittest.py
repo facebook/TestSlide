@@ -642,7 +642,7 @@ class TestDSLHelperFunction(TestDSLBase):
                     pass
 
                 @context.function  # noqa: F811
-                def helper(self, msg):
+                def helper(self, msg):  # noqa: F811
                     pass
 
     def test_cant_create_helper_function_on_top(self):
@@ -898,7 +898,7 @@ class TestDSLMemoizedAttribute(TestDSLBase):
                     pass
 
                 @context.memoize  # noqa: F811
-                def name(self, msg):
+                def name(self, msg):  # noqa: F811
                     pass
 
 
@@ -990,7 +990,7 @@ class TestDSLMemoizedBeforeAttribute(TestDSLBase):
                     pass
 
                 @context.memoize_before  # noqa: F811
-                def name(self, msg):
+                def name(self, msg):  # noqa: F811
                     pass
 
 
