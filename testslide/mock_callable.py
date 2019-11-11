@@ -12,11 +12,6 @@ from testslide.strict_mock import _add_signature_validation
 
 
 def mock_callable(target, method):
-    if method == "__new__":
-        raise ValueError(
-            "Mocking __new__ is not allowed with mock_callable(), please use "
-            "mock_constructor()."
-        )
     return _MockCallableDSL(target, method)
 
 
@@ -485,77 +480,86 @@ def _mock_instance_attribute(instance, attr, value):
     return unpatch_class
 
 
-def _patch(target, method, new_value):
-    if isinstance(target, str):
-        target = testslide._importer(target)
-
-    if isinstance(target, StrictMock):
-        template_value = getattr(target._template, method, None)
-        if (
-            template_value
-            and callable(template_value)
-            and inspect.iscoroutinefunction(template_value)
-        ):
-            raise ValueError(
-                "mock_callable() can not be used with coroutine functions.\n"
-                f"The attribute '{method}' of the template class of {target} "
-                "is a coroutine function. You can use mock_async_callable() "
-                "instead."
-            )
-        original_callable = None
-    else:
-        original_callable = getattr(target, method)
-        if not callable(original_callable):
-            raise ValueError(
-                "mock_callable() can only be used with callable attributes and {} is not.".format(
-                    repr(original_callable)
-                )
-            )
-        if inspect.isclass(original_callable):
-            raise ValueError(
-                "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
-                    repr(original_callable)
-                )
-            )
-        if inspect.iscoroutinefunction(original_callable):
-            raise ValueError(
-                "mock_callable() can not be used with coroutine functions.\n"
-                f"{original_callable} is a coroutine function. You can use "
-                "mock_async_callable() instead."
-            )
-
-    if not isinstance(target, StrictMock):
-        new_value = _add_signature_validation(new_value, target, method)
-    restore_value = target.__dict__.get(method, None)
-
-    if inspect.isclass(target):
-        if _is_instance_method(target, method):
-            raise ValueError(
-                "Patching an instance method at the class is not supported: "
-                "bugs are easy to introduce, as patch is not scoped for an "
-                "instance, which can potentially even break class behavior; "
-                "assertions on calls are ambiguous (for every instance or one "
-                "global assertion?)."
-            )
-        new_value = staticmethod(new_value)
-
-    if _is_instance_method(target, method):
-        unpatcher = _mock_instance_attribute(target, method, new_value)
-    else:
-        setattr(target, method, new_value)
-
-        def unpatcher():
-            if restore_value:
-                setattr(target, method, restore_value)
-            else:
-                delattr(target, method)
-
-    return original_callable, unpatcher
-
-
 class _MockCallableDSL(object):
 
     CALLABLE_MOCKS = {}  # NOQA T484
+
+    def _validate_patch(self):
+        if self._method == "__new__":
+            raise ValueError(
+                "Mocking __new__ is not allowed with mock_callable(), please use "
+                "mock_constructor()."
+            )
+
+        if isinstance(self._target, StrictMock):
+            template_value = getattr(self._target._template, self._method, None)
+            if (
+                template_value
+                and callable(template_value)
+                and inspect.iscoroutinefunction(template_value)
+            ):
+                raise ValueError(
+                    "mock_callable() can not be used with coroutine functions.\n"
+                    f"The attribute '{self._method}' of the template class of "
+                    "{self._target} is a coroutine function. You can use "
+                    "mock_async_callable() instead."
+                )
+        else:
+            original_callable = getattr(self._target, self._method)
+            if not callable(original_callable):
+                raise ValueError(
+                    "mock_callable() can only be used with callable attributes and {} is not.".format(
+                        repr(original_callable)
+                    )
+                )
+            if inspect.isclass(original_callable):
+                raise ValueError(
+                    "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
+                        repr(original_callable)
+                    )
+                )
+            if inspect.iscoroutinefunction(original_callable):
+                raise ValueError(
+                    "mock_callable() can not be used with coroutine functions.\n"
+                    f"{original_callable} is a coroutine function. You can use "
+                    "mock_async_callable() instead."
+                )
+
+    def _patch(self, new_value):
+        self._validate_patch()
+
+        if isinstance(self._target, StrictMock):
+            original_callable = None
+        else:
+            original_callable = getattr(self._target, self._method)
+
+        if not isinstance(self._target, StrictMock):
+            new_value = _add_signature_validation(new_value, self._target, self._method)
+        restore_value = self._target.__dict__.get(self._method, None)
+
+        if inspect.isclass(self._target):
+            if _is_instance_method(self._target, self._method):
+                raise ValueError(
+                    "Patching an instance method at the class is not supported: "
+                    "bugs are easy to introduce, as patch is not scoped for an "
+                    "instance, which can potentially even break class behavior; "
+                    "assertions on calls are ambiguous (for every instance or one "
+                    "global assertion?)."
+                )
+            new_value = staticmethod(new_value)
+
+        if _is_instance_method(self._target, self._method):
+            unpatcher = _mock_instance_attribute(self._target, self._method, new_value)
+        else:
+            setattr(self._target, self._method, new_value)
+
+            def unpatcher():
+                if restore_value:
+                    setattr(self._target, self._method, restore_value)
+                else:
+                    delattr(self._target, self._method)
+
+        return original_callable, unpatcher
 
     def __init__(self, target, method, callable_mock=None, original_callable=None):
         if not _is_setup():
@@ -591,7 +595,7 @@ class _MockCallableDSL(object):
             _unpatchers.append(del_callable_mock)
 
             if patch:
-                original_callable, unpatcher = _patch(target, method, callable_mock)
+                original_callable, unpatcher = self._patch(callable_mock)
                 _unpatchers.append(unpatcher)
             self._original_callable = original_callable
             callable_mock.original_callable = original_callable
