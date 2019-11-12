@@ -81,6 +81,7 @@ It is all about letting the failure messages guide you towards the solution. The
    test_runner/index.rst
    strict_mock/index.rst
    mock_callable/index.rst
+   mock_async_callable/index.rst
    mock_constructor/index.rst
    testslide_dsl/index.rst
    code_snippets/index.rst
