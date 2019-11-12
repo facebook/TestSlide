@@ -414,6 +414,12 @@ class _CallOriginalRunner(_Runner):
         return self.original_callable(*args, **kwargs)
 
 
+class _AsyncCallOriginalRunner(_AsyncRunner):
+    async def run(self, *args, **kwargs):
+        await super().run(*args, **kwargs)
+        return await self.original_callable(*args, **kwargs)
+
+
 ##
 ## Callable Mocks
 ##
@@ -969,13 +975,60 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
 
     def with_implementation(self, func):
         """
-        Replace callable by given function.
+        Replace callable by given async function.
         """
         if not callable(func):
             raise ValueError("{} must be callable.".format(func))
         self._add_runner(
             _AsyncImplementationRunner(
                 self._original_target, self._method, self._original_callable, func
+            )
+        )
+        return self
+
+    def with_wrapper(self, func):
+        """
+        Replace callable with given wrapper async function, that will be called as:
+
+          await func(original_async_func, *args, **kwargs)
+
+        receiving the original function as the first argument as well as any given
+        arguments.
+        """
+        if not callable(func):
+            raise ValueError("{} must be callable.".format(func))
+
+        if not self._original_callable:
+            raise ValueError("Can not wrap original callable that does not exist.")
+
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            coro = func(self._original_callable, *args, **kwargs)
+            if not inspect.iscoroutine(coro):
+                raise NotACoroutine(
+                    f"Function did not return a coroutine.\n"
+                    f"{func} must return a coroutine."
+                )
+            return await coro
+
+        self._add_runner(
+            _AsyncImplementationRunner(
+                self._original_target, self._method, self._original_callable, wrapper
+            )
+        )
+        return self
+
+    def to_call_original(self):
+        """
+        Calls the original callable implementation, instead of mocking it. This is
+        useful for example, if you want to by default call the original implementation,
+        but for a specific calls, mock the result.
+        """
+        if not self._original_callable:
+            raise ValueError("Can not call original callable that does not exist.")
+        self._add_runner(
+            _AsyncCallOriginalRunner(
+                self._original_target, self._method, self._original_callable
             )
         )
         return self

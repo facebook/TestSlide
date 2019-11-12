@@ -1342,8 +1342,22 @@ def mock_callable_tests(context):
 def mock_async_callable_tests(context):
 
     ##
+    ## Attributes
+    ##
+
+    context.memoize("assertions", lambda _: [])
+
+    ##
     ## Functions
     ##
+
+    @context.function
+    def assert_all(self):
+        try:
+            for assertion in self.assertions:
+                assertion()
+        finally:
+            del self.assertions[:]
 
     @context.function
     @contextlib.contextmanager
@@ -1359,6 +1373,24 @@ def mock_async_callable_tests(context):
                 exception.__module__, exception.__name__, repr(msg), repr(ex_msg)
             ),
         )
+
+    ##
+    ## Hooks
+    ##
+
+    @context.before
+    async def register_assertions(self):
+        def register_assertion(assertion):
+            self.assertions.append(assertion)
+
+        testslide.mock_callable.register_assertion = register_assertion
+
+    @context.after
+    async def cleanup_patches(self):
+        # Unpatch before assertions, to make sure it is done if assertion fails.
+        testslide.mock_callable.unpatch_all_callable_mocks()
+        for assertion in self.assertions:
+            assertion()
 
     ##
     ## Shared Contexts
@@ -1474,25 +1506,86 @@ def mock_async_callable_tests(context):
                 ):
                     await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.xexample(".with_wrapper(func)")
-        async def with_wrapper(self):
-            pass
+        if has_original_callable:
 
-        @context.xexample(".to_call_original()")
-        async def to_call_original(self):
-            pass
+            @context.sub_context(".with_wrapper(func)")
+            def with_wrapper(context):
+                @context.example
+                async def works_with_async_func(self):
+                    async def async_wrapper(original, *args, **kwargs):
+                        return "mock"
 
-        @context.xexample(".and_assert_*")
+                    mock_async_callable(
+                        self.target_arg, self.callable_arg
+                    ).with_wrapper(async_wrapper)
+                    self.assertEqual(
+                        await self.callable_target(*self.call_args, **self.call_kwargs),
+                        "mock",
+                    )
+
+                @context.example
+                async def raises_NotACoroutine_with_non_async_function(self):
+                    def wrapper(original, *args, **kwargs):
+                        return "mock"
+
+                    mock_async_callable(
+                        self.target_arg, self.callable_arg
+                    ).with_wrapper(wrapper)
+                    with self.assertRaisesRegex(
+                        NotACoroutine, "^Function did not return a coroutine\."
+                    ):
+                        await self.callable_target(*self.call_args, **self.call_kwargs)
+
+        else:
+
+            @context.example(".with_wrapper(func)")
+            async def with_wrapper(self):
+                async def async_wrapper(original, *args, **kwargs):
+                    return "mock"
+
+                with self.assertRaisesRegex(
+                    ValueError, "^Can not wrap original callable that does not exist\."
+                ):
+                    mock_async_callable(
+                        self.target_arg, self.callable_arg
+                    ).with_wrapper(async_wrapper)
+
+        if has_original_callable:
+
+            @context.example(".to_call_original()")
+            async def to_call_original(self):
+                mock_async_callable(
+                    self.target_arg, self.callable_arg
+                ).to_call_original()
+                self.assertEqual(
+                    id(await self.callable_target(*self.call_args, **self.call_kwargs)),
+                    id(
+                        await self.original_callable(
+                            *self.call_args, **self.call_kwargs
+                        )
+                    ),
+                )
+
+        else:
+
+            @context.example(".to_call_original()")
+            async def to_call_original(self):
+                with self.assertRaisesRegex(
+                    ValueError, "^Can not call original callable that does not exist\."
+                ):
+                    mock_async_callable(
+                        self.target_arg, self.callable_arg
+                    ).to_call_original()
+
+        @context.example(".and_assert_*")
         async def and_assert(self):
-            pass
-            # .and_assert_called_exactly(times)
-            # .and_assert_called_once()
-            # .and_assert_called_twice()
-            # .and_assert_called_at_least(times)
-            # .and_assert_called_at_most(times)
-            # .and_assert_called()
-            # .and_assert_called_ordered()
-            # .and_assert_not_called()
+            mock_async_callable(self.target_arg, self.callable_arg).to_return_value(
+                None
+            ).and_assert_called()
+            with self.assertRaisesRegex(
+                AssertionError, "^calls did not match assertion\."
+            ):
+                self.assert_all()
 
     @context.shared_context
     def sync_methods_examples(context, not_in_class_instance_method=False):
