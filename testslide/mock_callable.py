@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import inspect
 import functools
 from typing import List, Callable  # noqa
@@ -91,6 +92,11 @@ def _format_args(indent, *args, **kwargs):
             s += "{}".format(indentation)
         s += "}\n"
     return s
+
+
+def _is_coroutine(obj):
+
+    return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper)
 
 
 ##
@@ -400,7 +406,7 @@ class _AsyncImplementationRunner(_AsyncRunner):
     async def run(self, *args, **kwargs):
         await super().run(*args, **kwargs)
         coro = self.new_implementation(*args, **kwargs)
-        if not inspect.iscoroutine(coro):
+        if not _is_coroutine(coro):
             raise NotACoroutine(
                 f"Function did not return a coroutine.\n"
                 f"{self.new_implementation} must return a coroutine."
@@ -1004,7 +1010,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             coro = func(self._original_callable, *args, **kwargs)
-            if not inspect.iscoroutine(coro):
+            if not _is_coroutine(coro):
                 raise NotACoroutine(
                     f"Function did not return a coroutine.\n"
                     f"{func} must return a coroutine."
