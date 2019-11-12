@@ -31,6 +31,19 @@ It requires an async function:
     .with_wrapper(async_trim_query)
   await some_service.big_query()  # => returns trimmed list
 
+Implicit Coroutine Return
+-------------------------
+
+``mock_async_callable()`` checks if what it is mocking is a coroutine function and refuses to mock if it is not. This is usually a good thing, as it prevents mistakes. If you are trying to mock some callable with it, that is not a coroutine function, but you are **sure** that it returns a coroutine when called, you can still mock it like this:
+
+.. code-block:: python
+
+  self.mock_async_callable(
+    target,
+    "sync_callable_that_returns_a_coroutine",
+    callable_returns_coroutine=True,
+  )
+
 Test Framework Integration
 --------------------------
 
