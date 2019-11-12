@@ -122,6 +122,14 @@ class UnexpectedCallArguments(BaseException):
     """
 
 
+class NotACoroutine(BaseException):
+    """
+    Raised when a mock that requires a coroutine is not mocked with one.
+
+    Inherits from BaseException to avoid being caught by tested code.
+    """
+
+
 ##
 ## Runners
 ##
@@ -391,7 +399,13 @@ class _AsyncImplementationRunner(_AsyncRunner):
 
     async def run(self, *args, **kwargs):
         await super().run(*args, **kwargs)
-        return await self.new_implementation(*args, **kwargs)
+        coro = self.new_implementation(*args, **kwargs)
+        if not inspect.iscoroutine(coro):
+            raise NotACoroutine(
+                f"Function did not return a coroutine.\n"
+                f"{self.new_implementation} must return a coroutine."
+            )
+        return await coro
 
 
 class _CallOriginalRunner(_Runner):

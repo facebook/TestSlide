@@ -9,6 +9,7 @@ from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 from testslide.mock_callable import (
     mock_async_callable,
     mock_callable,
+    NotACoroutine,
     UndefinedBehaviorForCall,
     UnexpectedCallReceived,
     UnexpectedCallArguments,
@@ -1445,17 +1446,33 @@ def mock_async_callable_tests(context):
             with self.assertRaisesWithMessage(RuntimeError, "mock"):
                 await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.example(".with_implementation(func)")
-        async def with_implementation(self):
-            async def implementation_mock(*args, **kwargs):
-                return "mock"
+        @context.sub_context(".with_implementation(func)")
+        def with_implementation(context):
+            @context.example
+            async def works_with_async_func(self):
+                async def async_implementation_mock(*args, **kwargs):
+                    return "mock"
 
-            mock_async_callable(self.target_arg, self.callable_arg).with_implementation(
-                implementation_mock
-            )
-            self.assertEqual(
-                await self.callable_target(*self.call_args, **self.call_kwargs), "mock"
-            )
+                mock_async_callable(
+                    self.target_arg, self.callable_arg
+                ).with_implementation(async_implementation_mock)
+                self.assertEqual(
+                    await self.callable_target(*self.call_args, **self.call_kwargs),
+                    "mock",
+                )
+
+            @context.example
+            async def raises_NotACoroutine_with_non_async_function(self):
+                def implementation_mock(*args, **kwargs):
+                    return "mock"
+
+                mock_async_callable(
+                    self.target_arg, self.callable_arg
+                ).with_implementation(implementation_mock)
+                with self.assertRaisesRegex(
+                    NotACoroutine, "^Function did not return a coroutine\."
+                ):
+                    await self.callable_target(*self.call_args, **self.call_kwargs)
 
         @context.xexample(".with_wrapper(func)")
         async def with_wrapper(self):
