@@ -754,14 +754,17 @@ class _MockCallableDSL(object):
         If assertion is for 0 calls, any received call will raise
         UnexpectedCallReceived and also an AssertionError.
         """
-        if not self._runner:
-            self.to_raise(
-                UnexpectedCallReceived(
-                    ("{}, {}: Excepted not to be called!").format(
-                        _format_target(self._target), repr(self._method)
+        if count:
+            self._assert_runner()
+        else:
+            if not self._runner:
+                self.to_raise(
+                    UnexpectedCallReceived(
+                        ("{}, {}: Expected not to be called!").format(
+                            _format_target(self._target), repr(self._method)
+                        )
                     )
                 )
-            )
         self._runner.add_exact_calls_assertion(count)
         return self
 
@@ -814,9 +817,6 @@ class _MockCallableDSL(object):
         Assert that multiple calls, potentially to different mock_callable()
         targets, happened in the order defined.
         """
-        if not self._runner:
-            raise ValueError(
-                "Can not define call assertion without a behavior defined."
-            )
+        self._assert_runner()
         self._runner.add_call_order_assertion()
         return self

@@ -514,6 +514,13 @@ def mock_callable_context(context):
                 ):
                     self.callable_target(*self.call_args, **self.call_kwargs)
 
+            @context.example
+            def can_not_define_call_assertions(self):
+                with self.assertRaisesRegex(
+                    ValueError, "^You must first define a behavior.+"
+                ):
+                    self.mock_callable_dsl.and_assert_called_exactly(1)
+
             @context.sub_context(".and_assert_not_called()")
             def and_assert_not_called(context):
                 @context.before
@@ -537,7 +544,7 @@ def mock_callable_context(context):
                     def called(self):
                         with self.assertRaisesWithMessage(
                             UnexpectedCallReceived,
-                            "{}, {}: Excepted not to be called!".format(
+                            "{}, {}: Expected not to be called!".format(
                                 repr(self.real_target), repr(self.callable_arg)
                             ),
                         ):
