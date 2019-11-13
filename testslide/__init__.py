@@ -285,6 +285,17 @@ class _ExampleRunner:
                 original_showwarning(message, category, filename, lineno, file, line)
 
         warnings.showwarning = showwarning
+
+        original_logger_warning = asyncio.log.logger.warning
+
+        def logger_warning(msg, *args, **kwargs):
+            if re.compile("^Executing .+ took .+ seconds$").match(str(msg)):
+                caught_failures.append(RuntimeError(msg % args))
+            else:
+                original_logger_warning(msg, *args, **kwargs)
+
+        asyncio.log.logger.warning = logger_warning
+
         aggregated_exceptions = AggregatedExceptions()
 
         try:
@@ -292,6 +303,7 @@ class _ExampleRunner:
                 yield
         finally:
             warnings.showwarning = original_showwarning
+            asyncio.log.logger.warning = original_logger_warning
             for failure in caught_failures:
                 with aggregated_exceptions.catch():
                     raise failure
