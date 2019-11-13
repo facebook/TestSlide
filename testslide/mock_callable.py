@@ -490,6 +490,18 @@ def _patch(target, method, new_value):
         target = testslide._importer(target)
 
     if isinstance(target, StrictMock):
+        template_value = getattr(target.__template, method, None)
+        if (
+            template_value
+            and callable(template_value)
+            and inspect.iscoroutinefunction(template_value)
+        ):
+            raise ValueError(
+                "mock_callable() can not be used with coroutine functions.\n"
+                f"The attribute '{method}' of the template class of {target} "
+                "is a coroutine function. You can use mock_async_callable() "
+                "instead."
+            )
         original_callable = None
     else:
         original_callable = getattr(target, method)
@@ -504,6 +516,12 @@ def _patch(target, method, new_value):
                 "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
                     repr(original_callable)
                 )
+            )
+        if inspect.iscoroutinefunction(original_callable):
+            raise ValueError(
+                "mock_callable() can not be used with coroutine functions.\n"
+                f"{original_callable} is a coroutine function. You can use "
+                "mock_async_callable() instead."
             )
 
     if not isinstance(target, StrictMock):
