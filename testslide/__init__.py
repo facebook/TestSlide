@@ -808,8 +808,3 @@ class TestCase(unittest.TestCase):
     @staticmethod
     def mock_constructor(target, class_name):
         return testslide.mock_constructor.mock_constructor(target, class_name)
-
-
-def _test_function(arg1, arg2, kwarg1=None, kwarg2=None):
-    "This function is used by some unit tests only"
-    return "original response"
