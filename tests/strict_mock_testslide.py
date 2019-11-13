@@ -496,7 +496,10 @@ def strict_mock(context):
                             def with_default_context_manager_True(context):
                                 @context.memoize
                                 def strict_mock(self):
-                                    return StrictMock(template=self.template)
+                                    return StrictMock(
+                                        template=self.template,
+                                        default_context_manager=True,
+                                    )
 
                                 @context.example
                                 def context_manager_works(self):
