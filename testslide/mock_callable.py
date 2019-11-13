@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import inspect
 import functools
 from typing import List, Callable  # noqa
@@ -12,12 +13,11 @@ from testslide.strict_mock import _add_signature_validation
 
 
 def mock_callable(target, method):
-    if method == "__new__":
-        raise ValueError(
-            "Mocking __new__ is not allowed with mock_callable(), please use "
-            "mock_constructor()."
-        )
     return _MockCallableDSL(target, method)
+
+
+def mock_async_callable(target, method, callable_returns_coroutine=False):
+    return _MockAsyncCallableDSL(target, method, callable_returns_coroutine)
 
 
 _unpatchers = []  # type: List[Callable]  # noqa T484
@@ -94,6 +94,16 @@ def _format_args(indent, *args, **kwargs):
     return s
 
 
+def _is_coroutine(obj):
+
+    return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper)
+
+
+##
+## Exceptions
+##
+
+
 class UndefinedBehaviorForCall(BaseException):
     """
     Raised when a mock receives a call for which no behavior was defined.
@@ -118,12 +128,20 @@ class UnexpectedCallArguments(BaseException):
     """
 
 
+class NotACoroutine(BaseException):
+    """
+    Raised when a mock that requires a coroutine is not mocked with one.
+
+    Inherits from BaseException to avoid being caught by tested code.
+    """
+
+
 ##
-## Behavior
+## Runners
 ##
 
 
-class _Runner(object):
+class _BaseRunner:
     def __init__(self, target, method, original_callable):
         self.target = target
         self.method = method
@@ -134,7 +152,7 @@ class _Runner(object):
         self._max_calls = None
         self._has_order_assertion = False
 
-    def run(self, *args, **kwargs):
+    def register_call(self, *args, **kwargs):
         global _received_ordered_calls
 
         if self._has_order_assertion:
@@ -304,13 +322,23 @@ class _Runner(object):
         self._has_order_assertion = True
 
 
+class _Runner(_BaseRunner):
+    def run(self, *args, **kwargs):
+        super().register_call(*args, **kwargs)
+
+
+class _AsyncRunner(_BaseRunner):
+    async def run(self, *args, **kwargs):
+        super().register_call(*args, **kwargs)
+
+
 class _ReturnValueRunner(_Runner):
     def __init__(self, target, method, original_callable, value):
-        super(_ReturnValueRunner, self).__init__(target, method, original_callable)
+        super().__init__(target, method, original_callable)
         self.return_value = value
 
     def run(self, *args, **kwargs):
-        super(_ReturnValueRunner, self).run(*args, **kwargs)
+        super().run(*args, **kwargs)
         return self.return_value
 
 
@@ -370,22 +398,70 @@ class _ImplementationRunner(_Runner):
         return self.new_implementation(*args, **kwargs)
 
 
+class _AsyncImplementationRunner(_AsyncRunner):
+    def __init__(self, target, method, original_callable, new_implementation):
+        super().__init__(target, method, original_callable)
+        self.new_implementation = new_implementation
+
+    async def run(self, *args, **kwargs):
+        await super().run(*args, **kwargs)
+        coro = self.new_implementation(*args, **kwargs)
+        if not _is_coroutine(coro):
+            raise NotACoroutine(
+                f"Function did not return a coroutine.\n"
+                f"{self.new_implementation} must return a coroutine."
+            )
+        return await coro
+
+
 class _CallOriginalRunner(_Runner):
     def run(self, *args, **kwargs):
         super(_CallOriginalRunner, self).run(*args, **kwargs)
         return self.original_callable(*args, **kwargs)
 
 
+class _AsyncCallOriginalRunner(_AsyncRunner):
+    async def run(self, *args, **kwargs):
+        await super().run(*args, **kwargs)
+        return await self.original_callable(*args, **kwargs)
+
+
+##
+## Callable Mocks
+##
+
+
 class _CallableMock(object):
-    def __init__(self, target, method):
+    def __init__(self, target, method, is_async=False):
         self.target = target
         self.method = method
         self.runners = []
+        self.is_async = is_async
 
-    def __call__(self, *args, **kwargs):
+    def _get_runner(self, *args, **kwargs):
         for runner in self.runners:
             if runner.can_accept_args(*args, **kwargs):
-                return runner.run(*args, **kwargs)
+                return runner
+        return None
+
+    def __call__(self, *args, **kwargs):
+        runner = self._get_runner(*args, **kwargs)
+        if runner:
+            if isinstance(runner, _AsyncRunner):
+
+                async def await_runner(*args, **kwargs):
+                    return await runner.run(*args, **kwargs)
+
+                return await_runner(*args, **kwargs)
+            else:
+                if self.is_async:
+
+                    async def sync_wrapper(*args, **kwargs):
+                        return runner.run(*args, **kwargs)
+
+                    return sync_wrapper(*args, **kwargs)
+                else:
+                    return runner.run(*args, **kwargs)
         ex_msg = (
             "{}, {}:\n"
             "  Received call:\n"
@@ -409,6 +485,11 @@ class _CallableMock(object):
     @property
     def _registered_calls(self):
         return [runner.accepted_args for runner in self.runners if runner.accepted_args]
+
+
+##
+## Support
+##
 
 
 class _DescriptorProxy(object):
@@ -485,77 +566,119 @@ def _mock_instance_attribute(instance, attr, value):
     return unpatch_class
 
 
-def _patch(target, method, new_value):
-    if isinstance(target, str):
-        target = testslide._importer(target)
-
-    if isinstance(target, StrictMock):
-        template_value = getattr(target.__template, method, None)
-        if (
-            template_value
-            and callable(template_value)
-            and inspect.iscoroutinefunction(template_value)
-        ):
-            raise ValueError(
-                "mock_callable() can not be used with coroutine functions.\n"
-                f"The attribute '{method}' of the template class of {target} "
-                "is a coroutine function. You can use mock_async_callable() "
-                "instead."
-            )
-        original_callable = None
-    else:
-        original_callable = getattr(target, method)
-        if not callable(original_callable):
-            raise ValueError(
-                "mock_callable() can only be used with callable attributes and {} is not.".format(
-                    repr(original_callable)
-                )
-            )
-        if inspect.isclass(original_callable):
-            raise ValueError(
-                "mock_callable() can not be used with with classes: {}. Perhaps you want to use mock_constructor() instead.".format(
-                    repr(original_callable)
-                )
-            )
-        if inspect.iscoroutinefunction(original_callable):
-            raise ValueError(
-                "mock_callable() can not be used with coroutine functions.\n"
-                f"{original_callable} is a coroutine function. You can use "
-                "mock_async_callable() instead."
-            )
-
-    if not isinstance(target, StrictMock):
-        new_value = _add_signature_validation(new_value, target, method)
-    restore_value = target.__dict__.get(method, None)
-
-    if inspect.isclass(target):
-        if _is_instance_method(target, method):
-            raise ValueError(
-                "Patching an instance method at the class is not supported: "
-                "bugs are easy to introduce, as patch is not scoped for an "
-                "instance, which can potentially even break class behavior; "
-                "assertions on calls are ambiguous (for every instance or one "
-                "global assertion?)."
-            )
-        new_value = staticmethod(new_value)
-
-    if _is_instance_method(target, method):
-        unpatcher = _mock_instance_attribute(target, method, new_value)
-    else:
-        setattr(target, method, new_value)
-
-        def unpatcher():
-            if restore_value:
-                setattr(target, method, restore_value)
-            else:
-                delattr(target, method)
-
-    return original_callable, unpatcher
-
-
 class _MockCallableDSL(object):
 
     CALLABLE_MOCKS = {}  # NOQA T484
+
+    def _validate_patch(
+        self,
+        name="mock_callable",
+        other_name="mock_async_callable",
+        coroutine_function=False,
+        callable_returns_coroutine=False,
+    ):
+        if self._method == "__new__":
+            raise ValueError(
+                f"Mocking __new__ is not allowed with {name}(), please use "
+                "mock_constructor()."
+            )
+
+        if isinstance(self._target, StrictMock):
+            template_value = getattr(self._target._template, self._method, None)
+            if template_value and callable(template_value):
+                if not coroutine_function and inspect.iscoroutinefunction(
+                    template_value
+                ):
+                    raise ValueError(
+                        f"{name}() can not be used with coroutine functions.\n"
+                        f"The attribute '{self._method}' of the template class "
+                        f"of {self._target} is a coroutine function. You can "
+                        f"use {other_name}() instead."
+                    )
+                if (
+                    coroutine_function
+                    and not inspect.iscoroutinefunction(template_value)
+                    and not callable_returns_coroutine
+                ):
+                    raise ValueError(
+                        f"{name}() can not be used with non coroutine "
+                        "functions.\n"
+                        f"The attribute '{self._method}' of the template class "
+                        f"of {self._target} is not a coroutine function. You "
+                        f"can use {other_name}() instead."
+                    )
+        else:
+            if inspect.isclass(self._target) and _is_instance_method(
+                self._target, self._method
+            ):
+                raise ValueError(
+                    "Patching an instance method at the class is not supported: "
+                    "bugs are easy to introduce, as patch is not scoped for an "
+                    "instance, which can potentially even break class behavior; "
+                    "assertions on calls are ambiguous (for every instance or one "
+                    "global assertion?)."
+                )
+            original_callable = getattr(self._target, self._method)
+            if not callable(original_callable):
+                raise ValueError(
+                    f"{name}() can only be used with callable attributes and "
+                    f"{repr(original_callable)} is not."
+                )
+            if inspect.isclass(original_callable):
+                raise ValueError(
+                    f"{name}() can not be used with with classes: "
+                    f"{repr(original_callable)}. Perhaps you want to use "
+                    "mock_constructor() instead."
+                )
+            if not coroutine_function and inspect.iscoroutinefunction(
+                original_callable
+            ):
+                raise ValueError(
+                    f"{name}() can not be used with coroutine functions.\n"
+                    f"{original_callable} is a coroutine function. You can use "
+                    f"{other_name}() instead."
+                )
+            if (
+                coroutine_function
+                and not inspect.iscoroutinefunction(original_callable)
+                and not callable_returns_coroutine
+            ):
+                raise ValueError(
+                    f"{name}() can not be used with non coroutine functions.\n"
+                    f"{original_callable} is not a coroutine function. You can "
+                    f"use {other_name}() instead."
+                )
+
+    def _patch(self, new_value):
+        self._validate_patch()
+
+        if isinstance(self._target, StrictMock):
+            original_callable = None
+        else:
+            original_callable = getattr(self._target, self._method)
+
+        if not isinstance(self._target, StrictMock):
+            new_value = _add_signature_validation(new_value, self._target, self._method)
+        restore_value = self._target.__dict__.get(self._method, None)
+
+        if inspect.isclass(self._target):
+            new_value = staticmethod(new_value)
+
+        if _is_instance_method(self._target, self._method):
+            unpatcher = _mock_instance_attribute(self._target, self._method, new_value)
+        else:
+            setattr(self._target, self._method, new_value)
+
+            def unpatcher():
+                if restore_value:
+                    setattr(self._target, self._method, restore_value)
+                else:
+                    delattr(self._target, self._method)
+
+        return original_callable, unpatcher
+
+    def _get_callable_mock(self):
+        return _CallableMock(self._original_target, self._method)
 
     def __init__(self, target, method, callable_mock=None, original_callable=None):
         if not _is_setup():
@@ -579,7 +702,7 @@ class _MockCallableDSL(object):
         if target_method_id not in self.CALLABLE_MOCKS:
             if not callable_mock:
                 patch = True
-                callable_mock = _CallableMock(self._original_target, self._method)
+                callable_mock = self._get_callable_mock()
             else:
                 patch = False
             self.CALLABLE_MOCKS[target_method_id] = callable_mock
@@ -591,7 +714,7 @@ class _MockCallableDSL(object):
             _unpatchers.append(del_callable_mock)
 
             if patch:
-                original_callable, unpatcher = _patch(target, method, callable_mock)
+                original_callable, unpatcher = self._patch(callable_mock)
                 _unpatchers.append(unpatcher)
             self._original_callable = original_callable
             callable_mock.original_callable = original_callable
@@ -837,4 +960,81 @@ class _MockCallableDSL(object):
         """
         self._assert_runner()
         self._runner.add_call_order_assertion()
+        return self
+
+
+class _MockAsyncCallableDSL(_MockCallableDSL):
+    def __init__(self, target, method, callable_returns_coroutine):
+        self._callable_returns_coroutine = callable_returns_coroutine
+        super().__init__(target, method)
+
+    def _validate_patch(self):
+        return super()._validate_patch(
+            name="mock_async_callable",
+            other_name="mock_callable",
+            coroutine_function=True,
+            callable_returns_coroutine=self._callable_returns_coroutine,
+        )
+
+    def _get_callable_mock(self):
+        return _CallableMock(self._original_target, self._method, is_async=True)
+
+    def with_implementation(self, func):
+        """
+        Replace callable by given async function.
+        """
+        if not callable(func):
+            raise ValueError("{} must be callable.".format(func))
+        self._add_runner(
+            _AsyncImplementationRunner(
+                self._original_target, self._method, self._original_callable, func
+            )
+        )
+        return self
+
+    def with_wrapper(self, func):
+        """
+        Replace callable with given wrapper async function, that will be called as:
+
+          await func(original_async_func, *args, **kwargs)
+
+        receiving the original function as the first argument as well as any given
+        arguments.
+        """
+        if not callable(func):
+            raise ValueError("{} must be callable.".format(func))
+
+        if not self._original_callable:
+            raise ValueError("Can not wrap original callable that does not exist.")
+
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            coro = func(self._original_callable, *args, **kwargs)
+            if not _is_coroutine(coro):
+                raise NotACoroutine(
+                    f"Function did not return a coroutine.\n"
+                    f"{func} must return a coroutine."
+                )
+            return await coro
+
+        self._add_runner(
+            _AsyncImplementationRunner(
+                self._original_target, self._method, self._original_callable, wrapper
+            )
+        )
+        return self
+
+    def to_call_original(self):
+        """
+        Calls the original callable implementation, instead of mocking it. This is
+        useful for example, if you want to by default call the original implementation,
+        but for a specific calls, mock the result.
+        """
+        if not self._original_callable:
+            raise ValueError("Can not call original callable that does not exist.")
+        self._add_runner(
+            _AsyncCallOriginalRunner(
+                self._original_target, self._method, self._original_callable
+            )
+        )
         return self

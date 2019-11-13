@@ -14,8 +14,8 @@ from unittest.mock import _must_skip
 
 def _add_signature_validation(value, template, attr_name):
     if isinstance(template, StrictMock):
-        if "__template" in template.__dict__:
-            template = template.__template
+        if "_template" in template.__dict__:
+            template = template._template
         else:
             return value
 
@@ -360,9 +360,9 @@ class StrictMock(object):
         on the object's class __dict__.
         https://github.com/facebookincubator/TestSlide/issues/23
         """
-        if not self.__template:
+        if not self._template:
             return
-        for klass in self.__template.mro():
+        for klass in self._template.mro():
             if klass is object:
                 continue
             for name in klass.__dict__:
@@ -375,14 +375,14 @@ class StrictMock(object):
                     setattr(self, name, _DefaultMagic(self, name))
 
     def _setup_default_context_manager(self, default_context_manager):
-        if self.__template and default_context_manager:
-            if hasattr(self.__template, "__enter__") and hasattr(
-                self.__template, "__exit__"
+        if self._template and default_context_manager:
+            if hasattr(self._template, "__enter__") and hasattr(
+                self._template, "__exit__"
             ):
                 self.__enter__ = lambda: self
                 self.__exit__ = lambda exc_type, exc_value, traceback: None
-            if hasattr(self.__template, "__aenter__") and hasattr(
-                self.__template, "__aexit__"
+            if hasattr(self._template, "__aenter__") and hasattr(
+                self._template, "__aexit__"
             ):
 
                 async def aenter():
@@ -409,10 +409,10 @@ class StrictMock(object):
         """
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
-        self.__dict__["__template"] = template
+        self.__dict__["_template"] = template
 
-        self.__dict__["__runtime_attrs"] = runtime_attrs or []
-        self.__dict__["__name"] = name
+        self.__dict__["_runtime_attrs"] = runtime_attrs or []
+        self.__dict__["_name"] = name
 
         frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
         filename = frameinfo.filename
@@ -432,24 +432,22 @@ class StrictMock(object):
 
     @property
     def __class__(self):
-        return self.__template if self.__template is not None else type(self)
+        return self._template if self._template is not None else type(self)
 
     @property
-    def __template(self):
+    def _template(self):
         import testslide.mock_constructor  # Avoid cyclic dependencies
 
         # If the template class was mocked with mock_constructor(), this will
         # return the mocked subclass, which contains all attributes we need for
         # introspection.
-        return testslide.mock_constructor._get_class_or_mock(
-            self.__dict__["__template"]
-        )
+        return testslide.mock_constructor._get_class_or_mock(self.__dict__["_template"])
 
     @property
-    def __runtime_attrs(self):
-        return self.__dict__["__runtime_attrs"]
+    def _runtime_attrs(self):
+        return self.__dict__["_runtime_attrs"]
 
-    def __template_has_attr(self, name):
+    def _template_has_attr(self, name):
         def get_class_init(klass):
             import testslide.mock_constructor  # Avoid cyclic dependencies
 
@@ -466,8 +464,8 @@ class StrictMock(object):
                 return klass.__init__
 
         def is_runtime_attr():
-            if self.__template:
-                for klass in self.__template.mro():
+            if self._template:
+                for klass in self._template.mro():
                     template_init = get_class_init(klass)
                     if not inspect.isfunction(template_init):
                         continue
@@ -480,9 +478,9 @@ class StrictMock(object):
             return False
 
         return (
-            hasattr(self.__template, name)
-            or name in self.__runtime_attrs
-            or name in getattr(self.__template, "__slots__", [])
+            hasattr(self._template, name)
+            or name in self._runtime_attrs
+            or name in getattr(self._template, "__slots__", [])
             or is_runtime_attr()
         )
 
@@ -501,17 +499,17 @@ class StrictMock(object):
                 )
 
         mock_value = value
-        if self.__template:
-            if not self.__template_has_attr(name):
+        if self._template:
+            if not self._template_has_attr(name):
                 raise NonExistentAttribute(self, name)
 
-            if hasattr(self.__template, name):
-                template_value = getattr(self.__template, name)
+            if hasattr(self._template, name):
+                template_value = getattr(self._template, name)
                 if callable(template_value):
                     if not callable(value):
                         raise NonCallableValue(self, name)
                     value_with_sig_val = _add_signature_validation(
-                        value, self.__template, name
+                        value, self._template, name
                     )
                     if inspect.iscoroutinefunction(template_value):
 
@@ -533,7 +531,7 @@ class StrictMock(object):
         setattr(type(self), name, mock_value)
 
     def __getattr__(self, name):
-        if self.__template and self.__template_has_attr(name):
+        if self._template and self._template_has_attr(name):
             raise UndefinedAttribute(self, name)
         else:
             raise AttributeError(f"'{name}' was not set for {self}.")
@@ -544,15 +542,13 @@ class StrictMock(object):
 
     def __repr__(self):
         template_str = (
-            " template={}.{}".format(
-                self.__template.__module__, self.__template.__name__
-            )
-            if self.__template
+            " template={}.{}".format(self._template.__module__, self._template.__name__)
+            if self._template
             else ""
         )
 
-        if self.__dict__["__name"]:
-            name_str = " name={}".format(repr(self.__dict__["__name"]))
+        if self.__dict__["_name"]:
+            name_str = " name={}".format(repr(self.__dict__["_name"]))
         else:
             name_str = ""
 
@@ -568,7 +564,7 @@ class StrictMock(object):
     def __str__(self):
         return self.__repr__()
 
-    def __get_copyable_attrs(self, self_copy):
+    def _get_copyable_attrs(self, self_copy):
         attrs = []
         for name in type(self).__dict__:
             if name not in self_copy.__dict__:
@@ -583,10 +579,10 @@ class StrictMock(object):
 
     def __copy__(self):
         self_copy = type(self)(
-            template=self.__template, runtime_attrs=self.__runtime_attrs
+            template=self._template, runtime_attrs=self._runtime_attrs
         )
 
-        for name in self.__get_copyable_attrs(self_copy):
+        for name in self._get_copyable_attrs(self_copy):
             setattr(self_copy, name, type(self).__dict__[name])
 
         return self_copy
@@ -595,10 +591,10 @@ class StrictMock(object):
         if memo is None:
             memo = {}
         self_copy = type(self)(
-            template=self.__template, runtime_attrs=self.__runtime_attrs
+            template=self._template, runtime_attrs=self._runtime_attrs
         )
         memo[id(self)] = self_copy
 
-        for name in self.__get_copyable_attrs(self_copy):
+        for name in self._get_copyable_attrs(self_copy):
             setattr(self_copy, name, copy.deepcopy(type(self).__dict__[name], memo))
         return self_copy
