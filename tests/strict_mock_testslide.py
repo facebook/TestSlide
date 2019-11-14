@@ -622,22 +622,30 @@ def strict_mock(context):
             @context.before
             def set_attributes(self):
                 self.strict_mock.attr = self.attr
+                self.strict_mock.instance_method = lambda arg: "mock"
 
             @context.example("copy.copy()")
             def copy_copy(self):
                 strict_mock_copy = copy.copy(self.strict_mock)
-                self.assertEqual(self.strict_mock.attr, strict_mock_copy.attr)
-                # it is a shallow copy
-                strict_mock_copy.attr[self.key] = None
-                self.assertEqual(self.strict_mock.attr, strict_mock_copy.attr)
+                self.assertEqual(id(self.strict_mock.attr), id(strict_mock_copy.attr))
+                self.assertEqual(
+                    id(self.strict_mock.instance_method),
+                    id(strict_mock_copy.instance_method),
+                )
 
             @context.example("copy.deepcopy()")
             def copy_deepcopy(self):
                 strict_mock_copy = copy.deepcopy(self.strict_mock)
                 self.assertEqual(self.strict_mock.attr, strict_mock_copy.attr)
-                # it is a deep copy
-                strict_mock_copy.attr[self.key] = None
-                self.assertNotEqual(self.strict_mock.attr, strict_mock_copy.attr)
+                self.assertNotEqual(
+                    id(self.strict_mock.attr), id(strict_mock_copy.attr)
+                )
+                self.assertEqual((self.strict_mock.attr), (strict_mock_copy.attr))
+                self.assertNotEqual(
+                    id(self.strict_mock.instance_method),
+                    id(strict_mock_copy.instance_method),
+                )
+                self.assertEqual(self.strict_mock.instance_method(1), "mock")
 
     @context.sub_context
     def with_trim_path_prefix(context):

@@ -176,6 +176,21 @@ class _MethodProxy(object):
     def __call__(self, *args, **kwargs):
         return self.__dict__["_mock_value"](*args, **kwargs)
 
+    def __copy__(self):
+        return type(self)(
+            mock_value=self.__dict__["_mock_value"], value=self.__dict__["_value"]
+        )
+
+    def __deepcopy__(self, memo=None):
+        if memo is None:
+            memo = {}
+        self_copy = type(self)(
+            mock_value=copy.deepcopy(self.__dict__["_mock_value"]),
+            value=copy.deepcopy(self.__dict__["_value"]),
+        )
+        memo[id(self)] = self_copy
+        return self_copy
+
 
 class StrictMock(object):
     """
@@ -583,7 +598,7 @@ class StrictMock(object):
         )
 
         for name in self._get_copyable_attrs(self_copy):
-            setattr(self_copy, name, type(self).__dict__[name])
+            setattr(type(self_copy), name, type(self).__dict__[name])
 
         return self_copy
 
@@ -596,5 +611,7 @@ class StrictMock(object):
         memo[id(self)] = self_copy
 
         for name in self._get_copyable_attrs(self_copy):
-            setattr(self_copy, name, copy.deepcopy(type(self).__dict__[name], memo))
+            setattr(
+                type(self_copy), name, copy.deepcopy(type(self).__dict__[name], memo)
+            )
         return self_copy
