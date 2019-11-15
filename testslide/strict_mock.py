@@ -162,7 +162,9 @@ class StrictMock(object):
 
     TRIM_PATH_PREFIX = ""
 
-    def __init__(self, template=None, runtime_attrs=None, name=None):
+    def __init__(
+        self, template=None, runtime_attrs=None, name=None, default_context_manager=True
+    ):
         """
         template: Template class to be used as a template for the mock. If the
         template class implements a context manager, empty mocks for __enter__()
@@ -199,6 +201,7 @@ class StrictMock(object):
             self.__template
             and hasattr(self.__template, "__enter__")
             and hasattr(self.__template, "__exit__")
+            and default_context_manager
         ):
             self.__enter__ = lambda: self
             self.__exit__ = lambda exc_type, exc_value, traceback: None
