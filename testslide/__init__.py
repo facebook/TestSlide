@@ -165,7 +165,7 @@ class AggregatedExceptions(Exception):
             self.append_exception(exception)
 
     def __str__(self):
-        return "{} failures:\n".format(len(self.exceptions)) + "\n".join(
+        return "{} failures.\n".format(len(self.exceptions)) + "\n".join(
             f"{type(e)}: {str(e)}" for e in self.exceptions
         )
 
