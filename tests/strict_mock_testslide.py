@@ -106,6 +106,17 @@ class Template(TemplateParent):
         return "class_method: {}".format(message)
 
 
+class TemplateStrictMock(StrictMock):
+    def __init__(self):
+        super().__init__(template=Template)
+
+    def instance_method(self, message):
+        return "mock"
+
+    def __len__(self):
+        return 100
+
+
 class ContextManagerTemplate(Template):
     def __enter__(self):
         pass
@@ -569,6 +580,20 @@ def strict_mock(context):
                     )
                     strict_mock2 = StrictMock(self.template)
                     strict_mock2.instance_method = lambda *args, **kwargs: None
+
+            @context.sub_context
+            def mock_instance_with_subclass(context):
+                @context.memoize
+                def strict_mock(self):
+                    return TemplateStrictMock()
+
+                @context.example
+                def overriding_regular_methods_work(self):
+                    self.assertEqual(self.strict_mock.instance_method("Hello"), "mock")
+
+                @context.example
+                def overriding_magic_methods_work(self):
+                    self.assertEqual(len(self.strict_mock), 100)
 
             # @context.xsub_context
             # def mock_instance_after_any_object_as_template(context):
