@@ -185,33 +185,6 @@ The mock itself is yielded.
 
   This also works for `asynchronous context managers <https://docs.python.org/3/reference/datamodel.html#asynchronous-context-managers>`_.
 
-You can also disable this:
-
-.. code-block:: ipython
-
-  In [5]:  mock = StrictMock(template=CM, default_context_manager=False)
-
-  In [6]: with mock as m:
-     ...:   pass
-     ...:
-  (...)
-  UndefinedAttribute: '__enter__' is not set.
-  <StrictMock 0x7F1773E60D50 template=__main__.CM> must have a value set for this attribute if it is going to be accessed.
-
-  In [7]: mock.__enter__ = lambda: mock
-
-  In [8]: mock.__exit__ = lambda exc_type, exc_value, traceback: None
-
-  In [9]: with mock as m:
-      ...:     assert id(mock) == id(m)
-      ...:
-
-  In [10]:
-
-.. note::
-
-  ``default_context_manager`` currently defaults to ``True``. While often context managers yield itself, this is not universally true. This value defaulting to ``True`` is a bad past design decision that will default to ``False`` in future releases. Until then, it is then recommended to always be explicit with ``default_context_manager`` when your template is as context manager.
-
 Setting Attributes
 ^^^^^^^^^^^^^^^^^^
 

@@ -53,17 +53,21 @@ class UndefinedAttribute(BaseException):
     Inherits from BaseException to avoid being caught by tested code.
     """
 
-    def __init__(self, strict_mock, name):
+    def __init__(self, strict_mock, name, extra_msg=None):
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
+        self.extra_msg = extra_msg
 
     def __str__(self):
-        return (
+        message = (
             f"'{self.name}' is not set.\n"
             f"{self.strict_mock} must have a value set for this attribute "
             "if it is going to be accessed."
         )
+        if self.extra_msg is not None:
+            message += f"\n{self.extra_msg}"
+        return message
 
 
 class NonExistentAttribute(BaseException):
@@ -143,12 +147,20 @@ class UnsupportedMagic(BaseException):
 
 
 class _DefaultMagic:
+    CONTEXT_MANAGER_METHODS = ["__enter__", "__exit__", "__aenter__", "__aexit__"]
+
     def __init__(self, strict_mock, name):
         self.strict_mock = strict_mock
         self.name = name
 
     def __call__(self, *args, **kwargs):
-        raise UndefinedAttribute(self.strict_mock, self.name)
+        message = None
+        if self.name in self.CONTEXT_MANAGER_METHODS:
+            message = (
+                "Tip: most context managers can be automatically configured "
+                "with 'default_context_manager=True'."
+            )
+        raise UndefinedAttribute(self.strict_mock, self.name, message)
 
 
 class _MethodProxy(object):
@@ -395,7 +407,11 @@ class StrictMock(object):
                 self.__aexit__ = aexit
 
     def __init__(
-        self, template=None, runtime_attrs=None, name=None, default_context_manager=True
+        self,
+        template=None,
+        runtime_attrs=None,
+        name=None,
+        default_context_manager=False,
     ):
         """
         template: Template class to be used as a template for the mock.
