@@ -362,6 +362,15 @@ class StrictMock(object):
         """
         if not self._template:
             return
+
+        implemented_magic_methods = []
+        for klass in type(self).mro():
+            if klass is object:
+                continue
+            for name in klass.__dict__:
+                if name.startswith("__") and name.endswith("__"):
+                    implemented_magic_methods.append(name)
+
         for klass in self._template.mro():
             if klass is object:
                 continue
@@ -370,7 +379,7 @@ class StrictMock(object):
                     callable(klass.__dict__[name])
                     and name in self._SETTABLE_MAGICS
                     and name not in self._UNSETTABLE_MAGICS
-                    and name not in StrictMock.__dict__
+                    and name not in implemented_magic_methods
                 ):
                     setattr(self, name, _DefaultMagic(self, name))
 
