@@ -640,9 +640,7 @@ def strict_mock(context):
 
         @context.sub_context
         def making_copies(context):
-
             context.memoize("strict_mock", lambda self: StrictMock())
-
             context.memoize("key", lambda self: 1)
             context.memoize("value", lambda self: 2)
             context.memoize("attr", lambda self: {self.key: self.value})
@@ -651,6 +649,7 @@ def strict_mock(context):
             def set_attributes(self):
                 self.strict_mock.attr = self.attr
                 self.strict_mock.instance_method = lambda arg: "mock"
+                self.strict_mock.__eq__ = lambda other: True
 
             @context.example("copy.copy()")
             def copy_copy(self):
