@@ -3,14 +3,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import csv
 import testslide
 import unittest
+import sys
 
 
-class Dummy(object):
-    def do_something(self):
-        pass
+class SomeClass:
+    @staticmethod
+    def do_something():
+        return "original"
+
+    @staticmethod
+    async def async_do_something():
+        return "original"
 
 
 class TestSlideTestCaseIntegration(testslide.TestCase):
@@ -18,11 +25,22 @@ class TestSlideTestCaseIntegration(testslide.TestCase):
         self.assertTrue(issubclass(type(self), unittest.TestCase))
 
     def test_has_mock_callable(self):
-        dummy = Dummy()
-        self.mock_callable(dummy, "do_something").to_return_value(
+        self.mock_callable(SomeClass, "do_something").to_return_value(
             42
         ).and_assert_called_once()
-        self.assertEqual(dummy.do_something(), 42)
+        self.assertEqual(SomeClass.do_something(), 42)
+
+    def test_has_mock_async_callable(self):
+        self.mock_async_callable(SomeClass, "async_do_something").to_return_value(
+            42
+        ).and_assert_called_once()
+        if sys.version_info >= (3, 7):
+            self.assertEqual(asyncio.run(SomeClass.async_do_something()), 42)
+        else:
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(SomeClass.async_do_something())
+            loop.close()
+            self.assertEqual(result, 42)
 
     def test_has_mock_constructor(self):
         dict_reader = testslide.StrictMock(csv.DictReader)

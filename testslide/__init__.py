@@ -806,5 +806,11 @@ class TestCase(unittest.TestCase):
         return testslide.mock_callable.mock_callable(target, method)
 
     @staticmethod
+    def mock_async_callable(target, method, callable_returns_coroutine=False):
+        return testslide.mock_callable.mock_async_callable(
+            target, method, callable_returns_coroutine
+        )
+
+    @staticmethod
     def mock_constructor(target, class_name):
         return testslide.mock_constructor.mock_constructor(target, class_name)
