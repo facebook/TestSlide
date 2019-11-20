@@ -636,7 +636,12 @@ class StrictMock(object):
         memo[id(self)] = self_copy
 
         for name in self._get_copyable_attrs(self_copy):
-            setattr(
-                type(self_copy), name, copy.deepcopy(type(self).__dict__[name], memo)
-            )
+            value = type(self).__dict__[name]
+            if isinstance(value, _MethodProxy):
+                value = _MethodProxy(
+                    value.__dict__["_mock_value"], value.__dict__["_value"]
+                )
+            else:
+                value = copy.deepcopy(value, memo)
+            setattr(type(self_copy), name, value)
         return self_copy
