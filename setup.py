@@ -8,7 +8,7 @@ from io import open
 
 setup(
     name="TestSlide",
-    version="1.7.0",
+    version="2.0.0",
     packages=["testslide"],
     maintainer="Fabio Pugliese Ornellas",
     maintainer_email="fabio.ornellas@gmail.com",
@@ -25,7 +25,7 @@ setup(
     install_requires=[],
     extras_require={
         "build": [
-            'black ; python_version>="3.6"',
+            "black",
             "ipython",
             "flake8",
             "sphinx",
