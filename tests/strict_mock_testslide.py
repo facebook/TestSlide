@@ -283,9 +283,11 @@ def strict_mock(context):
 
                 @context.example
                 def allows_init_set_attributes_to_be_set(self):
-                    new_value = "new value"
+                    new_value = lambda msg: f"hello {msg}"
                     self.strict_mock.runtime_attr_from_init = new_value
-                    self.assertEqual(self.strict_mock.runtime_attr_from_init, new_value)
+                    self.assertEqual(
+                        self.strict_mock.runtime_attr_from_init("world"), "hello world"
+                    )
 
                 @context.example
                 def allows_parent_init_set_attributes_to_be_set(self):

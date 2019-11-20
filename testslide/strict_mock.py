@@ -562,9 +562,14 @@ class StrictMock(object):
                         mock_value = _MethodProxy(validate_awaitable_return, value)
                     else:
                         mock_value = _MethodProxy(value_with_sig_val, value)
+            else:
+                if callable(value):
+                    # We don't really need the proxy here, but it serves the
+                    # double purpose of swallowing self / cls when needed.
+                    mock_value = _MethodProxy(value, value)
         else:
             if callable(value):
-                # We don't really need the proxy here, but it server the
+                # We don't really need the proxy here, but it serves the
                 # double purpose of swallowing self / cls when needed.
                 mock_value = _MethodProxy(value, value)
 
