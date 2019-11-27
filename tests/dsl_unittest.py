@@ -1898,6 +1898,46 @@ class TestMockCallableIntegration(TestDSLBase):
             examples["expect fail"]()
 
 
+class TestMockAsyncCallableIntegration(TestDSLBase):
+    def test_mock_async_callable_integration(self):
+        class SomeClass:
+            @staticmethod
+            async def do_something():
+                return "for real"
+
+        @context
+        def fail_top(context):
+            @context.sub_context
+            def fail_sub_context(context):
+                @context.example
+                async def expect_fail(self):
+                    self.mock_async_callable(
+                        SomeClass, "do_something"
+                    ).for_call().to_return_value("mocked").and_assert_called_once()
+
+        @context
+        def pass_top(context):
+            @context.sub_context
+            def pass_sub_context(context):
+                @context.example
+                async def expect_pass(self):
+                    self.mock_async_callable(
+                        SomeClass, "do_something"
+                    ).for_call().to_return_value("mocked").and_assert_called_once()
+                    assert await SomeClass.do_something() == "mocked"
+
+        examples = {}
+
+        for all_top_level_context in Context.all_top_level_contexts:
+            for example in all_top_level_context.all_examples:
+                examples[example.name] = example
+
+        examples["expect pass"]()
+
+        with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
+            examples["expect fail"]()
+
+
 class TestMockConstructorIntegration(TestDSLBase):
     def test_mock_constructor_integration(self):
         @context
