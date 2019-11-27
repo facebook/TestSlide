@@ -69,11 +69,19 @@ class _ContextData(object):
 
     def _init_mock_callable_and_constructor(self):
         self.mock_callable = testslide.mock_callable.mock_callable
+        self.mock_async_callable = testslide.mock_callable.mock_async_callable
         self.mock_constructor = testslide.mock_constructor.mock_constructor
         self._mock_callable_after_functions = []
 
         def register_assertion(assertion):
-            self._mock_callable_after_functions.append(lambda _: assertion())
+            if self._example.is_async:
+
+                async def f(_):
+                    assertion()
+
+            else:
+                f = lambda _: assertion()
+            self._mock_callable_after_functions.append(f)
 
         testslide.mock_callable.register_assertion = register_assertion
 
