@@ -185,6 +185,33 @@ The mock itself is yielded.
 
   This also works for `asynchronous context managers <https://docs.python.org/3/reference/datamodel.html#asynchronous-context-managers>`_.
 
+Disabling Signature Validation
+""""""""""""""""""""""""""""""
+By default, ``StrictMock`` will validate arguments passed to callable attributes - it does this by inserting a proxy object in between the attribute and the value. In some rare situations, this proxy object can cause issues (eg if you ``assert type(self.attr) == Foo``). If having ``type()`` return the correct value is more important than having signatures validated, you can disable signature validation:
+
+.. code-block:: ipython
+
+  In [1]: from testslide import StrictMock
+
+  In [2]: class CallableObject(object):
+     ...:   def __call__(self):
+     ...:     pass
+     ...:
+
+  In [3]: s = StrictMock()
+
+  In [4]: s.attr = CallableObject()
+
+  In [5]: type(s.attr)
+  Out[5]: testslide.strict_mock._MethodProxy
+
+  In [6]: s = StrictMock(signature_validation=False)
+
+  In [7]: s.attr = CallableObject()
+
+  In [8]: type(s.attr)
+  Out[8]: __main__.CallableObject
+
 Setting Attributes
 ^^^^^^^^^^^^^^^^^^
 
