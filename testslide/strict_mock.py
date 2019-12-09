@@ -364,7 +364,12 @@ class StrictMock(object):
     ]
 
     def __new__(
-        cls, template=None, runtime_attrs=None, name=None, default_context_manager=True
+        cls,
+        template=None,
+        runtime_attrs=None,
+        name=None,
+        default_context_manager=True,
+        signature_validation=True,
     ):
         """
         For every new instance of StrictMock we dynamically create a subclass of
@@ -436,6 +441,7 @@ class StrictMock(object):
         runtime_attrs=None,
         name=None,
         default_context_manager=False,
+        signature_validation=True,
     ):
         """
         template: Template class to be used as a template for the mock.
@@ -446,6 +452,9 @@ class StrictMock(object):
         default_context_manager: If the template class is a context manager,
         setup a mock for __enter__/__aenter__ that yields itself and an empty function
         for __exit__/__aexit__.
+        signature_validation: validate that called attributes are called with the
+        correct parameters. This involves inserting a proxy between the attribute
+        and the method, so set this flag to False if you can't handle a proxy.
         """
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
@@ -453,6 +462,7 @@ class StrictMock(object):
 
         self.__dict__["_runtime_attrs"] = runtime_attrs or []
         self.__dict__["_name"] = name
+        self.__dict__["_signature_validation"] = signature_validation
 
         frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
         filename = frameinfo.filename
@@ -545,7 +555,7 @@ class StrictMock(object):
 
             if hasattr(self._template, name):
                 template_value = getattr(self._template, name)
-                if callable(template_value):
+                if callable(template_value) and self.__dict__["_signature_validation"]:
                     if not callable(value):
                         raise NonCallableValue(self, name)
                     value_with_sig_val = _add_signature_validation(
@@ -563,12 +573,12 @@ class StrictMock(object):
                     else:
                         mock_value = _MethodProxy(value_with_sig_val, value)
             else:
-                if callable(value):
+                if callable(value) and self.__dict__["_signature_validation"]:
                     # We don't really need the proxy here, but it serves the
                     # double purpose of swallowing self / cls when needed.
                     mock_value = _MethodProxy(value, value)
         else:
-            if callable(value):
+            if callable(value) and self.__dict__["_signature_validation"]:
                 # We don't really need the proxy here, but it serves the
                 # double purpose of swallowing self / cls when needed.
                 mock_value = _MethodProxy(value, value)

@@ -125,6 +125,11 @@ class ContextManagerTemplate(Template):
         pass
 
 
+class CallableObject(object):
+    def __call__(self):
+        pass
+
+
 @context("StrictMock")  # noqa: C901
 def strict_mock(context):
     @context.function
@@ -872,3 +877,21 @@ def strict_mock(context):
                 async def it_works(self):
                     async with self.strict_mock as m:
                         assert id(self.strict_mock) == id(m)
+
+    @context.sub_context
+    def disabling_signature_validation(context):
+        @context.example
+        def callable_attribute_replaced_with_proxy(self):
+            # Callable attributes normally get replaced with `_MethodProxy`
+            # instances, but type() can still tell the difference
+            mock_obj = StrictMock()
+            mock_obj.attr = CallableObject()
+            self.assertNotEqual(type(mock_obj.attr), type(CallableObject()))
+
+        @context.example
+        def callable_attribute_not_replaced_with_proxy(self):
+            # If we want type() to give correct results, then we need
+            # to disable method proxies
+            mock_obj = StrictMock(signature_validation=False)
+            mock_obj.attr = CallableObject()
+            self.assertEqual(type(mock_obj.attr), type(CallableObject()))
