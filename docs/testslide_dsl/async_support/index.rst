@@ -120,7 +120,7 @@ Every called coroutine must be awaited. If they are not, it means their code nev
     Successful: 1
     Failed: 1
 
-Even Loop Lock Up
+Slow Callback
 ^^^^^^^^^^^^^^^^^
 
 Async code must do their work in small chunks, properly awaiting other functions when needed. If an async function does some CPU intensive task that takes a long time to compute, or if it calls a sync function that takes a long time to return, the entirety of the event loop will be locked up. This means that no other code can be executed until this bad async function returns.
@@ -142,12 +142,12 @@ If during the test execution a task blocks the event loop, it will trigger a tes
 
   $ testslide blocked_event_loop.py 
   Blocked event loop
-    blocking sleep: RuntimeError: Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
+    blocking sleep: SlowCallback: Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
 
   Failures:
 
     1) Blocked event loop: blocking sleep
-      1) RuntimeError: Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
+      1) SlowCallback: Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
         File "/opt/python/lib/python3.7/contextlib.py", line 119, in __exit__
           next(self.gen)
 
