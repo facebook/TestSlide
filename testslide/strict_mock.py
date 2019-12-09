@@ -364,7 +364,12 @@ class StrictMock(object):
     ]
 
     def __new__(
-        cls, template=None, runtime_attrs=None, name=None, default_context_manager=True, signature_validation=True
+        cls,
+        template=None,
+        runtime_attrs=None,
+        name=None,
+        default_context_manager=True,
+        signature_validation=True,
     ):
         """
         For every new instance of StrictMock we dynamically create a subclass of
