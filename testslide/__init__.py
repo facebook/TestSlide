@@ -24,6 +24,25 @@ if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
 
 
+class EventLoopLockUp(BaseException):
+    """
+    Raised when during async test execution the event loop is locked up for more
+    than asyncio.get_running_loop().slow_callback_duration seconds.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+        self.slow_callback_duration = asyncio.get_running_loop().slow_callback_duration
+
+    def __str__(self):
+        return (
+            "Event loop locked up for more than "
+            f"{self.slow_callback_duration}s during test execution.\n"
+            f"{self.message}"
+        )
+
+
 def _importer(target):
     components = target.split(".")
     import_path = components.pop(0)
@@ -298,7 +317,7 @@ class _ExampleRunner:
 
         def logger_warning(msg, *args, **kwargs):
             if re.compile("^Executing .+ took .+ seconds$").match(str(msg)):
-                caught_failures.append(RuntimeError(msg % args))
+                caught_failures.append(EventLoopLockUp(msg % args))
             else:
                 original_logger_warning(msg, *args, **kwargs)
 

@@ -10,7 +10,7 @@ import time
 
 from unittest.mock import Mock, call, patch
 
-from testslide import Context, AggregatedExceptions, reset
+from testslide import Context, AggregatedExceptions, reset, EventLoopLockUp
 from testslide.dsl import context, xcontext, fcontext
 import os
 import subprocess
@@ -1859,7 +1859,10 @@ class SmokeTestAsync(TestDSLBase):
                 async def example(self):
                     time.sleep(0.1)
 
-            with self.assertRaisesRegex(RuntimeError, "^Executing .+ took .+ seconds$"):
+            with self.assertRaisesRegex(
+                EventLoopLockUp,
+                "^Event loop locked up for more than 0.1s during test execution.*",
+            ):
                 self.run_first_context_first_example()
 
 

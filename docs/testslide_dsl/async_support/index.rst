@@ -142,12 +142,13 @@ If during the test execution a task blocks the event loop, it will trigger a tes
 
   $ testslide blocked_event_loop.py 
   Blocked event loop
-    blocking sleep: RuntimeError: Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
+    blocking sleep: EventLoopLockUp: Event loop locked up for more than 0.1s during test execution.
 
   Failures:
 
     1) Blocked event loop: blocking sleep
-      1) RuntimeError: Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
+      1) EventLoopLockUp: Event loop locked up for more than 0.1s during test execution.
+      Executing <Task finished coro=<_ExampleRunner._real_async_run_all_hooks_and_example() done, defined at /opt/python/lib/python3.7/site-packages/testslide/__init__.py:220> result=None created at /opt/python/lib/python3.7/asyncio/base_events.py:558> took 1.002 seconds
         File "/opt/python/lib/python3.7/contextlib.py", line 119, in __exit__
           next(self.gen)
 
