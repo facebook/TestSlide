@@ -125,6 +125,16 @@ class ContextManagerTemplate(Template):
         pass
 
 
+class CallableObject(object):
+    def __call__(self):
+        pass
+
+
+class ObjectWithCallableAttribute(object):
+    def __init__(self):
+        self.attr = CallableObject()
+
+
 @context("StrictMock")  # noqa: C901
 def strict_mock(context):
     @context.function
@@ -873,32 +883,22 @@ def strict_mock(context):
                     async with self.strict_mock as m:
                         assert id(self.strict_mock) == id(m)
 
-    @context.memoize
-    def obj_with_callable_attribute(self):
-        class CallableObject(object):
-            def __call__(self):
-                pass
+    @context.sub_context
+    def disabling_signature_validation(context):
+        @context.example
+        def callable_attribute_replaced_with_proxy(self):
+            # Callable attributes normally get replaced with `_MethodProxy`
+            # instances, but type() can still tell the difference
+            real_obj = ObjectWithCallableAttribute()
+            mock_obj = StrictMock()
+            mock_obj.attr = real_obj.attr
+            self.assertNotEqual(type(mock_obj.attr), type(real_obj.attr))
 
-        class ObjWithCallableAttribute(object):
-            def __init__(self):
-                self.attr = CallableObject()
-
-        return ObjWithCallableAttribute()
-
-    @context.example
-    def callable_attribute_replaced_with_proxy(self):
-        # Callable attributes normally get replaced with `_MethodProxy`
-        # instances, but type() can still tell the difference
-        real_obj = self.obj_with_callable_attribute
-        mock_obj = StrictMock()
-        mock_obj.attr = real_obj.attr
-        self.assertNotEqual(type(mock_obj.attr), type(real_obj.attr))
-
-    @context.example
-    def callable_attribute_not_replaced_with_proxy(self):
-        # If we want type() to give correct results, then we need
-        # to disable method proxies
-        real_obj = self.obj_with_callable_attribute
-        mock_obj = StrictMock(signature_validation=False)
-        mock_obj.attr = real_obj.attr
-        self.assertEqual(type(mock_obj.attr), type(real_obj.attr))
+        @context.example
+        def callable_attribute_not_replaced_with_proxy(self):
+            # If we want type() to give correct results, then we need
+            # to disable method proxies
+            real_obj = ObjectWithCallableAttribute()
+            mock_obj = StrictMock(signature_validation=False)
+            mock_obj.attr = real_obj.attr
+            self.assertEqual(type(mock_obj.attr), type(real_obj.attr))
