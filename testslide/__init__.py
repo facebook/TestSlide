@@ -207,6 +207,12 @@ class UnexpectedSuccess(Exception):
     """
 
 
+class SlowCallback(Exception):
+    """
+    Raised by TestSlide when an asyncio slow callback warning is detected
+    """
+
+
 class _ExampleRunner:
     def __init__(self, example):
         self.example = example
@@ -298,7 +304,8 @@ class _ExampleRunner:
 
         def logger_warning(msg, *args, **kwargs):
             if re.compile("^Executing .+ took .+ seconds$").match(str(msg)):
-                caught_failures.append(RuntimeError(msg % args))
+                msg = f"{msg}\nSlow callback detected, see https://github.com/facebookincubator/TestSlide/blob/master/docs/testslide_dsl/async_support/index.rst#slow-callback"
+                caught_failures.append(SlowCallback(msg % args))
             else:
                 original_logger_warning(msg, *args, **kwargs)
 
