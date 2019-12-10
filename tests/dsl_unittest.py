@@ -7,7 +7,6 @@ import sys
 import asyncio
 import unittest
 import time
-import re
 
 from unittest.mock import Mock, call, patch
 
@@ -1860,12 +1859,7 @@ class SmokeTestAsync(TestDSLBase):
                 async def example(self):
                     time.sleep(0.1)
 
-            with self.assertRaisesRegex(
-                SlowCallback,
-                re.compile(
-                    r"^Executing .+ took .+ seconds\nSlow callback detected.*$", re.M
-                ),
-            ):
+            with self.assertRaisesRegex(SlowCallback, "^Executing .+ took .+ seconds"):
                 self.run_first_context_first_example()
 
 

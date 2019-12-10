@@ -304,7 +304,13 @@ class _ExampleRunner:
 
         def logger_warning(msg, *args, **kwargs):
             if re.compile("^Executing .+ took .+ seconds$").match(str(msg)):
-                msg = f"{msg}\nSlow callback detected, see https://github.com/facebookincubator/TestSlide/blob/master/docs/testslide_dsl/async_support/index.rst#slow-callback"
+                msg = (
+                    f"{msg}\n"
+                    "During the execution of the async test a slow callback "
+                    "that blocked the event loop was detected.\n"
+                    "Tip: you can customize the detection threshold with:\n"
+                    "  asyncio.get_running_loop().slow_callback_duration = seconds"
+                )
                 caught_failures.append(SlowCallback(msg % args))
             else:
                 original_logger_warning(msg, *args, **kwargs)
