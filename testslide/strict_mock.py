@@ -368,7 +368,7 @@ class StrictMock(object):
         template=None,
         runtime_attrs=None,
         name=None,
-        default_context_manager=True,
+        default_context_manager=False,
         signature_validation=True,
     ):
         """
