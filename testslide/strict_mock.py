@@ -172,9 +172,15 @@ class _MethodProxy(object):
     access is forwarded to the new value.
     """
 
-    def __init__(self, mock_value, value):
-        self.__dict__["_mock_value"] = mock_value
+    def __init__(self, value, callable_value=None):
         self.__dict__["_value"] = value
+        self.__dict__["_callable_value"] = callable_value if callable_value else value
+
+    def __get__(self, instance, owner=None):
+        if self.__dict__["_value"] is self.__dict__["_callable_value"]:
+            return self.__dict__["_callable_value"]
+        else:
+            return self
 
     def __getattr__(self, name):
         return getattr(self.__dict__["_value"], name)
@@ -186,18 +192,19 @@ class _MethodProxy(object):
         return delattr(self.__dict__["_value"], name)
 
     def __call__(self, *args, **kwargs):
-        return self.__dict__["_mock_value"](*args, **kwargs)
+        return self.__dict__["_callable_value"](*args, **kwargs)
 
     def __copy__(self):
         return type(self)(
-            mock_value=self.__dict__["_mock_value"], value=self.__dict__["_value"]
+            callable_value=self.__dict__["_callable_value"],
+            value=self.__dict__["_value"],
         )
 
     def __deepcopy__(self, memo=None):
         if memo is None:
             memo = {}
         self_copy = type(self)(
-            mock_value=copy.deepcopy(self.__dict__["_mock_value"]),
+            callable_value=copy.deepcopy(self.__dict__["_callable_value"]),
             value=copy.deepcopy(self.__dict__["_value"]),
         )
         memo[id(self)] = self_copy
@@ -368,7 +375,7 @@ class StrictMock(object):
         template=None,
         runtime_attrs=None,
         name=None,
-        default_context_manager=True,
+        default_context_manager=False,
         signature_validation=True,
     ):
         """
@@ -452,9 +459,13 @@ class StrictMock(object):
         default_context_manager: If the template class is a context manager,
         setup a mock for __enter__/__aenter__ that yields itself and an empty function
         for __exit__/__aexit__.
-        signature_validation: validate that called attributes are called with the
-        correct parameters. This involves inserting a proxy between the attribute
-        and the method, so set this flag to False if you can't handle a proxy.
+        signature_validation: validate callable attributes calls against the
+        template's method signature, raising TypeError if they don't match. This
+        is accomplished by wrapping the callable attribute with another
+        function. While attribute access is proxied correctly, the type() of
+        the attribute will change. Setting this value to False disables
+        signature validation, and should only be used when type() is required
+        to not change.
         """
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
@@ -534,9 +545,12 @@ class StrictMock(object):
             or is_runtime_attr()
         )
 
+    @staticmethod
+    def _is_magic_method(name):
+        return name.startswith("__") and name.endswith("__")
+
     def __setattr__(self, name, value):
-        # If magic...
-        if name.startswith("__") and name.endswith("__"):
+        if self._is_magic_method(name):
             # ...check whether we're allowed to mock...
             if name in self._UNSETTABLE_MAGICS or (
                 name in StrictMock.__dict__ and name not in self._SETTABLE_MAGICS
@@ -555,33 +569,44 @@ class StrictMock(object):
 
             if hasattr(self._template, name):
                 template_value = getattr(self._template, name)
-                if callable(template_value) and self.__dict__["_signature_validation"]:
+                if callable(template_value):
                     if not callable(value):
                         raise NonCallableValue(self, name)
-                    value_with_sig_val = _add_signature_validation(
-                        value, self._template, name
-                    )
-                    if inspect.iscoroutinefunction(template_value):
 
-                        async def validate_awaitable_return(*args, **kwargs):
-                            return_value = value_with_sig_val(*args, **kwargs)
-                            if not inspect.isawaitable(return_value):
-                                raise NonAwaitableReturn(self, name)
-                            return await return_value
+                    if self.__dict__["_signature_validation"]:
+                        signature_validation_wrapper = _add_signature_validation(
+                            value, self._template, name
+                        )
+                        if inspect.iscoroutinefunction(template_value):
 
-                        mock_value = _MethodProxy(validate_awaitable_return, value)
+                            async def awaitable_return_validation_wrapper(
+                                *args, **kwargs
+                            ):
+                                return_value = signature_validation_wrapper(
+                                    *args, **kwargs
+                                )
+                                if not inspect.isawaitable(return_value):
+                                    raise NonAwaitableReturn(self, name)
+                                return await return_value
+
+                            callable_value = awaitable_return_validation_wrapper
+                        else:
+                            callable_value = signature_validation_wrapper
                     else:
-                        mock_value = _MethodProxy(value_with_sig_val, value)
+                        callable_value = None
+                    mock_value = _MethodProxy(
+                        value=value, callable_value=callable_value
+                    )
             else:
-                if callable(value) and self.__dict__["_signature_validation"]:
+                if callable(value):
                     # We don't really need the proxy here, but it serves the
                     # double purpose of swallowing self / cls when needed.
-                    mock_value = _MethodProxy(value, value)
+                    mock_value = _MethodProxy(value=value)
         else:
-            if callable(value) and self.__dict__["_signature_validation"]:
+            if callable(value):
                 # We don't really need the proxy here, but it serves the
                 # double purpose of swallowing self / cls when needed.
-                mock_value = _MethodProxy(value, value)
+                mock_value = _MethodProxy(value=value)
 
         setattr(type(self), name, mock_value)
 
@@ -651,12 +676,6 @@ class StrictMock(object):
         memo[id(self)] = self_copy
 
         for name in self._get_copyable_attrs(self_copy):
-            value = type(self).__dict__[name]
-            if isinstance(value, _MethodProxy):
-                value = _MethodProxy(
-                    value.__dict__["_mock_value"], value.__dict__["_value"]
-                )
-            else:
-                value = copy.deepcopy(value, memo)
+            value = copy.deepcopy(type(self).__dict__[name], memo)
             setattr(type(self_copy), name, value)
         return self_copy
