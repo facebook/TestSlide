@@ -598,7 +598,7 @@ class _MockCallableDSL(object):
                 if (
                     coroutine_function
                     and (
-                        # FIXME We cant reliably introspect coroutine functions
+                        # FIXME We can not reliably introspect coroutine functions
                         # for builtins: https://bugs.python.org/issue38225
                         type(template_value) is not type(list.append)
                         and not inspect.iscoroutinefunction(template_value)
@@ -646,7 +646,7 @@ class _MockCallableDSL(object):
             if (
                 coroutine_function
                 and (
-                    # FIXME We cant reliably introspect coroutine functions
+                    # FIXME We can not reliably introspect coroutine functions
                     # for builtins: https://bugs.python.org/issue38225
                     type(original_callable) is not type(list.append)
                     and not inspect.iscoroutinefunction(original_callable)
