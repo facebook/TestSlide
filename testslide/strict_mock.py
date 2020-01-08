@@ -162,6 +162,16 @@ class _DefaultMagic:
             )
         raise UndefinedAttribute(self.strict_mock, self.name, message)
 
+    def __copy__(self):
+        return type(self)(strict_mock=self.strict_mock, name=self.name)
+
+    def __deepcopy__(self, memo=None):
+        if memo is None:
+            memo = {}
+        self_copy = type(self)(strict_mock=self.strict_mock, name=self.name)
+        memo[id(self)] = self_copy
+        return self_copy
+
 
 class _MethodProxy(object):
     """
@@ -442,6 +452,19 @@ class StrictMock(object):
                 self.__aenter__ = aenter
                 self.__aexit__ = aexit
 
+    def _get_caller(self, depth):
+        frameinfo = inspect.getframeinfo(inspect.stack()[depth + 1][0])
+        filename = frameinfo.filename
+        lineno = frameinfo.lineno
+        if self.TRIM_PATH_PREFIX:
+            split = filename.split(self.TRIM_PATH_PREFIX)
+            if len(split) == 2 and not split[0]:
+                filename = split[1]
+        if os.path.exists(filename):
+            return "{}:{}".format(filename, lineno)
+        else:
+            return None
+
     def __init__(
         self,
         template=None,
@@ -474,18 +497,7 @@ class StrictMock(object):
         self.__dict__["_runtime_attrs"] = runtime_attrs or []
         self.__dict__["_name"] = name
         self.__dict__["_signature_validation"] = signature_validation
-
-        frameinfo = inspect.getframeinfo(inspect.stack()[1][0])
-        filename = frameinfo.filename
-        lineno = frameinfo.lineno
-        if self.TRIM_PATH_PREFIX:
-            split = filename.split(self.TRIM_PATH_PREFIX)
-            if len(split) == 2 and not split[0]:
-                filename = split[1]
-        if os.path.exists(filename):
-            self.__dict__["__caller"] = "{}:{}".format(filename, lineno)
-        else:
-            self.__dict__["__caller"] = None
+        self.__dict__["__caller"] = self._get_caller(1)
 
         self._setup_magic_methods()
 
@@ -644,6 +656,16 @@ class StrictMock(object):
     def __str__(self):
         return self.__repr__()
 
+    def _get_copy(self):
+        self_copy = type(self)(
+            template=self._template,
+            runtime_attrs=self._runtime_attrs,
+            name=self._name,
+            signature_validation=self._signature_validation,
+        )
+        self_copy.__dict__["__caller"] = self._get_caller(2)
+        return self_copy
+
     def _get_copyable_attrs(self, self_copy):
         attrs = []
         for name in type(self).__dict__:
@@ -658,9 +680,7 @@ class StrictMock(object):
         return attrs
 
     def __copy__(self):
-        self_copy = type(self)(
-            template=self._template, runtime_attrs=self._runtime_attrs
-        )
+        self_copy = self._get_copy()
 
         for name in self._get_copyable_attrs(self_copy):
             setattr(type(self_copy), name, type(self).__dict__[name])
@@ -670,9 +690,7 @@ class StrictMock(object):
     def __deepcopy__(self, memo=None):
         if memo is None:
             memo = {}
-        self_copy = type(self)(
-            template=self._template, runtime_attrs=self._runtime_attrs
-        )
+        self_copy = self._get_copy()
         memo[id(self)] = self_copy
 
         for name in self._get_copyable_attrs(self_copy):
