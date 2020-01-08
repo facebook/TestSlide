@@ -68,6 +68,7 @@ class Template(TemplateParent):
     def __init__(self):
         super(Template, self).__init__()
         self.runtime_attr_from_init = True
+        self.attr = None
 
     def instance_method(self, message):
         return "instance_method: {}".format(message)
@@ -880,7 +881,7 @@ def strict_mock(context):
 
     @context.sub_context
     def making_copies(context):
-        context.memoize("strict_mock", lambda self: StrictMock())
+        context.memoize("strict_mock", lambda self: StrictMock(template=Template))
         context.memoize("key", lambda self: 1)
         context.memoize("value", lambda self: 2)
         context.memoize("attr", lambda self: {self.key: self.value})
@@ -899,6 +900,10 @@ def strict_mock(context):
                 id(self.strict_mock.instance_method),
                 id(strict_mock_copy.instance_method),
             )
+            self.assertEqual(
+                self.strict_mock.instance_method("hello"),
+                strict_mock_copy.instance_method("hello"),
+            )
 
         @context.example("copy.deepcopy()")
         def copy_deepcopy(self):
@@ -906,10 +911,9 @@ def strict_mock(context):
             self.assertEqual(self.strict_mock.attr, strict_mock_copy.attr)
             self.assertNotEqual(id(self.strict_mock.attr), id(strict_mock_copy.attr))
             self.assertEqual((self.strict_mock.attr), (strict_mock_copy.attr))
-            # Lambdas return itself when copied
             self.assertEqual(
-                id(self.strict_mock.instance_method),
-                id(strict_mock_copy.instance_method),
+                self.strict_mock.instance_method("hello"),
+                strict_mock_copy.instance_method("hello"),
             )
             self.assertEqual(self.strict_mock.instance_method(1), "mock")
 
