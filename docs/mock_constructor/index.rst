@@ -1,7 +1,7 @@
 mock_constructor()
 ==================
 
-Let's say we wan to unit test the ``Backup.delete`` method:
+Let's say we want to unit test the ``Backup.delete`` method:
 
 .. code-block:: python
 
