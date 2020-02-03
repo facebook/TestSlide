@@ -3,8 +3,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from distutils.core import setup
-from io import open
+from setuptools import setup
+
+with open("README.md", encoding="utf8") as f:
+    readme = f.read()
 
 setup(
     name="TestSlide",
@@ -15,13 +17,9 @@ setup(
     url="https://github.com/facebookincubator/TestSlide",
     license="MIT",
     description="A test framework for Python that makes mocking and iterating over code with tests a breeze",
-    long_description=(
-        "TestSlide makes writing tests fluid and easy. Whether you prefer classic unit testing, TDD or BDD, it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.\n"
-        "\n"
-        "It is designed to work well with other test frameworks, so you can use it on top of existing unittest.TestCase without rewriting everything."
-        "\n"
-        "Full documentation at https://testslide.readthedocs.io/."
-    ),
+    long_description=readme,
+    long_description_content_type="text/markdown",
+    setup_requires=["setuptools>=38.6.0"],
     install_requires=[],
     extras_require={
         "build": [
