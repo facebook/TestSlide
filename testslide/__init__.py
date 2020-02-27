@@ -17,6 +17,7 @@ import warnings
 
 import testslide.mock_callable
 import testslide.mock_constructor
+import testslide.patch_attribute
 from testslide.strict_mock import StrictMock  # noqa
 
 
@@ -67,10 +68,11 @@ class _ContextData(object):
 
         self.after(assert_sub_examples)
 
-    def _init_mock_callable_and_constructor(self):
+    def _init_mocks(self):
         self.mock_callable = testslide.mock_callable.mock_callable
         self.mock_async_callable = testslide.mock_callable.mock_async_callable
         self.mock_constructor = testslide.mock_constructor.mock_constructor
+        self.patch_attribute = testslide.patch_attribute.patch_attribute
         self._mock_callable_after_functions = []
 
         def register_assertion(assertion):
@@ -91,7 +93,7 @@ class _ContextData(object):
         self._after_functions = []
         self._test_case = unittest.TestCase()
         self._init_sub_example()
-        self._init_mock_callable_and_constructor()
+        self._init_mocks()
 
     @staticmethod
     def _not_callable(self):
@@ -412,6 +414,7 @@ class _ExampleRunner:
             sys.stderr.flush()
             testslide.mock_callable.unpatch_all_callable_mocks()
             testslide.mock_constructor.unpatch_all_constructor_mocks()
+            testslide.patch_attribute.unpatch_all_mocked_attributes()
 
 
 class Example(object):
@@ -820,6 +823,7 @@ class TestCase(unittest.TestCase):
         )
         self.addCleanup(testslide.mock_callable.unpatch_all_callable_mocks)
         self.addCleanup(testslide.mock_constructor.unpatch_all_constructor_mocks)
+        self.addCleanup(testslide.patch_attribute.unpatch_all_mocked_attributes)
         super(TestCase, self).setUp()
 
     @staticmethod
@@ -835,3 +839,7 @@ class TestCase(unittest.TestCase):
     @staticmethod
     def mock_constructor(target, class_name):
         return testslide.mock_constructor.mock_constructor(target, class_name)
+
+    @staticmethod
+    def patch_attribute(target, attribute, new_value):
+        return testslide.patch_attribute.patch_attribute(target, attribute, new_value)

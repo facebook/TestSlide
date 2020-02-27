@@ -1863,6 +1863,32 @@ class SmokeTestAsync(TestDSLBase):
                 self.run_first_context_first_example()
 
 
+class TestPatchAttributeIntegration(TestDSLBase):
+    def test_patch_attribute_integration(self):
+        @context
+        def patch_attribute_integration(context):
+            class SomeClass:
+                attribute = "original_value"
+
+            @context.example
+            def can_patch_attribute(self):
+                self.patch_attribute(SomeClass, "attribute", "new_value")
+                self.assertEqual(SomeClass.attribute, "new_value")
+
+            @context.example
+            def unpatching_works(self):
+                self.assertEqual(SomeClass.attribute, "original_value")
+
+        examples = {}
+
+        for all_top_level_context in Context.all_top_level_contexts:
+            for example in all_top_level_context.all_examples:
+                examples[example.name] = example
+
+        examples["can patch attribute"]()
+        examples["unpatching works"]()
+
+
 class TestMockCallableIntegration(TestDSLBase):
     def test_mock_callable_integration(self):
         @context

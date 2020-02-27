@@ -11,6 +11,8 @@ import sys
 
 
 class SomeClass:
+    attribute = "value"
+
     @staticmethod
     def do_something():
         return "original"
@@ -23,6 +25,10 @@ class SomeClass:
 class TestSlideTestCaseIntegration(testslide.TestCase):
     def test_inherits_from_unittest(self):
         self.assertTrue(issubclass(type(self), unittest.TestCase))
+
+    def test_has_patch_attribute(self):
+        self.patch_attribute(SomeClass, "attribute", "new_value")
+        self.assertEqual(SomeClass.attribute, "new_value")
 
     def test_has_mock_callable(self):
         self.mock_callable(SomeClass, "do_something").to_return_value(
