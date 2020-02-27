@@ -1,7 +1,7 @@
 mock_callable()
 ===============
 
-While :doc:`../../strict_mock/index` specializes in creating mocks that behave like some real object, mock_callable() focuses on mocking functions and instance/static/class methods. In a single shot, it allows you to:
+:doc:`../patch_attribute/index` deals with non-callable attributes. ``mock_callable()`` specializes on patching and mocking functions and instance/static/class methods. In a single shot, it allows you to:
 
 * Create a callable mock.
 * Define what call to accept.
