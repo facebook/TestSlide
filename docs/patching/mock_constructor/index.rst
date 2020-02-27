@@ -14,7 +14,7 @@ Let's say we want to unit test the ``Backup.delete`` method:
     def delete(self, path):
       self.storage.delete(path)
 
-We want to ensure that when ``Backup.delete`` is called, it actually deletes ``path`` from the storage as well, by calling ``storage.Client.delete``. We can leverage :doc:`../strict_mock/index` and :doc:`../mock_callable/index` for that:
+We want to ensure that when ``Backup.delete`` is called, it actually deletes ``path`` from the storage as well, by calling ``storage.Client.delete``. We can leverage :doc:`../../strict_mock/index` and :doc:`../mock_callable/index` for that:
 
 .. code-block:: python
 
@@ -108,7 +108,7 @@ Test Framework Integration
 TestSlide's DSL
 ^^^^^^^^^^^^^^^
 
-Integration comes out of the box for :doc:`../testslide_dsl/index`: you can simply do ``self.mock_constructor()`` from inside examples or hooks.
+Integration comes out of the box for :doc:`../../testslide_dsl/index`: you can simply do ``self.mock_constructor()`` from inside examples or hooks.
 
 Python Unittest
 ^^^^^^^^^^^^^^^

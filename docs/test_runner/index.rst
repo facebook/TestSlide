@@ -26,7 +26,7 @@ Whatever ``unittest.TestCase`` or :doc:`DSL<../testslide_dsl/index>` declared in
 
 .. note::
 
-  When using :doc:`../mock_callable/index` or :doc:`../mock_constructor/index` you must inherit your test class from ``testslide.TestCase`` to have access to those methods. The test runner does **not** require that, and is happy to run tests that inherit directly (or indirectly) from ``unittest.TestCase``.
+  When using :doc:`../patching/patch_attribute/index`, :doc:`../patching/mock_callable/index` or :doc:`../patching/mock_constructor/index` you must inherit your test class from ``testslide.TestCase`` to have access to those methods. The test runner does **not** require that, and is happy to run tests that inherit directly (or indirectly) from ``unittest.TestCase``.
 
 .. note::
 
@@ -45,7 +45,7 @@ You can use ``--list`` to run test discovery and list all tests found:
 Multiple Failures Report
 ------------------------
 
-When using TestSlide's :doc:`../mock_callable/index` assertions, you can have a better signal on failures. For example, in this test we have two assertions:
+When using TestSlide's :doc:`../patching/mock_callable/index` assertions, you can have a better signal on failures. For example, in this test we have two assertions:
 
 .. code-block:: python
 

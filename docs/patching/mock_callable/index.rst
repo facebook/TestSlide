@@ -1,7 +1,7 @@
 mock_callable()
 ===============
 
-While :doc:`../strict_mock/index` specializes in creating mocks that behave like some real object, mock_callable() focuses on mocking functions and instance/static/class methods. In a single shot, it allows you to:
+While :doc:`../../strict_mock/index` specializes in creating mocks that behave like some real object, mock_callable() focuses on mocking functions and instance/static/class methods. In a single shot, it allows you to:
 
 * Create a callable mock.
 * Define what call to accept.
@@ -94,7 +94,7 @@ You always start mock_callable with:
 
 ``target`` can be:
 
-* A :doc:`../strict_mock/index`.
+* A :doc:`../../strict_mock/index`.
 * A module.
 
   * The module can be given as a reference (eg: ``time``) or as a string (eg: ``"time"``). The latter allows you to avoid importing the module at the same file you use mock_callable.
@@ -405,7 +405,7 @@ Test Framework Integration
 TestSlide's DSL
 ^^^^^^^^^^^^^^^
 
-Integration comes out of the box for :doc:`../testslide_dsl/index`: you can simply do ``self.mock_callable()`` from inside examples or hooks.
+Integration comes out of the box for :doc:`../../testslide_dsl/index`: you can simply do ``self.mock_callable()`` from inside examples or hooks.
 
 Python Unittest
 ^^^^^^^^^^^^^^^
