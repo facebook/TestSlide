@@ -30,7 +30,15 @@ def unpatch_all_mocked_attributes():
 
 def patch_attribute(target, attribute, new_value):
     """
-    TODO
+    Patch target's attribute with new_value. The target can be any Python
+    object, such as modules, classes or instances; attribute is a string with
+    the attribute name and new_value.. is the value to be patched.
+
+    patch_attribute() has special mechanics so it "just works" for all cases.
+
+    For example, patching a @property at an instance requires changes in the
+    class, which may affect other instances. patch_attribute() takes care of
+    what's needed, so only the target instance is affected.
     """
     if isinstance(target, str):
         target = testslide._importer(target)
