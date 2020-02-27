@@ -20,7 +20,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     setup_requires=["setuptools>=38.6.0"],
-    install_requires=[],
+    install_requires=["psutil>=5.6.7"],
     extras_require={
         "build": [
             "black",

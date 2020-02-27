@@ -9,6 +9,7 @@ from time import time
 import traceback
 import sys
 import os
+import psutil
 
 from . import AggregatedExceptions, Skip
 from contextlib import redirect_stdout, redirect_stderr
@@ -32,7 +33,19 @@ class Formatter(object):
         self._import_secs_warn = True
         self.trim_stack_trace_path_prefix = trim_stack_trace_path_prefix
         self.show_testslide_stack_trace = show_testslide_stack_trace
-        self.reset()
+        self.current_hierarchy = []
+        self.results = {"success": [], "fail": [], "skip": []}
+        self.start_time = psutil.Process(os.getpid()).create_time()
+        self.end_time = None
+        self.duration_secs = None
+        if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
+            self.print_yellow(
+                "Warning: Importing test modules alone took %.1fs! To remove this slow "
+                "down remove object construction from module level. If not possible, "
+                "consider using/ lazy_import(). Try using --import-profiler to profile "
+                "your imports." % (self.import_secs)
+            )
+            self._import_secs_warn = False
 
     def discovery_start(self):
         """
@@ -51,24 +64,6 @@ class Formatter(object):
         To be called before example discovery finishes.
         """
         pass
-
-    def reset(self):
-        """
-        To be called before each run.
-        """
-        self.current_hierarchy = []
-        self.results = {"success": [], "fail": [], "skip": []}
-        self.start_time = time()
-        self.end_time = None
-        self.duration_secs = None
-        if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
-            self.print_yellow(
-                "Warning: Importing test modules alone took %.1fs! To remove this slow "
-                "down remove object construction from module level. If not possible, "
-                "consider using lazy_import(). Try using --import-profiler to profile "
-                "your imports." % (self.import_secs)
-            )
-            self._import_secs_warn = False
 
     def start(self, example):
         """
@@ -270,8 +265,10 @@ class DocumentFormatter(Formatter):
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs:" % (total, self.duration_secs)
+            "Finished %s example(s) in %.1fs: ." % (total, self.duration_secs)
         )
+        if self.import_secs > 2:
+            self.print_white("Imports took: %.1fs" % (self.import_secs))
         if success:
             self.print_green("  Successful: ", success)
         if fail:
@@ -344,7 +341,6 @@ class Runner(object):
         """
         sys.stdout.flush()
         sys.stderr.flush()
-        self.formatter.reset()
         executed_examples = []
         exit_code = 0
         for example in self._to_execute_examples:
