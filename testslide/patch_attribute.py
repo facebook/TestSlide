@@ -13,7 +13,7 @@ _unpatchers = []
 def unpatch_all_mocked_attributes():
     """
     This method must be called after every test unconditionally to remove all
-    active mock_attribute() patches.
+    active patch_attribute() patches.
     """
     unpatch_exceptions = []
     for unpatcher in _unpatchers:
@@ -28,7 +28,7 @@ def unpatch_all_mocked_attributes():
         )
 
 
-def mock_attribute(target, attribute, new_value):
+def patch_attribute(target, attribute, new_value):
     """
     TODO
     """

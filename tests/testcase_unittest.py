@@ -26,8 +26,8 @@ class TestSlideTestCaseIntegration(testslide.TestCase):
     def test_inherits_from_unittest(self):
         self.assertTrue(issubclass(type(self), unittest.TestCase))
 
-    def test_has_mock_attribute(self):
-        self.mock_attribute(SomeClass, "attribute", "new_value")
+    def test_has_patch_attribute(self):
+        self.patch_attribute(SomeClass, "attribute", "new_value")
         self.assertEqual(SomeClass.attribute, "new_value")
 
     def test_has_mock_callable(self):

@@ -8,11 +8,11 @@ from . import sample_module
 from testslide import StrictMock
 from testslide.strict_mock import UndefinedAttribute
 
-from testslide.mock_attribute import unpatch_all_mocked_attributes
+from testslide.patch_attribute import unpatch_all_mocked_attributes
 
 
-@context("mock_attribute()")
-def mock_attribute_tests(context):
+@context("patch_attribute()")
+def patch_attribute_tests(context):
     ##
     ## Attributes
     ##
@@ -46,7 +46,7 @@ def mock_attribute_tests(context):
             else:
                 original_value = None
             self.assertNotEqual(original_value, self.new_value)
-            self.mock_attribute(self.target, self.attribute, self.new_value)
+            self.patch_attribute(self.target, self.attribute, self.new_value)
             self.assertEqual(getattr(self.real_target, self.attribute), self.new_value)
             unpatch_all_mocked_attributes()
             if original_value:
@@ -63,7 +63,7 @@ def mock_attribute_tests(context):
         @context.example
         def it_fails_if_attribute_is_callable(self):
             with self.assertRaisesRegex(ValueError, "^Attribute can not be callable*"):
-                self.mock_attribute(
+                self.patch_attribute(
                     self.target, self.callable_attribute, self.new_value
                 )
 
@@ -74,7 +74,7 @@ def mock_attribute_tests(context):
                 with self.assertRaisesRegex(
                     ValueError, "^Attribute can not be a class*"
                 ):
-                    self.mock_attribute(
+                    self.patch_attribute(
                         self.target, self.class_attribute, self.new_value
                     )
 

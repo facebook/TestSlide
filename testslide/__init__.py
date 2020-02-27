@@ -17,7 +17,7 @@ import warnings
 
 import testslide.mock_callable
 import testslide.mock_constructor
-import testslide.mock_attribute
+import testslide.patch_attribute
 from testslide.strict_mock import StrictMock  # noqa
 
 
@@ -72,7 +72,7 @@ class _ContextData(object):
         self.mock_callable = testslide.mock_callable.mock_callable
         self.mock_async_callable = testslide.mock_callable.mock_async_callable
         self.mock_constructor = testslide.mock_constructor.mock_constructor
-        self.mock_attribute = testslide.mock_attribute.mock_attribute
+        self.patch_attribute = testslide.patch_attribute.patch_attribute
         self._mock_callable_after_functions = []
 
         def register_assertion(assertion):
@@ -414,7 +414,7 @@ class _ExampleRunner:
             sys.stderr.flush()
             testslide.mock_callable.unpatch_all_callable_mocks()
             testslide.mock_constructor.unpatch_all_constructor_mocks()
-            testslide.mock_attribute.unpatch_all_mocked_attributes()
+            testslide.patch_attribute.unpatch_all_mocked_attributes()
 
 
 class Example(object):
@@ -823,7 +823,7 @@ class TestCase(unittest.TestCase):
         )
         self.addCleanup(testslide.mock_callable.unpatch_all_callable_mocks)
         self.addCleanup(testslide.mock_constructor.unpatch_all_constructor_mocks)
-        self.addCleanup(testslide.mock_attribute.unpatch_all_mocked_attributes)
+        self.addCleanup(testslide.patch_attribute.unpatch_all_mocked_attributes)
         super(TestCase, self).setUp()
 
     @staticmethod
@@ -841,5 +841,5 @@ class TestCase(unittest.TestCase):
         return testslide.mock_constructor.mock_constructor(target, class_name)
 
     @staticmethod
-    def mock_attribute(target, attribute, new_value):
-        return testslide.mock_attribute.mock_attribute(target, attribute, new_value)
+    def patch_attribute(target, attribute, new_value):
+        return testslide.patch_attribute.patch_attribute(target, attribute, new_value)
