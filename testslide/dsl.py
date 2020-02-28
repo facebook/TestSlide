@@ -11,6 +11,15 @@ from . import Context as _Context
 from . import Skip  # noqa: F401
 
 
+def _validate_parameter(code, name, index):
+    parameters = list(inspect.signature(code).parameters.keys())
+    if not parameters or parameters[index] != name:
+        raise ValueError(
+            f"Function must receive parameter #{index+1} named "
+            f"'{name}', but given function has parameters: {parameters}."
+        )
+
+
 class _DSLContext(object):
     """
     This class implement TestSlide DSL. This is not intended to be used
@@ -37,10 +46,11 @@ class _DSLContext(object):
             new_context = self.current_context.add_child_context(
                 name, skip=self.skip, focus=self.focus
             )
+        _validate_parameter(context_code, "context", 0)
         context_code(
             type(self)(current_context=new_context, skip=self.skip, focus=self.focus),
             *args,
-            **kwargs
+            **kwargs,
         )
         return self._not_callable
 
@@ -93,6 +103,7 @@ class _DSLContext(object):
     def _create_example(self, name, example_code, skip, focus):
         if name is None:
             name = self._name_from_function(example_code)
+        _validate_parameter(example_code, "self", 0)
         self.current_context.add_example(name, example_code, skip=skip, focus=focus)
         return self._not_callable
 
@@ -116,6 +127,7 @@ class _DSLContext(object):
 
     @_require_context("create a shared context")
     def _create_shared_context(self, name, shared_context_code):
+        _validate_parameter(shared_context_code, "context", 0)
         self.current_context.add_shared_context(name, shared_context_code)
         return self._not_callable
 
@@ -151,6 +163,7 @@ class _DSLContext(object):
 
     @_require_context("create functions")
     def function(self, function_code):
+        _validate_parameter(function_code, "self", 0)
         self.current_context.add_function(function_code.__name__, function_code)
         return self._not_callable
 
@@ -166,6 +179,7 @@ class _DSLContext(object):
             else:  # used as decorator
                 name = name_or_code.__name__
                 memoizable_code = name_or_code
+            _validate_parameter(memoizable_code, "self", 0)
             self.current_context.add_memoized_attribute(name, memoizable_code)
         else:  # kwargs
             if name_or_code or memoizable_code:
@@ -181,6 +195,8 @@ class _DSLContext(object):
         else:  # Got a function
             name = name_or_code.__name__
             memoizable_code = name_or_code
+
+        _validate_parameter(memoizable_code, "self", 0)
 
         self.current_context.register_runtime_attribute(name)
 
@@ -203,6 +219,7 @@ class _DSLContext(object):
 
     @_require_context("register before hook")
     def before(self, before_code):
+        _validate_parameter(before_code, "self", 0)
         if not self.current_context:
             raise TypeError("Can not register before hook at top level context")
         self.current_context.before_functions.append(before_code)
@@ -210,11 +227,14 @@ class _DSLContext(object):
 
     @_require_context("register after hook")
     def after(self, after_code):
+        _validate_parameter(after_code, "self", 0)
         self.current_context.after_functions.append(after_code)
         return self._not_callable
 
     @_require_context("register around hook")
     def around(self, around_code):
+        _validate_parameter(around_code, "self", 0)
+        _validate_parameter(around_code, "wrapped", 1)
         if not self.current_context:
             raise TypeError("Can not register around hook at top level context")
         self.current_context.around_functions.append(around_code)

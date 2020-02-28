@@ -146,7 +146,7 @@ And its output:
 Around
 ------
 
-Around hooks execute around all **before hooks**, **example code** and all **after hooks**:
+Around hooks wrap around all **before hooks**, **example code** and **after hooks**:
 
 .. code-block:: python
 
@@ -157,13 +157,13 @@ Around hooks execute around all **before hooks**, **example code** and all **aft
   def Around_hooks(context):
   
     @context.around
-    def inside_tmp_dir(self, example):
+    def inside_tmp_dir(self, wrapped):
       with tempfile.TemporaryDirectory() as path:
         self.path = path
         original_path = os.getcwd()
         try:
           os.chdir(path)
-          example()
+          wrapped()
         finally:
           os.chdir(original_path)
   
