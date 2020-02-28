@@ -100,29 +100,6 @@ class _OrMatcher(_AlreadyChainedMatcher):
         return f"{self.a} | {self.b}"
 
 
-class RegexMatches(_Matcher):
-    """
-    Compares true if other mathes given regex.
-    """
-
-    def __init__(self, pattern, flags=0):
-        self.pattern = pattern
-        self.flags = flags
-        self.prog = re.compile(pattern, flags)
-
-    def __eq__(self, other):
-        if not isinstance(other, str):
-            return False
-        return bool(self.prog.match(other))
-
-    def __repr__(self):
-        return "<RegexMatches 0x{:02X} pattern={}{}>".format(
-            id(self),
-            repr(self.pattern),
-            f" flags={self.flags}" if self.flags != 0 else "",
-        )
-
-
 class _RichComparison(_Matcher):
     def __init__(self, klass, lt=None, le=None, eq=None, ne=None, ge=None, gt=None):
         self.klass = klass
@@ -179,7 +156,7 @@ class int_comparison(_RichComparison):
 
     def __init__(self, lt=None, le=None, eq=None, ne=None, ge=None, gt=None):
         super().__init__(int, lt=lt, le=le, eq=eq, ne=ne, ge=ge, gt=gt)
-
+# Ints
 AnyInt = int_comparison
 
 class ThisInt(int_comparison):
@@ -215,6 +192,7 @@ class IntLessOrEquals(int_comparison):
     def __init__(self, le):
         super().__init__(le=le)
 
+# floats
 AnyFloat = float_comparison
 
 class ThisFloat(float_comparison):
@@ -251,7 +229,42 @@ class FloatLessOrEquals(float_comparison):
     def __init__(self, le):
         super().__init__(le=le)
 
+#generic
 
+class Any(_Matcher):
+    def __eq__(self, other):
+        return other is not None
+
+
+#strings
+
+class AnyStr(_RichComparison):
+    def __init__(self):
+        super().__init__(klass=str)
+
+
+class RegexMatches(_Matcher):
+    """
+    Compares true if other mathes given regex.
+    """
+
+    def __init__(self, pattern, flags=0):
+        self.pattern = pattern
+        self.flags = flags
+        self.prog = re.compile(pattern, flags)
+
+    def __eq__(self, other):
+        if not isinstance(other, str):
+            return False
+        return bool(self.prog.match(other))
+
+    def __repr__(self):
+        return "<RegexMatches 0x{:02X} pattern={}{}>".format(
+            id(self),
+            repr(self.pattern),
+            f" flags={self.flags}" if self.flags != 0 else "",
+        )
+# collections
 class NotEmpty(_Matcher):
     def __eq__(self, other):
         return bool(other)
@@ -260,20 +273,6 @@ class NotEmpty(_Matcher):
 class Empty(_Matcher):
     def __eq__(self, other):
         return not bool(other)
-
-
-class Something(_Matcher):
-    def __eq__(self, other):
-        return other is not None
-
-
-class Nothing(_Matcher):
-    def __eq__(self, other):
-        return other is None
-
-class AnyString(_RichComparison):
-    def __init__(self):
-        super().__init__(klass=str)
 
 class ListContaining(_RichComparison):
     def __init__(self, subset:List):

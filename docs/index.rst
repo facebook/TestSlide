@@ -45,7 +45,7 @@ Write a test case ``backup_test.py`` describing the expected behavior:
         .and_assert_called_once()
       backup.Backup().delete('/file/to/delete')
 
-TestSlide's :doc:`strict_mock/index` , :doc:`mock_callable/index` and :doc:`mock_constructor/index` are seamlessly integrated with Python's TestCase.
+TestSlide's :doc:`strict_mock/index`, :doc:`matchers/index`  , :doc:`mock_callable/index` and :doc:`mock_constructor/index` are seamlessly integrated with Python's TestCase.
 
 Run the test and see the failure:
 
@@ -83,5 +83,6 @@ It is all about letting the failure messages guide you towards the solution. The
    mock_callable/index.rst
    mock_async_callable/index.rst
    mock_constructor/index.rst
+   matchers/index.rst
    testslide_dsl/index.rst
    code_snippets/index.rst

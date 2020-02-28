@@ -144,31 +144,19 @@ class SimpleTestCase(testslide.TestCase):
         self.assertEqual(testslide.matchers.NotEmpty(), "a")
         self.assertEqual(testslide.matchers.NotEmpty(), 1)
 
-    def testNothing(self):
-        self.assertNotEqual(testslide.matchers.Nothing(), {})
-        self.assertNotEqual(testslide.matchers.Nothing(), [])
-        self.assertNotEqual(testslide.matchers.Nothing(), ())
-        self.assertNotEqual(testslide.matchers.Nothing(), "")
-        self.assertEqual(testslide.matchers.Nothing(), None)
-        self.assertNotEqual(testslide.matchers.Nothing(), 0)
-        self.assertNotEqual(testslide.matchers.Nothing(), {"a": "b"})
-        self.assertNotEqual(testslide.matchers.Nothing(), ["a", "b"])
-        self.assertNotEqual(testslide.matchers.Nothing(), ("a", "b"))
-        self.assertNotEqual(testslide.matchers.Nothing(), "a")
-        self.assertNotEqual(testslide.matchers.Nothing(), 1)
 
-    def testSomething(self):
-        self.assertEqual(testslide.matchers.Something(), {})
-        self.assertEqual(testslide.matchers.Something(), [])
-        self.assertEqual(testslide.matchers.Something(), ())
-        self.assertEqual(testslide.matchers.Something(), "")
-        self.assertNotEqual(testslide.matchers.Something(), None)
-        self.assertEqual(testslide.matchers.Something(), 0)
-        self.assertEqual(testslide.matchers.Something(), {"a": "b"})
-        self.assertEqual(testslide.matchers.Something(), ["a", "b"])
-        self.assertEqual(testslide.matchers.Something(), ("a", "b"))
-        self.assertEqual(testslide.matchers.Something(), "a")
-        self.assertEqual(testslide.matchers.Something(), 1)
+    def testAny(self):
+        self.assertEqual(testslide.matchers.Any(), {})
+        self.assertEqual(testslide.matchers.Any(), [])
+        self.assertEqual(testslide.matchers.Any(), ())
+        self.assertEqual(testslide.matchers.Any(), "")
+        self.assertNotEqual(testslide.matchers.Any(), None)
+        self.assertEqual(testslide.matchers.Any(), 0)
+        self.assertEqual(testslide.matchers.Any(), {"a": "b"})
+        self.assertEqual(testslide.matchers.Any(), ["a", "b"])
+        self.assertEqual(testslide.matchers.Any(), ("a", "b"))
+        self.assertEqual(testslide.matchers.Any(), "a")
+        self.assertEqual(testslide.matchers.Any(), 1)
 
     def testA(self):
         self.assertEqual(testslide.matchers.A(str), "durrdurr")
@@ -176,11 +164,11 @@ class SimpleTestCase(testslide.TestCase):
 
 
 class StringTest(testslide.TestCase):
-    def testAnyString(self):
-        self.assertEqual(testslide.matchers.AnyString(), "aa")
-        self.assertEqual(testslide.matchers.AnyString(), "")
-        self.assertNotEqual(testslide.matchers.AnyString(), 69)
-        self.assertNotEqual(testslide.matchers.AnyString(), None)
+    def testAnyStr(self):
+        self.assertEqual(testslide.matchers.AnyStr(), "aa")
+        self.assertEqual(testslide.matchers.AnyStr(), "")
+        self.assertNotEqual(testslide.matchers.AnyStr(), 69)
+        self.assertNotEqual(testslide.matchers.AnyStr(), None)
 
     def testRegexMatches(self):
         self.assertEqual(testslide.matchers.RegexMatches("b[aeiou]t"), "bott")
@@ -209,61 +197,61 @@ class TestChaining(testslide.TestCase):
     def testBitwiseAnd(self):
         self.assertTrue(
             isinstance(
-                testslide.matchers.Something() & testslide.matchers.AnyString(),
+                testslide.matchers.Any() & testslide.matchers.AnyStr(),
                 testslide.matchers._AndMatcher,
             )
         )
         self.assertEqual(
-            testslide.matchers.Something() & testslide.matchers.AnyString(), "a"
+            testslide.matchers.Any() & testslide.matchers.AnyStr(), "a"
         )
         self.assertNotEqual(
-            testslide.matchers.Something() & testslide.matchers.AnyString(), 3
+            testslide.matchers.Any() & testslide.matchers.AnyStr(), 3
         )
 
     def testBitwiseOr(self):
         self.assertTrue(
             isinstance(
-                testslide.matchers.Something() | testslide.matchers.AnyString(),
+                testslide.matchers.Any() | testslide.matchers.AnyStr(),
                 testslide.matchers._OrMatcher,
             )
         )
         self.assertEqual(
-            testslide.matchers.AnyInt() | testslide.matchers.AnyString(), "a"
+            testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), "a"
         )
         self.assertEqual(
-            testslide.matchers.AnyInt() | testslide.matchers.AnyString(), 3
+            testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), 3
         )
         self.assertNotEqual(
-            testslide.matchers.AnyInt() | testslide.matchers.AnyString(), []
+            testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), []
         )
 
     def testBitwiseXor(self):
         self.assertTrue(
             isinstance(
-                testslide.matchers.Something() ^ testslide.matchers.AnyString(),
+                testslide.matchers.Any() ^ testslide.matchers.AnyStr(),
                 testslide.matchers._XorMatcher,
             )
         )
         self.assertEqual(
-            testslide.matchers.AnyInt() ^ testslide.matchers.AnyString(), []
+            testslide.matchers.AnyInt() ^ testslide.matchers.AnyStr(), []
         )
         self.assertNotEqual(
-            testslide.matchers.AnyInt() ^ testslide.matchers.AnyString(), 3
+            testslide.matchers.AnyInt() ^ testslide.matchers.AnyStr(), 3
         )
 
     def testCannotChainMoreThanTwo(self):
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
-            testslide.matchers.Something() | testslide.matchers.AnyString() | testslide.matchers.AnyInt()
+            testslide.matchers.Any() | testslide.matchers.AnyStr() | testslide.matchers.AnyInt()
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
-            testslide.matchers.Something() & testslide.matchers.AnyString() & testslide.matchers.AnyInt()
+            testslide.matchers.Any() & testslide.matchers.AnyStr() & testslide.matchers.AnyInt()
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
-            testslide.matchers.Something() ^ testslide.matchers.AnyString() ^ testslide.matchers.AnyInt()
+            testslide.matchers.Any() ^ testslide.matchers.AnyStr() ^ testslide.matchers.AnyInt()
 
 
 class TestUsageWithPatchCallable(testslide.TestCase):
     def test_patch_callable(self):
         self.mock_callable(sample_module, "test_function").for_call(
-            testslide.matchers.AnyString() & testslide.matchers.RegexMatches("test.*"),
+            testslide.matchers.A(str) & testslide.matchers.RegexMatches("test.*"),
             testslide.matchers.IntBetween(2, 4),
         ).to_return_value("mocked_response")
         with self.assertRaises(testslide.mock_callable.UnexpectedCallArguments):
