@@ -3,9 +3,9 @@ Patching
 
 :doc:`../../strict_mock/index` solves the problem of having mocks that behave like the real thing. To really accomplish that we need a way of defining what a mocked method call will return. We also need a way of putting the mock in place of real objects. These are problems solved with **patching**.
 
-TestSlide provides patching tools specialized in different problems. They are not only useful to configure ``StrictMock``, but rather any Python object, including "real" ones, like a database connection. You can configure canned responses for specific calls, simulate network timeouts or anything you may need for your test.
+TestSlide provides patching tools specialized in different problems. They are not only useful to configure ``StrictMock``, but any Python object, including "real" ones, like a database connection. You can configure canned responses for specific calls, simulate network timeouts or anything you may need for your test.
 
-Please follow each documentation page to learn more and keep the :doc:`cheat_sheet/index` at hand for future reference.
+Here's a summary of the patching tools available either via ``testslide.TestCase`` or :doc:`../testslide_dsl/index`. Also check the comprehensive :doc:`cheat_sheet/index`.
 
 
 :doc:`patch_attribute()<patch_attribute/index>`
@@ -14,10 +14,10 @@ Please follow each documentation page to learn more and keep the :doc:`cheat_she
 	.. code-block:: python
 
 		self.patch_attribute(math, "pi", 3)
-		math.py  # => 3
+		math.pi  # => 3
 
 :doc:`mock_callable()<mock_callable/index>` / :doc:`mock_async_callable()<mock_async_callable/index>`
-	Defines what a sync/async function/method should do when called. You can define **call arguments constraints**, different **behaviors** (return value, raise exception etc) and optionally **call assertions**. Eg:
+	Similar to ``patch_attribute()`` but designed to work with sync/async **functions/methods**. It creates and patches mocks for callables, which implements call **arguments constraints**, different call **behaviors** (return value, raise exception etc) and optional **call assertions**. Eg:
 
 	.. code-block:: python
 

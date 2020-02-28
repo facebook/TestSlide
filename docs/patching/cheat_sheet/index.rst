@@ -6,6 +6,8 @@ Here is a comprehensive list of use cases for all patching tools TestSlide offer
 
 .. code-block:: python
 
+  # module.py
+
   # self.patch_attribute(module, "MODULE_ATTRIBUTE", "mock")
   # module.MODULE_ATTRIBUTE  # => "mock"
   MODULE_ATTRIBUTE = "..."
@@ -24,9 +26,9 @@ Here is a comprehensive list of use cases for all patching tools TestSlide offer
   async def async_function_at_module():
     pass
   
-  # some_class_mock = StrictMock(template=module.SomeClass)
+  # some_class_mock = testslide.StrictMock(template=module.SomeClass)
   class SomeClass:
-    # Patching here affects all instances of the class as well!
+    # Patching here affects all instances of the class as well
     # self.patch_attribute(SomeClass, "CLASS_ATTRIBUTE", "mock")
     # module.SomeClass.CLASS_ATTRIBUTE  # => "mock"
     CLASS_ATTRIBUTE = "..."
@@ -93,7 +95,7 @@ Here is a comprehensive list of use cases for all patching tools TestSlide offer
   # self.patch_attribute(some_class_instance, "init_attribute", "mock")
   some_class_instance.init_attribute  # => "mock"
   
-  # Patching at the instance does not affect other instances and the class
+  # Patching at the instance does not affect other instances or the class
   # self.patch_attribute(some_class_instance, "CLASS_ATTRIBUTE", "mock")
   some_class_instance.CLASS_ATTRIBUTE  # => "mock"
   
