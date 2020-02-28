@@ -61,11 +61,6 @@ class IntMatcherTest(testslide.TestCase):
 
 
 class FloatMatcherTest(testslide.TestCase):
-    def test_ThisFloat(self):
-        self.assertEqual(testslide.matchers.ThisFloat(66.6), 66.6)
-        self.assertNotEqual(testslide.matchers.ThisFloat(6.9), 4.2)
-        self.assertNotEqual(testslide.matchers.ThisFloat(4.2), "derp")
-
     def test_NotThisFloat(self):
         self.assertEqual(testslide.matchers.NotThisFloat(66.6), 4.2)
         self.assertNotEqual(testslide.matchers.NotThisFloat(6.9), 6.9)
