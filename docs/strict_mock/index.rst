@@ -79,8 +79,8 @@ Under the hood there's tons of validation to ensure the mock's interface precise
 
 .. note::
 
-  - Refer to :doc:`../mock_callable/index` to learn to tighten what arguments ``is_odd()`` should accept.
-  - Refer to :doc:`../mock_constructor/index` to learn how to put ``StrictMock`` in place of your dependency.
+  - Refer to :doc:`../patching/mock_callable/index` to learn to tighten what arguments ``is_odd()`` should accept.
+  - Refer to :doc:`../patching/mock_constructor/index` to learn how to put ``StrictMock`` in place of your dependency.
 
 Configuration
 -------------
