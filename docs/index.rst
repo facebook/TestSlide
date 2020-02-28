@@ -45,7 +45,7 @@ Write a test case ``backup_test.py`` describing the expected behavior:
         .and_assert_called_once()
       backup.Backup().delete('/file/to/delete')
 
-TestSlide's :doc:`strict_mock/index`, :doc:`mock_callable/index` and :doc:`mock_constructor/index` are seamlessly integrated with Python's TestCase.
+TestSlide's :doc:`strict_mock/index` , :doc:`patching/mock_callable/index` and :doc:`patching/mock_constructor/index` are seamlessly integrated with Python's TestCase.
 
 Run the test and see the failure:
 
@@ -75,14 +75,11 @@ And watch the test go green:
 It is all about letting the failure messages guide you towards the solution. There's a plethora of validation inside TestSlide's mocks, so you can trust they will help you iterate quickly when writing code and also cover you when breaking changes are introduced.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    test_runner/index.rst
    strict_mock/index.rst
-   mock_callable/index.rst
-   mock_async_callable/index.rst
-   mock_constructor/index.rst
-   matchers/index.rst
+   patching/index.rst
    testslide_dsl/index.rst
    code_snippets/index.rst
