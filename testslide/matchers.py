@@ -163,11 +163,6 @@ class int_comparison(_RichComparison):
 AnyInt = int_comparison
 
 
-class ThisInt(int_comparison):
-    def __init__(self, eq):
-        super().__init__(eq=eq)
-
-
 class NotThisInt(int_comparison):
     def __init__(self, ne: int):
         super().__init__(ne=ne)
@@ -200,11 +195,6 @@ class IntLessOrEquals(int_comparison):
 
 # floats
 AnyFloat = float_comparison
-
-
-class ThisFloat(float_comparison):
-    def __init__(self, eq):
-        super().__init__(eq=eq)
 
 
 class NotThisFloat(float_comparison):
