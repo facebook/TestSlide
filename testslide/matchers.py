@@ -6,6 +6,7 @@
 import re
 from typing import List, Dict
 
+
 class AlreadyChainedException(Exception):
     pass
 
@@ -156,8 +157,11 @@ class int_comparison(_RichComparison):
 
     def __init__(self, lt=None, le=None, eq=None, ne=None, ge=None, gt=None):
         super().__init__(int, lt=lt, le=le, eq=eq, ne=ne, ge=ge, gt=gt)
+
+
 # Ints
 AnyInt = int_comparison
+
 
 class ThisInt(int_comparison):
     def __init__(self, eq):
@@ -188,12 +192,15 @@ class IntLess(int_comparison):
     def __init__(self, lt):
         super().__init__(lt=lt)
 
+
 class IntLessOrEquals(int_comparison):
     def __init__(self, le):
         super().__init__(le=le)
 
+
 # floats
 AnyFloat = float_comparison
+
 
 class ThisFloat(float_comparison):
     def __init__(self, eq):
@@ -229,14 +236,17 @@ class FloatLessOrEquals(float_comparison):
     def __init__(self, le):
         super().__init__(le=le)
 
-#generic
+
+# generic
+
 
 class Any(_Matcher):
     def __eq__(self, other):
         return other is not None
 
 
-#strings
+# strings
+
 
 class AnyStr(_RichComparison):
     def __init__(self):
@@ -264,6 +274,8 @@ class RegexMatches(_Matcher):
             repr(self.pattern),
             f" flags={self.flags}" if self.flags != 0 else "",
         )
+
+
 # collections
 class NotEmpty(_Matcher):
     def __eq__(self, other):
@@ -274,8 +286,9 @@ class Empty(_Matcher):
     def __eq__(self, other):
         return not bool(other)
 
+
 class ListContaining(_RichComparison):
-    def __init__(self, subset:List):
+    def __init__(self, subset: List):
         self.subset = subset
         super().__init__(klass=List)
 
@@ -291,7 +304,7 @@ class ListContaining(_RichComparison):
 
 
 class DictContaining(_RichComparison):
-    def __init__(self, subset:Dict):
+    def __init__(self, subset: Dict):
         self.subset = subset
         super().__init__(klass=Dict)
 

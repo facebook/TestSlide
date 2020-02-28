@@ -144,7 +144,6 @@ class SimpleTestCase(testslide.TestCase):
         self.assertEqual(testslide.matchers.NotEmpty(), "a")
         self.assertEqual(testslide.matchers.NotEmpty(), 1)
 
-
     def testAny(self):
         self.assertEqual(testslide.matchers.Any(), {})
         self.assertEqual(testslide.matchers.Any(), [])
@@ -201,12 +200,8 @@ class TestChaining(testslide.TestCase):
                 testslide.matchers._AndMatcher,
             )
         )
-        self.assertEqual(
-            testslide.matchers.Any() & testslide.matchers.AnyStr(), "a"
-        )
-        self.assertNotEqual(
-            testslide.matchers.Any() & testslide.matchers.AnyStr(), 3
-        )
+        self.assertEqual(testslide.matchers.Any() & testslide.matchers.AnyStr(), "a")
+        self.assertNotEqual(testslide.matchers.Any() & testslide.matchers.AnyStr(), 3)
 
     def testBitwiseOr(self):
         self.assertTrue(
@@ -215,12 +210,8 @@ class TestChaining(testslide.TestCase):
                 testslide.matchers._OrMatcher,
             )
         )
-        self.assertEqual(
-            testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), "a"
-        )
-        self.assertEqual(
-            testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), 3
-        )
+        self.assertEqual(testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), "a")
+        self.assertEqual(testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), 3)
         self.assertNotEqual(
             testslide.matchers.AnyInt() | testslide.matchers.AnyStr(), []
         )
@@ -232,9 +223,7 @@ class TestChaining(testslide.TestCase):
                 testslide.matchers._XorMatcher,
             )
         )
-        self.assertEqual(
-            testslide.matchers.AnyInt() ^ testslide.matchers.AnyStr(), []
-        )
+        self.assertEqual(testslide.matchers.AnyInt() ^ testslide.matchers.AnyStr(), [])
         self.assertNotEqual(
             testslide.matchers.AnyInt() ^ testslide.matchers.AnyStr(), 3
         )
