@@ -45,4 +45,5 @@ Here's a summary of the patching tools available either via ``testslide.TestCase
    mock_callable/index.rst
    mock_async_callable/index.rst
    mock_constructor/index.rst
+   argument_matchers/index.rst
    cheat_sheet/index.rst

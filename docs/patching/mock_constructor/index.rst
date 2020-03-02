@@ -52,6 +52,10 @@ The question now is: how to put ``self.storage_mock`` inside ``Backup.__init__``
 
 Note how by using ``mock_constructor()``, not only you get all **safe by default** goodies, but also **totally decouples** your test from the code. This means that, no matter how ``Backup`` is refactored, the test remains the same.
 
+.. note::
+
+  Also check :doc:`../argument_matchers/index`: they allow more relaxed argument matching like "any string matching this regexp" or "any positive number".
+
 Caveats
 -------
 

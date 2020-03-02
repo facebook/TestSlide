@@ -132,6 +132,10 @@ You can define precisely what arguments to accept:
 
 Note how it is **safe by default**: once ``for_call`` is used, other calls will not be accepted.
 
+.. note::
+
+  Also check :doc:`../argument_matchers/index`: they allow more relaxed argument matching like "any string matching this regexp" or "any positive number".
+
 Composition
 ^^^^^^^^^^^
 
