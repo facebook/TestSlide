@@ -17,7 +17,7 @@ def patch_attribute_tests(context):
     ## Attributes
     ##
 
-    context.memoize("new_value", lambda _: "new_value")
+    context.memoize("new_value", lambda self: "new_value")
 
     ##
     ## Functions
@@ -94,34 +94,34 @@ def patch_attribute_tests(context):
 
     @context.sub_context
     def when_target_is_a_module(context):
-        context.memoize("callable_attribute", lambda _: "test_function")
-        context.memoize("class_attribute", lambda _: "SomeClass")
-        context.memoize("attribute", lambda _: "attribute")
+        context.memoize("callable_attribute", lambda self: "test_function")
+        context.memoize("class_attribute", lambda self: "SomeClass")
+        context.memoize("attribute", lambda self: "attribute")
 
         @context.sub_context
         def given_as_a_reference(context):
-            context.memoize("target", lambda _: sample_module)
+            context.memoize("target", lambda self: sample_module)
             context.memoize("real_target", lambda self: self.target)
             context.merge_context("common", fails_if_class_attribute=True)
 
         @context.sub_context
         def given_as_a_string(context):
-            context.memoize("target", lambda _: "tests.sample_module")
+            context.memoize("target", lambda self: "tests.sample_module")
             context.memoize("real_target", lambda self: sample_module)
             context.merge_context("common", fails_if_class_attribute=True)
 
     @context.sub_context
     def when_target_is_a_class(context):
-        context.memoize("target", lambda _: sample_module.SomeClass)
+        context.memoize("target", lambda self: sample_module.SomeClass)
         context.memoize("real_target", lambda self: self.target)
-        context.memoize("callable_attribute", lambda _: "method")
-        context.memoize("class_attribute", lambda _: "other_class_attribute")
-        context.memoize("attribute", lambda _: "attribute")
+        context.memoize("callable_attribute", lambda self: "method")
+        context.memoize("class_attribute", lambda self: "other_class_attribute")
+        context.memoize("attribute", lambda self: "attribute")
         context.merge_context("common", fails_if_class_attribute=False)
 
         @context.sub_context
         def when_target_is_an_instance(context):
-            context.memoize("target", lambda _: sample_module.SomeClass())
+            context.memoize("target", lambda self: sample_module.SomeClass())
             context.memoize("real_target", lambda self: self.target)
             context.merge_context("common", fails_if_class_attribute=False)
 
@@ -132,19 +132,19 @@ def patch_attribute_tests(context):
     @context.sub_context
     def when_target_is_a_StrictMock(context):
         context.memoize("real_target", lambda self: self.target)
-        context.memoize("callable_attribute", lambda _: "method")
-        context.memoize("class_attribute", lambda _: "other_class_attribute")
-        context.memoize("attribute", lambda _: "attribute")
+        context.memoize("callable_attribute", lambda self: "method")
+        context.memoize("class_attribute", lambda self: "other_class_attribute")
+        context.memoize("attribute", lambda self: "attribute")
 
         @context.sub_context
         def with_a_template(context):
             context.memoize(
-                "target", lambda _: StrictMock(template=sample_module.SomeClass)
+                "target", lambda self: StrictMock(template=sample_module.SomeClass)
             )
 
             context.merge_context("common", fails_if_class_attribute=False)
 
         @context.sub_context
         def without_a_template(context):
-            context.memoize("target", lambda _: StrictMock())
+            context.memoize("target", lambda self: StrictMock())
             context.merge_context("patching works")

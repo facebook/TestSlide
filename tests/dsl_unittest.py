@@ -134,7 +134,7 @@ class TestDSLContext(TestDSLBase):
         name = "context name"
 
         @context(name)
-        def whatever(_):
+        def whatever(context):
             pass
 
         self.assertEqual(str(Context.all_top_level_contexts[0]), name)
@@ -146,7 +146,7 @@ class TestDSLContext(TestDSLBase):
         """
 
         @context
-        def Context_name_from_Function(_):
+        def Context_name_from_Function(context):
             pass
 
         self.assertEqual(
@@ -159,11 +159,11 @@ class TestDSLContext(TestDSLBase):
         """
 
         @context
-        def first_context(_):
+        def first_context(context):
             pass
 
         @context
-        def second_context(_):
+        def second_context(context):
             pass
 
         self.assertEqual(str(Context.all_top_level_contexts[0]), "first context")
@@ -211,7 +211,7 @@ class TestDSLContext(TestDSLBase):
         """
 
         @context
-        def not_callable(_):
+        def not_callable(context):
             pass
 
         with self.assertRaisesRegex(
@@ -235,7 +235,7 @@ class TestDSLContext(TestDSLBase):
                 pass
 
             @context("top context")
-            def whatever(_):
+            def whatever(context):
                 pass
 
     def test_can_create_nested_contexts_with_same_name(self):
@@ -246,7 +246,7 @@ class TestDSLContext(TestDSLBase):
         @context
         def same_name(context):
             @context.sub_context
-            def same_name(_):
+            def same_name(context):
                 pass
 
         self.assertEqual(str(Context.all_top_level_contexts[0]), "same name")
@@ -266,11 +266,11 @@ class TestDSLContext(TestDSLBase):
             @context
             def top_context(context):
                 @context.sub_context
-                def repeated_name(_):
+                def repeated_name(context):
                     pass
 
                 @context.sub_context("repeated name")
-                def whatever(_):
+                def whatever(context):
                     pass
 
     # Focus and skip
@@ -287,7 +287,7 @@ class TestDSLContext(TestDSLBase):
             @context.xsub_context
             def skipped(context):
                 @context.sub_context
-                def inherits_skip_setting_from_parent(_):
+                def inherits_skip_setting_from_parent(context):
                     pass
 
             @context.sub_context
@@ -299,7 +299,7 @@ class TestDSLContext(TestDSLBase):
             @context.sub_context
             def not_skipped(context):
                 @context.sub_context
-                def not_skipped(_):
+                def not_skipped(context):
                     pass
 
         self.assertFalse(Context.all_top_level_contexts[0].skip)
@@ -336,7 +336,7 @@ class TestDSLContext(TestDSLBase):
             @context.fsub_context
             def focused(context):
                 @context.sub_context
-                def inherits_focus_setting_from_parent(_):
+                def inherits_focus_setting_from_parent(context):
                     pass
 
             @context.sub_context
@@ -348,7 +348,7 @@ class TestDSLContext(TestDSLBase):
             @context.sub_context
             def not_focused(context):
                 @context.sub_context
-                def not_focused(_):
+                def not_focused(context):
                     pass
 
         self.assertFalse(Context.all_top_level_contexts[0].focus)
@@ -405,7 +405,7 @@ class TestDSLSharedContext(TestDSLBase):
         @context
         def top(context):
             @context.shared_context("Shared context")
-            def whatever(self):
+            def whatever(context):
                 pass
 
         self.assertEqual(len(Context.all_top_level_contexts[0].all_shared_contexts), 1)
@@ -430,7 +430,7 @@ class TestDSLSharedContext(TestDSLBase):
                     pass
 
                 @context.shared_context("Shared context")
-                def whatever(self):
+                def whatever(context):
                     pass
 
     def test_inherit_shared_context(self):
@@ -677,15 +677,15 @@ class TestDSLMergeTestCase(TestDSLBase):
                 @context
                 def top(context):
                     @context.around
-                    def first_around_hook(self, example):
+                    def first_around_hook(self, wrapped):
                         calls.append("first around before")
-                        example()
+                        wrapped()
                         calls.append("first around after")
 
                     @context.around
-                    def second_around_hook(self, example):
+                    def second_around_hook(self, wrapped):
                         calls.append("second around before")
-                        example()
+                        wrapped()
                         calls.append("second around after")
 
                     context.merge_test_case(SomeTestCase, "some_test_case")
@@ -741,15 +741,15 @@ class TestDSLMergeTestCase(TestDSLBase):
             @context
             def top(context):
                 @context.around
-                def first_around_hook(self, example):
+                def first_around_hook(self, wrapped):
                     calls.append("first around before")
-                    example()
+                    wrapped()
                     calls.append("first around after")
 
                 @context.around
-                def second_around_hook(self, example):
+                def second_around_hook(self, wrapped):
                     calls.append("second around before")
-                    example()
+                    wrapped()
                     calls.append("second around after")
 
                 context.merge_test_case(SomeTestCase, "some_test_case")
@@ -836,7 +836,7 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
             value = 1
 
-            context.memoize("attribute_name", lambda _: value + 1)
+            context.memoize("attribute_name", lambda self: value + 1)
 
             @context.example
             def attribute_is_memoized(self):
@@ -858,7 +858,7 @@ class TestDSLMemoizedAttribute(TestDSLBase):
             value = 1
 
             context.memoize(
-                attribute1=lambda _: value + 1, attribute2=lambda _: value + 2
+                attribute1=lambda self: value + 1, attribute2=lambda self: value + 2
             )
 
             @context.example
@@ -1032,8 +1032,8 @@ class TestDSLBeforeHook(TestDSLBase):
         @context
         def top(context):
 
-            context.before(lambda _: mock("first before"))
-            context.before(lambda _: mock("second before"))
+            context.before(lambda self: mock("first before"))
+            context.before(lambda self: mock("second before"))
 
             @context.example
             def with_before_hook(self):
@@ -1138,8 +1138,8 @@ class TestDSLAfterHook(TestDSLBase):
         @context
         def top(context):
 
-            context.after(lambda _: mock("first after"))
-            context.after(lambda _: mock("second after"))
+            context.after(lambda self: mock("first after"))
+            context.after(lambda self: mock("second after"))
 
             @context.example
             def with_after_hook(self):
@@ -1308,40 +1308,40 @@ class TestDSLAroundHook(TestDSLBase):
         @context
         def top(context):
             @context.around
-            def first_top_around(self, example):
+            def first_top_around(self, wrapped):
                 mock("first top around start")
-                example()
+                wrapped()
                 mock("first top around end")
 
             @context.around
-            def second_top_around(self, example):
+            def second_top_around(self, wrapped):
                 mock("second top around start")
-                example()
+                wrapped()
                 mock("second top around end")
 
-            context.before(lambda _: mock("first top before"))
-            context.before(lambda _: mock("second top before"))
-            context.after(lambda _: mock("first top after"))
-            context.after(lambda _: mock("second top after"))
+            context.before(lambda self: mock("first top before"))
+            context.before(lambda self: mock("second top before"))
+            context.after(lambda self: mock("first top after"))
+            context.after(lambda self: mock("second top after"))
 
             @context.sub_context
             def inner(context):
                 @context.around
-                def first_inner_around(self, example):
+                def first_inner_around(self, wrapped):
                     mock("first inner around start")
-                    example()
+                    wrapped()
                     mock("first inner around end")
 
                 @context.around
-                def second_inner_around(self, example):
+                def second_inner_around(self, wrapped):
                     mock("second inner around start")
-                    example()
+                    wrapped()
                     mock("second inner around end")
 
-                context.before(lambda _: mock("first inner before"))
-                context.before(lambda _: mock("second inner before"))
-                context.after(lambda _: mock("first inner after"))
-                context.after(lambda _: mock("second inner after"))
+                context.before(lambda self: mock("first inner before"))
+                context.before(lambda self: mock("second inner before"))
+                context.after(lambda self: mock("first inner after"))
+                context.after(lambda self: mock("second inner after"))
 
                 @context.example
                 def example(self):
@@ -1381,14 +1381,14 @@ class TestDSLAroundHook(TestDSLBase):
         @context
         def top(context):
             @context.around
-            def first_around_hook(self, example):
+            def first_around_hook(self, wrapped):
                 mock("first around before")
                 raise SimulatedFailure("first around before failure", "(extra)")
 
             @context.around
-            def second_around_hook(self, example):
+            def second_around_hook(self, wrapped):
                 mock("second around before")
-                example()
+                wrapped()
                 mock("second around after")
 
             @context.before
@@ -1420,7 +1420,7 @@ class TestDSLAroundHook(TestDSLBase):
             @context
             def top(context):
                 @context.around
-                def not_callable(self, example):
+                def not_callable(self, wrapped):
                     pass
 
                 not_callable(None)
@@ -1434,7 +1434,7 @@ class TestDSLAroundHook(TestDSLBase):
         ):
 
             @context.around
-            def invalid(self, example):
+            def invalid(self, wrapped):
                 pass
 
     def test_can_set_arbitrary_attributes(self):
@@ -1447,9 +1447,9 @@ class TestDSLAroundHook(TestDSLBase):
         @context
         def top(context):
             @context.around
-            def around(self, example):
+            def around(self, wrapped):
                 self.around = "around"
-                example()
+                wrapped()
 
             @context.before
             def before(self):
@@ -1474,7 +1474,7 @@ class TestDSLAroundHook(TestDSLBase):
         @context
         def top(context):
             @context.around
-            def broken_around(self, example):
+            def broken_around(self, wrapped):
                 pass  # without calling example()
 
             @context.example
@@ -1497,7 +1497,7 @@ class TestExample(TestDSLBase):
         @context
         def top_context(context):
             @context.example(name)
-            def whatever(_):
+            def whatever(self):
                 pass
 
         self.assertEqual(str(Context.all_top_level_contexts[0].examples[0]), name)
@@ -1511,7 +1511,7 @@ class TestExample(TestDSLBase):
         @context
         def top_context(context):
             @context.example
-            def Example_name(_):
+            def Example_name(self):
                 pass
 
         self.assertEqual(
@@ -1527,7 +1527,7 @@ class TestExample(TestDSLBase):
         ):
 
             @context.example
-            def whatever(_):
+            def whatever(self):
                 pass
 
     def test_skip_with_xexample(self):
@@ -1538,23 +1538,23 @@ class TestExample(TestDSLBase):
         @context
         def top_context(context):
             @context.xexample
-            def skip_with_xexample(_):
+            def skip_with_xexample(self):
                 pass
 
             @context.example(skip=True)
-            def skip_with_skip_arg(_):
+            def skip_with_skip_arg(self):
                 pass
 
             @context.example("skip_with_name_and_skip_arg", skip=True)
-            def skip_with_name_and_skip_arg(_):
+            def skip_with_name_and_skip_arg(self):
                 pass
 
             @context.example(skip_unless=False)
-            def skip_with_skip_unless_arg(_):
+            def skip_with_skip_unless_arg(self):
                 pass
 
             @context.example("skip_with_name_and_skip_unless_arg", skip_unless=False)
-            def skip_with_name_and_skip_unless_arg(_):
+            def skip_with_name_and_skip_unless_arg(self):
                 pass
 
         self.assertTrue(Context.all_top_level_contexts[0].examples)
@@ -1569,7 +1569,7 @@ class TestExample(TestDSLBase):
         @xcontext
         def skipped_context(context):
             @context.example
-            def also_skipped(_):
+            def also_skipped(self):
                 pass
 
         self.assertTrue(Context.all_top_level_contexts[0].examples[0].skip)
@@ -1582,7 +1582,7 @@ class TestExample(TestDSLBase):
         @context
         def top_context(context):
             @context.fexample
-            def focused(_):
+            def focused(self):
                 pass
 
         self.assertTrue(Context.all_top_level_contexts[0].examples[0].focus)
@@ -1595,7 +1595,7 @@ class TestExample(TestDSLBase):
         @fcontext
         def focused_context(context):
             @context.example
-            def also_focused(_):
+            def also_focused(self):
                 pass
 
         self.assertTrue(Context.all_top_level_contexts[0].examples[0].focus)
@@ -1611,7 +1611,7 @@ class TestExample(TestDSLBase):
             @context
             def top_context(context):
                 @context.example
-                def not_callable(_):
+                def not_callable(self):
                     pass
 
                 not_callable(None)
@@ -1628,11 +1628,11 @@ class TestExample(TestDSLBase):
             @context
             def top_context(context):
                 @context.example
-                def same_name(_):
+                def same_name(self):
                     pass
 
                 @context.example("same name")
-                def whatever(_):
+                def whatever(self):
                     pass
 
     def test_can_call_unittest_assert_methods(self):

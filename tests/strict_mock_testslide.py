@@ -191,7 +191,7 @@ def strict_mock(context):
 
     @context.sub_context
     def without_template(context):
-        context.memoize("strict_mock", lambda _: StrictMock())
+        context.memoize("strict_mock", lambda self: StrictMock())
 
         @context.memoize
         def strict_mock_rgx(self):
@@ -201,10 +201,10 @@ def strict_mock(context):
                 + ":\d+>"
             )
 
-        context.memoize("value", lambda _: 3241234123)
+        context.memoize("value", lambda self: 3241234123)
 
-        context.memoize("test_method_name", lambda _: "some_method")
-        context.memoize("mock_function", lambda _: lambda: None)
+        context.memoize("test_method_name", lambda self: "some_method")
+        context.memoize("mock_function", lambda self: lambda: None)
 
         context.merge_context("can access attributes")
 

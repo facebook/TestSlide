@@ -88,9 +88,9 @@ def mock_callable_tests(context):
     ## Attributes
     ##
 
-    context.memoize("assertions", lambda _: [])
-    context.memoize("call_args", lambda _: ("first", "second"))
-    context.memoize("call_kwargs", lambda _: {"kwarg1": "first", "kwarg2": "second"})
+    context.memoize("assertions", lambda self: [])
+    context.memoize("call_args", lambda self: ("first", "second"))
+    context.memoize("call_kwargs", lambda self: {"kwarg1": "first", "kwarg2": "second"})
 
     @context.memoize
     def specific_call_args(self):
@@ -476,8 +476,8 @@ def mock_callable_tests(context):
         @context.sub_context(".to_return(value)")
         def to_return_value(context):
 
-            context.memoize("value", lambda _: "mocked value")
-            context.memoize("times", lambda _: 3)
+            context.memoize("value", lambda self: "mocked value")
+            context.memoize("times", lambda self: 3)
 
             @context.before
             def setup_mock(self):
@@ -502,7 +502,7 @@ def mock_callable_tests(context):
         @context.sub_context(".to_return_values(values_list)")
         def to_return_values_values_list(context):
 
-            context.memoize("values_list", lambda _: ["first", "second", "third"])
+            context.memoize("values_list", lambda self: ["first", "second", "third"])
             context.memoize("times", lambda self: len(self.values_list) - 1)
 
             @context.before
@@ -539,7 +539,9 @@ def mock_callable_tests(context):
             @context.sub_context(".to_yield_values(values_list)")
             def to_yield_values_values_list(context):
 
-                context.memoize("values_list", lambda _: ["first", "second", "third"])
+                context.memoize(
+                    "values_list", lambda self: ["first", "second", "third"]
+                )
                 context.memoize("times", lambda self: len(self.values_list) - 1)
 
                 @context.before
@@ -576,8 +578,8 @@ def mock_callable_tests(context):
         @context.sub_context(".to_raise(exception)")
         def to_raise_exception(context):
 
-            context.memoize("exception_class", lambda _: RuntimeError)
-            context.memoize("times", lambda _: 3)
+            context.memoize("exception_class", lambda self: RuntimeError)
+            context.memoize("times", lambda self: 3)
 
             @context.shared_context
             def integration(context):
@@ -611,7 +613,7 @@ def mock_callable_tests(context):
             @context.sub_context
             def when_given_an_exception_instance(context):
 
-                context.memoize("exception_message", lambda _: "test exception")
+                context.memoize("exception_message", lambda self: "test exception")
                 context.memoize(
                     "exception",
                     lambda self: self.exception_class(self.exception_message),
@@ -632,8 +634,8 @@ def mock_callable_tests(context):
         @context.sub_context(".with_implementation(func)")
         def with_implementation_func(context):
 
-            context.memoize("times", lambda _: 3)
-            context.memoize("func_return", lambda _: "mocked response")
+            context.memoize("times", lambda self: 3)
+            context.memoize("func_return", lambda self: "mocked response")
 
             @context.memoize
             def func(self):
@@ -660,7 +662,7 @@ def mock_callable_tests(context):
         @context.sub_context(".with_wrapper(wrapper_func)")
         def with_wrapper_wrappr_func(context):
 
-            context.memoize("func_return", lambda _: "mocked response")
+            context.memoize("func_return", lambda self: "mocked response")
 
             @context.memoize
             def wrapper_func(self):
@@ -672,7 +674,7 @@ def mock_callable_tests(context):
 
             if has_original_callable:
 
-                context.memoize("times", lambda _: 3)
+                context.memoize("times", lambda self: 3)
 
                 @context.before
                 def setup_mock(self):
@@ -703,7 +705,7 @@ def mock_callable_tests(context):
 
             if has_original_callable:
 
-                context.memoize("times", lambda _: 3)
+                context.memoize("times", lambda self: 3)
 
                 @context.before
                 def setup_mock(self):
@@ -863,7 +865,7 @@ def mock_callable_tests(context):
     def async_methods_examples(context, not_in_class_instance_method=False):
         @context.sub_context
         def and_callable_is_an_async_instance_method(context):
-            context.memoize("callable_arg", lambda _: "async_instance_method")
+            context.memoize("callable_arg", lambda self: "async_instance_method")
 
             if not_in_class_instance_method:
 
@@ -875,19 +877,19 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_class_method(context):
-            context.memoize("callable_arg", lambda _: "async_class_method")
+            context.memoize("callable_arg", lambda self: "async_class_method")
 
             context.merge_context("can not mock async callable")
 
         @context.sub_context
         def and_callable_is_an_async_static_method(context):
-            context.memoize("callable_arg", lambda _: "async_static_method")
+            context.memoize("callable_arg", lambda self: "async_static_method")
 
             context.merge_context("can not mock async callable")
 
         @context.sub_context
         def and_callable_is_an_async_magic_method(context):
-            context.memoize("callable_arg", lambda _: "__aiter__")
+            context.memoize("callable_arg", lambda self: "__aiter__")
 
             if not_in_class_instance_method:
 
@@ -1000,8 +1002,8 @@ def mock_callable_tests(context):
 
     @context.sub_context
     def when_target_is_a_module(context):
-        context.memoize("target_arg", lambda _: "tests.sample_module")
-        context.memoize("real_target", lambda _: sample_module)
+        context.memoize("target_arg", lambda self: "tests.sample_module")
+        context.memoize("real_target", lambda self: sample_module)
 
         @context.example
         def works_with_alternative_module_names(self):
@@ -1039,7 +1041,7 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_function(context):
-            context.memoize("callable_arg", lambda _: "async_test_function")
+            context.memoize("callable_arg", lambda self: "async_test_function")
 
             context.merge_context("can not mock async callable")
 
@@ -1125,7 +1127,7 @@ def mock_callable_tests(context):
         @context.sub_context
         def and_callable_is_an_instance_method(context):
 
-            context.memoize("callable_arg", lambda _: "instance_method")
+            context.memoize("callable_arg", lambda self: "instance_method")
 
             @context.before
             def before(self):
@@ -1170,8 +1172,8 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_magic_method(context):
-            context.memoize("call_args", lambda _: ())
-            context.memoize("call_kwargs", lambda _: {})
+            context.memoize("call_args", lambda self: ())
+            context.memoize("call_kwargs", lambda self: {})
 
             @context.shared_context
             def magic_method_tests(context):
@@ -1247,7 +1249,7 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_instance_method(context):
-            context.memoize("callable_arg", lambda _: "instance_method")
+            context.memoize("callable_arg", lambda self: "instance_method")
 
             @context.sub_context
             def that_is_statically_defined_at_the_class(context):
@@ -1267,7 +1269,7 @@ def mock_callable_tests(context):
             @context.sub_context
             def that_is_dynamically_defined_by_the_instance(context):
 
-                context.memoize("callable_arg", lambda _: "dynamic_instance_method")
+                context.memoize("callable_arg", lambda self: "dynamic_instance_method")
 
                 @context.before
                 def before(self):
@@ -1325,8 +1327,8 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_magic_method(context):
-            context.memoize("call_args", lambda _: ())
-            context.memoize("call_kwargs", lambda _: {})
+            context.memoize("call_args", lambda self: ())
+            context.memoize("call_kwargs", lambda self: {})
 
             @context.before
             def before(self):
@@ -1352,7 +1354,7 @@ def mock_async_callable_tests(context):
     ## Attributes
     ##
 
-    context.memoize("assertions", lambda _: [])
+    context.memoize("assertions", lambda self: [])
 
     ##
     ## Functions
