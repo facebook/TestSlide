@@ -17,6 +17,7 @@ import warnings
 
 import testslide.mock_callable
 import testslide.mock_constructor
+import testslide.matchers
 import testslide.patch_attribute
 from testslide.strict_mock import StrictMock  # noqa
 
