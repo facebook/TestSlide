@@ -879,9 +879,7 @@ def mock_callable_tests(context):
                 mock_callable(self.target_arg, self.callable_arg)
 
     @context.shared_context
-    def async_methods_examples(
-        context, not_in_class_instance_method=False, alllow_private=True
-    ):
+    def async_methods_examples(context, not_in_class_instance_method=False):
         @context.sub_context
         def and_callable_is_an_async_instance_method(context):
             context.memoize("callable_arg", lambda _: "async_instance_method")
