@@ -248,12 +248,13 @@ def _patch_and_return_mocked_class(
     return mocked_class
 
 
-def mock_constructor(target, class_name):
+def mock_constructor(target, class_name, allow_private=False):
     if not isinstance(class_name, str):
         raise ValueError("Second argument must be a string with the name of the class.")
+    if not allow_private and class_name.startswith("_"):
+        raise ValueError("Private classes should not be mocked")
     if isinstance(target, str):
         target = testslide._importer(target)
-
     target_class_id = (id(target), class_name)
 
     if target_class_id in _mocked_target_classes:

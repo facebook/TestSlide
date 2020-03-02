@@ -13,12 +13,16 @@ from testslide.strict_mock import _add_signature_validation
 from .patch import _patch, _is_instance_method
 
 
-def mock_callable(target, method):
-    return _MockCallableDSL(target, method)
+def mock_callable(target, method, allow_private=False):
+    return _MockCallableDSL(target, method, allow_private=allow_private)
 
 
-def mock_async_callable(target, method, callable_returns_coroutine=False):
-    return _MockAsyncCallableDSL(target, method, callable_returns_coroutine)
+def mock_async_callable(
+    target, method, callable_returns_coroutine=False, allow_private=False
+):
+    return _MockAsyncCallableDSL(
+        target, method, callable_returns_coroutine, allow_private
+    )
 
 
 _unpatchers = []  # type: List[Callable]  # noqa T484
@@ -509,6 +513,15 @@ class _MockCallableDSL(object):
                 f"Mocking __new__ is not allowed with {name}(), please use "
                 "mock_constructor()."
             )
+        if (
+            self._method.startswith("_")
+            and not self.allow_private
+            and not (self._method.startswith("__") and self._method.endswith("__"))
+        ):
+            raise ValueError(
+                f"Mocking private functions is not allowed,"
+                "unless explicity asked for with allow_private=True"
+            )
 
         if isinstance(self._target, StrictMock):
             template_value = getattr(self._target._template, self._method, None)
@@ -612,7 +625,14 @@ class _MockCallableDSL(object):
     def _get_callable_mock(self):
         return _CallableMock(self._original_target, self._method)
 
-    def __init__(self, target, method, callable_mock=None, original_callable=None):
+    def __init__(
+        self,
+        target,
+        method,
+        callable_mock=None,
+        original_callable=None,
+        allow_private=False,
+    ):
         if not _is_setup():
             raise RuntimeError(
                 "mock_callable() was not setup correctly before usage. "
@@ -623,7 +643,7 @@ class _MockCallableDSL(object):
         self._method = method
         self._runner = None
         self._next_runner_accepted_args = None
-
+        self.allow_private = allow_private
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -896,9 +916,9 @@ class _MockCallableDSL(object):
 
 
 class _MockAsyncCallableDSL(_MockCallableDSL):
-    def __init__(self, target, method, callable_returns_coroutine):
+    def __init__(self, target, method, callable_returns_coroutine, allow_private=False):
         self._callable_returns_coroutine = callable_returns_coroutine
-        super().__init__(target, method)
+        super().__init__(target, method, allow_private=allow_private)
 
     def _validate_patch(self):
         return super()._validate_patch(
