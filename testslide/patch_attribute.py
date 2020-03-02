@@ -5,6 +5,7 @@
 
 import testslide
 from .patch import _patch
+from .lib import _bail_if_private
 from testslide.strict_mock import UndefinedAttribute
 
 _unpatchers = []
@@ -28,7 +29,7 @@ def unpatch_all_mocked_attributes():
         )
 
 
-def patch_attribute(target, attribute, new_value):
+def patch_attribute(target, attribute, new_value, allow_private=False):
     """
     Patch target's attribute with new_value. The target can be any Python
     object, such as modules, classes or instances; attribute is a string with
@@ -78,6 +79,6 @@ def patch_attribute(target, attribute, new_value):
                 "Attribute can not be callable!\n"
                 "You can either use mock_callable() / mock_async_callable() instead."
             )
-
+    _bail_if_private(attribute, allow_private)
     unpatcher = _patch(target, attribute, new_value, restore, restore_value)
     _unpatchers.append(unpatcher)

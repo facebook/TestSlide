@@ -11,6 +11,7 @@ import testslide
 from testslide.strict_mock import StrictMock
 from testslide.strict_mock import _add_signature_validation
 from .patch import _patch, _is_instance_method
+from .lib import _bail_if_private
 
 
 def mock_callable(target, method, allow_private=False):
@@ -513,16 +514,7 @@ class _MockCallableDSL(object):
                 f"Mocking __new__ is not allowed with {name}(), please use "
                 "mock_constructor()."
             )
-        if (
-            self._method.startswith("_")
-            and not self.allow_private
-            and not (self._method.startswith("__") and self._method.endswith("__"))
-        ):
-            raise ValueError(
-                f"Mocking private functions is not allowed,"
-                "unless explicity asked for with allow_private=True"
-            )
-
+        _bail_if_private(self._method, self.allow_private)
         if isinstance(self._target, StrictMock):
             template_value = getattr(self._target._template, self._method, None)
             if template_value and callable(template_value):

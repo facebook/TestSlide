@@ -12,6 +12,7 @@ class OtherClass:
 
 class SomeClass:
     attribute = "value"
+    _private_attr = "sooprivate"
     other_class_attribute = OtherClass
 
     def method(self):

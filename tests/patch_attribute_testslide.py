@@ -148,3 +148,16 @@ def patch_attribute_tests(context):
         def without_a_template(context):
             context.memoize("target", lambda _: StrictMock())
             context.merge_context("patching works")
+
+    @context.example
+    def patch_attribute_raises_valueerror_for_private(self):
+        with self.assertRaises(ValueError):
+            self.patch_attribute(
+                sample_module.SomeClass, "_private_attr", "notsoprivate"
+            )
+
+    @context.example
+    def patch_attribute_passes_for_private_with_allow_private(self):
+        self.patch_attribute(
+            sample_module.SomeClass, "_private_attr", "notsoprivate", allow_private=True
+        )
