@@ -30,7 +30,7 @@ class _AlreadyChainedMatcher:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
 
-class _Matcher:
+class Matcher:
     """
     Allows composition of equality of objects by using bitwise operations.
     """
@@ -101,7 +101,7 @@ class _OrMatcher(_AlreadyChainedMatcher):
         return f"{self.a} | {self.b}"
 
 
-class _RichComparison(_Matcher):
+class _RichComparison(Matcher):
     def __init__(self, klass, lt=None, le=None, eq=None, ne=None, ge=None, gt=None):
         self.klass = klass
         self.lt = lt
@@ -173,7 +173,7 @@ class IntBetween(int_comparison):
         super().__init__(ge=lower, le=upper)
 
 
-class IntGreater(int_comparison):
+class IntGreaterThan(int_comparison):
     def __init__(self, gt: int):
         super().__init__(gt=gt)
 
@@ -183,7 +183,7 @@ class IntGreaterOrEquals(int_comparison):
         super().__init__(ge=ge)
 
 
-class IntLess(int_comparison):
+class IntLessThan(int_comparison):
     def __init__(self, lt):
         super().__init__(lt=lt)
 
@@ -207,7 +207,7 @@ class FloatBetween(float_comparison):
         super().__init__(ge=lower, le=upper)
 
 
-class FloatGreater(float_comparison):
+class FloatGreaterThan(float_comparison):
     def __init__(self, gt: float):
         super().__init__(gt=gt)
 
@@ -217,7 +217,7 @@ class FloatGreaterOrEquals(float_comparison):
         super().__init__(ge=ge)
 
 
-class FloatLess(float_comparison):
+class FloatLessThan(float_comparison):
     def __init__(self, lt):
         super().__init__(lt=lt)
 
@@ -225,14 +225,6 @@ class FloatLess(float_comparison):
 class FloatLessOrEquals(float_comparison):
     def __init__(self, le):
         super().__init__(le=le)
-
-
-# generic
-
-
-class Any(_Matcher):
-    def __eq__(self, other):
-        return other is not None
 
 
 # strings
@@ -243,7 +235,7 @@ class AnyStr(_RichComparison):
         super().__init__(klass=str)
 
 
-class RegexMatches(_Matcher):
+class RegexMatches(Matcher):
     """
     Compares true if other mathes given regex.
     """
@@ -266,18 +258,53 @@ class RegexMatches(_Matcher):
         )
 
 
-# collections
-class NotEmpty(_Matcher):
+class StrContaining(Matcher):
+    def __init__(self, needle):
+        self.needle = needle
+
     def __eq__(self, other):
-        return bool(other)
+        return isinstance(other, str) and self.needle in other
 
 
-class Empty(_Matcher):
+class StrStartingWith(Matcher):
+    def __init__(self, needle):
+        self.needle = needle
+
     def __eq__(self, other):
-        return not bool(other)
+        return isinstance(other, str) and other.startswith(self.needle)
 
 
-class ListContaining(_RichComparison):
+class StrEndingWith(Matcher):
+    def __init__(self, needle):
+        self.needle = needle
+
+    def __eq__(self, other):
+        return isinstance(other, str) and other.endswith(self.needle)
+
+
+# lists
+class AnyList(_RichComparison):
+    def __init__(self):
+        super().__init__(klass=List)
+
+
+class ListContainingElement(_RichComparison):
+    def __init__(self, needle):
+        self.needle = needle
+        super().__init__(klass=List)
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.needle in other
+
+    def __repr__(self):
+        return "<{} 0x{:02X}{}>".format(
+            type(self).__name__,
+            id(self),
+            f" subset={self.subset}" if self.subset is not None else "",
+        )
+
+
+class ListContainingAll(_RichComparison):
     def __init__(self, subset: List):
         self.subset = subset
         super().__init__(klass=List)
@@ -293,7 +320,47 @@ class ListContaining(_RichComparison):
         )
 
 
-class DictContaining(_RichComparison):
+class NotEmptyList(AnyList):
+    def __eq__(self, other):
+        return super().__eq__(other) and len(other)
+
+
+class EmptyList(AnyList):
+    def __eq__(self, other):
+        return super().__eq__(other) and not len(other)
+
+
+# dicts
+class AnyDict(_RichComparison):
+    def __init__(self):
+        super().__init__(klass=Dict)
+
+
+class NotEmptyDict(AnyDict):
+    def __eq__(self, other):
+        return super().__eq__(other) and bool(other)
+
+
+class EmptyDict(AnyDict):
+    def __eq__(self, other):
+        return super().__eq__(other) and not bool(other)
+
+
+class DictHavingKeys(_RichComparison):
+    def __init__(self, expected_keys: List):
+        self.expected_keys = expected_keys
+        super().__init__(klass=Dict)
+
+    def __eq__(self, other):
+        try:
+            return super().__eq__(other) and all(
+                attr in other for attr in self.expected_keys
+            )
+        except KeyError:
+            return False
+
+
+class DictSupersetOf(_RichComparison):
     def __init__(self, subset: Dict):
         self.subset = subset
         super().__init__(klass=Dict)
@@ -307,6 +374,24 @@ class DictContaining(_RichComparison):
             return False
 
 
-class A(_RichComparison):
+# generic
+
+
+class Any(Matcher):
+    def __eq__(self, other):
+        return other is not None
+
+
+class AnyTruthy(Matcher):
+    def __eq__(self, other):
+        return bool(other)
+
+
+class AnyFalsey(Matcher):
+    def __eq__(self, other):
+        return not bool(other)
+
+
+class AnyInstanceOf(_RichComparison):
     def __init__(self, klass):
         super().__init__(klass=klass)
