@@ -11,6 +11,10 @@ from testslide.mock_callable import _MockCallableDSL
 from testslide.strict_mock import StrictMock
 
 
+class _PrivateClass(object):
+    pass
+
+
 class TargetParent(object):
     def __init__(self, *args, **kwargs):
         self.args = args
@@ -478,3 +482,15 @@ def mock_constructor(context):
                 return self.get_target_mock()
 
             context.merge_context("StrictMock tests")
+
+    @context.example
+    def private_patching_raises_valueerror(self):
+        with self.assertRaises(ValueError):
+            self.mock_constructor(self.target_module, _PrivateClass.__name__)
+
+    @context.example
+    def private_patching_allow_private(self):
+        self.mock_constructor(
+            self.target_module, _PrivateClass.__name__, allow_private=True
+        ).for_call().to_return_value("mocked_private")
+        _PrivateClass()

@@ -24,6 +24,9 @@ class TargetStr(object):
     def __str__(self):
         return "original response"
 
+    def _privatefun(self):
+        return "cannotbemocked"
+
 
 class ParentTarget(TargetStr):
     def instance_method(self, arg1, arg2, kwarg1=None, kwarg2=None):
@@ -144,6 +147,22 @@ def mock_callable_tests(context):
         testslide.mock_callable.unpatch_all_callable_mocks()
         for assertion in self.assertions:
             assertion()
+
+    ##
+    ## Examples
+    ##
+    @context.example
+    def patching_private_functions_raises_valueerror(self):
+        with self.assertRaises(ValueError):
+            self.mock_callable(TargetStr, "_privatefun")
+
+    @context.example
+    def patching_private_functions_with_allow_private(self):
+        t = TargetStr()
+        self.mock_callable(t, "_privatefun", allow_private=True).to_return_value(
+            "This fun is private"
+        ).and_assert_called_once()
+        t._privatefun()
 
     ##
     ## Shared Contexts

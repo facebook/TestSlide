@@ -8,7 +8,7 @@ import inspect
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
-
+from .lib import _bail_if_private
 
 _DO_NOT_COPY_CLASS_ATTRIBUTES = (
     "__dict__",
@@ -248,12 +248,12 @@ def _patch_and_return_mocked_class(
     return mocked_class
 
 
-def mock_constructor(target, class_name):
+def mock_constructor(target, class_name, allow_private=False):
     if not isinstance(class_name, str):
         raise ValueError("Second argument must be a string with the name of the class.")
+    _bail_if_private(class_name, allow_private)
     if isinstance(target, str):
         target = testslide._importer(target)
-
     target_class_id = (id(target), class_name)
 
     if target_class_id in _mocked_target_classes:
