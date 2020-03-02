@@ -23,7 +23,7 @@ class _AlreadyChainedMatcher:
     def __xor__(self, other):
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
-    def __inv__(self):
+    def __invert__(self):
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
     def __or__(self, other):
@@ -41,7 +41,7 @@ class Matcher:
     def __xor__(self, other):
         return _XorMatcher(self, other)
 
-    def __inv__(self):
+    def __invert__(self):
         return _InvMatcher(self)
 
     def __or__(self, other):
@@ -288,7 +288,7 @@ class AnyList(_RichComparison):
         super().__init__(klass=List)
 
 
-class ListContainingElement(_RichComparison):
+class ListContaining(_RichComparison):
     def __init__(self, needle):
         self.needle = needle
         super().__init__(klass=List)
@@ -346,7 +346,7 @@ class EmptyDict(AnyDict):
         return super().__eq__(other) and not bool(other)
 
 
-class DictHavingKeys(_RichComparison):
+class DictContainingKeys(_RichComparison):
     def __init__(self, expected_keys: List):
         self.expected_keys = expected_keys
         super().__init__(klass=Dict)

@@ -169,9 +169,9 @@ class TestLists(testslide.TestCase):
         self.assertNotEqual(testslide.matchers.AnyList(), None)
 
     def testListContainingElement(self):
-        self.assertEqual(testslide.matchers.ListContainingElement(1), [1, 2, 3])
-        self.assertNotEqual(testslide.matchers.ListContainingElement(1), [2, 3, 4])
-        self.assertNotEqual(testslide.matchers.ListContainingElement(1), "DERP")
+        self.assertEqual(testslide.matchers.ListContaining(1), [1, 2, 3])
+        self.assertNotEqual(testslide.matchers.ListContaining(1), [2, 3, 4])
+        self.assertNotEqual(testslide.matchers.ListContaining(1), "DERP")
 
     def testListContainingAll(self):
         self.assertEqual(testslide.matchers.ListContainingAll([1, 2]), [1, 2, 3])
@@ -213,14 +213,15 @@ class TestDicts(testslide.TestCase):
         )
         self.assertNotEqual(testslide.matchers.DictSupersetOf({}), "DERP")
 
-    def testDictHavingKeys(self):
+    def testDictContainingKeys(self):
         self.assertEqual(
-            testslide.matchers.DictHavingKeys(["a", "c"]), {"a": "b", "c": 1, "d": "e"}
+            testslide.matchers.DictContainingKeys(["a", "c"]),
+            {"a": "b", "c": 1, "d": "e"},
         )
         self.assertNotEqual(
-            testslide.matchers.DictHavingKeys(["a", "b", "c"]), {"c": 1, "d": "e"}
+            testslide.matchers.DictContainingKeys(["a", "b", "c"]), {"c": 1, "d": "e"}
         )
-        self.assertNotEqual(testslide.matchers.DictHavingKeys([1, 2]), "DERP")
+        self.assertNotEqual(testslide.matchers.DictContainingKeys([1, 2]), "DERP")
 
 
 class TestChaining(testslide.TestCase):
@@ -258,6 +259,12 @@ class TestChaining(testslide.TestCase):
         self.assertNotEqual(
             testslide.matchers.AnyInt() ^ testslide.matchers.AnyStr(), 3
         )
+
+    def testBitwiseInverse(self):
+        inverted_matcher = ~testslide.matchers.StrContaining("Fabio")
+        self.assertTrue(isinstance(inverted_matcher, testslide.matchers._InvMatcher))
+        self.assertEqual(inverted_matcher, "Balint")
+        self.assertNotEqual(inverted_matcher, "Fabio.")
 
     def testCannotChainMoreThanTwo(self):
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
