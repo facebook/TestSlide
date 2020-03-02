@@ -14,7 +14,6 @@ class AlreadyChainedException(Exception):
 class _AlreadyChainedMatcher:
     """
     Disallow further chaining of equality of objects.
-
     """
 
     def __and__(self, other):
@@ -141,7 +140,7 @@ class _RichComparison(Matcher):
         )
 
 
-class float_comparison(_RichComparison):
+class _FloatComparison(_RichComparison):
     """
     Compares true if other number passes all rich comparison cases given.
     """
@@ -150,7 +149,7 @@ class float_comparison(_RichComparison):
         super().__init__(float, lt=lt, le=le, eq=eq, ne=ne, ge=ge, gt=gt)
 
 
-class int_comparison(_RichComparison):
+class _IntComparison(_RichComparison):
     """
     Compares true if other number passes all rich comparison cases given.
     """
@@ -160,69 +159,73 @@ class int_comparison(_RichComparison):
 
 
 # Ints
-AnyInt = int_comparison
+class AnyInt(_IntComparison):
+    def __init__(self):
+        super().__init__()
 
 
-class NotThisInt(int_comparison):
+class NotThisInt(_IntComparison):
     def __init__(self, ne: int):
         super().__init__(ne=ne)
 
 
-class IntBetween(int_comparison):
+class IntBetween(_IntComparison):
     def __init__(self, lower: int, upper: int):
         super().__init__(ge=lower, le=upper)
 
 
-class IntGreaterThan(int_comparison):
+class IntGreaterThan(_IntComparison):
     def __init__(self, gt: int):
         super().__init__(gt=gt)
 
 
-class IntGreaterOrEquals(int_comparison):
+class IntGreaterOrEquals(_IntComparison):
     def __init__(self, ge: int):
         super().__init__(ge=ge)
 
 
-class IntLessThan(int_comparison):
+class IntLessThan(_IntComparison):
     def __init__(self, lt):
         super().__init__(lt=lt)
 
 
-class IntLessOrEquals(int_comparison):
+class IntLessOrEquals(_IntComparison):
     def __init__(self, le):
         super().__init__(le=le)
 
 
 # floats
-AnyFloat = float_comparison
+class AnyFloat(_FloatComparison):
+    def __init__(self):
+        super().__init__()
 
 
-class NotThisFloat(float_comparison):
+class NotThisFloat(_FloatComparison):
     def __init__(self, ne: float):
         super().__init__(ne=ne)
 
 
-class FloatBetween(float_comparison):
+class FloatBetween(_FloatComparison):
     def __init__(self, lower: float, upper: float):
         super().__init__(ge=lower, le=upper)
 
 
-class FloatGreaterThan(float_comparison):
+class FloatGreaterThan(_FloatComparison):
     def __init__(self, gt: float):
         super().__init__(gt=gt)
 
 
-class FloatGreaterOrEquals(float_comparison):
+class FloatGreaterOrEquals(_FloatComparison):
     def __init__(self, ge: float):
         super().__init__(ge=ge)
 
 
-class FloatLessThan(float_comparison):
+class FloatLessThan(_FloatComparison):
     def __init__(self, lt):
         super().__init__(lt=lt)
 
 
-class FloatLessOrEquals(float_comparison):
+class FloatLessOrEquals(_FloatComparison):
     def __init__(self, le):
         super().__init__(le=le)
 
