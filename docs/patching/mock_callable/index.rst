@@ -403,6 +403,38 @@ mock_callable implements signature validation. When you use it, the mock will ra
 
 This is particularly helpful when changes are introduced to the code: if a mocked method changes the signature, even when mocked, mock_callable will give you the signal that there's something broken.
 
+
+Type Checking Validation
+------------------------
+
+mock_callable implements type-check validation. When you use it, the mock will raise ``TypeError`` if it is called with arguments that does not match the original method's type annotation:
+
+.. code-block:: python
+
+  import time
+  import typing
+  from testslide import TestCase
+  
+  class A:
+    def typedfun(
+        self,
+        a: str,
+        b: typing.Iterable[typing.Union[str, float]],
+        c: typing.Optional[str],
+    ):
+        return a
+  
+  class TestSignature(TestCase):
+    def test_signature(self):
+      a = A()
+      self.mock_callable(a, 'typedfun')\
+        .to_return_value('mocked')
+      self.assertEqual(a.typedfun("a", ["b"], None), 'mocked')
+      with self.assertRaises(TypeError):
+        a.typedfun(1,2,3)
+
+This will prevent you from writing mocks, that don't use the original functions typing requirements.
+
 Test Framework Integration
 --------------------------
 
