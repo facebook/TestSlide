@@ -97,7 +97,7 @@ Dictionaries
 
 	"``AnyDict()``", "Any ``dict``"
 	"``NotEmptyDict()``", "A dictionary with any at least one key"
-	"``EmptyDicc()``", "An empty dictionary: ``{}``"
+	"``EmptyDict()``", "An empty dictionary: ``{}``"
 	"``DictContainingKeys(keys_list)``", "A dictionary containing all keys from ``keys_list``"
 	"``DictSupersetOf(this_dict)``", "A dictionary containing all key / value pairs from ``this_dict``"
 
