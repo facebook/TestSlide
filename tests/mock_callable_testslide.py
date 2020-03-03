@@ -177,7 +177,9 @@ def mock_callable_tests(context):
     def calling_patched_functions_with_bad_types_raises_TypeError(self):
         t = TargetStr()
         self.mock_callable(t, "typedfun").to_return_value("This is patched")
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(
+            TypeError, "('type of a must be str; got int instead')"
+        ):
             t.typedfun("a", 1, c=2)
 
     ##

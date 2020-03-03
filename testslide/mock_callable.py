@@ -9,7 +9,7 @@ import functools
 from typing import List, Callable  # noqa
 import testslide
 from testslide.strict_mock import StrictMock
-from testslide.strict_mock import _add_signature_validation
+from testslide.strict_mock import _wrap_signature_and_type_validation
 from .patch import _patch, _is_instance_method
 from .lib import _bail_if_private
 
@@ -600,7 +600,9 @@ class _MockCallableDSL(object):
             original_callable = getattr(self._target, self._method)
 
         if not isinstance(self._target, StrictMock):
-            new_value = _add_signature_validation(new_value, self._target, self._method)
+            new_value = _wrap_signature_and_type_validation(
+                new_value, self._target, self._method
+            )
 
         restore = self._method in self._target.__dict__
         restore_value = self._target.__dict__.get(self._method, None)

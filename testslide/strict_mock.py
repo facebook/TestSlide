@@ -13,7 +13,7 @@ from unittest.mock import _must_skip
 from .lib import _validate_function_signature
 
 
-def _add_signature_validation(value, template, attr_name):
+def _wrap_signature_and_type_validation(value, template, attr_name):
     if isinstance(template, StrictMock):
         if "_template" in template.__dict__:
             template = template._template
@@ -592,7 +592,7 @@ class StrictMock(object):
                         raise NonCallableValue(self, name)
 
                     if self.__dict__["_signature_validation"]:
-                        signature_validation_wrapper = _add_signature_validation(
+                        signature_validation_wrapper = _wrap_signature_and_type_validation(
                             value, self._template, name
                         )
                         if inspect.iscoroutinefunction(template_value):
