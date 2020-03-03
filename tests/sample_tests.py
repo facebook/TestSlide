@@ -58,3 +58,16 @@ def top_context(context):
         @context.example
         def passing_nested_example(self):
             _cond_print("passing_nested_example")
+
+
+class SampleTestCase(unittest.TestCase):
+    def test_passing(self):
+        _cond_print("test_pass")
+
+    def test_failing(self):
+        _cond_print("test_fail")
+        assert False
+
+    @unittest.skip("skip")
+    def test_skipped(self):
+        pass
