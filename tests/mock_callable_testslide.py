@@ -18,11 +18,20 @@ import contextlib
 from testslide.strict_mock import StrictMock
 import os
 from . import sample_module
+import typing
 
 
 class TargetStr(object):
     def __str__(self):
         return "original response"
+
+    def typedfun(
+        self,
+        a: str,
+        b: typing.Iterable[typing.Union[str, float]],
+        c: typing.Optional[str],
+    ):
+        return "asd"
 
     def _privatefun(self):
         return "cannotbemocked"
@@ -163,6 +172,15 @@ def mock_callable_tests(context):
             "This fun is private"
         ).and_assert_called_once()
         t._privatefun()
+
+    @context.example
+    def calling_patched_functions_with_bad_types_raises_TypeError(self):
+        t = TargetStr()
+        self.mock_callable(t, "typedfun").to_return_value("This is patched")
+        with self.assertRaisesRegex(
+            TypeError, "('type of a must be str; got int instead')"
+        ):
+            t.typedfun("a", 1, c=2)
 
     ##
     ## Shared Contexts
