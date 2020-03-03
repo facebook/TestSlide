@@ -10,6 +10,7 @@ import inspect
 import os.path
 
 from unittest.mock import _must_skip
+from .lib import _validate_function_signature
 
 
 def _add_signature_validation(value, template, attr_name):
@@ -24,6 +25,7 @@ def _add_signature_validation(value, template, attr_name):
         return value
 
     callable_template = getattr(template, attr_name)
+
     # FIXME decouple from _must_skip. It tells when self should be skipped
     # for signature validation.
     if _must_skip(template, attr_name, isinstance(template, type)):
@@ -42,6 +44,10 @@ def _add_signature_validation(value, template, attr_name):
                 raise TypeError(
                     "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
                 )
+            argspec = inspect.getfullargspec(callable_template)
+            validation_errors = _validate_function_signature(argspec, args, kwargs)
+            if validation_errors:
+                raise TypeError(validation_errors)
         return value(*args, **kwargs)
 
     return with_sig_check
