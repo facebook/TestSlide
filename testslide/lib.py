@@ -6,7 +6,6 @@
 
 import inspect
 import typeguard
-import typing
 
 
 def _bail_if_private(candidate: str, allow_private: False):
@@ -23,7 +22,6 @@ def _bail_if_private(candidate: str, allow_private: False):
         )
 
 
-# FullArgSpec(args=['a', 'b', 'c', 'd', 'e', 'f', 'g'], varargs=None, varkw=None, defaults=None, kwonlyargs=[], kwonlydefaults=None, annotations={'a': <class 'int'>, 'b': <class 'float'>, 'c': <class 'dict'>, 'd': <class 'list'>})
 def _validate_function_signature(argspec: inspect.FullArgSpec, args, kwargs):
     type_errs = []
     for idx in range(0, len(args)):

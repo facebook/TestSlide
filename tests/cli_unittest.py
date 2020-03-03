@@ -14,10 +14,10 @@ import unittest
 
 
 class TestCliBase(unittest.TestCase):
-    SAMPLE_DSL_PATH = os.path.dirname(__file__) + "/sample_dsl.py"
+    SAMPLE_TESTS_PATH = os.path.dirname(__file__) + "/sample_tests.py"
 
     def setUp(self):
-        self.argv = [self.SAMPLE_DSL_PATH]
+        self.argv = [self.SAMPLE_TESTS_PATH]
         self.env = {}
         super(TestCliBase, self).setUp()
 
@@ -171,6 +171,9 @@ class TestCliList(TestCliBase):
                 "top context: skipped example\n"
                 "top context: unittest SkipTest\n"
                 "top context, nested context: passing nested example\n"
+                "tests.sample_tests.SampleTestCase: test_failing\n"
+                "tests.sample_tests.SampleTestCase: test_passing\n"
+                "tests.sample_tests.SampleTestCase: test_skipped\n"
             )
         )
 
@@ -202,6 +205,16 @@ class TestCliQuiet(TestCliBase):
                 "  unittest SkipTest: SKIP\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "stdout:\n"
+                "test_fail stdout\n"
+                "\n"
+                "stderr:\n"
+                "test_fail stderr\n"
+                "\n"
+                "  test_failing: AssertionError: \n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
                 "\n"
                 "Failures:\n"
                 # TODO Rest of the output
@@ -228,6 +241,12 @@ class TestCliQuiet(TestCliBase):
                 "  nested context\n"
                 "passing_nested_example stdout\n"
                 "    passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "test_fail stdout\n"
+                "  test_failing: AssertionError: \n"
+                "test_pass stdout\n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
                 "\n"
                 "Failures:\n"
                 # TODO Rest of the output
@@ -312,6 +331,10 @@ class TestCliDocumentation(TestCliBase):
                 "  unittest SkipTest: SKIP\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "  test_failing: AssertionError: \n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
                 "\n"
                 "Failures:\n"
                 # TODO rest of output
@@ -330,12 +353,17 @@ class TestCliDocumentation(TestCliBase):
             expected_stdout_startswith=(
                 "top context\n"
                 "  passing example: PASS\n"
-                "  *focused example: PASS\n"
-                "  skipped example: SKIP\n"
+                "  unittest SkipTest: SKIP\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
                 "  failing example: SimulatedFailure: test failure (extra)\n"
-                "  unittest SkipTest: SKIP\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
+                "  test_failing: AssertionError: \n"
+                "top context\n"
+                "  skipped example: SKIP\n"
+                "  *focused example: PASS\n"
                 "\n"
                 "Failures:\n"
                 # TODO rest of output
@@ -373,6 +401,10 @@ class TestCliDocumentation(TestCliBase):
                 "  unittest SkipTest: SKIP\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "  test_failing: AssertionError: \n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
                 "\n"
                 "Failures:\n"
             ),
@@ -445,8 +477,11 @@ class TestCliDocumentation(TestCliBase):
                 "  unittest SkipTest: SKIP\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
                 "\n"
-                "Finished 5 example(s) in "
+                "Finished 7 example(s) in"
             ),
         )
 
@@ -457,7 +492,7 @@ class TestCliDocumentation(TestCliBase):
         """
         self.run_testslide(
             expected_return_code=1,
-            expected_in_stdout=('File "tests/sample_dsl.py", line'),
+            expected_in_stdout=('File "tests/sample_tests.py", line'),
         )
 
     def test_nonempty_trim_stack_trace_path_prefix(self):
@@ -465,11 +500,11 @@ class TestCliDocumentation(TestCliBase):
         Trims prefix passed to --trim-stack-trace-path-prefix.
         """
         self.argv.append("--trim-stack-trace-path-prefix")
-        self.argv.append(os.path.dirname(self.SAMPLE_DSL_PATH) + "/")
+        self.argv.append(os.path.dirname(self.SAMPLE_TESTS_PATH) + "/")
         self.run_testslide(
             expected_return_code=1,
             expected_in_stdout=(
-                'File "' + os.path.basename(self.SAMPLE_DSL_PATH) + '", line'
+                'File "' + os.path.basename(self.SAMPLE_TESTS_PATH) + '", line'
             ),
         )
 
@@ -481,7 +516,7 @@ class TestCliDocumentation(TestCliBase):
         self.argv.append("")
         self.run_testslide(
             expected_return_code=1,
-            expected_in_stdout=('File "' + self.SAMPLE_DSL_PATH + '", line'),
+            expected_in_stdout=('File "' + self.SAMPLE_TESTS_PATH + '", line'),
         )
 
 
@@ -492,7 +527,7 @@ class TestCliProgress(TestCliBase):
         self.argv.append("progress")
 
     def test_ouputs_dots(self):
-        self.run_testslide(expected_return_code=1, expected_stdout=(".F.SS.\n"))
+        self.run_testslide(expected_return_code=1, expected_stdout=(".F.SS.F.S\n"))
 
     def test_ouputs_colored_dots_with_terminal(self):
         self.run_testslide(
@@ -505,6 +540,9 @@ class TestCliProgress(TestCliBase):
                 + self.yellow("S")
                 + self.yellow("S")
                 + self.green(".")
+                + self.red("F")
+                + self.green(".")
+                + self.yellow("S")
                 + "\r\n"
             ),
         )

@@ -93,7 +93,7 @@ def _load_unittest_test_cases(import_module_names):
         # This extra method is needed so context_code is evaluated with different
         # values of test_case.
         def get_context_code(test_case):
-            def context_code(test_case_context):
+            def context_code(context):
 
                 for test_method_name in test_method_names:
 
@@ -122,17 +122,17 @@ def _load_unittest_test_cases(import_module_names):
 
                     # Regular example
                     if test_method_name.startswith("test"):
-                        test_case_context.example(test_method_name)(
+                        context.example(test_method_name)(
                             gen_example_code(test_method_name)
                         )
                     # Focused example
                     if test_method_name.startswith("ftest"):
-                        test_case_context.fexample(test_method_name)(
+                        context.fexample(test_method_name)(
                             gen_example_code(test_method_name)
                         )
                     # Skipped example
                     if test_method_name.startswith("xtest"):
-                        test_case_context.xexample(test_method_name)(
+                        context.xexample(test_method_name)(
                             gen_example_code(test_method_name)
                         )
 
