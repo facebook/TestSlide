@@ -828,19 +828,17 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).setUp()
 
     @staticmethod
-    def mock_callable(target, method):
-        return testslide.mock_callable.mock_callable(target, method)
+    def mock_callable(*args, **kwargs):
+        return testslide.mock_callable.mock_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_async_callable(target, method, callable_returns_coroutine=False):
-        return testslide.mock_callable.mock_async_callable(
-            target, method, callable_returns_coroutine
-        )
+    def mock_async_callable(*args, **kwargs):
+        return testslide.mock_callable.mock_async_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_constructor(target, class_name):
-        return testslide.mock_constructor.mock_constructor(target, class_name)
+    def mock_constructor(*args, **kwargs):
+        return testslide.mock_constructor.mock_constructor(*args, **kwargs)
 
     @staticmethod
-    def patch_attribute(target, attribute, new_value):
-        return testslide.patch_attribute.patch_attribute(target, attribute, new_value)
+    def patch_attribute(*args, **kwargs):
+        return testslide.patch_attribute.patch_attribute(*args, **kwargs)
