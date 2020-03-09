@@ -23,6 +23,7 @@ Before hooks are executed in the order defined, before each example:
     def append_one(self):
       self.value.append(1)
   
+    @context.before
     def append_two(self):
       self.value.append(2)
   
