@@ -20,7 +20,10 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     setup_requires=["setuptools>=38.6.0"],
-    install_requires=["psutil>=5.6.7"],
+    install_requires=[
+        "psutil>=5.6.7",
+        "typeguard>=2.7.1",
+    ],
     extras_require={
         "build": [
             "black",
@@ -29,7 +32,6 @@ setup(
             "sphinx",
             "sphinx-autobuild",
             "sphinx_rtd_theme",
-            "typeguard",
         ]
     },
     classifiers=[
