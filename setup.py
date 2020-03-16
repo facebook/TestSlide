@@ -10,7 +10,7 @@ with open("README.md", encoding="utf8") as f:
 
 setup(
     name="TestSlide",
-    version="2.3.0",
+    version="2.3.1",
     packages=["testslide"],
     maintainer="Fabio Pugliese Ornellas",
     maintainer_email="fabio.ornellas@gmail.com",
