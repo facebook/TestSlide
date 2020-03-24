@@ -341,6 +341,19 @@ def strict_mock(context):
                     getattr(self.strict_mock, attr_name)
 
             @context.example
+            def shows_the_correct_file_and_linenum_when_raising_when_an_undefined_attribute_is_accessed(
+                self,
+            ):
+                attr_name = "non_callable"
+                with self.assertRaisesWithRegexMessage(
+                    UndefinedAttribute,
+                    f"'{attr_name}' is not set.\n"
+                    f"{self.strict_mock_rgx} must have a value set "
+                    "for this attribute if it is going to be accessed.",
+                ):
+                    getattr(self.strict_mock, attr_name)
+
+            @context.example
             def raises_when_an_non_existing_attribute_is_accessed(self):
                 attr_name = "non_existing_attr"
                 with self.assertRaisesWithRegexMessage(
