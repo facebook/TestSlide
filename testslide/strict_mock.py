@@ -458,8 +458,28 @@ class StrictMock(object):
                 self.__aenter__ = aenter
                 self.__aexit__ = aexit
 
+    def _get_caller_frame(self, depth):
+        # Adding extra 3 to account for the stack:
+        #   _get_caller_frame
+        #   _get_caller
+        #   __init__
+        depth = depth + 3
+        current_frame = inspect.currentframe()
+        while current_frame:
+            depth -= 1
+            if not depth:
+                break
+
+            current_frame = current_frame.f_back
+
+        return current_frame
+
     def _get_caller(self, depth):
-        frameinfo = inspect.getframeinfo(inspect.stack()[depth + 1][0])
+        # Doing inspect.stack will retrieve the whole stack, including context
+        # and that is really slow, this only retrieves the minimum, and does
+        # not read the file contents.
+        caller_frame = self._get_caller_frame(depth)
+        frameinfo = inspect.getframeinfo(caller_frame, context=0)
         filename = frameinfo.filename
         lineno = frameinfo.lineno
         if self.TRIM_PATH_PREFIX:
