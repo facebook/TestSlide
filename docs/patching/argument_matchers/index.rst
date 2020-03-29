@@ -111,3 +111,11 @@ Generic
 	"``AnyTruthy()``", "Any object where ``bool(obj) == True``"
 	"``AnyFalsey()``", "Any object where ``bool(obj) == False``"
 	"``AnyInstanceOf()``", "Any object where ``isinstance(obj) == True``"
+	"``AnyWithCall(call)``", "Any object where ``call(obj) == True``"
+
+.. code-block:: python
+
+  self.mock_callable(os, 'remove')\
+    .for_call(AnyWithCall(lambda path: path.endswith("py"))\
+    .to_return_value(None)\
+    .and_assert_called_once()

@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import re
-from typing import List, Dict
+from typing import Callable, Dict, List, TypeVar
 
 
 class AlreadyChainedException(Exception):
@@ -398,3 +398,14 @@ class AnyFalsey(Matcher):
 class AnyInstanceOf(_RichComparison):
     def __init__(self, klass):
         super().__init__(klass=klass)
+
+
+T = TypeVar("T")
+
+
+class AnyWithCall(Matcher):
+    def __init__(self, call: Callable[[T], bool]) -> None:
+        self.call = call
+
+    def __eq__(self, other: T) -> bool:
+        return self.call(other)
