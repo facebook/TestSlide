@@ -18,6 +18,7 @@ import inspect
 import sys
 import re
 import os
+from unittest.mock import Mock
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
@@ -508,6 +509,40 @@ def strict_mock(context):
                                             self.strict_mock, test_method_name
                                         )
                                         self.assertEqual(method("hello"), "mock: hello")
+
+                                    @context.example
+                                    def works_with_Mock_parameter(self):
+                                        class Dummy_param:
+                                            def get_string():
+                                                return "Dummy_param: not mocked"
+
+                                        class Dummy:
+                                            def method(self, param: Dummy_param):
+                                                return f"Dummy: {param.get_string()}"
+
+                                        my_strict_mock = StrictMock(template=Dummy)
+                                        my_mock = Mock(spec=Dummy_param)
+                                        my_mock.get_string.return_value = "mock_param"
+
+                                        my_strict_mock.method = lambda param: f"mock_method: {param.get_string()}"
+                                        self.assertEqual(my_strict_mock.method(param=my_mock), "mock_method: mock_param")
+
+                                    @context.example
+                                    def works_with_StrictMock_parameter(self):
+                                        class Dummy_param:
+                                            def get_string():
+                                                return "Dummy_param: not mocked"
+
+                                        class Dummy:
+                                            def method(self, param: Dummy_param):
+                                                return f"Dummy: {param.get_string()}"
+
+                                        my_strict_mock = StrictMock(template=Dummy)
+                                        my_mock = StrictMock(template=Dummy_param)
+                                        my_mock.get_string = lambda: "mock_param"
+
+                                        my_strict_mock.method = lambda param: f"mock_method: {param.get_string()}"
+                                        self.assertEqual(my_strict_mock.method(param=my_mock), "mock_method: mock_param")
 
                             else:
 
