@@ -8,64 +8,12 @@ import copy
 import functools
 import inspect
 import os.path
-import typeguard
-from typing import Optional, Type
 from unittest.mock import NonCallableMock, _must_skip
-
-
-def _get_spec_from_strict_mock(mock_obj: "StrictMock") -> Optional[Type]:
-    if "__template" in mock_obj.__dict__:
-        return mock_obj.__template
-
-    return mock_obj
-
-
-def _get_spec_from_mock(mock_obj: NonCallableMock) -> Optional[Type]:
-    if "_spec_class" in mock_obj.__dict__:
-        return mock_obj._spec_class
-
-    return mock_obj
-
-
-def _unwrap_mock(maybe_mock):
-    if isinstance(maybe_mock, StrictMock):
-        return _get_spec_from_strict_mock(maybe_mock)
-
-    # all mocks in unittest.mock inherit from NonCallableMock
-    if isinstance(maybe_mock, NonCallableMock):
-        return _get_spec_from_mock(maybe_mock)
-
-    return maybe_mock
-
-def _validate_function_signature(argspec: inspect.FullArgSpec, args, kwargs):
-    type_errs = []
-    for idx in range(0, len(args)):
-        if argspec.args:
-            arg = argspec.args[idx]
-            try:
-                __validate_argument_type(argspec.annotations, arg, args[idx])
-            except TypeError as te:
-                type_errs.append(te)
-    for k, v in kwargs.items():
-        try:
-            __validate_argument_type(argspec.annotations, k, v)
-        except TypeError as te:
-            type_errs.append(te)
-    return type_errs
-
-
-def __validate_argument_type(annotations, argname, value):
-    type_information = annotations.get(argname)
-    if type_information:
-        unwraped_value = _unwrap_mock(value)
-        if unwraped_value != value and unwraped_value != type_information:
-            raise TypeError(
-                f"type of param '{argname}' must be {type_information}; got {value} instead"
-            )
-
-        else:
-            typeguard.check_type(argname, value, type_information)
-
+from testslide.lib import (
+    validate_function_signature,
+    get_spec_from_strict_mock,
+    get_spec_from_mock,
+)
 
 
 def _wrap_signature_and_type_validation(value, template, attr_name):
@@ -100,7 +48,9 @@ def _wrap_signature_and_type_validation(value, template, attr_name):
                     "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
                 )
             argspec = inspect.getfullargspec(callable_template)
-            validation_errors = _validate_function_signature(argspec, args, kwargs)
+            validation_errors = validate_function_signature(
+                argspec, args, kwargs, mock_extractors=MOCK_SPEC_EXTRACTORS
+            )
             if validation_errors:
                 raise TypeError(validation_errors)
         return value(*args, **kwargs)
@@ -778,3 +728,10 @@ class StrictMock(object):
             value = copy.deepcopy(type(self).__dict__[name], memo)
             setattr(type(self_copy), name, value)
         return self_copy
+
+
+MOCK_SPEC_EXTRACTORS = {
+    # Add here any other mocks
+    StrictMock: get_spec_from_strict_mock,
+    NonCallableMock: get_spec_from_mock,
+}
