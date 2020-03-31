@@ -8,12 +8,9 @@ import copy
 import functools
 import inspect
 import os.path
+from typing import Any, Optional
 from unittest.mock import NonCallableMock, _must_skip
-from testslide.lib import (
-    validate_function_signature,
-    get_spec_from_strict_mock,
-    get_spec_from_mock,
-)
+from testslide.lib import validate_function_signature
 
 
 def _wrap_signature_and_type_validation(value, template, attr_name):
@@ -730,8 +727,22 @@ class StrictMock(object):
         return self_copy
 
 
+def _get_spec_from_strict_mock(mock_obj: StrictMock) -> Optional[Any]:
+    if "_template" in mock_obj.__dict__ and mock_obj._template is not None:
+        return mock_obj._template
+
+    return mock_obj
+
+
+def _get_spec_from_mock(mock_obj: NonCallableMock) -> Optional[Any]:
+    if "_spec_class" in mock_obj.__dict__ and mock_obj._spec_class is not None:
+        return mock_obj._spec_class
+
+    return mock_obj
+
+
 MOCK_SPEC_EXTRACTORS = {
     # Add here any other mocks
-    StrictMock: get_spec_from_strict_mock,
-    NonCallableMock: get_spec_from_mock,
+    StrictMock: _get_spec_from_strict_mock,
+    NonCallableMock: _get_spec_from_mock,
 }

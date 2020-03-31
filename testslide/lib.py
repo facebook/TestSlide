@@ -5,22 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 import inspect
 import typeguard
-from typing import Any, Callable, Dict, List, Optional, Type
-from unittest.mock import NonCallableMock, _must_skip
-
-
-def get_spec_from_strict_mock(mock_obj: "StrictMock") -> Optional[Any]:
-    if "__template" in mock_obj.__dict__:
-        return mock_obj.__template
-
-    return mock_obj
-
-
-def get_spec_from_mock(mock_obj: NonCallableMock) -> Optional[Any]:
-    if "_spec_class" in mock_obj.__dict__:
-        return mock_obj._spec_class
-
-    return mock_obj
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type
 
 
 def _unwrap_mock(
@@ -59,6 +44,10 @@ def validate_function_signature(
     return type_errs
 
 
+def _is_a_mock(maybe_mock: Any, mock_classes: Iterable[Type]) -> bool:
+    return any(isinstance(maybe_mock, mock_class) for mock_class in mock_classes)
+
+
 def __validate_argument_type(
     annotations: Dict[str, Any],
     argname: str,
@@ -67,12 +56,9 @@ def __validate_argument_type(
 ) -> None:
     type_information = annotations.get(argname)
     if type_information:
-        unwraped_value = _unwrap_mock(value, mock_extractors)
-        if unwraped_value != value and unwraped_value != type_information:
-            raise TypeError(
-                f"type of param '{argname}' must be {type_information}; got {value} instead"
-            )
-
+        unwrapped_value = _unwrap_mock(value, mock_extractors)
+        if _is_a_mock(unwrapped_value, mock_classes=mock_extractors.keys()):
+            return
         else:
             typeguard.check_type(argname, value, type_information)
 
