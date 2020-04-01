@@ -55,9 +55,7 @@ def validate_function_signature(
             type_errors.append(f"{repr(argname)}: {type_error}")
     if type_errors:
         raise TypeError(
-            "Call with incompatible argument types:\n  "
-            +
-            "\n  ".join(type_errors)
+            "Call with incompatible argument types:\n  " + "\n  ".join(type_errors)
         )
 
 
