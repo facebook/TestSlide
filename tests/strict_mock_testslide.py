@@ -452,31 +452,6 @@ def strict_mock(context):
                                 ):
                                     getattr(self.strict_mock, self.test_method_name)
 
-                            @context.example
-                            def raises_when_a_non_existing_method_is_accessed(self):
-                                attr_name = "non_existing_method"
-                                with self.assertRaisesWithRegexMessage(
-                                    AttributeError,
-                                    f"'{attr_name}' was not set for "
-                                    f"{self.strict_mock_rgx}.",
-                                ):
-                                    getattr(self.strict_mock, attr_name)
-
-                            @context.example
-                            def raises_when_setting_non_existing_methods(self):
-                                attr_name = "non_existing_method"
-                                with self.assertRaisesWithRegexMessage(
-                                    NonExistentAttribute,
-                                    f"'{attr_name}' can not be set.\n"
-                                    f"{self.strict_mock_rgx} template class does not "
-                                    "have this attribute so the mock can not have it "
-                                    "as well.\n"
-                                    "See also: 'runtime_attrs' at StrictMock.__init__.",
-                                ):
-                                    self.strict_mock.non_existing_method = (
-                                        self.mock_function
-                                    )
-
                             @context.sub_context
                             def signature_validation(context):
                                 @context.example
