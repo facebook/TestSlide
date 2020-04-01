@@ -96,6 +96,11 @@ class TestDSLBase(unittest.TestCase):
     def setUp(self):
         reset()
 
+    def run_all_examples(self):
+        for each_context in Context.all_top_level_contexts:
+            for example in each_context.all_examples:
+                example()
+
     def run_first_context_first_example(self):
         Context.all_top_level_contexts[0].all_examples[0]()
 
@@ -995,6 +1000,38 @@ class TestDSLMemoizedBeforeAttribute(TestDSLBase):
                 @context.memoize_before  # noqa: F811
                 def name(self, msg):  # noqa: F811
                     pass
+
+    def test_cant_do_composition(self):
+        """
+        Similar to @context.memoize.
+        """
+        executed = []
+
+        @context
+        def top(context):
+            @context.memoize_before
+            async def attribute(self):
+                executed.append(True)
+                return "top"
+
+            @context.memoize_before
+            async def trigger_attribute(self):
+                trigger_attribute = {}
+                trigger_attribute["attribute"] = self.attribute
+                return trigger_attribute
+
+            @context.sub_context
+            def inner(context):
+                @context.memoize_before
+                async def attribute(self):
+                    return "inner"
+
+                @context.example
+                async def can_compose(self):
+                    assert self.trigger_attribute["attribute"] == "inner"
+
+        self.run_all_examples()
+        self.assertFalse(bool(executed))
 
 
 class TestDSLBeforeHook(TestDSLBase):

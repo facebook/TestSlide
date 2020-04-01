@@ -198,20 +198,7 @@ class _DSLContext(object):
 
         _validate_parameter(memoizable_code, "self", 0)
 
-        self.current_context.register_runtime_attribute(name)
-
-        if inspect.iscoroutinefunction(memoizable_code):
-
-            async def async_materialize_attribute(self):
-                setattr(self, name, await memoizable_code(self))
-
-            self.before(async_materialize_attribute)
-        else:
-
-            def materialize_attribute(self):
-                setattr(self, name, memoizable_code(self))
-
-            self.before(materialize_attribute)
+        self.current_context.add_memoized_attribute(name, memoizable_code, before=True)
 
         return self._not_callable
 
