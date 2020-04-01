@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 import inspect
 import typeguard
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type
+from typing import Any, Callable, Dict, Iterable, Optional, Type
 
 
 def _unwrap_mock(
