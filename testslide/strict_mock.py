@@ -8,9 +8,9 @@ import copy
 import functools
 import inspect
 import os.path
-
-from unittest.mock import _must_skip
-from .lib import _validate_function_signature
+from typing import Any, Optional
+from unittest.mock import NonCallableMock, _must_skip
+from testslide.lib import validate_function_signature
 
 
 def _wrap_signature_and_type_validation(value, template, attr_name):
@@ -45,7 +45,9 @@ def _wrap_signature_and_type_validation(value, template, attr_name):
                     "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
                 )
             argspec = inspect.getfullargspec(callable_template)
-            validation_errors = _validate_function_signature(argspec, args, kwargs)
+            validation_errors = validate_function_signature(
+                argspec, args, kwargs, mock_extractors=MOCK_SPEC_EXTRACTORS
+            )
             if validation_errors:
                 raise TypeError(validation_errors)
         return value(*args, **kwargs)
@@ -723,3 +725,24 @@ class StrictMock(object):
             value = copy.deepcopy(type(self).__dict__[name], memo)
             setattr(type(self_copy), name, value)
         return self_copy
+
+
+def _get_spec_from_strict_mock(mock_obj: StrictMock) -> Optional[Any]:
+    if "_template" in mock_obj.__dict__ and mock_obj._template is not None:
+        return mock_obj._template
+
+    return mock_obj
+
+
+def _get_spec_from_mock(mock_obj: NonCallableMock) -> Optional[Any]:
+    if "_spec_class" in mock_obj.__dict__ and mock_obj._spec_class is not None:
+        return mock_obj._spec_class
+
+    return mock_obj
+
+
+MOCK_SPEC_EXTRACTORS = {
+    # Add here any other mocks
+    StrictMock: _get_spec_from_strict_mock,
+    NonCallableMock: _get_spec_from_mock,
+}
