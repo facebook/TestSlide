@@ -24,24 +24,41 @@ def _unwrap_mock(
 
 
 def validate_function_signature(
-    argspec: inspect.FullArgSpec, args, kwargs, mock_extractors: Dict[Type, Callable]
-) -> List[TypeError]:
-    type_errs = []
+    callable_template, args, kwargs, mock_extractors: Dict[Type, Callable]
+):
+    argspec = inspect.getfullargspec(callable_template)
+    try:
+        signature = inspect.signature(callable_template)
+    except ValueError:
+        signature = None
+    type_errors = []
     for idx in range(0, len(args)):
         if argspec.args:
-            arg = argspec.args[idx]
+            # We use the signature whenever available because for class methods
+            # argspec has the extra 'cls' value
+            if signature:
+                argname = list(signature.parameters.keys())[idx]
+            else:
+                argname = argspec.args[idx]
             try:
                 __validate_argument_type(
-                    argspec.annotations, arg, args[idx], mock_extractors
+                    argspec.annotations, argname, args[idx], mock_extractors
                 )
-            except TypeError as te:
-                type_errs.append(te)
-    for k, v in kwargs.items():
+            except TypeError as type_error:
+                type_errors.append(f"{repr(argname)}: {type_error}")
+    for argname, value in kwargs.items():
         try:
-            __validate_argument_type(argspec.annotations, k, v, mock_extractors)
-        except TypeError as te:
-            type_errs.append(te)
-    return type_errs
+            __validate_argument_type(
+                argspec.annotations, argname, value, mock_extractors
+            )
+        except TypeError as type_error:
+            type_errors.append(f"{repr(argname)}: {type_error}")
+    if type_errors:
+        raise TypeError(
+            "Call with incompatible argument types:\n  "
+            +
+            "\n  ".join(type_errors)
+        )
 
 
 def _is_a_mock(maybe_mock: Any, mock_classes: Iterable[Type]) -> bool:

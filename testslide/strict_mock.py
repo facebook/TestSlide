@@ -44,12 +44,9 @@ def _wrap_signature_and_type_validation(value, template, attr_name):
                 raise TypeError(
                     "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
                 )
-            argspec = inspect.getfullargspec(callable_template)
-            validation_errors = validate_function_signature(
-                argspec, args, kwargs, mock_extractors=MOCK_SPEC_EXTRACTORS
+            validate_function_signature(
+                callable_template, args, kwargs, mock_extractors=MOCK_SPEC_EXTRACTORS
             )
-            if validation_errors:
-                raise TypeError(validation_errors)
         return value(*args, **kwargs)
 
     return with_sig_check

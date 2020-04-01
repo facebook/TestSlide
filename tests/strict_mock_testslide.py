@@ -22,7 +22,7 @@ import os
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 
 
-def extra_arg(f):
+def extra_arg_with_wraps(f):
     @functools.wraps(f)
     def wrapper(*args, **kwds):
         return f("extra", *args, **kwds)
@@ -70,40 +70,40 @@ class Template(TemplateParent):
         self.runtime_attr_from_init = True
         self.attr = None
 
-    def instance_method(self, message):
+    def instance_method(self, message: str):
         return "instance_method: {}".format(message)
 
-    async def async_instance_method(self, message):
+    async def async_instance_method(self, message: str):
         return "async_instance_method: {}".format(message)
 
     @staticmethod
-    def static_method(message):
+    def static_method(message: str):
         return "static_method: {}".format(message)
 
     @staticmethod
-    async def async_static_method(message):
+    async def async_static_method(message: str):
         return "async_static_method: {}".format(message)
 
     @classmethod
-    def class_method(cls, message):
+    def class_method(cls, message: str):
         return "class_method: {}".format(message)
 
     @classmethod
-    async def async_class_method(cls, message):
+    async def async_class_method(cls, message: str):
         return "async_class_method: {}".format(message)
 
-    @extra_arg
-    def instance_method_extra(self, extra, message):
+    @extra_arg_with_wraps
+    def instance_method_wrapped(self, extra, message):
         return "instance_method: {}".format(message)
 
-    @extra_arg
+    @extra_arg_with_wraps
     @staticmethod
-    def static_method_extra(extra, message):
+    def static_method_wrapped(extra, message):
         return "static_method: {}".format(message)
 
-    @extra_arg
+    @extra_arg_with_wraps
     @classmethod
-    def class_method_extra(cls, extra, message):
+    def class_method_wrapped(cls, extra, message):
         return "class_method: {}".format(message)
 
 
@@ -468,7 +468,7 @@ def strict_mock(context):
 
                                 @context.example
                                 def works_with_wraps(self):
-                                    test_method_name = "{}_extra".format(
+                                    test_method_name = "{}_wrapped".format(
                                         self.test_method_name
                                     )
                                     setattr(
@@ -515,6 +515,22 @@ def strict_mock(context):
                                             ),
                                             type(self.mock_function),
                                         )
+
+                            @context.sub_context
+                            def type_validation(context):
+                                @context.example
+                                def fails_call_with_wrong_argument_type(self):
+                                    print("template: ", self.template)
+                                    print("test_method_name: ", self.test_method_name)
+                                    setattr(
+                                        self.strict_mock,
+                                        self.test_method_name,
+                                        lambda message: None,
+                                    )
+                                    with self.assertRaises(TypeError):
+                                        getattr(
+                                            self.strict_mock, self.test_method_name
+                                        )(1234)
 
                         @context.sub_context
                         def success(context):
@@ -897,7 +913,7 @@ def strict_mock(context):
                 self.strict_mock.instance_method("hello"),
                 strict_mock_copy.instance_method("hello"),
             )
-            self.assertEqual(self.strict_mock.instance_method(1), "mock")
+            self.assertEqual(self.strict_mock.instance_method("meh"), "mock")
 
     @context.sub_context("with TRIM_PATH_PREFIX set")
     def with_trim_path_prefix_set(context):
