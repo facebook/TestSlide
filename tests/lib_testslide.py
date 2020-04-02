@@ -72,9 +72,27 @@ def _validate_function_signature(context):
     def invalid_types(context):
         @context.function
         def assert_fails(self, *args, **kwargs):
-            with self.assertRaises(TypeError):
+            with self.assertRaisesRegex(
+                TypeError, "Call with incompatible argument types"
+            ):
                 testslide.lib._validate_function_signature(
                     sample_module.test_function, args, kwargs
+                )
+
+        @context.example
+        def error_message(self):
+            with self.assertRaises(
+                TypeError,
+                msg=(
+                    "Call with incompatible argument types:\n"
+                    "  'arg1': type of arg1 must be str; got int instead\n"
+                    "  'arg2': type of arg2 must be str; got int instead\n"
+                    "  'kwarg1': type of kwarg1 must be str; got int instead\n"
+                    "  'kwarg2': type of kwarg2 must be str; got int instead"
+                ),
+            ):
+                testslide.lib._validate_function_signature(
+                    sample_module.test_function, (1, 2, 3, 4), {}
                 )
 
         @context.example
