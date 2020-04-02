@@ -39,32 +39,32 @@ class TargetStr(object):
 
 class ParentTarget(TargetStr):
     def instance_method(
-        self, arg1: str, arg2: str, kwarg1: str = None, kwarg2: str = None
+        self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
     ):
         return "original response"
 
     async def async_instance_method(
-        self, arg1: str, arg2: str, kwarg1: str = None, kwarg2: str = None
+        self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
     ):
         return "async original response"
 
     @staticmethod
-    def static_method(arg1: str, arg2: str, kwarg1: str = None, kwarg2: str = None):
+    def static_method(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
         return "original response"
 
     @staticmethod
     async def async_static_method(
-        arg1: str, arg2: str, kwarg1: str = None, kwarg2: str = None
+        arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
     ):
         return "async original response"
 
     @classmethod
-    def class_method(cls, arg1: str, arg2: str, kwarg1: str = None, kwarg2: str = None):
+    def class_method(cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
         return "original response"
 
     @classmethod
     async def async_class_method(
-        cls, arg1: str, arg2: str, kwarg1: str = None, kwarg2: str = None
+        cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
     ):
         return "async original response"
 

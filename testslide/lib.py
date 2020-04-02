@@ -90,7 +90,7 @@ def _validate_function_signature(
 ##
 
 
-def _bail_if_private(candidate: str, allow_private: False):
+def _bail_if_private(candidate: str, allow_private: bool):
     if (
         candidate.startswith("_")
         and not allow_private
