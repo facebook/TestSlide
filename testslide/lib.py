@@ -51,11 +51,8 @@ def _validate_argument_type(
 
     if _is_a_mock(value):
         template = _extract_mock_template(value)
-        if template:
-            value = template
-        else:
+        if not template:
             return
-
     typeguard.check_type(argname, value, type_information)
 
 
