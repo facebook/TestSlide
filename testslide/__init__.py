@@ -105,7 +105,7 @@ class _ContextData(object):
         return self._context.all_context_data_methods
 
     @property
-    def _all_attributes(self):
+    def _all_memoizable_attributes(self):
         return self._context.all_context_data_memoizable_attributes
 
     def __getattr__(self, name):
@@ -116,8 +116,8 @@ class _ContextData(object):
 
             self.__dict__[name] = static
 
-        if name in self._all_attributes.keys():
-            attribute_code = self._all_attributes[name]
+        if name in self._all_memoizable_attributes.keys():
+            attribute_code = self._all_memoizable_attributes[name]
             if self._example.is_async and inspect.iscoroutinefunction(attribute_code):
                 raise ValueError(
                     f"Function can not be a coroutine function: {repr(attribute_code)}"
@@ -549,7 +549,6 @@ class Context(object):
         self.context_data_methods = {}
         self.context_data_memoizable_attributes = {}
         self.shared_contexts = {}
-        self._runtime_attributes = []
 
         if not self.parent_context and not self.shared:
             self.all_top_level_contexts.append(self)
@@ -729,7 +728,6 @@ class Context(object):
             [
                 name in self.context_data_methods.keys(),
                 name in self.context_data_memoizable_attributes.keys(),
-                name in self._runtime_attributes,
             ]
         )
 
@@ -743,18 +741,7 @@ class Context(object):
             )
         self.context_data_methods[name] = function_code
 
-    def register_runtime_attribute(self, name):
-        """
-        Register name as a new runtime attribute, that can not be registered
-        again.
-        """
-        if name in self._runtime_attributes:
-            raise AttributeError(
-                'Attribute "{}" already set for context "{}"'.format(name, self)
-            )
-        self._runtime_attributes.append(name)
-
-    def add_memoized_attribute(self, name, memoizable_code):
+    def add_memoized_attribute(self, name, memoizable_code, before=False):
         """
         Add given attribute name to execution scope, by lazily memoizing the return
         value of memoizable_code().
@@ -764,6 +751,27 @@ class Context(object):
                 'Attribute "{}" already set for context "{}"'.format(name, self)
             )
         self.context_data_memoizable_attributes[name] = memoizable_code
+
+        if before:
+
+            if inspect.iscoroutinefunction(memoizable_code):
+
+                async def async_materialize_attribute(context_data):
+                    code = context_data._context.all_context_data_memoizable_attributes[
+                        name
+                    ]
+                    context_data.__dict__[name] = await code(context_data)
+
+                self.before_functions.append(async_materialize_attribute)
+            else:
+
+                def materialize_attribute(context_data):
+                    code = context_data._context.all_context_data_memoizable_attributes[
+                        name
+                    ]
+                    context_data.__dict__[name] = code(context_data)
+
+                self.before_functions.append(materialize_attribute)
 
     def add_shared_context(self, name, shared_context_code):
         """
