@@ -9,7 +9,7 @@ import functools
 from typing import List, Callable  # noqa
 import testslide
 from testslide.strict_mock import StrictMock
-from testslide.strict_mock import _wrap_signature_and_type_validation
+from testslide.lib import _wrap_signature_and_type_validation
 from .patch import _patch, _is_instance_method
 from .lib import _bail_if_private
 

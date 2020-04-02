@@ -2,54 +2,12 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
 import dis
 import copy
-import functools
 import inspect
 import os.path
-from typing import Any, Optional
-from unittest.mock import NonCallableMock, _must_skip
-from testslide.lib import _validate_function_signature
-
-
-def _wrap_signature_and_type_validation(value, template, attr_name):
-    if isinstance(template, StrictMock):
-        if "_template" in template.__dict__:
-            template = template._template
-        else:
-            return value
-
-    # This covers runtime attributes
-    if not hasattr(template, attr_name):
-        return value
-
-    callable_template = getattr(template, attr_name)
-
-    # FIXME decouple from _must_skip. It tells when self should be skipped
-    # for signature validation.
-    if _must_skip(template, attr_name, isinstance(template, type)):
-        callable_template = functools.partial(callable_template, None)
-
-    try:
-        signature = inspect.signature(callable_template, follow_wrapped=False)
-    except ValueError:
-        signature = None
-
-    def with_sig_check(*args, **kwargs):
-        if signature:
-            try:
-                signature.bind(*args, **kwargs)
-            except TypeError as e:
-                raise TypeError(
-                    "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
-                )
-            _validate_function_signature(
-                callable_template, args, kwargs, mock_extractors=MOCK_SPEC_EXTRACTORS
-            )
-        return value(*args, **kwargs)
-
-    return with_sig_check
+import testslide.lib
+from typing import Optional, Any
 
 
 class UndefinedAttribute(BaseException):
@@ -611,7 +569,7 @@ class StrictMock(object):
                         raise NonCallableValue(self, name)
 
                     if self.__dict__["_signature_validation"]:
-                        signature_validation_wrapper = _wrap_signature_and_type_validation(
+                        signature_validation_wrapper = testslide.lib._wrap_signature_and_type_validation(
                             value, self._template, name
                         )
                         if inspect.iscoroutinefunction(template_value):
@@ -724,22 +682,11 @@ class StrictMock(object):
         return self_copy
 
 
-def _get_spec_from_strict_mock(mock_obj: StrictMock) -> Optional[Any]:
+def _extract_StrictMock_template(mock_obj) -> Optional[Any]:
     if "_template" in mock_obj.__dict__ and mock_obj._template is not None:
         return mock_obj._template
 
-    return mock_obj
+    return None
 
 
-def _get_spec_from_mock(mock_obj: NonCallableMock) -> Optional[Any]:
-    if "_spec_class" in mock_obj.__dict__ and mock_obj._spec_class is not None:
-        return mock_obj._spec_class
-
-    return mock_obj
-
-
-MOCK_SPEC_EXTRACTORS = {
-    # Add here any other mocks
-    StrictMock: _get_spec_from_strict_mock,
-    NonCallableMock: _get_spec_from_mock,
-}
+testslide.lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template
