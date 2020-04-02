@@ -5,7 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 import inspect
 import typeguard
-from typing import Any, Callable, Dict, Iterable, Optional, Type
+from typing import Any, Callable, Dict, Iterable, Optional, Type, Tuple
+
+##
+## Type validation
+##
 
 
 def _unwrap_mock(
@@ -23,8 +27,30 @@ def _unwrap_mock(
     return unwrap_func(maybe_mock)
 
 
-def validate_function_signature(
-    callable_template, args, kwargs, mock_extractors: Dict[Type, Callable]
+def _is_a_mock(maybe_mock: Any, mock_classes: Iterable[Type]) -> bool:
+    return any(isinstance(maybe_mock, mock_class) for mock_class in mock_classes)
+
+
+def _validate_argument_type(
+    annotations: Dict[str, Any],
+    argname: str,
+    value: Any,
+    mock_extractors: Dict[Type, Callable],
+) -> None:
+    type_information = annotations.get(argname)
+    if type_information:
+        unwrapped_value = _unwrap_mock(value, mock_extractors)
+        if _is_a_mock(unwrapped_value, mock_classes=mock_extractors.keys()):
+            return
+        else:
+            typeguard.check_type(argname, value, type_information)
+
+
+def _validate_function_signature(
+    callable_template: Callable,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
+    mock_extractors: Dict[Type, Callable],
 ):
     argspec = inspect.getfullargspec(callable_template)
     try:
@@ -41,14 +67,14 @@ def validate_function_signature(
             else:
                 argname = argspec.args[idx]
             try:
-                __validate_argument_type(
+                _validate_argument_type(
                     argspec.annotations, argname, args[idx], mock_extractors
                 )
             except TypeError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
     for argname, value in kwargs.items():
         try:
-            __validate_argument_type(
+            _validate_argument_type(
                 argspec.annotations, argname, value, mock_extractors
             )
         except TypeError as type_error:
@@ -59,23 +85,9 @@ def validate_function_signature(
         )
 
 
-def _is_a_mock(maybe_mock: Any, mock_classes: Iterable[Type]) -> bool:
-    return any(isinstance(maybe_mock, mock_class) for mock_class in mock_classes)
-
-
-def __validate_argument_type(
-    annotations: Dict[str, Any],
-    argname: str,
-    value: Any,
-    mock_extractors: Dict[Type, Callable],
-) -> None:
-    type_information = annotations.get(argname)
-    if type_information:
-        unwrapped_value = _unwrap_mock(value, mock_extractors)
-        if _is_a_mock(unwrapped_value, mock_classes=mock_extractors.keys()):
-            return
-        else:
-            typeguard.check_type(argname, value, type_information)
+##
+## Private attributes
+##
 
 
 def _bail_if_private(candidate: str, allow_private: False):

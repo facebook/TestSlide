@@ -10,7 +10,7 @@ import inspect
 import os.path
 from typing import Any, Optional
 from unittest.mock import NonCallableMock, _must_skip
-from testslide.lib import validate_function_signature
+from testslide.lib import _validate_function_signature
 
 
 def _wrap_signature_and_type_validation(value, template, attr_name):
@@ -44,7 +44,7 @@ def _wrap_signature_and_type_validation(value, template, attr_name):
                 raise TypeError(
                     "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
                 )
-            validate_function_signature(
+            _validate_function_signature(
                 callable_template, args, kwargs, mock_extractors=MOCK_SPEC_EXTRACTORS
             )
         return value(*args, **kwargs)
