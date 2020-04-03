@@ -282,10 +282,9 @@ class TestChaining(testslide.TestCase):
 class TestUsageWithPatchCallable(testslide.TestCase):
     def test_patch_callable(self):
         self.mock_callable(sample_module, "test_function").for_call(
-            testslide.matchers.AnyInstanceOf(str)
-            & testslide.matchers.RegexMatches("test.*"),
-            testslide.matchers.IntBetween(2, 4),
+            testslide.matchers.RegexMatches("foo"),
+            testslide.matchers.RegexMatches("bar"),
         ).to_return_value("mocked_response")
         with self.assertRaises(testslide.mock_callable.UnexpectedCallArguments):
-            sample_module.test_function(2, 5)
-        sample_module.test_function("testing", 3)
+            sample_module.test_function("meh", "moh")
+        sample_module.test_function("foo", "bar")

@@ -38,26 +38,32 @@ class TargetStr(object):
 
 
 class ParentTarget(TargetStr):
-    def instance_method(self, arg1, arg2, kwarg1=None, kwarg2=None):
+    def instance_method(self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
         return "original response"
 
-    async def async_instance_method(self, arg1, arg2, kwarg1=None, kwarg2=None):
+    async def async_instance_method(
+        self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ):
         return "async original response"
 
     @staticmethod
-    def static_method(arg1, arg2, kwarg1=None, kwarg2=None):
+    def static_method(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
         return "original response"
 
     @staticmethod
-    async def async_static_method(arg1, arg2, kwarg1=None, kwarg2=None):
+    async def async_static_method(
+        arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ):
         return "async original response"
 
     @classmethod
-    def class_method(cls, arg1, arg2, kwarg1=None, kwarg2=None):
+    def class_method(cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
         return "original response"
 
     @classmethod
-    async def async_class_method(cls, arg1, arg2, kwarg1=None, kwarg2=None):
+    async def async_class_method(
+        cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ):
         return "async original response"
 
     async def __aiter__(self):
@@ -173,26 +179,13 @@ def mock_callable_tests(context):
         ).and_assert_called_once()
         t._privatefun()
 
-    @context.example
-    def calling_patched_functions_with_bad_types_raises_TypeError(self):
-        t = TargetStr()
-        self.mock_callable(t, "typedfun").to_return_value("This is patched")
-        with self.assertRaisesRegex(
-            TypeError, "('type of a must be str; got int instead')"
-        ):
-            t.typedfun("a", 1, c=2)
-
     ##
     ## Shared Contexts
     ##
 
     @context.shared_context
     def mock_configuration_examples(
-        context,
-        callable_accepts_no_args=False,
-        has_original_callable=True,
-        can_yield=True,
-        validate_signature=True,
+        context, empty_args=False, has_original_callable=True, can_yield=True
     ):
         @context.function
         def no_behavior_msg(self):
@@ -221,23 +214,56 @@ def mock_callable_tests(context):
 
         @context.shared_context
         def mock_call_arguments(context):
-            @context.example
-            def works_for_matching_signature(self):
-                self.callable_target(*self.call_args, **self.call_kwargs),
+            @context.sub_context
+            def mock_call(context):
+                @context.sub_context
+                def signature(context):
+                    @context.example
+                    def works_with_valid_signature(self):
+                        self.callable_target(*self.call_args, **self.call_kwargs),
 
-            if validate_signature:
+                    @context.example
+                    def raises_TypeError_for_mismatching_signature(self):
+                        args = ("some", "invalid", "args", "list")
+                        kwargs = {"invalid_kwarg": "invalid_value"}
+                        with self.assertRaises(TypeError):
+                            self.callable_target(*args, **kwargs)
 
-                @context.example
-                def raises_TypeError_for_mismatching_signature(self):
-                    args = ("some", "invalid", "args", "list")
-                    kwargs = {"invalid_kwarg": "invalid_value"}
-                    with self.assertRaises(TypeError):
-                        self.callable_target(*args, **kwargs)
+                if not empty_args:
+
+                    @context.sub_context
+                    def argument_types(context):
+                        @context.example
+                        def raises_TypeError_for_mismatching_types(self):
+                            bad_signature_args = (1234 for arg in self.call_args)
+                            bad_signature_kargs = {
+                                k: 1234 for k, v in self.call_kwargs.items()
+                            }
+                            with self.assertRaises(TypeError):
+                                self.callable_target(
+                                    *bad_signature_args, **bad_signature_kargs
+                                )
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):
+                @context.sub_context
+                def with_mismatching_signature(context):
+                    @context.xexample
+                    def it_fails_to_mock(self):
+                        with self.assertRaisesWithMessage(
+                            ValueError,
+                            "Can not mock target for arguments that mismatch the "
+                            "original callable signature.",
+                        ):
+                            self.mock_callable_dsl.for_call(
+                                "some",
+                                "invalid",
+                                "args",
+                                and_some="invalid",
+                                kwargs="values",
+                            )
 
-                if not callable_accepts_no_args:
+                if not empty_args:
 
                     @context.sub_context
                     def with_matching_signature(context):
@@ -253,48 +279,25 @@ def mock_callable_tests(context):
                                 *self.specific_call_args, **self.specific_call_kwargs
                             )
 
-                        if validate_signature:
-
-                            @context.example
-                            def it_rejects_unknown_arguments(self):
-                                with self.assertRaisesWithMessage(
-                                    UnexpectedCallArguments,
-                                    self.no_behavior_msg()
-                                    + "\n  These are the registered calls:\n"
-                                    + "    {}\n".format(self.specific_call_args)
-                                    + "    {\n"
-                                    + "".join(
-                                        "      {}={},\n".format(
-                                            k, self.specific_call_kwargs[k]
-                                        )
-                                        for k in sorted(
-                                            self.specific_call_kwargs.keys()
-                                        )
+                        @context.example
+                        def it_rejects_unknown_arguments(self):
+                            with self.assertRaisesWithMessage(
+                                UnexpectedCallArguments,
+                                self.no_behavior_msg()
+                                + "\n  These are the registered calls:\n"
+                                + "    {}\n".format(self.specific_call_args)
+                                + "    {\n"
+                                + "".join(
+                                    "      {}={},\n".format(
+                                        k, self.specific_call_kwargs[k]
                                     )
-                                    + "    }\n",
-                                ):
-                                    self.callable_target(
-                                        *self.call_args, **self.call_kwargs
-                                    )
-
-                    if validate_signature:
-
-                        @context.sub_context
-                        def with_mismatching_signature(context):
-                            @context.xexample
-                            def it_fails_to_mock(self):
-                                with self.assertRaisesWithMessage(
-                                    ValueError,
-                                    "Can not mock target for arguments that mismatch the "
-                                    "original callable signature.",
-                                ):
-                                    self.mock_callable_dsl.for_call(
-                                        "some",
-                                        "invalid",
-                                        "args",
-                                        and_some="invalid",
-                                        kwargs="values",
-                                    )
+                                    for k in sorted(self.specific_call_kwargs.keys())
+                                )
+                                + "    }\n",
+                            ):
+                                self.callable_target(
+                                    *self.call_args, **self.call_kwargs
+                                )
 
         @context.shared_context
         def assertions(context):
@@ -521,7 +524,7 @@ def mock_callable_tests(context):
                 self.mock_callable_dsl.to_return_value(self.value)
 
             if has_original_callable:
-                context.nest_context("mock call arguments")
+                context.merge_context("mock call arguments")
             context.nest_context("assertions")
 
             @context.example
@@ -547,7 +550,7 @@ def mock_callable_tests(context):
                 self.mock_callable_dsl.to_return_values(self.values_list)
 
             if has_original_callable:
-                context.nest_context("mock call arguments")
+                context.merge_context("mock call arguments")
             context.nest_context("assertions")
 
             @context.example
@@ -586,7 +589,7 @@ def mock_callable_tests(context):
                     self.mock_callable_dsl.to_yield_values(self.values_list)
 
                 if has_original_callable:
-                    context.nest_context("mock call arguments")
+                    context.merge_context("mock call arguments")
                 context.nest_context("assertions")
 
                 @context.memoize
@@ -631,7 +634,7 @@ def mock_callable_tests(context):
                     self.callable_target = _callable_target
 
                 if has_original_callable:
-                    context.nest_context("mock call arguments")
+                    context.merge_context("mock call arguments")
                 context.nest_context("assertions")
 
             @context.sub_context
@@ -686,7 +689,7 @@ def mock_callable_tests(context):
                 self.mock_callable_dsl.with_implementation(self.func)
 
             if has_original_callable:
-                context.nest_context("mock call arguments")
+                context.merge_context("mock call arguments")
             context.nest_context("assertions")
 
             @context.example
@@ -717,7 +720,7 @@ def mock_callable_tests(context):
                 def setup_mock(self):
                     self.mock_callable_dsl.with_wrapper(self.wrapper_func)
 
-                context.nest_context("mock call arguments")
+                context.merge_context("mock call arguments")
                 context.nest_context("assertions")
 
                 @context.example
@@ -748,7 +751,7 @@ def mock_callable_tests(context):
                 def setup_mock(self):
                     self.mock_callable_dsl.to_call_original()
 
-                context.nest_context("mock call arguments")
+                context.merge_context("mock call arguments")
                 context.nest_context("assertions")
 
                 @context.example
@@ -768,7 +771,7 @@ def mock_callable_tests(context):
                     ):
                         self.mock_callable_dsl.to_call_original()
 
-        if not callable_accepts_no_args:
+        if not empty_args:
 
             @context.sub_context
             def composition(context):
@@ -1226,9 +1229,7 @@ def mock_callable_tests(context):
                     self.callable_target = lambda: str(self.target)
 
                 context.merge_context(
-                    "mock configuration examples",
-                    callable_accepts_no_args=True,
-                    can_yield=False,
+                    "mock configuration examples", empty_args=True, can_yield=False
                 )
 
                 @context.example
@@ -1377,7 +1378,7 @@ def mock_callable_tests(context):
 
             context.merge_context(
                 "mock configuration examples",
-                callable_accepts_no_args=True,
+                empty_args=True,
                 has_original_callable=False,
                 can_yield=False,
             )
@@ -1466,10 +1467,7 @@ def mock_async_callable_tests(context):
 
     @context.shared_context
     def mock_configuration_examples(
-        context,
-        callable_accepts_no_args=False,
-        can_yield=False,
-        has_original_callable=True,
+        context, empty_args=False, can_yield=False, has_original_callable=True
     ):
         @context.example
         async def default_behavior(self):
@@ -1859,9 +1857,7 @@ def mock_async_callable_tests(context):
                 self.call_kwargs = {}
 
             context.merge_context(
-                "mock configuration examples",
-                callable_accepts_no_args=True,
-                can_yield=False,
+                "mock configuration examples", empty_args=True, can_yield=False
             )
 
     @context.sub_context
@@ -1932,7 +1928,7 @@ def mock_async_callable_tests(context):
 
             context.merge_context(
                 "mock configuration examples",
-                callable_accepts_no_args=True,
+                empty_args=True,
                 has_original_callable=False,
                 can_yield=False,
             )

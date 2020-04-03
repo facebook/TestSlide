@@ -19,11 +19,11 @@ class SomeClass:
         pass
 
 
-def test_function(arg1, arg2, kwarg1=None, kwarg2=None):
+def test_function(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
     "This function is used by some unit tests only"
     return "original response"
 
 
-async def async_test_function(arg1, arg2, kwarg1=None, kwarg2=None):
+async def async_test_function(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
     "This function is used by some unit tests only"
     return "original response"
