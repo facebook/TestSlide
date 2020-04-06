@@ -9,7 +9,7 @@ import functools
 from typing import List, Callable  # noqa
 import testslide
 from testslide.strict_mock import StrictMock
-from testslide.lib import _wrap_signature_validation
+from testslide.lib import _wrap_signature_validation, _validate_return_type
 from .patch import _patch, _is_instance_method
 from .lib import _bail_if_private
 
@@ -721,6 +721,7 @@ class _MockCallableDSL(object):
         """
         Always return given value.
         """
+        _validate_return_type(self._original_callable, value)
         self._add_runner(
             _ReturnValueRunner(
                 self._original_target, self._method, self._original_callable, value
@@ -735,6 +736,16 @@ class _MockCallableDSL(object):
         """
         if not isinstance(values_list, list):
             raise ValueError("{} is not a list".format(values_list))
+        type_errors = []
+        for it in values_list:
+            try:
+                _validate_return_type(self._original_callable, it)
+            except TypeError as t_err:
+                type_errors.append(t_err)
+        if type_errors:
+            raise TypeError(
+                "Call with incompatible return types:\n  " + "\n  ".join(type_errors)
+            )
         self._add_runner(
             _ReturnValuesRunner(
                 self._original_target,
