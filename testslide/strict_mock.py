@@ -475,6 +475,10 @@ class StrictMock(object):
         signature validation, and should only be used when type() is required
         to not change.
         """
+        if not signature_validation and type_validation:
+            raise ValueError(
+                "Type Validation is only available with Signature validation turned on"
+            )
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
         self.__dict__["_template"] = template
