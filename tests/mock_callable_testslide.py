@@ -30,7 +30,7 @@ class TargetStr(object):
         a: str,
         b: typing.Iterable[typing.Union[str, float]],
         c: typing.Optional[str],
-    ):
+    ) -> str:
         return "asd"
 
     def _privatefun(self):
@@ -178,6 +178,18 @@ def mock_callable_tests(context):
             "This fun is private"
         ).and_assert_called_once()
         t._privatefun()
+
+    @context.example
+    def patching_typed_functions_raises_typeerror_with_invalid_responsetype(self):
+        t = TargetStr()
+        with self.assertRaises(TypeError):
+            self.mock_callable(t, "typedfun").to_return_value(1)
+
+    @context.example
+    def patching_typed_functions_raises_typeerror_with_invalid_responsetypes(self):
+        t = TargetStr()
+        with self.assertRaises(TypeError):
+            self.mock_callable(t, "typedfun").to_return_values(["a", 1])
 
     ##
     ## Shared Contexts
