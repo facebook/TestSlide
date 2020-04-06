@@ -541,7 +541,7 @@ def strict_mock(context):
                                     "with signature_validation=True, type_validation=True"
                                 )
                                 def with_signature_validation_True_type_validation_True(
-                                    context
+                                    context,
                                 ):
                                     context.merge_context(
                                         "common examples",
@@ -553,7 +553,7 @@ def strict_mock(context):
                                     "with signature_validation=False, type_validation=True"
                                 )
                                 def with_signature_validation_False_type_validation_True(
-                                    context
+                                    context,
                                 ):
                                     context.memoize(
                                         "signature_validation", lambda self: False
@@ -568,7 +568,7 @@ def strict_mock(context):
                                     "with signature_validation=True, type_validation=False"
                                 )
                                 def with_signature_validation_True_type_validation_False(
-                                    context
+                                    context,
                                 ):
                                     context.memoize(
                                         "type_validation", lambda self: False
@@ -584,7 +584,7 @@ def strict_mock(context):
                                     "with signature_validation=False, type_validation=False"
                                 )
                                 def with_signature_validation_False_type_validation_False(
-                                    context
+                                    context,
                                 ):
                                     context.memoize(
                                         "signature_validation", lambda self: False
@@ -913,7 +913,7 @@ def strict_mock(context):
                             "with signature_validation=True, type_validation=True"
                         )
                         def with_signature_validation_True_type_validation_True(
-                            context
+                            context,
                         ):
                             context.merge_context(
                                 "common examples",
@@ -925,7 +925,7 @@ def strict_mock(context):
                             "with signature_validation=False, type_validation=True"
                         )
                         def with_signature_validation_False_type_validation_True(
-                            context
+                            context,
                         ):
                             @context.memoize_before
                             async def signature_validation(self):
@@ -940,7 +940,7 @@ def strict_mock(context):
                             "with signature_validation=True, type_validation=False"
                         )
                         def with_signature_validation_True_type_validation_False(
-                            context
+                            context,
                         ):
                             @context.memoize_before
                             async def type_validation(self):
@@ -956,7 +956,7 @@ def strict_mock(context):
                             "with signature_validation=False, type_validation=False"
                         )
                         def with_signature_validation_False_type_validation_False(
-                            context
+                            context,
                         ):
                             @context.memoize_before
                             async def signature_validation(self):
