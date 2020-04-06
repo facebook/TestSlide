@@ -124,6 +124,14 @@ def _wrap_signature_and_type_validation(value, template, attr_name):
     return with_sig_check
 
 
+def _validate_return_type(template, value):
+    try:
+        argspec = inspect.getfullargspec(template)
+    except TypeError:
+        return
+    _validate_argument_type(argspec.annotations, "return", value)
+
+
 ##
 ## Private attributes
 ##
