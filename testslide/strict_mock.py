@@ -350,6 +350,7 @@ class StrictMock(object):
         name=None,
         default_context_manager=False,
         signature_validation=True,
+        type_validation=True,
     ):
         """
         For every new instance of StrictMock we dynamically create a subclass of
@@ -455,6 +456,7 @@ class StrictMock(object):
         name=None,
         default_context_manager=False,
         signature_validation=True,
+        type_validation=True,
     ):
         """
         template: Template class to be used as a template for the mock.
@@ -480,6 +482,7 @@ class StrictMock(object):
         self.__dict__["_runtime_attrs"] = runtime_attrs or []
         self.__dict__["_name"] = name
         self.__dict__["_signature_validation"] = signature_validation
+        self.__dict__["_type_validation"] = type_validation
         self.__dict__["__caller"] = self._get_caller(1)
 
         self._setup_magic_methods()
@@ -569,7 +572,7 @@ class StrictMock(object):
                         raise NonCallableValue(self, name)
 
                     if self.__dict__["_signature_validation"]:
-                        signature_validation_wrapper = testslide.lib._wrap_signature_and_type_validation(
+                        signature_validation_wrapper = testslide.lib._wrap_signature_validation(
                             value, self._template, name
                         )
                         if inspect.iscoroutinefunction(template_value):
@@ -587,7 +590,26 @@ class StrictMock(object):
                             callable_value = awaitable_return_validation_wrapper
                         else:
                             callable_value = signature_validation_wrapper
-                    else:
+                    if self.__dict__["_type_validation"]:
+                        type_validation_wrapper = testslide.lib._wrap_type_validation(
+                            value, self._template, name
+                        )
+                        if inspect.iscoroutinefunction(template_value):
+
+                            async def awaitable_return_validation_wrapper(
+                                *args, **kwargs
+                            ):
+                                return_value = type_validation_wrapper(
+                                    *args, **kwargs
+                                )
+                                if not inspect.isawaitable(return_value):
+                                    raise NonAwaitableReturn(self, name)
+                                return await return_value
+
+                            callable_value = awaitable_return_validation_wrapper
+                        else:
+                            callable_value = type_validation_wrapper
+                    if not self.__dict__["_type_validation"] and not self.__dict__["_signature_validation"]:
                         callable_value = None
                     mock_value = _MethodProxy(
                         value=value, callable_value=callable_value
@@ -645,6 +667,7 @@ class StrictMock(object):
             runtime_attrs=self._runtime_attrs,
             name=self._name,
             signature_validation=self._signature_validation,
+            type_validation=self._type_validation
         )
         self_copy.__dict__["__caller"] = self._get_caller(2)
         return self_copy
