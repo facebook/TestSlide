@@ -570,10 +570,9 @@ class StrictMock(object):
                 if callable(template_value):
                     if not callable(value):
                         raise NonCallableValue(self, name)
-
                     if self.__dict__["_signature_validation"]:
                         signature_validation_wrapper = testslide.lib._wrap_signature_validation(
-                            value, self._template, name
+                            value, self._template, name, self.__dict__["_signature_validation"]
                         )
                         if inspect.iscoroutinefunction(template_value):
 
@@ -590,26 +589,7 @@ class StrictMock(object):
                             callable_value = awaitable_return_validation_wrapper
                         else:
                             callable_value = signature_validation_wrapper
-                    if self.__dict__["_type_validation"]:
-                        type_validation_wrapper = testslide.lib._wrap_type_validation(
-                            value, self._template, name
-                        )
-                        if inspect.iscoroutinefunction(template_value):
-
-                            async def awaitable_return_validation_wrapper(
-                                *args, **kwargs
-                            ):
-                                return_value = type_validation_wrapper(
-                                    *args, **kwargs
-                                )
-                                if not inspect.isawaitable(return_value):
-                                    raise NonAwaitableReturn(self, name)
-                                return await return_value
-
-                            callable_value = awaitable_return_validation_wrapper
-                        else:
-                            callable_value = type_validation_wrapper
-                    if not self.__dict__["_type_validation"] and not self.__dict__["_signature_validation"]:
+                    else:
                         callable_value = None
                     mock_value = _MethodProxy(
                         value=value, callable_value=callable_value

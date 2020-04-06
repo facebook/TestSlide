@@ -88,7 +88,7 @@ def _validate_function_signature(
         )
 
 
-def _wrap_signature_validation(value, template, attr_name):
+def _wrap_signature_validation(value, template, attr_name, validate_types):
     if _is_a_mock(template):
         template = _extract_mock_template(template)
         if not template:
@@ -117,36 +117,12 @@ def _wrap_signature_validation(value, template, attr_name):
                 raise TypeError(
                     "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
                 )
+            if validate_types:
+                _validate_function_signature(callable_template, args, kwargs)
+
         return value(*args, **kwargs)
 
     return with_sig_check
-
-
-
-def _wrap_type_validation(value, template, attr_name):
-    if _is_a_mock(template):
-        template = _extract_mock_template(template)
-        if not template:
-            return value
-
-    # This covers runtime attributes
-    if not hasattr(template, attr_name):
-        return value
-
-    callable_template = getattr(template, attr_name)
-
-    # FIXME decouple from _must_skip. It tells when self should be skipped
-    # for signature validation.
-    if unittest.mock._must_skip(template, attr_name, isinstance(template, type)):
-        callable_template = functools.partial(callable_template, None)
-
-
-    def with_type_check(*args, **kwargs):
-        _validate_function_signature(callable_template, args, kwargs)
-        return value(*args, **kwargs)
-
-    return with_type_check
-
 
 ##
 ## Private attributes
