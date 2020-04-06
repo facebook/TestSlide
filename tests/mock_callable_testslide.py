@@ -25,45 +25,41 @@ class TargetStr(object):
     def __str__(self):
         return "original response"
 
-    def typedfun(
-        self,
-        a: str,
-        b: typing.Iterable[typing.Union[str, float]],
-        c: typing.Optional[str],
-    ) -> str:
-        return "asd"
-
     def _privatefun(self):
         return "cannotbemocked"
 
 
 class ParentTarget(TargetStr):
-    def instance_method(self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
+    def instance_method(
+        self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ) -> str:
         return "original response"
 
     async def async_instance_method(
         self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ):
+    ) -> str:
         return "async original response"
 
     @staticmethod
-    def static_method(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
+    def static_method(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = "") -> str:
         return "original response"
 
     @staticmethod
     async def async_static_method(
         arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ):
+    ) -> str:
         return "async original response"
 
     @classmethod
-    def class_method(cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
+    def class_method(
+        cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ) -> str:
         return "original response"
 
     @classmethod
     async def async_class_method(
         cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ):
+    ) -> str:
         return "async original response"
 
     async def __aiter__(self):
@@ -180,18 +176,6 @@ def mock_callable_tests(context):
         ).and_assert_called_once()
         t._privatefun()
 
-    @context.example
-    def patching_typed_functions_raises_typeerror_with_invalid_responsetype(self):
-        t = TargetStr()
-        with self.assertRaises(TypeError):
-            self.mock_callable(t, "typedfun").to_return_value(1)
-
-    @context.example
-    def patching_typed_functions_raises_typeerror_with_invalid_responsetypes(self):
-        t = TargetStr()
-        with self.assertRaises(TypeError):
-            self.mock_callable(t, "typedfun").to_return_values(["a", 1])
-
     ##
     ## Shared Contexts
     ##
@@ -226,13 +210,13 @@ def mock_callable_tests(context):
             )
 
         @context.shared_context
-        def mock_call_arguments(context):
+        def mock_call_arguments(context, has_return_value=True):
             @context.sub_context
             def mock_call(context):
                 @context.sub_context
                 def signature(context):
                     @context.example
-                    def works_with_valid_signature(self):
+                    def passes_with_valid_signature(self):
                         self.callable_target(*self.call_args, **self.call_kwargs)
 
                     @context.example
@@ -246,28 +230,52 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def type_validation(context):
-                        @context.example
-                        def raises_TypeError_for_mismatching_types(self):
-                            bad_signature_args = (1234 for arg in self.call_args)
-                            bad_signature_kargs = {
-                                k: 1234 for k, v in self.call_kwargs.items()
-                            }
-                            with self.assertRaises(TypeError):
-                                self.callable_target(
-                                    *bad_signature_args, **bad_signature_kargs
-                                )
-
-                        @context.sub_context("with type_validation=False")
-                        def with_type_validation_False(context):
-                            context.memoize("type_validation", lambda self: False)
-
+                        @context.sub_context
+                        def arguments(context):
                             @context.example
-                            def passes_with_invalid_type(self):
-                                call_args = [1 for arg in self.call_args]
-                                call_kwargs = {
-                                    key: 1 for key in self.call_kwargs.keys()
+                            def raises_TypeError_for_invalid_types(self):
+                                bad_signature_args = (1234 for arg in self.call_args)
+                                bad_signature_kargs = {
+                                    k: 1234 for k, v in self.call_kwargs.items()
                                 }
-                                self.callable_target(*call_args, **call_kwargs)
+                                with self.assertRaises(TypeError):
+                                    self.callable_target(
+                                        *bad_signature_args, **bad_signature_kargs
+                                    )
+
+                            @context.sub_context("with type_validation=False")
+                            def with_type_validation_False(context):
+                                context.memoize("type_validation", lambda self: False)
+
+                                @context.example
+                                def passes_with_invalid_argument_type(self):
+                                    call_args = [1 for arg in self.call_args]
+                                    call_kwargs = {
+                                        key: 1 for key in self.call_kwargs.keys()
+                                    }
+                                    self.callable_target(*call_args, **call_kwargs)
+
+                        if has_return_value:
+
+                            @context.sub_context
+                            def return_value(context):
+                                @context.example
+                                def passes_with_valid_type(self):
+                                    self.callable_target(
+                                        *self.call_args, **self.call_kwargs
+                                    )
+
+                                @context.sub_context
+                                def with_invalid_return_type(context):
+                                    context.memoize("value", lambda self: 1)
+
+                                    @context.example
+                                    def raises_TypeError(self):
+                                        t = TargetStr()
+                                        with self.assertRaises(TypeError):
+                                            self.callable_target(
+                                                *self.call_args, **self.call_kwargs
+                                            )
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):
@@ -566,8 +574,8 @@ def mock_callable_tests(context):
 
         @context.sub_context(".to_return_values(values_list)")
         def to_return_values_values_list(context):
-
-            context.memoize("values_list", lambda self: ["first", "second", "third"])
+            context.memoize("value", lambda self: "first")
+            context.memoize("values_list", lambda self: [self.value, "second", "third"])
             context.memoize("times", lambda self: len(self.values_list) - 1)
 
             @context.before
@@ -614,7 +622,7 @@ def mock_callable_tests(context):
                     self.mock_callable_dsl.to_yield_values(self.values_list)
 
                 if has_original_callable:
-                    context.merge_context("mock call arguments")
+                    context.merge_context("mock call arguments", has_return_value=False)
                 context.nest_context("assertions")
 
                 @context.memoize
@@ -659,7 +667,7 @@ def mock_callable_tests(context):
                     self.callable_target = _callable_target
 
                 if has_original_callable:
-                    context.merge_context("mock call arguments")
+                    context.merge_context("mock call arguments", has_return_value=False)
                 context.nest_context("assertions")
 
             @context.sub_context
@@ -700,7 +708,8 @@ def mock_callable_tests(context):
         def with_implementation_func(context):
 
             context.memoize("times", lambda self: 3)
-            context.memoize("func_return", lambda self: "mocked response")
+            context.memoize("value", lambda self: "mocked return")
+            context.memoize("func_return", lambda self: self.value)
 
             @context.memoize
             def func(self):
@@ -727,7 +736,8 @@ def mock_callable_tests(context):
         @context.sub_context(".with_wrapper(wrapper_func)")
         def with_wrapper_wrappr_func(context):
 
-            context.memoize("func_return", lambda self: "mocked response")
+            context.memoize("value", lambda self: "mocked return")
+            context.memoize("func_return", lambda self: self.value)
 
             @context.memoize
             def wrapper_func(self):
@@ -776,7 +786,7 @@ def mock_callable_tests(context):
                 def setup_mock(self):
                     self.mock_callable_dsl.to_call_original()
 
-                context.merge_context("mock call arguments")
+                context.merge_context("mock call arguments", has_return_value=False)
                 context.nest_context("assertions")
 
                 @context.example
