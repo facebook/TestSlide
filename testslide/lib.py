@@ -124,6 +124,7 @@ def _wrap_signature_validation(value, template, attr_name, validate_types):
 
     return with_sig_check
 
+
 ##
 ## Private attributes
 ##

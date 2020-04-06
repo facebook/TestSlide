@@ -15,11 +15,17 @@ from .lib import _bail_if_private
 
 
 def mock_callable(target, method, allow_private=False, type_validation=True):
-    return _MockCallableDSL(target, method, allow_private=allow_private, type_validation=type_validation)
+    return _MockCallableDSL(
+        target, method, allow_private=allow_private, type_validation=type_validation
+    )
 
 
 def mock_async_callable(
-    target, method, callable_returns_coroutine=False, allow_private=False, type_validation=True
+    target,
+    method,
+    callable_returns_coroutine=False,
+    allow_private=False,
+    type_validation=True,
 ):
     return _MockAsyncCallableDSL(
         target, method, callable_returns_coroutine, allow_private, type_validation
@@ -604,7 +610,6 @@ class _MockCallableDSL(object):
                 new_value, self._target, self._method, self.type_validation
             )
 
-
         restore = self._method in self._target.__dict__
         restore_value = self._target.__dict__.get(self._method, None)
 
@@ -640,7 +645,7 @@ class _MockCallableDSL(object):
         self._runner = None
         self._next_runner_accepted_args = None
         self.allow_private = allow_private
-        self.type_validation=type_validation
+        self.type_validation = type_validation
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -913,9 +918,18 @@ class _MockCallableDSL(object):
 
 
 class _MockAsyncCallableDSL(_MockCallableDSL):
-    def __init__(self, target, method, callable_returns_coroutine, allow_private=False, type_validation=True):
+    def __init__(
+        self,
+        target,
+        method,
+        callable_returns_coroutine,
+        allow_private=False,
+        type_validation=True,
+    ):
         self._callable_returns_coroutine = callable_returns_coroutine
-        super().__init__(target, method, allow_private=allow_private, type_validation=type_validation)
+        super().__init__(
+            target, method, allow_private=allow_private, type_validation=type_validation
+        )
 
     def _validate_patch(self):
         return super()._validate_patch(

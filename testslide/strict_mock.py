@@ -572,7 +572,10 @@ class StrictMock(object):
                         raise NonCallableValue(self, name)
                     if self.__dict__["_signature_validation"]:
                         signature_validation_wrapper = testslide.lib._wrap_signature_validation(
-                            value, self._template, name, self.__dict__["_signature_validation"]
+                            value,
+                            self._template,
+                            name,
+                            self.__dict__["_signature_validation"],
                         )
                         if inspect.iscoroutinefunction(template_value):
 
@@ -647,7 +650,7 @@ class StrictMock(object):
             runtime_attrs=self._runtime_attrs,
             name=self._name,
             signature_validation=self._signature_validation,
-            type_validation=self._type_validation
+            type_validation=self._type_validation,
         )
         self_copy.__dict__["__caller"] = self._get_caller(2)
         return self_copy
