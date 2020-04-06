@@ -579,7 +579,7 @@ class StrictMock(object):
                             value,
                             self._template,
                             name,
-                            self.__dict__["_signature_validation"],
+                            self.__dict__["_type_validation"],
                         )
                         if inspect.iscoroutinefunction(template_value):
 
