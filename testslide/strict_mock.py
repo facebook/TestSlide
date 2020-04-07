@@ -476,6 +476,9 @@ class StrictMock(object):
         the attribute will change. Setting this value to False disables
         signature validation, and should only be used when type() is required
         to not change.
+        type_validation: use type hinting information from template to validate
+        that mock attribute types match them. Type validation also happens for
+        callable attributes (instance/static/class methods) calls.
         """
         if not signature_validation and type_validation:
             raise ValueError(
