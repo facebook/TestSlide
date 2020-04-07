@@ -154,6 +154,8 @@ class NotACoroutine(BaseException):
 
 
 class _BaseRunner:
+    TYPE_VALIDATION = True
+
     def __init__(self, target, method, original_callable):
         self.target = target
         self.method = method
@@ -369,6 +371,8 @@ class _ReturnValuesRunner(_Runner):
 
 
 class _YieldValuesRunner(_Runner):
+    TYPE_VALIDATION = False
+
     def __init__(self, target, method, original_callable, values_list):
         super(_YieldValuesRunner, self).__init__(target, method, original_callable)
         self.values_list = values_list
@@ -456,6 +460,10 @@ class _CallableMock(object):
                 return runner
         return None
 
+    def _validate_return_type(self, runner, value):
+        if runner.TYPE_VALIDATION and runner.original_callable is not None:
+            _validate_return_type(runner.original_callable, value)
+
     def __call__(self, *args, **kwargs):
         runner = self._get_runner(*args, **kwargs)
         if runner:
@@ -464,16 +472,19 @@ class _CallableMock(object):
                 async def await_runner(*args, **kwargs):
                     return await runner.run(*args, **kwargs)
 
-                return await_runner(*args, **kwargs)
+                value = await_runner(*args, **kwargs)
             else:
                 if self.is_async:
 
                     async def sync_wrapper(*args, **kwargs):
                         return runner.run(*args, **kwargs)
 
-                    return sync_wrapper(*args, **kwargs)
+                    value = sync_wrapper(*args, **kwargs)
                 else:
-                    return runner.run(*args, **kwargs)
+                    value = runner.run(*args, **kwargs)
+                    self._validate_return_type(runner, value)
+
+            return value
         ex_msg = (
             "{}, {}:\n"
             "  Received call:\n"
@@ -721,7 +732,6 @@ class _MockCallableDSL(object):
         """
         Always return given value.
         """
-        _validate_return_type(self._original_callable, value)
         self._add_runner(
             _ReturnValueRunner(
                 self._original_target, self._method, self._original_callable, value
@@ -736,16 +746,6 @@ class _MockCallableDSL(object):
         """
         if not isinstance(values_list, list):
             raise ValueError("{} is not a list".format(values_list))
-        type_errors = []
-        for it in values_list:
-            try:
-                _validate_return_type(self._original_callable, it)
-            except TypeError as t_err:
-                type_errors.append(t_err)
-        if type_errors:
-            raise TypeError(
-                "Call with incompatible return types:\n  " + "\n  ".join(type_errors)
-            )
         self._add_runner(
             _ReturnValuesRunner(
                 self._original_target,
