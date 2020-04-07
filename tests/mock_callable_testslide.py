@@ -18,52 +18,47 @@ import contextlib
 from testslide.strict_mock import StrictMock
 import os
 from . import sample_module
-import typing
 
 
 class TargetStr(object):
     def __str__(self):
         return "original response"
 
-    def typedfun(
-        self,
-        a: str,
-        b: typing.Iterable[typing.Union[str, float]],
-        c: typing.Optional[str],
-    ):
-        return "asd"
-
     def _privatefun(self):
         return "cannotbemocked"
 
 
 class ParentTarget(TargetStr):
-    def instance_method(self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
+    def instance_method(
+        self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ) -> str:
         return "original response"
 
     async def async_instance_method(
         self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ):
+    ) -> str:
         return "async original response"
 
     @staticmethod
-    def static_method(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
+    def static_method(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = "") -> str:
         return "original response"
 
     @staticmethod
     async def async_static_method(
         arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ):
+    ) -> str:
         return "async original response"
 
     @classmethod
-    def class_method(cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""):
+    def class_method(
+        cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+    ) -> str:
         return "original response"
 
     @classmethod
     async def async_class_method(
         cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ):
+    ) -> str:
         return "async original response"
 
     async def __aiter__(self):
@@ -214,13 +209,13 @@ def mock_callable_tests(context):
             )
 
         @context.shared_context
-        def mock_call_arguments(context):
+        def mock_call_arguments(context, has_return_value=True):
             @context.sub_context
             def mock_call(context):
                 @context.sub_context
                 def signature(context):
                     @context.example
-                    def works_with_valid_signature(self):
+                    def passes_with_valid_signature(self):
                         self.callable_target(*self.call_args, **self.call_kwargs)
 
                     @context.example
@@ -234,28 +229,51 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def type_validation(context):
-                        @context.example
-                        def raises_TypeError_for_mismatching_types(self):
-                            bad_signature_args = (1234 for arg in self.call_args)
-                            bad_signature_kargs = {
-                                k: 1234 for k, v in self.call_kwargs.items()
-                            }
-                            with self.assertRaises(TypeError):
-                                self.callable_target(
-                                    *bad_signature_args, **bad_signature_kargs
-                                )
-
-                        @context.sub_context("with type_validation=False")
-                        def with_type_validation_False(context):
-                            context.memoize("type_validation", lambda self: False)
-
+                        @context.sub_context
+                        def arguments(context):
                             @context.example
-                            def passes_with_invalid_type(self):
-                                call_args = [1 for arg in self.call_args]
-                                call_kwargs = {
-                                    key: 1 for key in self.call_kwargs.keys()
+                            def raises_TypeError_for_invalid_types(self):
+                                bad_signature_args = (1234 for arg in self.call_args)
+                                bad_signature_kargs = {
+                                    k: 1234 for k, v in self.call_kwargs.items()
                                 }
-                                self.callable_target(*call_args, **call_kwargs)
+                                with self.assertRaises(TypeError):
+                                    self.callable_target(
+                                        *bad_signature_args, **bad_signature_kargs
+                                    )
+
+                            @context.sub_context("with type_validation=False")
+                            def with_type_validation_False(context):
+                                context.memoize("type_validation", lambda self: False)
+
+                                @context.example
+                                def passes_with_invalid_argument_type(self):
+                                    call_args = [1 for arg in self.call_args]
+                                    call_kwargs = {
+                                        key: 1 for key in self.call_kwargs.keys()
+                                    }
+                                    self.callable_target(*call_args, **call_kwargs)
+
+                        if has_return_value:
+
+                            @context.sub_context
+                            def return_value(context):
+                                @context.example
+                                def passes_with_valid_type(self):
+                                    self.callable_target(
+                                        *self.call_args, **self.call_kwargs
+                                    )
+
+                                @context.sub_context
+                                def with_invalid_return_type(context):
+                                    context.memoize("value", lambda self: 1)
+
+                                    @context.example
+                                    def raises_TypeError(self):
+                                        with self.assertRaises(TypeError):
+                                            self.callable_target(
+                                                *self.call_args, **self.call_kwargs
+                                            )
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):
@@ -554,8 +572,8 @@ def mock_callable_tests(context):
 
         @context.sub_context(".to_return_values(values_list)")
         def to_return_values_values_list(context):
-
-            context.memoize("values_list", lambda self: ["first", "second", "third"])
+            context.memoize("value", lambda self: "first")
+            context.memoize("values_list", lambda self: [self.value, "second", "third"])
             context.memoize("times", lambda self: len(self.values_list) - 1)
 
             @context.before
@@ -602,7 +620,7 @@ def mock_callable_tests(context):
                     self.mock_callable_dsl.to_yield_values(self.values_list)
 
                 if has_original_callable:
-                    context.merge_context("mock call arguments")
+                    context.merge_context("mock call arguments", has_return_value=False)
                 context.nest_context("assertions")
 
                 @context.memoize
@@ -647,7 +665,7 @@ def mock_callable_tests(context):
                     self.callable_target = _callable_target
 
                 if has_original_callable:
-                    context.merge_context("mock call arguments")
+                    context.merge_context("mock call arguments", has_return_value=False)
                 context.nest_context("assertions")
 
             @context.sub_context
@@ -688,7 +706,8 @@ def mock_callable_tests(context):
         def with_implementation_func(context):
 
             context.memoize("times", lambda self: 3)
-            context.memoize("func_return", lambda self: "mocked response")
+            context.memoize("value", lambda self: "mocked return")
+            context.memoize("func_return", lambda self: self.value)
 
             @context.memoize
             def func(self):
@@ -715,7 +734,8 @@ def mock_callable_tests(context):
         @context.sub_context(".with_wrapper(wrapper_func)")
         def with_wrapper_wrappr_func(context):
 
-            context.memoize("func_return", lambda self: "mocked response")
+            context.memoize("value", lambda self: "mocked return")
+            context.memoize("func_return", lambda self: self.value)
 
             @context.memoize
             def wrapper_func(self):
@@ -764,7 +784,7 @@ def mock_callable_tests(context):
                 def setup_mock(self):
                     self.mock_callable_dsl.to_call_original()
 
-                context.merge_context("mock call arguments")
+                context.merge_context("mock call arguments", has_return_value=False)
                 context.nest_context("assertions")
 
                 @context.example
@@ -1483,7 +1503,13 @@ def mock_async_callable_tests(context):
     ## Attributes
     ##
 
-    context.memoize("assertions", lambda self: [])
+    @context.memoize_before
+    async def assertions(self):
+        return []
+
+    @context.memoize_before
+    async def value(self):
+        return "mocked value"
 
     ##
     ## Functions
@@ -1560,6 +1586,27 @@ def mock_async_callable_tests(context):
     def mock_configuration_examples(
         context, empty_args=False, can_yield=False, has_original_callable=True
     ):
+        @context.shared_context
+        def return_value_type(context):
+            if not empty_args and has_original_callable:
+
+                @context.example
+                async def passes_with_valid_type(self):
+                    await self.callable_target(*self.call_args, **self.call_kwargs)
+
+                @context.sub_context
+                def with_invalid_return_type(context):
+                    @context.memoize_before
+                    async def value(self):
+                        return 1
+
+                    @context.example
+                    async def raises_TypeError(self):
+                        with self.assertRaises(TypeError):
+                            await self.callable_target(
+                                *self.call_args, **self.call_kwargs
+                            )
+
         @context.example
         async def default_behavior(self):
             mock_async_callable(self.target_arg, self.callable_arg)
@@ -1580,30 +1627,49 @@ def mock_async_callable_tests(context):
                 with self.assertRaises(UnexpectedCallArguments):
                     await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.example(".to_return_value(value)")
-        async def to_return_value(self):
-            mock_async_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mock"
-            )
-            self.assertEqual(
-                await self.callable_target(*self.call_args, **self.call_kwargs), "mock"
-            )
+        @context.sub_context(".to_return_value(value)")
+        def to_return_value_value(context):
+            @context.before
+            async def before(self):
+                mock_async_callable(self.target_arg, self.callable_arg).to_return_value(
+                    self.value
+                )
+                self.callable_target = getattr(self.real_target, self.callable_arg)
 
-        @context.example(".to_return_values(value_list)")
-        async def to_return_values(self):
-            mock_async_callable(self.target_arg, self.callable_arg).to_return_values(
-                ["mock1", "mock2"]
-            )
-            self.assertEqual(
-                await self.callable_target(*self.call_args, **self.call_kwargs), "mock1"
-            )
-            self.assertEqual(
-                await self.callable_target(*self.call_args, **self.call_kwargs), "mock2"
-            )
-            with self.assertRaisesRegex(
-                UndefinedBehaviorForCall, "No more values to return!"
-            ):
-                await self.callable_target(*self.call_args, **self.call_kwargs)
+            @context.example
+            async def it_returns_value(self):
+                self.assertEqual(
+                    await self.callable_target(*self.call_args, **self.call_kwargs),
+                    self.value,
+                )
+
+            context.nest_context("return value type")
+
+        @context.sub_context(".to_return_values(value_list)")
+        def to_return_values(context):
+            @context.before
+            async def before(self):
+                mock_async_callable(
+                    self.target_arg, self.callable_arg
+                ).to_return_values([self.value, "mock2"])
+                self.callable_target = getattr(self.real_target, self.callable_arg)
+
+            @context.example
+            async def it_returns_values(self):
+                self.assertEqual(
+                    await self.callable_target(*self.call_args, **self.call_kwargs),
+                    self.value,
+                )
+                self.assertEqual(
+                    await self.callable_target(*self.call_args, **self.call_kwargs),
+                    "mock2",
+                )
+                with self.assertRaisesRegex(
+                    UndefinedBehaviorForCall, "No more values to return!"
+                ):
+                    await self.callable_target(*self.call_args, **self.call_kwargs)
+
+            context.nest_context("return value type")
 
         @context.example(".to_raise(exception)")
         async def to_raise(self):
@@ -1615,75 +1681,101 @@ def mock_async_callable_tests(context):
 
         @context.sub_context(".with_implementation(func)")
         def with_implementation(context):
-            @context.example
-            async def works_with_async_func(self):
+            @context.memoize_before
+            async def implementation(self):
                 async def async_implementation_mock(*args, **kwargs):
-                    return "mock"
+                    return self.value
 
+                return async_implementation_mock
+
+            @context.before
+            async def before(self):
                 mock_async_callable(
                     self.target_arg, self.callable_arg
-                ).with_implementation(async_implementation_mock)
+                ).with_implementation(self.implementation)
+                self.callable_target = getattr(self.real_target, self.callable_arg)
+
+            @context.example
+            async def it_calls_mocked_function(self):
                 self.assertEqual(
                     await self.callable_target(*self.call_args, **self.call_kwargs),
-                    "mock",
+                    self.value,
                 )
 
-            @context.example
-            async def raises_NotACoroutine_with_non_async_function(self):
-                def implementation_mock(*args, **kwargs):
-                    return "mock"
+            context.nest_context("return value type")
 
-                mock_async_callable(
-                    self.target_arg, self.callable_arg
-                ).with_implementation(implementation_mock)
-                with self.assertRaisesRegex(
-                    NotACoroutine, "^Function did not return a coroutine\."
-                ):
-                    await self.callable_target(*self.call_args, **self.call_kwargs)
+            @context.sub_context
+            def with_sync_function(context):
+                @context.memoize_before
+                async def implementation(self):
+                    def sync_implementation_mock(*args, **kwargs):
+                        return self.value
 
-        if has_original_callable:
-
-            @context.sub_context(".with_wrapper(func)")
-            def with_wrapper(context):
-                @context.example
-                async def works_with_async_func(self):
-                    async def async_wrapper(original, *args, **kwargs):
-                        return "mock"
-
-                    mock_async_callable(
-                        self.target_arg, self.callable_arg
-                    ).with_wrapper(async_wrapper)
-                    self.assertEqual(
-                        await self.callable_target(*self.call_args, **self.call_kwargs),
-                        "mock",
-                    )
+                    return sync_implementation_mock
 
                 @context.example
                 async def raises_NotACoroutine_with_non_async_function(self):
-                    def wrapper(original, *args, **kwargs):
-                        return "mock"
-
-                    mock_async_callable(
-                        self.target_arg, self.callable_arg
-                    ).with_wrapper(wrapper)
                     with self.assertRaisesRegex(
                         NotACoroutine, "^Function did not return a coroutine\."
                     ):
                         await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        else:
-
-            @context.example(".with_wrapper(func)")
-            async def with_wrapper(self):
+        @context.sub_context(".with_wrapper(func)")
+        def with_wrapper(context):
+            @context.memoize_before
+            async def wrapper(self):
                 async def async_wrapper(original, *args, **kwargs):
-                    return "mock"
+                    return self.value
 
-                with self.assertRaisesRegex(
-                    ValueError, "^Can not wrap original callable that does not exist\."
-                ):
+                return async_wrapper
+
+            if has_original_callable:
+
+                @context.before
+                async def before(self):
                     mock_async_callable(
                         self.target_arg, self.callable_arg
-                    ).with_wrapper(async_wrapper)
+                    ).with_wrapper(self.wrapper)
+                    self.callable_target = getattr(self.real_target, self.callable_arg)
+
+                @context.example
+                async def it_calls_function(self):
+                    self.assertEqual(
+                        await self.callable_target(*self.call_args, **self.call_kwargs),
+                        self.value,
+                    )
+
+                context.nest_context("return value type")
+
+                @context.sub_context
+                def with_sync_function(context):
+                    @context.memoize_before
+                    async def wrapper(self):
+                        def sync_wrapper(original, *args, **kwargs):
+                            return self.value
+
+                        return sync_wrapper
+
+                    @context.example
+                    async def it_raises_NotACoroutine(self):
+                        with self.assertRaisesRegex(
+                            NotACoroutine, "^Function did not return a coroutine\."
+                        ):
+                            await self.callable_target(
+                                *self.call_args, **self.call_kwargs
+                            )
+
+            else:
+
+                @context.example
+                async def it_raises_ValueError(self):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "^Can not wrap original callable that does not exist\.",
+                    ):
+                        mock_async_callable(
+                            self.target_arg, self.callable_arg
+                        ).with_wrapper(self.wrapper)
 
         if has_original_callable:
 

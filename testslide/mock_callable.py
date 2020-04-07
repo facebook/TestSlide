@@ -9,7 +9,7 @@ import functools
 from typing import List, Callable  # noqa
 import testslide
 from testslide.strict_mock import StrictMock
-from testslide.lib import _wrap_signature_validation
+from testslide.lib import _wrap_signature_validation, _validate_return_type
 from .patch import _patch, _is_instance_method
 from .lib import _bail_if_private
 
@@ -154,6 +154,8 @@ class NotACoroutine(BaseException):
 
 
 class _BaseRunner:
+    TYPE_VALIDATION = True
+
     def __init__(self, target, method, original_callable):
         self.target = target
         self.method = method
@@ -369,6 +371,8 @@ class _ReturnValuesRunner(_Runner):
 
 
 class _YieldValuesRunner(_Runner):
+    TYPE_VALIDATION = False
+
     def __init__(self, target, method, original_callable, values_list):
         super(_YieldValuesRunner, self).__init__(target, method, original_callable)
         self.values_list = values_list
@@ -456,43 +460,54 @@ class _CallableMock(object):
                 return runner
         return None
 
+    def _validate_return_type(self, runner, value):
+        if runner.TYPE_VALIDATION and runner.original_callable is not None:
+            _validate_return_type(runner.original_callable, value)
+
     def __call__(self, *args, **kwargs):
         runner = self._get_runner(*args, **kwargs)
         if runner:
-            if isinstance(runner, _AsyncRunner):
+            if self.is_async:
+                if isinstance(runner, _AsyncRunner):
 
-                async def await_runner(*args, **kwargs):
-                    return await runner.run(*args, **kwargs)
+                    async def async_wrapper(*args, **kwargs):
+                        value = await runner.run(*args, **kwargs)
+                        self._validate_return_type(runner, value)
+                        return value
 
-                return await_runner(*args, **kwargs)
-            else:
-                if self.is_async:
-
-                    async def sync_wrapper(*args, **kwargs):
-                        return runner.run(*args, **kwargs)
-
-                    return sync_wrapper(*args, **kwargs)
+                    value = async_wrapper(*args, **kwargs)
                 else:
-                    return runner.run(*args, **kwargs)
-        ex_msg = (
-            "{}, {}:\n"
-            "  Received call:\n"
-            "{}"
-            "  But no behavior was defined for it."
-        ).format(
-            _format_target(self.target),
-            repr(self.method),
-            _format_args(2, *args, **kwargs),
-        )
-        if self._registered_calls:
-            ex_msg += "\n  These are the registered calls:\n" "{}".format(
-                "".join(
-                    _format_args(2, *reg_args, **reg_kwargs)
-                    for reg_args, reg_kwargs in self._registered_calls
-                )
+
+                    async def async_wrapper(*args, **kwargs):
+                        value = runner.run(*args, **kwargs)
+                        self._validate_return_type(runner, value)
+                        return value
+
+                    value = async_wrapper(*args, **kwargs)
+            else:
+                value = runner.run(*args, **kwargs)
+                self._validate_return_type(runner, value)
+            return value
+        else:
+            ex_msg = (
+                "{}, {}:\n"
+                "  Received call:\n"
+                "{}"
+                "  But no behavior was defined for it."
+            ).format(
+                _format_target(self.target),
+                repr(self.method),
+                _format_args(2, *args, **kwargs),
             )
-            raise UnexpectedCallArguments(ex_msg)
-        raise UndefinedBehaviorForCall(ex_msg)
+            if self._registered_calls:
+                ex_msg += "\n  These are the registered calls:\n" "{}".format(
+                    "".join(
+                        _format_args(2, *reg_args, **reg_kwargs)
+                        for reg_args, reg_kwargs in self._registered_calls
+                    )
+                )
+                raise UnexpectedCallArguments(ex_msg)
+            raise UndefinedBehaviorForCall(ex_msg)
 
     @property
     def _registered_calls(self):
