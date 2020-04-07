@@ -255,9 +255,7 @@ def mock_callable_tests(context):
                                 call_kwargs = {
                                     key: 1 for key in self.call_kwargs.keys()
                                 }
-                                self.callable_target(
-                                    *self.call_args, **self.call_kwargs
-                                )
+                                self.callable_target(*call_args, **call_kwargs)
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):
