@@ -18,7 +18,6 @@ import contextlib
 from testslide.strict_mock import StrictMock
 import os
 from . import sample_module
-import typing
 
 
 class TargetStr(object):
@@ -271,7 +270,6 @@ def mock_callable_tests(context):
 
                                     @context.example
                                     def raises_TypeError(self):
-                                        t = TargetStr()
                                         with self.assertRaises(TypeError):
                                             self.callable_target(
                                                 *self.call_args, **self.call_kwargs
@@ -1590,21 +1588,24 @@ def mock_async_callable_tests(context):
     ):
         @context.shared_context
         def return_value_type(context):
-            @context.example
-            async def passes_with_valid_type(self):
-                await self.callable_target(*self.call_args, **self.call_kwargs)
-
-            @context.sub_context
-            def with_invalid_return_type(context):
-                @context.memoize_before
-                async def value(self):
-                    return 1
+            if not empty_args and has_original_callable:
 
                 @context.example
-                async def raises_TypeError(self):
-                    t = TargetStr()
-                    with self.assertRaises(TypeError):
-                        await self.callable_target(*self.call_args, **self.call_kwargs)
+                async def passes_with_valid_type(self):
+                    await self.callable_target(*self.call_args, **self.call_kwargs)
+
+                @context.sub_context
+                def with_invalid_return_type(context):
+                    @context.memoize_before
+                    async def value(self):
+                        return 1
+
+                    @context.example
+                    async def raises_TypeError(self):
+                        with self.assertRaises(TypeError):
+                            await self.callable_target(
+                                *self.call_args, **self.call_kwargs
+                            )
 
         @context.example
         async def default_behavior(self):
@@ -1650,14 +1651,14 @@ def mock_async_callable_tests(context):
             async def before(self):
                 mock_async_callable(
                     self.target_arg, self.callable_arg
-                ).to_return_values(["mock1", "mock2"])
+                ).to_return_values([self.value, "mock2"])
                 self.callable_target = getattr(self.real_target, self.callable_arg)
 
             @context.example
             async def it_returns_values(self):
                 self.assertEqual(
                     await self.callable_target(*self.call_args, **self.call_kwargs),
-                    "mock1",
+                    self.value,
                 )
                 self.assertEqual(
                     await self.callable_target(*self.call_args, **self.call_kwargs),
@@ -1719,7 +1720,7 @@ def mock_async_callable_tests(context):
                     ):
                         await self.callable_target(*self.call_args, **self.call_kwargs)
 
-        @context.fsub_context(".with_wrapper(func)")
+        @context.sub_context(".with_wrapper(func)")
         def with_wrapper(context):
             @context.memoize_before
             async def wrapper(self):

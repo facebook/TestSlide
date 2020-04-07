@@ -467,43 +467,47 @@ class _CallableMock(object):
     def __call__(self, *args, **kwargs):
         runner = self._get_runner(*args, **kwargs)
         if runner:
-            if isinstance(runner, _AsyncRunner):
+            if self.is_async:
+                if isinstance(runner, _AsyncRunner):
 
-                async def await_runner(*args, **kwargs):
-                    return await runner.run(*args, **kwargs)
+                    async def async_wrapper(*args, **kwargs):
+                        value = await runner.run(*args, **kwargs)
+                        self._validate_return_type(runner, value)
+                        return value
 
-                value = await_runner(*args, **kwargs)
-            else:
-                if self.is_async:
-
-                    async def sync_wrapper(*args, **kwargs):
-                        return runner.run(*args, **kwargs)
-
-                    value = sync_wrapper(*args, **kwargs)
+                    value = async_wrapper(*args, **kwargs)
                 else:
-                    value = runner.run(*args, **kwargs)
-                    self._validate_return_type(runner, value)
 
+                    async def async_wrapper(*args, **kwargs):
+                        value = runner.run(*args, **kwargs)
+                        self._validate_return_type(runner, value)
+                        return value
+
+                    value = async_wrapper(*args, **kwargs)
+            else:
+                value = runner.run(*args, **kwargs)
+                self._validate_return_type(runner, value)
             return value
-        ex_msg = (
-            "{}, {}:\n"
-            "  Received call:\n"
-            "{}"
-            "  But no behavior was defined for it."
-        ).format(
-            _format_target(self.target),
-            repr(self.method),
-            _format_args(2, *args, **kwargs),
-        )
-        if self._registered_calls:
-            ex_msg += "\n  These are the registered calls:\n" "{}".format(
-                "".join(
-                    _format_args(2, *reg_args, **reg_kwargs)
-                    for reg_args, reg_kwargs in self._registered_calls
-                )
+        else:
+            ex_msg = (
+                "{}, {}:\n"
+                "  Received call:\n"
+                "{}"
+                "  But no behavior was defined for it."
+            ).format(
+                _format_target(self.target),
+                repr(self.method),
+                _format_args(2, *args, **kwargs),
             )
-            raise UnexpectedCallArguments(ex_msg)
-        raise UndefinedBehaviorForCall(ex_msg)
+            if self._registered_calls:
+                ex_msg += "\n  These are the registered calls:\n" "{}".format(
+                    "".join(
+                        _format_args(2, *reg_args, **reg_kwargs)
+                        for reg_args, reg_kwargs in self._registered_calls
+                    )
+                )
+                raise UnexpectedCallArguments(ex_msg)
+            raise UndefinedBehaviorForCall(ex_msg)
 
     @property
     def _registered_calls(self):
