@@ -350,6 +350,7 @@ class StrictMock(object):
         name=None,
         default_context_manager=False,
         signature_validation=True,
+        type_validation=True,
     ):
         """
         For every new instance of StrictMock we dynamically create a subclass of
@@ -455,6 +456,7 @@ class StrictMock(object):
         name=None,
         default_context_manager=False,
         signature_validation=True,
+        type_validation=True,
     ):
         """
         template: Template class to be used as a template for the mock.
@@ -473,6 +475,10 @@ class StrictMock(object):
         signature validation, and should only be used when type() is required
         to not change.
         """
+        if not signature_validation and type_validation:
+            raise ValueError(
+                "Type Validation is only available with Signature validation turned on"
+            )
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
         self.__dict__["_template"] = template
@@ -480,6 +486,7 @@ class StrictMock(object):
         self.__dict__["_runtime_attrs"] = runtime_attrs or []
         self.__dict__["_name"] = name
         self.__dict__["_signature_validation"] = signature_validation
+        self.__dict__["_type_validation"] = type_validation
         self.__dict__["__caller"] = self._get_caller(1)
 
         self._setup_magic_methods()
@@ -567,10 +574,12 @@ class StrictMock(object):
                 if callable(template_value):
                     if not callable(value):
                         raise NonCallableValue(self, name)
-
                     if self.__dict__["_signature_validation"]:
-                        signature_validation_wrapper = testslide.lib._wrap_signature_and_type_validation(
-                            value, self._template, name
+                        signature_validation_wrapper = testslide.lib._wrap_signature_validation(
+                            value,
+                            self._template,
+                            name,
+                            self.__dict__["_type_validation"],
                         )
                         if inspect.iscoroutinefunction(template_value):
 
@@ -645,6 +654,7 @@ class StrictMock(object):
             runtime_attrs=self._runtime_attrs,
             name=self._name,
             signature_validation=self._signature_validation,
+            type_validation=self._type_validation,
         )
         self_copy.__dict__["__caller"] = self._get_caller(2)
         return self_copy

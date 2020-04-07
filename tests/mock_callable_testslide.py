@@ -109,6 +109,7 @@ def mock_callable_tests(context):
     context.memoize("assertions", lambda self: [])
     context.memoize("call_args", lambda self: ("first", "second"))
     context.memoize("call_kwargs", lambda self: {"kwarg1": "first", "kwarg2": "second"})
+    context.memoize("type_validation", lambda self: True)
 
     @context.memoize
     def specific_call_args(self):
@@ -220,7 +221,7 @@ def mock_callable_tests(context):
                 def signature(context):
                     @context.example
                     def works_with_valid_signature(self):
-                        self.callable_target(*self.call_args, **self.call_kwargs),
+                        self.callable_target(*self.call_args, **self.call_kwargs)
 
                     @context.example
                     def raises_TypeError_for_mismatching_signature(self):
@@ -232,7 +233,7 @@ def mock_callable_tests(context):
                 if not empty_args:
 
                     @context.sub_context
-                    def argument_types(context):
+                    def type_validation(context):
                         @context.example
                         def raises_TypeError_for_mismatching_types(self):
                             bad_signature_args = (1234 for arg in self.call_args)
@@ -242,6 +243,20 @@ def mock_callable_tests(context):
                             with self.assertRaises(TypeError):
                                 self.callable_target(
                                     *bad_signature_args, **bad_signature_kargs
+                                )
+
+                        @context.sub_context("with type_validation=False")
+                        def with_type_validation_False(context):
+                            context.memoize("type_validation", lambda self: False)
+
+                            @context.example
+                            def passes_with_invalid_type(self):
+                                call_args = [1 for arg in self.call_args]
+                                call_kwargs = {
+                                    key: 1 for key in self.call_kwargs.keys()
+                                }
+                                self.callable_target(
+                                    *self.call_args, **self.call_kwargs
                                 )
 
             @context.sub_context(".for_call(*args, **kwargs)")
@@ -1068,14 +1083,23 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_function(context):
-            @context.before
-            def before(self):
-                self.callable_arg = "test_function"
-                self.original_callable = getattr(self.real_target, self.callable_arg)
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
+            context.memoize("callable_arg", lambda self: "test_function")
+
+            @context.memoize_before
+            def original_callable(self):
+                return getattr(self.real_target, self.callable_arg)
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(
+                    self.target_arg,
+                    self.callable_arg,
+                    type_validation=self.type_validation,
                 )
-                self.callable_target = getattr(self.real_target, self.callable_arg)
+
+            @context.memoize_before
+            def callable_target(self):
+                return getattr(self.real_target, self.callable_arg)
 
             context.merge_context("mock configuration examples")
 
@@ -1105,27 +1129,45 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_class_method(context):
-            @context.before
-            def before(self):
-                self.original_callable = Target.class_method
-                self.callable_arg = "class_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
+            @context.memoize_before
+            def original_callable(self):
+                return Target.class_method
+
+            context.memoize("callable_arg", lambda self: "class_method")
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(
+                    self.target_arg,
+                    self.callable_arg,
+                    type_validation=self.type_validation,
                 )
-                self.callable_target = Target.class_method
+
+            @context.memoize_before
+            def callable_target(self):
+                return Target.class_method
 
             context.merge_context("mock configuration examples")
 
         @context.sub_context
         def and_callable_is_a_static_method(context):
-            @context.before
-            def before(self):
-                self.original_callable = Target.static_method
-                self.callable_arg = "static_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
+            @context.memoize_before
+            def original_callable(self):
+                return Target.static_method
+
+            context.memoize("callable_arg", lambda self: "static_method")
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(
+                    self.target_arg,
+                    self.callable_arg,
+                    type_validation=self.type_validation,
                 )
-                self.callable_target = Target.static_method
+
+            @context.memoize_before
+            def callable_target(self):
+                return Target.static_method
 
             context.merge_context("mock configuration examples")
 
@@ -1169,27 +1211,44 @@ def mock_callable_tests(context):
 
             context.memoize("callable_arg", lambda self: "instance_method")
 
-            @context.before
-            def before(self):
-                self.original_callable = self.real_target.instance_method
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
+            @context.memoize_before
+            def original_callable(self):
+                return self.real_target.instance_method
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(
+                    self.target_arg,
+                    self.callable_arg,
+                    type_validation=self.type_validation,
                 )
-                self.callable_target = self.real_target.instance_method
+
+            @context.memoize_before
+            def callable_target(self):
+                return self.real_target.instance_method
 
             context.merge_context("mock configuration examples")
             context.merge_context("other instances are not mocked")
 
         @context.sub_context
         def and_callable_is_a_class_method(context):
-            @context.before
-            def before(self):
-                self.original_callable = self.real_target.class_method
-                self.callable_arg = "class_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
+            @context.memoize_before
+            def original_callable(self):
+                return self.real_target.class_method
+
+            context.memoize("callable_arg", lambda self: "class_method")
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(
+                    self.target_arg,
+                    self.callable_arg,
+                    type_validation=self.type_validation,
                 )
-                self.callable_target = self.real_target.class_method
+
+            @context.memoize_before
+            def callable_target(self):
+                return self.real_target.class_method
 
             context.merge_context("mock configuration examples")
             context.merge_context("other instances are not mocked")
@@ -1197,14 +1256,23 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_static_method(context):
-            @context.before
-            def before(self):
-                self.original_callable = self.real_target.static_method
-                self.callable_arg = "static_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
+            @context.memoize_before
+            def original_callable(self):
+                return self.real_target.static_method
+
+            context.memoize("callable_arg", lambda self: "static_method")
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(
+                    self.target_arg,
+                    self.callable_arg,
+                    type_validation=self.type_validation,
                 )
-                self.callable_target = self.real_target.static_method
+
+            @context.memoize_before
+            def callable_target(self):
+                return self.real_target.static_method
 
             context.merge_context("mock configuration examples")
             context.merge_context("other instances are not mocked")
@@ -1217,16 +1285,31 @@ def mock_callable_tests(context):
 
             @context.shared_context
             def magic_method_tests(context):
-                @context.before
-                def before(self):
-                    self.original_callable = self.target.__str__
-                    self.real_target = self.target
-                    self.target_arg = self.target
-                    self.callable_arg = "__str__"
-                    self.mock_callable_dsl = mock_callable(
-                        self.target_arg, self.callable_arg
+                @context.memoize_before
+                def original_callable(self):
+                    return self.target.__str__
+
+                @context.memoize_before
+                def real_target(self):
+                    return self.target
+
+                @context.memoize_before
+                def target_arg(self):
+                    return self.target
+
+                context.memoize("callable_arg", lambda self: "__str__")
+
+                @context.memoize_before
+                def mock_callable_dsl(self):
+                    return mock_callable(
+                        self.target_arg,
+                        self.callable_arg,
+                        type_validation=self.type_validation,
                     )
-                    self.callable_target = lambda: str(self.target)
+
+                @context.memoize_before
+                def callable_target(self):
+                    return lambda: str(self.target)
 
                 context.merge_context(
                     "mock configuration examples", empty_args=True, can_yield=False
@@ -1291,12 +1374,13 @@ def mock_callable_tests(context):
 
             @context.sub_context
             def that_is_statically_defined_at_the_class(context):
-                @context.before
-                def before(self):
-                    self.mock_callable_dsl = mock_callable(
-                        self.target_arg, self.callable_arg
-                    )
-                    self.callable_target = self.real_target.instance_method
+                @context.memoize_before
+                def mock_callable_dsl(self):
+                    return mock_callable(self.target_arg, self.callable_arg)
+
+                @context.memoize_before
+                def callable_target(self):
+                    return self.real_target.instance_method
 
                 context.merge_context(
                     "mock configuration examples", has_original_callable=False
@@ -1311,16 +1395,20 @@ def mock_callable_tests(context):
 
                 @context.before
                 def before(self):
-                    target = StrictMock(
+                    self.target = StrictMock(
                         template=Target, runtime_attrs=["dynamic_instance_method"]
                     )
                     self.original_callable = None
-                    self.real_target = target
-                    self.target_arg = target
-                    self.mock_callable_dsl = mock_callable(
-                        self.target_arg, self.callable_arg
-                    )
-                    self.callable_target = target.dynamic_instance_method
+                    self.real_target = self.target
+                    self.target_arg = self.target
+
+                @context.memoize_before
+                def mock_callable_dsl(self):
+                    return mock_callable(self.target_arg, self.callable_arg)
+
+                @context.memoize_before
+                def callable_target(self):
+                    return self.target.dynamic_instance_method
 
                 context.merge_context(
                     "mock configuration examples", has_original_callable=False
@@ -1333,13 +1421,15 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_class_method(context):
-            @context.before
-            def before(self):
-                self.callable_arg = "class_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
-                )
-                self.callable_target = self.real_target.class_method
+            context.memoize("callable_arg", lambda self: "class_method")
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(self.target_arg, self.callable_arg)
+
+            @context.memoize_before
+            def callable_target(self):
+                return self.real_target.class_method
 
             context.merge_context(
                 "mock configuration examples", has_original_callable=False
@@ -1349,13 +1439,15 @@ def mock_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_a_static_method(context):
-            @context.before
-            def before(self):
-                self.callable_arg = "static_method"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
-                )
-                self.callable_target = self.real_target.static_method
+            context.memoize("callable_arg", lambda self: "static_method")
+
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(self.target_arg, self.callable_arg)
+
+            @context.memoize_before
+            def callable_target(self):
+                return self.real_target.static_method
 
             context.merge_context(
                 "mock configuration examples", has_original_callable=False
@@ -1367,14 +1459,15 @@ def mock_callable_tests(context):
         def and_callable_is_a_magic_method(context):
             context.memoize("call_args", lambda self: ())
             context.memoize("call_kwargs", lambda self: {})
+            context.memoize("callable_arg", lambda self: "__str__")
 
-            @context.before
-            def before(self):
-                self.callable_arg = "__str__"
-                self.mock_callable_dsl = mock_callable(
-                    self.target_arg, self.callable_arg
-                )
-                self.callable_target = lambda: str(self.real_target)
+            @context.memoize_before
+            def mock_callable_dsl(self):
+                return mock_callable(self.target_arg, self.callable_arg)
+
+            @context.memoize_before
+            def callable_target(self):
+                return lambda: str(self.real_target)
 
             context.merge_context(
                 "mock configuration examples",

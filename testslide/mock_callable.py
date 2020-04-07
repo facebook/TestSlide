@@ -9,20 +9,26 @@ import functools
 from typing import List, Callable  # noqa
 import testslide
 from testslide.strict_mock import StrictMock
-from testslide.lib import _wrap_signature_and_type_validation
+from testslide.lib import _wrap_signature_validation
 from .patch import _patch, _is_instance_method
 from .lib import _bail_if_private
 
 
-def mock_callable(target, method, allow_private=False):
-    return _MockCallableDSL(target, method, allow_private=allow_private)
+def mock_callable(target, method, allow_private=False, type_validation=True):
+    return _MockCallableDSL(
+        target, method, allow_private=allow_private, type_validation=type_validation
+    )
 
 
 def mock_async_callable(
-    target, method, callable_returns_coroutine=False, allow_private=False
+    target,
+    method,
+    callable_returns_coroutine=False,
+    allow_private=False,
+    type_validation=True,
 ):
     return _MockAsyncCallableDSL(
-        target, method, callable_returns_coroutine, allow_private
+        target, method, callable_returns_coroutine, allow_private, type_validation
     )
 
 
@@ -600,8 +606,8 @@ class _MockCallableDSL(object):
             original_callable = getattr(self._target, self._method)
 
         if not isinstance(self._target, StrictMock):
-            new_value = _wrap_signature_and_type_validation(
-                new_value, self._target, self._method
+            new_value = _wrap_signature_validation(
+                new_value, self._target, self._method, self.type_validation
             )
 
         restore = self._method in self._target.__dict__
@@ -626,6 +632,7 @@ class _MockCallableDSL(object):
         callable_mock=None,
         original_callable=None,
         allow_private=False,
+        type_validation=True,
     ):
         if not _is_setup():
             raise RuntimeError(
@@ -638,6 +645,7 @@ class _MockCallableDSL(object):
         self._runner = None
         self._next_runner_accepted_args = None
         self.allow_private = allow_private
+        self.type_validation = type_validation
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -910,9 +918,18 @@ class _MockCallableDSL(object):
 
 
 class _MockAsyncCallableDSL(_MockCallableDSL):
-    def __init__(self, target, method, callable_returns_coroutine, allow_private=False):
+    def __init__(
+        self,
+        target,
+        method,
+        callable_returns_coroutine,
+        allow_private=False,
+        type_validation=True,
+    ):
         self._callable_returns_coroutine = callable_returns_coroutine
-        super().__init__(target, method, allow_private=allow_private)
+        super().__init__(
+            target, method, allow_private=allow_private, type_validation=type_validation
+        )
 
     def _validate_patch(self):
         return super()._validate_patch(
