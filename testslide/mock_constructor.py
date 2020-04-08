@@ -8,7 +8,7 @@ import inspect
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
-from .lib import _bail_if_private
+from .lib import _bail_if_private, _validate_function_signature
 
 _DO_NOT_COPY_CLASS_ATTRIBUTES = (
     "__dict__",
@@ -157,11 +157,24 @@ class AttrAccessValidation(object):
         )
 
 
-def _get_mocked_class(original_class, target_class_id, callable_mock):
+def _wrap_type_validation(callable_mock, templates):
+    def callable_mock_with_type_validation(*args, **kwargs):
+        for template in templates:
+            _validate_function_signature(template, args, kwargs)
+        return callable_mock(*args, **kwargs)
+
+    return callable_mock_with_type_validation
+
+
+def _get_mocked_class(original_class, target_class_id, callable_mock, type_validation):
     if target_class_id in _target_class_id_by_original_class_id:
         raise RuntimeError("Can not mock the same class at two different modules!")
     else:
         _target_class_id_by_original_class_id[id(original_class)] = target_class_id
+
+    original_class_new = original_class.__new__
+    original_class_init = original_class.__init__
+
     # Extract class attributes from the target class...
     _restore_dict[target_class_id] = {}
     class_dict_to_copy = {
@@ -177,7 +190,13 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
             continue
         _restore_dict[target_class_id][name] = value
     # ...and reuse them...
-    mocked_class_dict = {"__new__": callable_mock}
+    mocked_class_dict = {
+        "__new__": _wrap_type_validation(
+            callable_mock, [original_class_new, original_class_init]
+        )
+        if type_validation
+        else callable_mock
+    }
     mocked_class_dict.update(
         {
             name: value
@@ -226,9 +245,11 @@ def _get_mocked_class(original_class, target_class_id, callable_mock):
 
 
 def _patch_and_return_mocked_class(
-    target, class_name, target_class_id, original_class, callable_mock
+    target, class_name, target_class_id, original_class, callable_mock, type_validation
 ):
-    mocked_class = _get_mocked_class(original_class, target_class_id, callable_mock)
+    mocked_class = _get_mocked_class(
+        original_class, target_class_id, callable_mock, type_validation
+    )
 
     def unpatcher():
         for name, value in _restore_dict[target_class_id].items():
@@ -248,7 +269,7 @@ def _patch_and_return_mocked_class(
     return mocked_class
 
 
-def mock_constructor(target, class_name, allow_private=False):
+def mock_constructor(target, class_name, allow_private=False, type_validation=True):
     if not isinstance(class_name, str):
         raise ValueError("Second argument must be a string with the name of the class.")
     _bail_if_private(class_name, allow_private)
@@ -291,7 +312,12 @@ def mock_constructor(target, class_name, allow_private=False):
             raise ValueError("Old style classes are not supported.")
         callable_mock = _CallableMock(original_class, "__new__")
         mocked_class = _patch_and_return_mocked_class(
-            target, class_name, target_class_id, original_class, callable_mock
+            target,
+            class_name,
+            target_class_id,
+            original_class,
+            callable_mock,
+            type_validation,
         )
 
     def original_callable(cls, *args, **kwargs):
