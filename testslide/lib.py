@@ -70,7 +70,17 @@ def _validate_function_signature(
             # We use the signature whenever available because for class methods
             # argspec has the extra 'cls' value
             if signature:
-                argname = list(signature.parameters.keys())[idx]
+                argnames = list(signature.parameters.keys())
+                if len(argnames) - 1 < idx:
+                    # we might have some *args
+                    if not argspec.varargs:
+                        type_errors.append(
+                            f"Got extra argument with value '{args[idx]}'"
+                        )
+
+                    continue
+
+                argname = argnames[idx]
             else:
                 argname = argspec.args[idx]
             try:

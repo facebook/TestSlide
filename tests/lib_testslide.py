@@ -36,6 +36,12 @@ def _validate_function_signature(context):
                 arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
             )
 
+        @context.example
+        def varargs_and_varkwargs(self):
+            testslide.lib._validate_function_signature(
+                object.__new__, (1, 2, 3), {"four": 5, "six": 6}
+            )
+
         @context.example("testslide.StrictMock with valid template")
         def testslide_StrictMock_with_valid_template(self):
             strict_mock = StrictMock(template=str)
