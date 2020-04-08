@@ -9,6 +9,7 @@ import contextlib
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 from testslide.mock_callable import _MockCallableDSL
 from testslide.strict_mock import StrictMock
+from typing import Optional
 
 
 class _PrivateClass(object):
@@ -43,13 +44,15 @@ class Target(TargetParent):
     CLASS_ATTR = "CLASS_ATTR"
     __slots__ = ("args", "kwargs", "p2_super", "p3_super")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, message: Optional[str] = None, *args, **kwargs):
         self.p2_super = False
         super(Target, self).__init__(p2_super=True)
 
         self.p3_super = False
         super().__init__(p3_super=True)
 
+        if message is not None:
+            args = [message] + list(args)
         super(Target, self).__init__(*args, **kwargs)
 
         self.dynamic_attr = "dynamic_attr"
@@ -178,20 +181,20 @@ def mock_constructor(context):
         @context.example
         def works_with_composition(self):
             self.mock_constructor(self.target_module, self.target_class_name).for_call(
-                1
+                "1"
             ).with_wrapper(
                 lambda original_callable, *args, **kwargs: original_callable("one")
             )
             self.mock_constructor(self.target_module, self.target_class_name).for_call(
-                2
+                "2"
             ).with_wrapper(
                 lambda original_callable, *args, **kwargs: original_callable("two")
             )
 
-            target_one = self.get_target_class()(1)
+            target_one = self.get_target_class()("1")
             self.assertEqual(target_one.args, ("one",))
 
-            target_two = self.get_target_class()(2)
+            target_two = self.get_target_class()("2")
             self.assertEqual(target_two.args, ("two",))
 
         @context.sub_context
@@ -345,10 +348,12 @@ def mock_constructor(context):
 
             @context.sub_context(".with_wrapper()")
             def with_wrapper(context):
-                context.memoize("args", lambda self: (1, 2))
-                context.memoize("wrapped_args", lambda self: (3, 4))
-                context.memoize("kwargs", lambda self: {"one": 1, "two": 2})
-                context.memoize("wrapped_kwargs", lambda self: {"three": 3, "four": 4})
+                context.memoize("args", lambda self: ("1", "2"))
+                context.memoize("wrapped_args", lambda self: ("3", "4"))
+                context.memoize("kwargs", lambda self: {"one": "1", "two": "2"})
+                context.memoize(
+                    "wrapped_kwargs", lambda self: {"three": "3", "four": "4"}
+                )
 
                 @context.memoize
                 def target(self):
@@ -494,3 +499,34 @@ def mock_constructor(context):
             self.target_module, _PrivateClass.__name__, allow_private=True
         ).for_call().to_return_value("mocked_private")
         _PrivateClass()
+
+    @context.sub_context
+    def type_validation(context):
+        context.memoize("value", lambda self: "Target mock")
+        context.memoize("type_validation", lambda self: True)
+
+        @context.before
+        def before(self):
+            self.mock_constructor(
+                self.target_module,
+                self.target_class_name,
+                type_validation=self.type_validation,
+            ).to_return_value(self.value)
+            self.target = getattr(self.target_module, self.target_class_name)
+
+        @context.example
+        def it_passes_with_valid_types(self):
+            self.assertEqual(self.target(message="hello"), self.value)
+
+        @context.example
+        def it_fails_with_invalid_types(self):
+            with self.assertRaises(TypeError):
+                self.target(message=1234)
+
+        @context.sub_context("with type_validation=False")
+        def with_type_validation_False(context):
+            context.memoize("type_validation", lambda self: False)
+
+            @context.example
+            def it_passes_with_invalid_types(self):
+                self.target(message=1234)
