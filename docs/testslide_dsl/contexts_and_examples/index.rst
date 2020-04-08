@@ -44,7 +44,7 @@ This describes the basic behavior of a calculator class. Here's what you get whe
   Finished 2 examples in 0.0s:
     Successful: 2
 
-Note how TestSlide parses the Python code, and yields a close to spoken language wersion of it.
+Note how TestSlide parses the Python code, and yields a close to spoken language version of it.
 
 Sub Examples
 ------------
