@@ -12,7 +12,7 @@ import sys
 from contextlib import contextmanager
 
 from . import _TestSlideTestResult, Context
-from .runner import Runner, ProgressFormatter, DocumentFormatter
+from .runner import Runner, ProgressFormatter, DocumentFormatter, LongFormatter
 import unittest
 import testslide.dsl
 from .strict_mock import StrictMock
@@ -154,6 +154,8 @@ class Cli(object):
         "progress": ProgressFormatter,
         "d": DocumentFormatter,
         "documentation": DocumentFormatter,
+        "l": LongFormatter,
+        "long": LongFormatter,
     }
 
     @staticmethod
