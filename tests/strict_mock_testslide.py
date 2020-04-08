@@ -17,6 +17,7 @@ import functools
 import inspect
 import sys
 import re
+import unittest
 import os
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
@@ -63,7 +64,7 @@ class Template(TemplateParent):
 
     __slots__ = ["slot_attribute"]
 
-    non_callable = "original value"
+    non_callable: str = "original value"
 
     def __init__(self):
         super(Template, self).__init__()
@@ -417,11 +418,61 @@ def strict_mock(context):
 
                     @context.example
                     def attribute_type_is_maintained(self):
-                        non_callable = {1: 2}
+                        non_callable = "non callable"
                         self.strict_mock.non_callable = non_callable
                         self.assertEqual(
                             type(self.strict_mock.non_callable), type(non_callable)
                         )
+
+                    @context.sub_context
+                    def type_validation(context):
+                        @context.example
+                        def allows_setting_valid_type(self):
+                            self.strict_mock.non_callable = "valid"
+
+                        @context.example
+                        def allows_setting_valid_type_with_templated_mock(self):
+                            print(unittest.mock.Mock(spec=str).__class__)
+                            self.strict_mock.non_callable = unittest.mock.Mock(spec=str)
+                            self.strict_mock.non_callable = StrictMock(template=str)
+
+                        @context.example
+                        def allows_setting_valid_type_with_generic_mock(self):
+                            self.strict_mock.non_callable = unittest.mock.Mock()
+                            self.strict_mock.non_callable = StrictMock()
+
+                        @context.example
+                        def raises_TypeError_when_setting_invalid_type(self):
+                            with self.assertRaises(TypeError):
+                                self.strict_mock.non_callable = 1
+
+                        @context.example
+                        def raises_TypeError_when_setting_with_mock_with_invalid_type_template(
+                            self,
+                        ):
+                            with self.assertRaises(TypeError):
+                                self.strict_mock.non_callable = unittest.mock.Mock(
+                                    spec=int
+                                )
+                            with self.assertRaises(TypeError):
+                                self.strict_mock.non_callable = StrictMock(template=int)
+
+                        @context.sub_context("with type_validation=False")
+                        def with_type_validation_False(context):
+                            context.memoize("type_validation", lambda self: False)
+
+                            @context.example
+                            def allows_setting_invalid_type(self):
+                                self.strict_mock.non_callable = 1
+
+                            @context.example
+                            def allows_setting_with_mock_with_invalid_type_template(
+                                self,
+                            ):
+                                self.strict_mock.non_callable = unittest.mock.Mock(
+                                    spec=int
+                                )
+                                self.strict_mock.non_callable = StrictMock(template=int)
 
                 @context.sub_context
                 def callable_attributes(context):
@@ -522,7 +573,7 @@ def strict_mock(context):
 
                                     else:
 
-                                        @context.xexample
+                                        @context.example
                                         def passes_on_wrong_type_call(self):
                                             setattr(
                                                 self.strict_mock,

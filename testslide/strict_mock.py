@@ -9,6 +9,8 @@ import os.path
 import testslide.lib
 from typing import Optional, Any
 
+from . import lib
+
 
 class UndefinedAttribute(BaseException):
     """
@@ -551,23 +553,21 @@ class StrictMock(object):
     def _is_magic_method(name):
         return name.startswith("__") and name.endswith("__")
 
-    def __setattr__(self, name, value):
-        if self._is_magic_method(name):
-            # ...check whether we're allowed to mock...
-            if name in self._UNSETTABLE_MAGICS or (
-                name in StrictMock.__dict__ and name not in self._SETTABLE_MAGICS
-            ):
-                raise UnsupportedMagic(self, name)
-            # ...or if it is something unsupported.
-            if name not in self._SETTABLE_MAGICS:
-                raise NotImplementedError(
-                    f"StrictMock does not implement support for {name}"
-                )
+    def _validate_attribute_type(self, name, value):
+        if not self.__dict__["_type_validation"]:
+            return
 
-        mock_value = value
+        if hasattr(self._template, "__annotations__"):
+            annotations = self._template.__annotations__
+            if name in annotations:
+                lib._validate_argument_type(annotations[name], name, value)
+
+    def _validate_and_wrap_mock_value(self, name, value):
         if self._template:
             if not self._template_has_attr(name):
                 raise NonExistentAttribute(self, name)
+
+            self._validate_attribute_type(name, value)
 
             if hasattr(self._template, name):
                 template_value = getattr(self._template, name)
@@ -598,20 +598,34 @@ class StrictMock(object):
                             callable_value = signature_validation_wrapper
                     else:
                         callable_value = None
-                    mock_value = _MethodProxy(
-                        value=value, callable_value=callable_value
-                    )
+                    return _MethodProxy(value=value, callable_value=callable_value)
             else:
                 if callable(value):
                     # We don't really need the proxy here, but it serves the
                     # double purpose of swallowing self / cls when needed.
-                    mock_value = _MethodProxy(value=value)
+                    return _MethodProxy(value=value)
         else:
             if callable(value):
                 # We don't really need the proxy here, but it serves the
                 # double purpose of swallowing self / cls when needed.
-                mock_value = _MethodProxy(value=value)
+                return _MethodProxy(value=value)
 
+        return value
+
+    def __setattr__(self, name, value):
+        if self._is_magic_method(name):
+            # ...check whether we're allowed to mock...
+            if name in self._UNSETTABLE_MAGICS or (
+                name in StrictMock.__dict__ and name not in self._SETTABLE_MAGICS
+            ):
+                raise UnsupportedMagic(self, name)
+            # ...or if it is something unsupported.
+            if name not in self._SETTABLE_MAGICS:
+                raise NotImplementedError(
+                    f"StrictMock does not implement support for {name}"
+                )
+
+        mock_value = self._validate_and_wrap_mock_value(name, value)
         setattr(type(self), name, mock_value)
 
     def __getattr__(self, name):
