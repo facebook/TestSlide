@@ -312,7 +312,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 + "\n"
                 + self.green("    passing nested example")
                 + "\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
 
@@ -337,7 +337,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "  test_skipped: SKIP\n"
                 "\n"
                 "Failures:\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
 
@@ -366,7 +366,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "  *focused example: PASS\n"
                 "\n"
                 "Failures:\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
 
@@ -381,7 +381,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "  *focused example: PASS\n"
                 "\n"
                 "Finished 1 example(s) in "
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             )
         )
 
@@ -652,6 +652,6 @@ class TestCliLongFormatter(TestCliBase):
                 "tests.sample_tests.SampleTestCase: test_failing: AssertionError: \n"
                 "tests.sample_tests.SampleTestCase: test_passing: PASS\n"
                 "tests.sample_tests.SampleTestCase: test_skipped: SKIP\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
