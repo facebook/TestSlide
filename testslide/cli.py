@@ -227,6 +227,14 @@ class Cli(object):
             help="Suppress output (stdout and stderr) of tested code",
         )
         parser.add_argument(
+            "--dsl-debug",
+            action="store_true",
+            help=(
+                "Print debugging information during execution of TestSlide's "
+                "DSL tests."
+            ),
+        )
+        parser.add_argument(
             "--trim-path-prefix",
             nargs=1,
             type=str,
@@ -336,6 +344,7 @@ class Cli(object):
             parsed_args.exclude_regex[0] if parsed_args.exclude_regex else None
         )
         config.quiet = parsed_args.quiet
+        config.dsl_debug = parsed_args.dsl_debug
         if self._modules:
             config.import_module_names = self._modules
         else:
@@ -364,6 +373,7 @@ class Cli(object):
                 import_secs=import_secs,
                 trim_path_prefix=config.trim_path_prefix,
                 show_testslide_stack_trace=config.show_testslide_stack_trace,
+                dsl_debug=config.dsl_debug,
             )
             StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
             if config.list:
