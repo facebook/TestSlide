@@ -254,7 +254,7 @@ class TestCliQuiet(TestCliBase):
         )
 
 
-class TestCliDocumentation(TestCliBase):
+class TestCliDocumentationFormatter(TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "documentation"] + self.argv
@@ -312,7 +312,7 @@ class TestCliDocumentation(TestCliBase):
                 + "\n"
                 + self.green("    passing nested example")
                 + "\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
 
@@ -337,7 +337,7 @@ class TestCliDocumentation(TestCliBase):
                 "  test_skipped: SKIP\n"
                 "\n"
                 "Failures:\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
 
@@ -366,7 +366,7 @@ class TestCliDocumentation(TestCliBase):
                 "  *focused example: PASS\n"
                 "\n"
                 "Failures:\n"
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
 
@@ -381,7 +381,7 @@ class TestCliDocumentation(TestCliBase):
                 "  *focused example: PASS\n"
                 "\n"
                 "Finished 1 example(s) in "
-                # TODO rest of output
+                # TODO add remaining bits of the output (using regexes)
             )
         )
 
@@ -520,7 +520,7 @@ class TestCliDocumentation(TestCliBase):
         )
 
 
-class TestCliProgress(TestCliBase):
+class TestCliProgressFormatter(TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv.append("--format")
@@ -544,5 +544,114 @@ class TestCliProgress(TestCliBase):
                 + self.green(".")
                 + self.yellow("S")
                 + "\r\n"
+            ),
+        )
+
+
+class TestCliLongFormatter(TestCliBase):
+    def setUp(self):
+        super().setUp()
+        self.argv = ["--format", "long"] + self.argv
+
+    def test_colored_output_to_terminal(self):
+        """
+        Execute all examples in the order defined with colored output.
+        """
+        self.run_testslide(
+            tty_stdout=True,
+            expected_return_code=1,
+            expected_stdout_startswith=(
+                self.white("top context: ")
+                + self.green("passing example")
+                + "\r\n"
+                + self.white("top context: ")
+                + self.red("failing example: ")
+                + "SimulatedFailure: test failure (extra)"
+                + "\r\n"
+                + self.white("top context: ")
+                + self.green("*focused example")
+                + "\r\n"
+                + self.white("top context: ")
+                + self.yellow("skipped example")
+                + "\r\n"
+                + self.white("top context: ")
+                + self.yellow("unittest SkipTest")
+                + "\r\n"
+                + self.white("top context, nested context: ")
+                + self.green("passing nested example")
+                + "\r\n"
+                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.red("test_failing: ")
+                + "AssertionError: "
+                + "\r\n"
+                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.green("test_passing")
+                + "\r\n"
+                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.yellow("test_skipped")
+                + "\r\n"
+                # TODO Rest of the output
+            ),
+        )
+
+    def test_colored_output_with_force_color(self):
+        """
+        Execute all examples in the order defined with colored output.
+        """
+        self.argv.append("--force-color")
+
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(
+                self.white("top context: ")
+                + self.green("passing example")
+                + "\n"
+                + self.white("top context: ")
+                + self.red("failing example: ")
+                + "SimulatedFailure: test failure (extra)"
+                + "\n"
+                + self.white("top context: ")
+                + self.green("*focused example")
+                + "\n"
+                + self.white("top context: ")
+                + self.yellow("skipped example")
+                + "\n"
+                + self.white("top context: ")
+                + self.yellow("unittest SkipTest")
+                + "\n"
+                + self.white("top context, nested context: ")
+                + self.green("passing nested example")
+                + "\n"
+                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.red("test_failing: ")
+                + "AssertionError: "
+                + "\n"
+                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.green("test_passing")
+                + "\n"
+                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.yellow("test_skipped")
+                + "\n"
+                # TODO Rest of the output
+            ),
+        )
+
+    def test_plain_output_without_terminal(self):
+        """
+        Execute all examples in the order defined without color.
+        """
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(
+                "top context: passing example: PASS\n"
+                "top context: failing example: SimulatedFailure: test failure (extra)\n"
+                "top context: *focused example: PASS\n"
+                "top context: skipped example: SKIP\n"
+                "top context: unittest SkipTest: SKIP\n"
+                "top context, nested context: passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase: test_failing: AssertionError: \n"
+                "tests.sample_tests.SampleTestCase: test_passing: PASS\n"
+                "tests.sample_tests.SampleTestCase: test_skipped: SKIP\n"
+                # TODO add remaining bits of the output (using regexes)
             ),
         )
