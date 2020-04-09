@@ -404,36 +404,56 @@ mock_callable implements signature validation. When you use it, the mock will ra
 This is particularly helpful when changes are introduced to the code: if a mocked method changes the signature, even when mocked, mock_callable will give you the signal that there's something broken.
 
 
-Type Checking Validation
-------------------------
+Type Validation
+---------------
 
-mock_callable implements type-check validation. When you use it, the mock will raise ``TypeError`` if it is called with arguments that does not match the original method's type annotation:
+If typing annotation information is available, ``mock_callable()`` validates types of objects passing through the mock. If an invalid type is detected, it will raise ``TypeError``.
+
+This feature is enabled by default. If you need to disable it (potentially due to a bug, please report!), you can do so by ``mock_callable(target, name, type_validation=False)``.
+
+Call Argument Types
+^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-  import time
-  import typing
-  from testslide import TestCase
+  import testslide
   
-  class A:
-    def typedfun(
-        self,
-        a: str,
-        b: typing.Iterable[typing.Union[str, float]],
-        c: typing.Optional[str],
-    ):
-        return a
+  class SomeClass:
+      def some_method(self, message: str):
+          return "world"
   
-  class TestSignature(TestCase):
-    def test_signature(self):
-      a = A()
-      self.mock_callable(a, 'typedfun')\
-        .to_return_value('mocked')
-      self.assertEqual(a.typedfun("a", ["b"], None), 'mocked')
-      with self.assertRaises(TypeError):
-        a.typedfun(1,2,3)
+  class TestArgumentTypeValidation(testslide.TestCase):
+      def test_argument_type_validation(self):
+          some_class_instance = SomeClass()
+          self.mock_callable(some_class_instance, "some_method").to_return_value(
+              "mocked world"
+          )
+          self.assertEqual(some_class_instance.some_method("hello"), "mocked world")
+          with self.assertRaises(TypeError):
+              # TypeError: Call with incompatible argument types:
+              # 'message': type of message must be str; got int instead
+              some_class_instance.some_method(1)
 
-This will prevent you from writing mocks, that don't use the original functions typing requirements.
+Return Value Type
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import testslide
+  
+  class SomeClass:
+      def one(self) -> int:
+          return 1
+  
+  class TestReturnTypeValidation(testslide.TestCase):
+      def test_return_type_validation(self):
+          some_class_instance = SomeClass()
+          self.mock_callable(some_class_instance, "one").to_return_value(
+              "one"
+          )
+          with self.assertRaises(TypeError):
+              # TypeError: type of return must be int; got str instead
+              some_class_instance.one()
 
 Test Framework Integration
 --------------------------
