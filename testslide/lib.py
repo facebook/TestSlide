@@ -42,18 +42,12 @@ def _is_a_mock(maybe_mock: Any) -> bool:
     )
 
 
-def _validate_argument_type(
-    annotations: Dict[str, Any], argname: str, value: Any
-) -> None:
-    type_information = annotations.get(argname)
-    if not type_information:
-        return
-
+def _validate_argument_type(expected_type, name: str, value) -> None:
     if _is_a_mock(value):
         template = _extract_mock_template(value)
         if not template:
             return
-    typeguard.check_type(argname, value, type_information)
+    typeguard.check_type(name, value, expected_type)
 
 
 def _validate_function_signature(
@@ -84,12 +78,18 @@ def _validate_function_signature(
             else:
                 argname = argspec.args[idx]
             try:
-                _validate_argument_type(argspec.annotations, argname, args[idx])
+                expected_type = argspec.annotations.get(argname)
+                if not expected_type:
+                    continue
+                _validate_argument_type(expected_type, argname, args[idx])
             except TypeError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
     for argname, value in kwargs.items():
         try:
-            _validate_argument_type(argspec.annotations, argname, value)
+            expected_type = argspec.annotations.get(argname)
+            if not expected_type:
+                continue
+            _validate_argument_type(expected_type, argname, value)
         except TypeError as type_error:
             type_errors.append(f"{repr(argname)}: {type_error}")
     if type_errors:
@@ -140,7 +140,9 @@ def _validate_return_type(template, value):
         argspec = inspect.getfullargspec(template)
     except TypeError:
         return
-    _validate_argument_type(argspec.annotations, "return", value)
+    expected_type = argspec.annotations.get("return")
+    if expected_type:
+        _validate_argument_type(expected_type, "return", value)
 
 
 ##
