@@ -34,7 +34,9 @@ It requires an async function:
 Implicit Coroutine Return
 -------------------------
 
-``mock_async_callable()`` checks if what it is mocking is a coroutine function and refuses to mock if it is not. This is usually a good thing, as it prevents mistakes. If you are trying to mock some callable with it, that is not a coroutine function, but you are **sure** that it returns a coroutine when called, you can still mock it like this:
+``mock_async_callable()`` checks if what it is mocking is a coroutine function and refuses to mock if it is not. This is usually a good thing, as it prevents mistakes. In some cases, such as the ones related to this `cython issue <https://github.com/cython/cython/issues/2273>`_, this check can fail.
+
+If you are trying to mock some callable with it, that is not a coroutine function, but you are **sure** that it returns a coroutine when called, you can still mock it like this:
 
 .. code-block:: python
 
