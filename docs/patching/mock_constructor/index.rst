@@ -75,9 +75,9 @@ Type Validation
           messenger_mock = testslide.StrictMock(template=Messenger)
           self.mock_constructor(sys.modules[__name__], "Messenger").to_return_value(messenger_mock)
           with self.assertRaises(TypeError):
-            # TypeError: Call with incompatible argument types:
-            # 'message': type of message must be str; got int instead
-            Messenger(message=1)
+              # TypeError: Call with incompatible argument types:
+              # 'message': type of message must be str; got int instead
+              Messenger(message=1)
 
 If you need to disable it (potentially due to a bug, please report!) you can do so with: ``mock_constructor(module, class_name, type_validation=False)``.
 
