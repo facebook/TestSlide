@@ -11,11 +11,11 @@ import sys
 import os
 import psutil
 
-from . import AggregatedExceptions, Skip
+from . import AggregatedExceptions, Skip, _ExampleRunner
 from contextlib import redirect_stdout, redirect_stderr
 
 
-class Formatter(object):
+class BaseFormatter(object):
     """
     Formatter base class. To be paired with Runner, to process / output example
     execution results.
@@ -47,6 +47,8 @@ class Formatter(object):
             )
             self._import_secs_warn = False
 
+    # Example Discovery
+
     def discovery_start(self):
         """
         To be called before example discovery starts.
@@ -64,6 +66,8 @@ class Formatter(object):
         To be called before example discovery finishes.
         """
         pass
+
+    # Test Execution
 
     def start(self, example):
         """
@@ -117,6 +121,35 @@ class Formatter(object):
         self.end_time = time()
         self.duration_secs = self.end_time - self.start_time
 
+    # DSL
+
+    def dsl_example(self, example, code):
+        pass
+
+    def dsl_before(self, example, code):
+        pass
+
+    def dsl_after(self, example, code):
+        pass
+
+    def dsl_around(self, example, code):
+        pass
+
+    def dsl_memoize(self, example, code):
+        pass
+
+    def dsl_memoize_before(self, example, code):
+        pass
+
+    def dsl_function(self, example, code):
+        pass
+
+
+class QuietFormatter(BaseFormatter):
+    pass
+
+
+class ColorFormatter(BaseFormatter):
     def _print_attrs(self, attrs, *values, **kwargs):
         stream = kwargs.get("file", sys.stdout)
         if stream.isatty() or self.force_color:
@@ -145,29 +178,29 @@ class Formatter(object):
         self._print_attrs("36", *values, **kwargs)
 
 
-class ProgressFormatter(Formatter):
+class ProgressFormatter(ColorFormatter):
     """
     Simple formatter that outputs "." when an example passes or "F" w
     """
 
     def success(self, example):
-        Formatter.success(self, example)
+        super().success(example)
         self.print_green(".", end="")
 
     def fail(self, example, exception):
-        Formatter.fail(self, example, exception)
+        super().fail(example, exception)
         self.print_red("F", end="")
 
     def skip(self, example):
-        Formatter.skip(self, example)
+        super().skip(example)
         self.print_yellow("S", end="")
 
     def finish(self, not_executed_examples):
-        Formatter.finish(self, not_executed_examples)
+        super().finish(not_executed_examples)
         print("")
 
 
-class DocumentFormatter(Formatter):
+class DocumentFormatter(ColorFormatter):
     def new_context(self, context):
         self.print_white(
             "{}{}{}".format("  " * context.depth, "*" if context.focus else "", context)
@@ -177,7 +210,7 @@ class DocumentFormatter(Formatter):
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example):
-        Formatter.success(self, example)
+        super().success(example)
         self.print_green(
             "{indent}{focus}{example}{pass_text}".format(
                 indent="  " * (example.context.depth + 1),
@@ -193,7 +226,7 @@ class DocumentFormatter(Formatter):
         ):
             exception = exception.exceptions[0]
 
-        Formatter.fail(self, example, exception)
+        super().fail(example, exception)
 
         self.print_red(
             "{indent}{focus}{example}: {ex_class}: {ex_message}".format(
@@ -206,7 +239,7 @@ class DocumentFormatter(Formatter):
         )
 
     def skip(self, example):
-        Formatter.skip(self, example)
+        super().skip(example)
         self.print_yellow(
             "{indent}{focus}{example}{skip_text}".format(
                 indent="  " * (example.context.depth + 1),
@@ -251,7 +284,7 @@ class DocumentFormatter(Formatter):
                 )
 
     def finish(self, not_executed_examples):
-        Formatter.finish(self, not_executed_examples)
+        super().finish(not_executed_examples)
         success = len(self.results["success"])
         fail = len(self.results["fail"])
         skip = len(self.results["skip"])
@@ -279,7 +312,7 @@ class DocumentFormatter(Formatter):
             self.print_cyan("  Not executed: ", len(not_executed_examples))
 
 
-class LongFormatter(Formatter):
+class LongFormatter(ColorFormatter):
     def new_example(self, example):
         self.print_white(
             "{}{}: ".format(
@@ -292,7 +325,7 @@ class LongFormatter(Formatter):
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example):
-        Formatter.success(self, example)
+        super().success(example)
         self.print_green(
             "{focus}{example}{pass_text}".format(
                 focus="*" if example.focus else "",
@@ -307,7 +340,7 @@ class LongFormatter(Formatter):
         ):
             exception = exception.exceptions[0]
 
-        Formatter.fail(self, example, exception)
+        super().fail(example, exception)
 
         self.print_red(
             "{focus}{example}: ".format(
@@ -323,7 +356,7 @@ class LongFormatter(Formatter):
         )
 
     def skip(self, example):
-        Formatter.skip(self, example)
+        super().skip(example)
         self.print_yellow(
             "{focus}{example}{skip_text}".format(
                 focus="*" if example.focus else "",
@@ -367,7 +400,7 @@ class LongFormatter(Formatter):
                 )
 
     def finish(self, not_executed_examples):
-        Formatter.finish(self, not_executed_examples)
+        super().finish(not_executed_examples)
         success = len(self.results["success"])
         fail = len(self.results["fail"])
         skip = len(self.results["skip"])
@@ -438,7 +471,7 @@ class Runner(object):
             example_exception = None
             with redirect_stdout(stdout), redirect_stderr(stderr):
                 try:
-                    example()
+                    _ExampleRunner(example, self.formatter).run()
                 except BaseException as ex:
                     example_exception = ex
             if example_exception:
@@ -449,7 +482,7 @@ class Runner(object):
                         print("stderr:\n{}".format(stderr.getvalue()))
                 raise example_exception
         else:
-            example()
+            _ExampleRunner(example, self.formatter).run()
 
     def run(self):
         """
