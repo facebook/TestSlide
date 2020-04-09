@@ -218,6 +218,7 @@ Methods with type annotation will have call arguments validated against it and i
   In [6]: mock.is_odd("1")
   (...)
   TypeError: Call with incompatible argument types:
+    'x': type of x must be int; got str instead
 
 Method Return Type
 ==================
@@ -236,8 +237,8 @@ Methods with return type annotated will have its return value type validated as 
   In [3]: mock = testslide.StrictMock(template=Calculator)
 
   In [4]: mock.is_odd = lambda x: 1
-
-TODO
+  (...)
+  TypeError: type of return must be bool; got int instead
 
 Setting Methods With Callables
 ==============================
