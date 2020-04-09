@@ -243,8 +243,8 @@ def mock_constructor(context):
 
         @context.sub_context
         def module(context):
-            context.memoize("args", lambda self: (6, 7))
-            context.memoize("kwargs", lambda self: {"8": 9, "10": 11})
+            context.memoize("args", lambda self: ("6", "7"))
+            context.memoize("kwargs", lambda self: {"8": "eight", "9": "nine"})
 
             @context.after
             def assert_working(self):
@@ -332,8 +332,8 @@ def mock_constructor(context):
 
             @context.example(".with_implementation() works")
             def with_implementation_works(self):
-                args = (1, 2)
-                kwargs = {"one": 1, "two": 2}
+                args = ("1", "2")
+                kwargs = {"one": "2", "two": "2"}
 
                 def implementation(*received_args, **received_kwargs):
                     self.assertEqual(received_args, args)
