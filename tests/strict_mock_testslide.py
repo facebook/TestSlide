@@ -71,26 +71,26 @@ class Template(TemplateParent):
         self.runtime_attr_from_init = True
         self.attr = None
 
-    def instance_method(self, message: str):
+    def instance_method(self, message: str) -> str:
         return "instance_method: {}".format(message)
 
-    async def async_instance_method(self, message: str):
+    async def async_instance_method(self, message: str) -> str:
         return "async_instance_method: {}".format(message)
 
     @staticmethod
-    def static_method(message: str):
+    def static_method(message: str) -> str:
         return "static_method: {}".format(message)
 
     @staticmethod
-    async def async_static_method(message: str):
+    async def async_static_method(message: str) -> str:
         return "async_static_method: {}".format(message)
 
     @classmethod
-    def class_method(cls, message: str):
+    def class_method(cls, message: str) -> str:
         return "class_method: {}".format(message)
 
     @classmethod
-    async def async_class_method(cls, message: str):
+    async def async_class_method(cls, message: str) -> str:
         return "async_class_method: {}".format(message)
 
     @extra_arg_with_wraps
@@ -432,7 +432,6 @@ def strict_mock(context):
 
                         @context.example
                         def allows_setting_valid_type_with_templated_mock(self):
-                            print(unittest.mock.Mock(spec=str).__class__)
                             self.strict_mock.non_callable = unittest.mock.Mock(spec=str)
                             self.strict_mock.non_callable = StrictMock(template=str)
 
@@ -527,7 +526,7 @@ def strict_mock(context):
                                     if signature_validation:
 
                                         @context.example
-                                        def fails_on_wrong_signature_call(self):
+                                        def fails_on_invalid_signature_call(self):
                                             setattr(
                                                 self.strict_mock,
                                                 self.test_method_name,
@@ -542,7 +541,7 @@ def strict_mock(context):
                                     else:
 
                                         @context.example
-                                        def passes_on_wrong_signature_call(self):
+                                        def passes_on_invalid_signature_call(self):
                                             setattr(
                                                 self.strict_mock,
                                                 self.test_method_name,
@@ -559,7 +558,7 @@ def strict_mock(context):
                                     if type_validation:
 
                                         @context.example
-                                        def fails_on_wrong_type_call(self):
+                                        def fails_on_invalid_argument_type_call(self):
                                             setattr(
                                                 self.strict_mock,
                                                 self.test_method_name,
@@ -571,10 +570,23 @@ def strict_mock(context):
                                                     self.test_method_name,
                                                 )(1234)
 
+                                        @context.example
+                                        def fails_on_invalid_return_type(self):
+                                            setattr(
+                                                self.strict_mock,
+                                                self.test_method_name,
+                                                lambda message: 1234,
+                                            )
+                                            with self.assertRaises(TypeError):
+                                                getattr(
+                                                    self.strict_mock,
+                                                    self.test_method_name,
+                                                )("message")
+
                                     else:
 
                                         @context.example
-                                        def passes_on_wrong_type_call(self):
+                                        def passes_on_invalid_argument_type_call(self):
                                             setattr(
                                                 self.strict_mock,
                                                 self.test_method_name,
@@ -586,6 +598,21 @@ def strict_mock(context):
                                                     self.test_method_name,
                                                 )(1),
                                                 "mock",
+                                            )
+
+                                        @context.example
+                                        def passes_on_invalid_return_type(self):
+                                            setattr(
+                                                self.strict_mock,
+                                                self.test_method_name,
+                                                lambda message: 1234,
+                                            )
+                                            self.assertEqual(
+                                                getattr(
+                                                    self.strict_mock,
+                                                    self.test_method_name,
+                                                )("message"),
+                                                1234,
                                             )
 
                                 @context.sub_context(
@@ -950,6 +977,19 @@ def strict_mock(context):
                                             self.strict_mock, self.method_name
                                         )(1)
 
+                                @context.example
+                                async def fails_on_invalid_return_type(self):
+                                    async def mock(message):
+                                        return 1234
+
+                                    setattr(
+                                        self.strict_mock, self.method_name, mock,
+                                    )
+                                    with self.assertRaises(TypeError):
+                                        await getattr(
+                                            self.strict_mock, self.method_name,
+                                        )("message")
+
                             else:
 
                                 @context.example
@@ -959,6 +999,21 @@ def strict_mock(context):
 
                                     setattr(self.strict_mock, self.method_name, mock)
                                     await getattr(self.strict_mock, self.method_name)(1)
+
+                                @context.example
+                                async def passes_on_invalid_return_type(self):
+                                    async def mock(message):
+                                        return 1234
+
+                                    setattr(
+                                        self.strict_mock, self.method_name, mock,
+                                    )
+                                    self.assertEqual(
+                                        await getattr(
+                                            self.strict_mock, self.method_name,
+                                        )("message"),
+                                        1234,
+                                    )
 
                         @context.sub_context(
                             "with signature_validation=True, type_validation=True"

@@ -9,7 +9,7 @@ import os.path
 import testslide.lib
 from typing import Optional, Any
 
-from . import lib
+import testslide.mock_callable
 
 
 class UndefinedAttribute(BaseException):
@@ -563,7 +563,7 @@ class StrictMock(object):
         if hasattr(self._template, "__annotations__"):
             annotations = self._template.__annotations__
             if name in annotations:
-                lib._validate_argument_type(annotations[name], name, value)
+                testslide.lib._validate_argument_type(annotations[name], name, value)
 
     def _validate_and_wrap_mock_value(self, name, value):
         if self._template:
@@ -584,21 +584,43 @@ class StrictMock(object):
                             name,
                             self.__dict__["_type_validation"],
                         )
+
                         if inspect.iscoroutinefunction(template_value):
 
                             async def awaitable_return_validation_wrapper(
                                 *args, **kwargs
                             ):
-                                return_value = signature_validation_wrapper(
+                                result_awaitable = signature_validation_wrapper(
                                     *args, **kwargs
                                 )
-                                if not inspect.isawaitable(return_value):
+                                if not inspect.isawaitable(result_awaitable):
                                     raise NonAwaitableReturn(self, name)
-                                return await return_value
+
+                                return_value = await result_awaitable
+                                if self.__dict__["_type_validation"] and not isinstance(
+                                    value, testslide.mock_callable._CallableMock
+                                ):
+                                    testslide.lib._validate_return_type(
+                                        template_value, return_value
+                                    )
+                                return return_value
 
                             callable_value = awaitable_return_validation_wrapper
                         else:
-                            callable_value = signature_validation_wrapper
+
+                            def return_validation_wrapper(*args, **kwargs):
+                                return_value = signature_validation_wrapper(
+                                    *args, **kwargs
+                                )
+                                if self.__dict__["_type_validation"] and not isinstance(
+                                    value, testslide.mock_callable._CallableMock
+                                ):
+                                    testslide.lib._validate_return_type(
+                                        template_value, return_value
+                                    )
+                                return return_value
+
+                            callable_value = return_validation_wrapper
                     else:
                         callable_value = None
                     return _MethodProxy(value=value, callable_value=callable_value)
