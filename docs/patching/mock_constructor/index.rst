@@ -56,6 +56,31 @@ Note how by using ``mock_constructor()``, not only you get all **safe by default
 
   Also check :doc:`../argument_matchers/index`: they allow more relaxed argument matching like "any string matching this regexp" or "any positive number".
 
+Type Validation
+---------------
+
+``mock_constructor()`` uses type annotation information from constructors to validate that mocks are respecting the interface:
+
+.. code-block:: python
+
+  import sys
+  import testslide
+  
+  class Messenger:
+      def __init__(self, message: str):
+        self.message = message
+  
+  class TestArgumentTypeValidation(testslide.TestCase):
+      def test_argument_type_validation(self):
+          messenger_mock = testslide.StrictMock(template=Messenger)
+          self.mock_constructor(sys.modules[__name__], "Messenger").to_return_value(messenger_mock)
+          with self.assertRaises(TypeError):
+            # TypeError: Call with incompatible argument types:
+            # 'message': type of message must be str; got int instead
+            Messenger(message=1)
+
+If you need to disable it (potentially due to a bug, please report!) you can do so with: ``mock_constructor(module, class_name, type_validation=False)``.
+
 Caveats
 -------
 
