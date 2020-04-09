@@ -25,13 +25,13 @@ class Formatter(object):
         self,
         force_color=False,
         import_secs=None,
-        trim_stack_trace_path_prefix=None,
+        trim_path_prefix=None,
         show_testslide_stack_trace=False,
     ):
         self.force_color = force_color
         self.import_secs = import_secs
         self._import_secs_warn = True
-        self.trim_stack_trace_path_prefix = trim_stack_trace_path_prefix
+        self.trim_path_prefix = trim_path_prefix
         self.show_testslide_stack_trace = show_testslide_stack_trace
         self.current_hierarchy = []
         self.results = {"success": [], "fail": [], "skip": []}
@@ -241,8 +241,8 @@ class DocumentFormatter(Formatter):
                     os.path.dirname(__file__)
                 ):
                     continue
-                if self.trim_stack_trace_path_prefix:
-                    split = path.split(self.trim_stack_trace_path_prefix)
+                if self.trim_path_prefix:
+                    split = path.split(self.trim_path_prefix)
                     if len(split) == 2 and not split[0]:
                         path = split[1]
                 self.print_cyan(
@@ -357,8 +357,8 @@ class LongFormatter(Formatter):
                     os.path.dirname(__file__)
                 ):
                     continue
-                if self.trim_stack_trace_path_prefix:
-                    split = path.split(self.trim_stack_trace_path_prefix)
+                if self.trim_path_prefix:
+                    split = path.split(self.trim_path_prefix)
                     if len(split) == 2 and not split[0]:
                         path = split[1]
                 self.print_cyan(

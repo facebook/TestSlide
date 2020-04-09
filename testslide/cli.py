@@ -227,13 +227,13 @@ class Cli(object):
             help="Suppress output (stdout and stderr) of tested code",
         )
         parser.add_argument(
-            "--trim-stack-trace-path-prefix",
+            "--trim-path-prefix",
             nargs=1,
             type=str,
-            default=[self._default_trim_stack_trace_path_prefix],
+            default=[self._default_trim_path_prefix],
             help=(
-                "Remove the specified prefix from stack trace paths in the output. "
-                "Default: {}".format(repr(self._default_trim_stack_trace_path_prefix))
+                "Remove the specified prefix from paths in some of the output. "
+                "Default: {}".format(repr(self._default_trim_path_prefix))
             ),
         )
         parser.add_argument(
@@ -268,11 +268,11 @@ class Cli(object):
             )
         return parser
 
-    def __init__(self, args, default_trim_stack_trace_path_prefix=None, modules=None):
+    def __init__(self, args, default_trim_path_prefix=None, modules=None):
         self.args = args
-        self._default_trim_stack_trace_path_prefix = (
-            default_trim_stack_trace_path_prefix
-            if default_trim_stack_trace_path_prefix
+        self._default_trim_path_prefix = (
+            default_trim_path_prefix
+            if default_trim_path_prefix
             else os.getcwd() + os.sep
         )
         self.parser = self._build_parser(disable_test_files=bool(modules))
@@ -318,9 +318,7 @@ class Cli(object):
 
         config.format = parsed_args.format
         config.force_color = parsed_args.force_color
-        config.trim_stack_trace_path_prefix = parsed_args.trim_stack_trace_path_prefix[
-            0
-        ]
+        config.trim_path_prefix = parsed_args.trim_path_prefix[0]
         config.show_testslide_stack_trace = parsed_args.show_testslide_stack_trace
         config.shuffle = parsed_args.shuffle
         config.list = parsed_args.list
@@ -364,10 +362,10 @@ class Cli(object):
             formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
                 force_color=config.force_color,
                 import_secs=import_secs,
-                trim_stack_trace_path_prefix=config.trim_stack_trace_path_prefix,
+                trim_path_prefix=config.trim_path_prefix,
                 show_testslide_stack_trace=config.show_testslide_stack_trace,
             )
-            StrictMock.TRIM_PATH_PREFIX = config.trim_stack_trace_path_prefix
+            StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
             if config.list:
                 formatter.discovery_start()
                 for context in Context.all_top_level_contexts:

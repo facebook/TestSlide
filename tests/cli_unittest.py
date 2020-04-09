@@ -485,9 +485,9 @@ class TestCliDocumentationFormatter(TestCliBase):
             ),
         )
 
-    def test_default_trim_stack_trace_path_prefix(self):
+    def test_default_trim_path_prefix(self):
         """
-        Default value for --trim-stack-trace-path-prefix trims path shared with
+        Default value for --trim-path-prefix trims path shared with
         testslide itself.
         """
         self.run_testslide(
@@ -495,11 +495,11 @@ class TestCliDocumentationFormatter(TestCliBase):
             expected_in_stdout=('File "tests/sample_tests.py", line'),
         )
 
-    def test_nonempty_trim_stack_trace_path_prefix(self):
+    def test_nonempty_trim_path_prefix(self):
         """
-        Trims prefix passed to --trim-stack-trace-path-prefix.
+        Trims prefix passed to --trim-path-prefix.
         """
-        self.argv.append("--trim-stack-trace-path-prefix")
+        self.argv.append("--trim-path-prefix")
         self.argv.append(os.path.dirname(self.SAMPLE_TESTS_PATH) + "/")
         self.run_testslide(
             expected_return_code=1,
@@ -512,7 +512,7 @@ class TestCliDocumentationFormatter(TestCliBase):
         """
         Trims nothing if '' passed to --trim-stack-trace-path-prefix.
         """
-        self.argv.append("--trim-stack-trace-path-prefix")
+        self.argv.append("--trim-path-prefix")
         self.argv.append("")
         self.run_testslide(
             expected_return_code=1,
