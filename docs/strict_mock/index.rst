@@ -154,7 +154,23 @@ This validation works even for attributes set by ``__init__``, as ``StrictMock``
 Attribute Type
 ==============
 
-TODO
+When type annotation is available for attributes, ``StrictMock`` won't allow setting it with an invalid type:
+
+.. code-block:: ipython
+
+  In [1]: import testslide
+
+  In [2]: class Calculator:
+     ...:     VERSION: str = "1.0"
+     ...:
+
+  In [3]: mock = testslide.StrictMock(template=Calculator)
+
+  In [4]: mock.VERSION = "1.1"                                                                                                  
+
+  In [5]: mock.VERSION = 1.2
+  (...)
+  TypeError: type of VERSION must be str; got float instead
 
 Method Signature
 ================
@@ -181,10 +197,45 @@ Method signatures must match the signature of the equivalent method at the templ
 Method Argument Type
 ====================
 
-TODO
+Methods with type annotation will have call arguments validated against it and invalid types will raise:
+
+.. code-block:: ipython
+
+  In [1]: import testslide
+
+  In [2]: class Calculator:
+     ...:     def is_odd(self, x: int):
+     ...:         return bool(x % 2)
+     ...:
+
+  In [3]: mock = testslide.StrictMock(template=Calculator)
+
+  In [4]: mock.is_odd = lambda x: True
+
+  In [5]: mock.is_odd(1)
+  Out[5]: True
+
+  In [6]: mock.is_odd("1")
+  (...)
+  TypeError: Call with incompatible argument types:
 
 Method Return Type
 ==================
+
+Methods with return type annotated will have its return value type validated as well:
+
+.. code-block:: ipython
+
+  In [1]: import testslide
+
+  In [2]: class Calculator:
+     ...:     def is_odd(self, x): -> bool
+     ...:         return bool(x % 2)
+     ...:
+
+  In [3]: mock = testslide.StrictMock(template=Calculator)
+
+  In [4]: mock.is_odd = lambda x: 1
 
 TODO
 
