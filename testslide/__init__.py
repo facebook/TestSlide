@@ -222,7 +222,7 @@ class _ExampleRunner:
     def __init__(self, example, formatter):
         self.example = example
         self.formatter = formatter
-        self.trim_path_prefix = self.formatter.trim_path_prefix  # FIMXE
+        self.trim_path_prefix = self.formatter.trim_path_prefix
 
     @staticmethod
     async def _fail_if_not_coroutine_function(func, *args, **kwargs):
