@@ -142,12 +142,15 @@ And this test will be skipped:
     Successful: 3
     Skipped: 1
 
-Stack Trace Simplification
---------------------------
+Path Simplification
+-------------------
 
-Stack traces can be hard to read. By default, TestSlide trims the working directory from file names on stack traces, simplifying the output. You can tweak this behavior with ``--trim-strace-path-prefix``.
+The option ``--trim-path-prefix`` selects a path prefix to remove from stack traces and error messages. This makes parsing error messages easier. It defaults to the working directory, so there's seldom need to tweak it.
 
-Also, stack trace lines that are from TestSlide's code base are hidden, as they are only useful when debugging TestSlide itself. You can see them if you wish, by using ``--show-testslide-stack-trace``.
+Internal Stack Trace
+--------------------
+
+By default, stack trace lines that are from TestSlide's code base are hidden, as they are only useful when debugging TestSlide itself. You can see them if you wish, by using ``--show-testslide-stack-trace``.
 
 Shuffled Execution
 ------------------
