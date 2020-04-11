@@ -508,9 +508,9 @@ class TestCliDocumentationFormatter(TestCliBase):
             ),
         )
 
-    def test_empty_trim_strace_path_prefix(self):
+    def test_empty_trim_path_prefix(self):
         """
-        Trims nothing if '' passed to --trim-stack-trace-path-prefix.
+        Trims nothing if '' passed to --trim-path-prefix.
         """
         self.argv.append("--trim-path-prefix")
         self.argv.append("")
