@@ -3,19 +3,20 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import random
+import inspect
 import io
-from time import time
-import traceback
-import sys
 import os
 import psutil
+import random
+import sys
+import time
+import traceback
 
-from . import AggregatedExceptions, Skip
+from . import AggregatedExceptions, Skip, _ExampleRunner
 from contextlib import redirect_stdout, redirect_stderr
 
 
-class Formatter(object):
+class BaseFormatter(object):
     """
     Formatter base class. To be paired with Runner, to process / output example
     execution results.
@@ -25,14 +26,16 @@ class Formatter(object):
         self,
         force_color=False,
         import_secs=None,
-        trim_stack_trace_path_prefix=None,
+        trim_path_prefix=None,
         show_testslide_stack_trace=False,
+        dsl_debug=False,
     ):
         self.force_color = force_color
         self.import_secs = import_secs
         self._import_secs_warn = True
-        self.trim_stack_trace_path_prefix = trim_stack_trace_path_prefix
+        self.trim_path_prefix = trim_path_prefix
         self.show_testslide_stack_trace = show_testslide_stack_trace
+        self.dsl_debug = dsl_debug
         self.current_hierarchy = []
         self.results = {"success": [], "fail": [], "skip": []}
         self.start_time = psutil.Process(os.getpid()).create_time()
@@ -46,6 +49,8 @@ class Formatter(object):
                 "your imports." % (self.import_secs)
             )
             self._import_secs_warn = False
+
+    # Example Discovery
 
     def discovery_start(self):
         """
@@ -64,6 +69,8 @@ class Formatter(object):
         To be called before example discovery finishes.
         """
         pass
+
+    # Test Execution
 
     def start(self, example):
         """
@@ -114,9 +121,38 @@ class Formatter(object):
         """
         Called when all examples finished execution.
         """
-        self.end_time = time()
+        self.end_time = time.time()
         self.duration_secs = self.end_time - self.start_time
 
+    # DSL
+
+    def dsl_example(self, example, code):
+        pass
+
+    def dsl_before(self, example, code):
+        pass
+
+    def dsl_after(self, example, code):
+        pass
+
+    def dsl_around(self, example, code):
+        pass
+
+    def dsl_memoize(self, example, code):
+        pass
+
+    def dsl_memoize_before(self, example, code):
+        pass
+
+    def dsl_function(self, example, code):
+        pass
+
+
+class QuietFormatter(BaseFormatter):
+    pass
+
+
+class ColorFormatter(BaseFormatter):
     def _print_attrs(self, attrs, *values, **kwargs):
         stream = kwargs.get("file", sys.stdout)
         if stream.isatty() or self.force_color:
@@ -124,7 +160,7 @@ class Formatter(object):
                 "\033[0m\033[{attrs}m{value}\033[0m".format(
                     attrs=attrs, value="".join([str(value) for value in values])
                 ),
-                **kwargs
+                **kwargs,
             )
         else:
             print(*values, **kwargs)
@@ -145,29 +181,93 @@ class Formatter(object):
         self._print_attrs("36", *values, **kwargs)
 
 
-class ProgressFormatter(Formatter):
+class DSLDebugMixin:
+    def get_dsl_debug_indent(self, example):
+        return ""
+
+    def _dsl_print(self, example, description, code):
+        if not self.dsl_debug:
+            return
+        name = code.__name__
+        try:
+            file = inspect.getsourcefile(code)
+        except TypeError:
+            try:
+                file = inspect.getfile(code)
+            except TypeError:
+                file = "?"
+        if file.startswith(os.path.dirname(__file__)):
+            return
+        if self.trim_path_prefix:
+            split = file.split(self.trim_path_prefix)
+            if len(split) == 2 and not split[0]:
+                file = split[1]
+        try:
+            _lines, lineno = inspect.getsourcelines(code)
+        except OSError:
+            lineno = "?"
+        self.print_cyan(
+            "{indent}{description}: {name} @ {file_lineno}".format(
+                indent=self.get_dsl_debug_indent(example),
+                description=description,
+                name=name,
+                file_lineno=f"{file}:{lineno}",
+            )
+        )
+
+    def dsl_example(self, example, code):
+        self._dsl_print(example, "example", code)
+
+    def dsl_before(self, example, code):
+        self._dsl_print(example, "before", code)
+
+    def dsl_after(self, example, code):
+        self._dsl_print(example, "after", code)
+
+    def dsl_around(self, example, code):
+        self._dsl_print(example, "around", code)
+
+    def dsl_memoize(self, example, code):
+        self._dsl_print(example, "memoize", code)
+
+    def dsl_memoize_before(self, example, code):
+        self._dsl_print(example, "memoize_before", code)
+
+    def dsl_function(self, example, code):
+        self._dsl_print(example, "function", code)
+
+
+class ProgressFormatter(DSLDebugMixin, ColorFormatter):
     """
     Simple formatter that outputs "." when an example passes or "F" w
     """
 
+    def new_example(self, example):
+        super().new_example(example)
+        if self.dsl_debug:
+            print("")
+
     def success(self, example):
-        Formatter.success(self, example)
+        super().success(example)
         self.print_green(".", end="")
 
     def fail(self, example, exception):
-        Formatter.fail(self, example, exception)
+        super().fail(example, exception)
         self.print_red("F", end="")
 
     def skip(self, example):
-        Formatter.skip(self, example)
+        super().skip(example)
         self.print_yellow("S", end="")
 
     def finish(self, not_executed_examples):
-        Formatter.finish(self, not_executed_examples)
+        super().finish(not_executed_examples)
         print("")
 
 
-class DocumentFormatter(Formatter):
+class DocumentFormatter(DSLDebugMixin, ColorFormatter):
+    def get_dsl_debug_indent(self, example):
+        return "  " * (example.context.depth + 1)
+
     def new_context(self, context):
         self.print_white(
             "{}{}{}".format("  " * context.depth, "*" if context.focus else "", context)
@@ -177,7 +277,7 @@ class DocumentFormatter(Formatter):
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example):
-        Formatter.success(self, example)
+        super().success(example)
         self.print_green(
             "{indent}{focus}{example}{pass_text}".format(
                 indent="  " * (example.context.depth + 1),
@@ -193,7 +293,7 @@ class DocumentFormatter(Formatter):
         ):
             exception = exception.exceptions[0]
 
-        Formatter.fail(self, example, exception)
+        super().fail(example, exception)
 
         self.print_red(
             "{indent}{focus}{example}: {ex_class}: {ex_message}".format(
@@ -206,7 +306,7 @@ class DocumentFormatter(Formatter):
         )
 
     def skip(self, example):
-        Formatter.skip(self, example)
+        super().skip(example)
         self.print_yellow(
             "{indent}{focus}{example}{skip_text}".format(
                 indent="  " * (example.context.depth + 1),
@@ -241,8 +341,8 @@ class DocumentFormatter(Formatter):
                     os.path.dirname(__file__)
                 ):
                     continue
-                if self.trim_stack_trace_path_prefix:
-                    split = path.split(self.trim_stack_trace_path_prefix)
+                if self.trim_path_prefix:
+                    split = path.split(self.trim_path_prefix)
                     if len(split) == 2 and not split[0]:
                         path = split[1]
                 self.print_cyan(
@@ -251,7 +351,7 @@ class DocumentFormatter(Formatter):
                 )
 
     def finish(self, not_executed_examples):
-        Formatter.finish(self, not_executed_examples)
+        super().finish(not_executed_examples)
         success = len(self.results["success"])
         fail = len(self.results["fail"])
         skip = len(self.results["skip"])
@@ -279,7 +379,10 @@ class DocumentFormatter(Formatter):
             self.print_cyan("  Not executed: ", len(not_executed_examples))
 
 
-class LongFormatter(Formatter):
+class LongFormatter(DSLDebugMixin, ColorFormatter):
+    def get_dsl_debug_indent(self, example):
+        return "  "
+
     def new_example(self, example):
         self.print_white(
             "{}{}: ".format(
@@ -287,12 +390,16 @@ class LongFormatter(Formatter):
             ),
             end="",
         )
+        if self.dsl_debug:
+            print("")
 
     def _color_output(self):
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example):
-        Formatter.success(self, example)
+        super().success(example)
+        if self.dsl_debug:
+            print("  ", end="")
         self.print_green(
             "{focus}{example}{pass_text}".format(
                 focus="*" if example.focus else "",
@@ -307,8 +414,9 @@ class LongFormatter(Formatter):
         ):
             exception = exception.exceptions[0]
 
-        Formatter.fail(self, example, exception)
-
+        super().fail(example, exception)
+        if self.dsl_debug:
+            print("  ", end="")
         self.print_red(
             "{focus}{example}: ".format(
                 focus="*" if example.focus else "", example=example,
@@ -323,7 +431,9 @@ class LongFormatter(Formatter):
         )
 
     def skip(self, example):
-        Formatter.skip(self, example)
+        super().skip(example)
+        if self.dsl_debug:
+            print("  ", end="")
         self.print_yellow(
             "{focus}{example}{skip_text}".format(
                 focus="*" if example.focus else "",
@@ -357,8 +467,8 @@ class LongFormatter(Formatter):
                     os.path.dirname(__file__)
                 ):
                     continue
-                if self.trim_stack_trace_path_prefix:
-                    split = path.split(self.trim_stack_trace_path_prefix)
+                if self.trim_path_prefix:
+                    split = path.split(self.trim_path_prefix)
                     if len(split) == 2 and not split[0]:
                         path = split[1]
                 self.print_cyan(
@@ -367,7 +477,7 @@ class LongFormatter(Formatter):
                 )
 
     def finish(self, not_executed_examples):
-        Formatter.finish(self, not_executed_examples)
+        super().finish(not_executed_examples)
         success = len(self.results["success"])
         fail = len(self.results["fail"])
         skip = len(self.results["skip"])
@@ -438,7 +548,7 @@ class Runner(object):
             example_exception = None
             with redirect_stdout(stdout), redirect_stderr(stderr):
                 try:
-                    example()
+                    _ExampleRunner(example, self.formatter).run()
                 except BaseException as ex:
                     example_exception = ex
             if example_exception:
@@ -449,7 +559,7 @@ class Runner(object):
                         print("stderr:\n{}".format(stderr.getvalue()))
                 raise example_exception
         else:
-            example()
+            _ExampleRunner(example, self.formatter).run()
 
     def run(self):
         """

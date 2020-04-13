@@ -10,7 +10,8 @@ import time
 
 from unittest.mock import Mock, call, patch
 
-from testslide import Context, AggregatedExceptions, SlowCallback, reset
+from testslide import Context, AggregatedExceptions, SlowCallback, reset, _ExampleRunner
+from testslide.runner import QuietFormatter
 from testslide.dsl import context, xcontext, fcontext
 import os
 import subprocess
@@ -96,17 +97,20 @@ class TestDSLBase(unittest.TestCase):
     def setUp(self):
         reset()
 
+    def run_example(self, exapmle):
+        _ExampleRunner(exapmle, QuietFormatter()).run()
+
     def run_all_examples(self):
         for each_context in Context.all_top_level_contexts:
             for example in each_context.all_examples:
-                example()
+                self.run_example(example)
 
     def run_first_context_first_example(self):
-        Context.all_top_level_contexts[0].all_examples[0]()
+        self.run_example(Context.all_top_level_contexts[0].all_examples[0])
 
     def run_first_context_all_examples(self):
         for example in Context.all_top_level_contexts[0].all_examples:
-            example()
+            self.run_example(example)
 
     def _print_context_hierarchy(self, contexts=None, indent=""):
         if contexts is None:
@@ -1922,8 +1926,8 @@ class TestPatchAttributeIntegration(TestDSLBase):
             for example in all_top_level_context.all_examples:
                 examples[example.name] = example
 
-        examples["can patch attribute"]()
-        examples["unpatching works"]()
+        self.run_example(examples["can patch attribute"])
+        self.run_example(examples["unpatching works"])
 
 
 class TestMockCallableIntegration(TestDSLBase):
@@ -1955,10 +1959,10 @@ class TestMockCallableIntegration(TestDSLBase):
             for example in all_top_level_context.all_examples:
                 examples[example.name] = example
 
-        examples["expect pass"]()
+        self.run_example(examples["expect pass"])
 
         with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
-            examples["expect fail"]()
+            self.run_example(examples["expect fail"])
 
 
 class TestMockAsyncCallableIntegration(TestDSLBase):
@@ -1995,10 +1999,10 @@ class TestMockAsyncCallableIntegration(TestDSLBase):
             for example in all_top_level_context.all_examples:
                 examples[example.name] = example
 
-        examples["expect pass"]()
+        self.run_example(examples["expect pass"])
 
         with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
-            examples["expect fail"]()
+            self.run_example(examples["expect fail"])
 
 
 class TestMockConstructorIntegration(TestDSLBase):
@@ -2030,7 +2034,7 @@ class TestMockConstructorIntegration(TestDSLBase):
             for example in all_top_level_context.all_examples:
                 examples[example.name] = example
 
-        examples["expect pass"]()
+        self.run_example(examples["expect pass"])
 
         with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
-            examples["expect fail"]()
+            self.run_example(examples["expect fail"])

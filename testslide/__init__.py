@@ -5,14 +5,14 @@
 
 from contextlib import contextmanager
 
-import sys
-import asyncio.log
-import unittest
-import contextlib
-import re
-import types
 import asyncio
+import asyncio.log
+import contextlib
 import inspect
+import re
+import sys
+import types
+import unittest
 import warnings
 
 import testslide.mock_callable
@@ -88,8 +88,9 @@ class _ContextData(object):
 
         testslide.mock_callable.register_assertion = register_assertion
 
-    def __init__(self, example):
+    def __init__(self, example, formatter):
         self._example = example
+        self._formatter = formatter
         self._context = example.context
         self._after_functions = []
         self._test_case = unittest.TestCase()
@@ -122,6 +123,7 @@ class _ContextData(object):
                 raise ValueError(
                     f"Function can not be a coroutine function: {repr(attribute_code)}"
                 )
+            self._formatter.dsl_memoize(self._example, attribute_code)
             self.__dict__[name] = attribute_code(self)
 
         try:
@@ -217,8 +219,10 @@ class SlowCallback(Exception):
 
 
 class _ExampleRunner:
-    def __init__(self, example):
+    def __init__(self, example, formatter):
         self.example = example
+        self.formatter = formatter
+        self.trim_path_prefix = self.formatter.trim_path_prefix
 
     @staticmethod
     async def _fail_if_not_coroutine_function(func, *args, **kwargs):
@@ -246,9 +250,16 @@ class _ExampleRunner:
             aggregated_exceptions = AggregatedExceptions()
             with aggregated_exceptions.catch():
                 for before_code in self.example.context.all_before_functions:
+                    if hasattr(before_code, "_memoize_before_code"):
+                        self.formatter.dsl_memoize_before(
+                            self.example, before_code._memoize_before_code
+                        )
+                    else:
+                        self.formatter.dsl_before(self.example, before_code)
                     await self._fail_if_not_coroutine_function(
                         before_code, context_data
                     )
+                self.formatter.dsl_example(self.example, self.example.code)
                 await self._fail_if_not_coroutine_function(
                     self.example.code, context_data
                 )
@@ -258,6 +269,7 @@ class _ExampleRunner:
             after_functions.extend(context_data._after_functions)
             for after_code in reversed(after_functions):
                 with aggregated_exceptions.catch():
+                    self.formatter.dsl_after(self.example, after_code)
                     await self._fail_if_not_coroutine_function(after_code, context_data)
             aggregated_exceptions.raise_correct_exception()
             return
@@ -271,6 +283,7 @@ class _ExampleRunner:
                 context_data, around_functions
             )
 
+        self.formatter.dsl_around(self.example, around_code)
         await self._fail_if_not_coroutine_function(
             around_code, context_data, async_wrapped
         )
@@ -373,7 +386,14 @@ class _ExampleRunner:
             aggregated_exceptions = AggregatedExceptions()
             with aggregated_exceptions.catch():
                 for before_code in self.example.context.all_before_functions:
+                    if hasattr(before_code, "_memoize_before_code"):
+                        self.formatter.dsl_memoize_before(
+                            self.example, before_code._memoize_before_code
+                        )
+                    else:
+                        self.formatter.dsl_before(self.example, before_code)
                     self._fail_if_coroutine_function(before_code, context_data)
+                self.formatter.dsl_example(self.example, self.example.code)
                 self._fail_if_coroutine_function(self.example.code, context_data)
             after_functions = []
             after_functions.extend(context_data._mock_callable_after_functions)
@@ -381,6 +401,7 @@ class _ExampleRunner:
             after_functions.extend(context_data._after_functions)
             for after_code in reversed(after_functions):
                 with aggregated_exceptions.catch():
+                    self.formatter.dsl_after(self.example, after_code)
                     self._fail_if_coroutine_function(after_code, context_data)
             aggregated_exceptions.raise_correct_exception()
             return
@@ -392,6 +413,7 @@ class _ExampleRunner:
             wrapped_called.append(True)
             self._sync_run_all_hooks_and_example(context_data, around_functions)
 
+        self.formatter.dsl_around(self.example, around_code)
         self._fail_if_coroutine_function(around_code, context_data, wrapped)
 
         if not wrapped_called:
@@ -405,7 +427,7 @@ class _ExampleRunner:
         try:
             if self.example.skip:
                 raise Skip()
-            context_data = _ContextData(self.example)
+            context_data = _ContextData(self.example, self.formatter)
             if self.example.is_async:
                 self._async_run_all_hooks_and_example(context_data)
             else:
@@ -450,12 +472,6 @@ class Example(object):
         True if the example of its context is marked to be focused.
         """
         return any([self.context.focus, self.__dict__["focus"]])
-
-    def __call__(self):
-        """
-        Run the example, including all around, before and after hooks.
-        """
-        _ExampleRunner(self).run()
 
     def __str__(self):
         return self.name
@@ -762,6 +778,7 @@ class Context(object):
                     ]
                     context_data.__dict__[name] = await code(context_data)
 
+                async_materialize_attribute._memoize_before_code = memoizable_code
                 self.before_functions.append(async_materialize_attribute)
             else:
 
@@ -771,6 +788,7 @@ class Context(object):
                     ]
                     context_data.__dict__[name] = code(context_data)
 
+                materialize_attribute._memoize_before_code = memoizable_code
                 self.before_functions.append(materialize_attribute)
 
     def add_shared_context(self, name, shared_context_code):

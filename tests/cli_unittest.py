@@ -485,9 +485,9 @@ class TestCliDocumentationFormatter(TestCliBase):
             ),
         )
 
-    def test_default_trim_stack_trace_path_prefix(self):
+    def test_default_trim_path_prefix(self):
         """
-        Default value for --trim-stack-trace-path-prefix trims path shared with
+        Default value for --trim-path-prefix trims path shared with
         testslide itself.
         """
         self.run_testslide(
@@ -495,11 +495,11 @@ class TestCliDocumentationFormatter(TestCliBase):
             expected_in_stdout=('File "tests/sample_tests.py", line'),
         )
 
-    def test_nonempty_trim_stack_trace_path_prefix(self):
+    def test_nonempty_trim_path_prefix(self):
         """
-        Trims prefix passed to --trim-stack-trace-path-prefix.
+        Trims prefix passed to --trim-path-prefix.
         """
-        self.argv.append("--trim-stack-trace-path-prefix")
+        self.argv.append("--trim-path-prefix")
         self.argv.append(os.path.dirname(self.SAMPLE_TESTS_PATH) + "/")
         self.run_testslide(
             expected_return_code=1,
@@ -508,15 +508,40 @@ class TestCliDocumentationFormatter(TestCliBase):
             ),
         )
 
-    def test_empty_trim_strace_path_prefix(self):
+    def test_empty_trim_path_prefix(self):
         """
-        Trims nothing if '' passed to --trim-stack-trace-path-prefix.
+        Trims nothing if '' passed to --trim-path-prefix.
         """
-        self.argv.append("--trim-stack-trace-path-prefix")
+        self.argv.append("--trim-path-prefix")
         self.argv.append("")
         self.run_testslide(
             expected_return_code=1,
             expected_in_stdout=('File "' + self.SAMPLE_TESTS_PATH + '", line'),
+        )
+
+    def test_dsl_debug(self):
+        self.argv.append("--dsl-debug")
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(
+                "top context\n"
+                "  example: passing_example @ tests/sample_tests.py:34\n"
+                "  passing example: PASS\n"
+                "  example: failing_example @ tests/sample_tests.py:38\n"
+                "  failing example: SimulatedFailure: test failure (extra)\n"
+                "  example: focused_example @ tests/sample_tests.py:43\n"
+                "  *focused example: PASS\n"
+                "  skipped example: SKIP\n"
+                "  example: unittest_SkipTest @ tests/sample_tests.py:51\n"
+                "  unittest SkipTest: SKIP\n"
+                "  nested context\n"
+                "    example: passing_nested_example @ tests/sample_tests.py:58\n"
+                "    passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase\n"
+                "  test_failing: AssertionError: \n"
+                "  test_passing: PASS\n"
+                "  test_skipped: SKIP\n"
+            ),
         )
 
 
@@ -544,6 +569,29 @@ class TestCliProgressFormatter(TestCliBase):
                 + self.green(".")
                 + self.yellow("S")
                 + "\r\n"
+            ),
+        )
+
+    def test_dsl_debug(self):
+        self.argv.append("--dsl-debug")
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(
+                "\n"
+                "example: passing_example @ tests/sample_tests.py:34\n"
+                ".\n"
+                "example: failing_example @ tests/sample_tests.py:38\n"
+                "F\n"
+                "example: focused_example @ tests/sample_tests.py:43\n"
+                ".\n"
+                "S\n"
+                "example: unittest_SkipTest @ tests/sample_tests.py:51\n"
+                "S\n"
+                "example: passing_nested_example @ tests/sample_tests.py:58\n"
+                ".\n"
+                "F\n"
+                ".\n"
+                "S\n"
             ),
         )
 
@@ -653,5 +701,36 @@ class TestCliLongFormatter(TestCliBase):
                 "tests.sample_tests.SampleTestCase: test_passing: PASS\n"
                 "tests.sample_tests.SampleTestCase: test_skipped: SKIP\n"
                 # TODO add remaining bits of the output (using regexes)
+            ),
+        )
+
+    def test_dsl_debug(self):
+        self.argv.append("--dsl-debug")
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(
+                "top context: \n"
+                "  example: passing_example @ tests/sample_tests.py:34\n"
+                "  passing example: PASS\n"
+                "top context: \n"
+                "  example: failing_example @ tests/sample_tests.py:38\n"
+                "  failing example: SimulatedFailure: test failure (extra)\n"
+                "top context: \n"
+                "  example: focused_example @ tests/sample_tests.py:43\n"
+                "  *focused example: PASS\n"
+                "top context: \n"
+                "  skipped example: SKIP\n"
+                "top context: \n"
+                "  example: unittest_SkipTest @ tests/sample_tests.py:51\n"
+                "  unittest SkipTest: SKIP\n"
+                "top context, nested context: \n"
+                "  example: passing_nested_example @ tests/sample_tests.py:58\n"
+                "  passing nested example: PASS\n"
+                "tests.sample_tests.SampleTestCase: \n"
+                "  test_failing: AssertionError: \n"
+                "tests.sample_tests.SampleTestCase: \n"
+                "  test_passing: PASS\n"
+                "tests.sample_tests.SampleTestCase: \n"
+                "  test_skipped: SKIP\n"
             ),
         )
