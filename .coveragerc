@@ -4,4 +4,4 @@ parallel = True
 [report]
 precision = 1
 fail_under = 93.1
-omit = tests/*.py
+include = testslide/*
