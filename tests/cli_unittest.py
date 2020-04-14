@@ -18,7 +18,9 @@ class TestCliBase(unittest.TestCase):
 
     def setUp(self):
         self.argv = [self.SAMPLE_TESTS_PATH]
-        self.env = {}
+        self.env = {
+            "COVERAGE_PROCESS_START": ".coveragerc",
+        }
         super(TestCliBase, self).setUp()
 
     def run_testslide(
