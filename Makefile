@@ -3,6 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+TESTSLIDE_FORMAT?=documentation
+UNITTEST_VERBOSE?=--verbose
+
 .PHONY: all
 all: test
 
@@ -12,7 +15,6 @@ coveralls:
 
 .PHONY: travis
 travis: test install_local coveralls
-	testslide --help
 
 .PHONY: install_deps
 install_deps:
@@ -32,11 +34,11 @@ coverage_erase:
 
 .PHONY: unittest_tests
 unittest_tests: coverage_erase
-	coverage run -m unittest discover --verbose --failfast -p '*_unittest.py'
+	coverage run -m unittest discover $(UNITTEST_VERBOSE) --failfast -p '*_unittest.py'
 
 .PHONY: testslide_tests
 testslide_tests: coverage_erase
-	coverage run -m testslide.cli --show-testslide-stack-trace --fail-fast --fail-if-focused tests/*_testslide.py
+	coverage run -m testslide.cli --format $(TESTSLIDE_FORMAT) --show-testslide-stack-trace --fail-fast --fail-if-focused tests/*_testslide.py
 
 .PHONY: coverage_combine
 coverage_combine: unittest_tests testslide_tests
@@ -61,6 +63,7 @@ sdist:
 .PHONY: install_local
 install_local:
 	pip install -e .
+	testslide --help
 
 .PHONY: test
 test: unittest_tests testslide_tests coverage_report black_check flake8 docs sdist

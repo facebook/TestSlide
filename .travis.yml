@@ -6,4 +6,4 @@ python:
 install:
   - make install_deps
 script:
-  make travis
+  TESTSLIDE_FORMAT="progress" UNITTEST_VERBOSE="" make travis
