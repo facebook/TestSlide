@@ -162,6 +162,26 @@ Slow Imports Profiler
 
 As projects grow with more dependencies, running a test for a few lines of code can take several seconds. This is often cause by time spent on importing dependencies, rather that the tests themselves. If you run your tests with ``--import-profiler $MS``, any imported module that took more that that the given amount of milliseconds will be reported in a nice and readable tree view. This helps you optimize your imports, so your unit tests can run faster. Frequently, the cause of slow imports is the construction of heavy objects at module level.
 
+Code Coverage
+-------------
+
+`Coverage.py <https://coverage.readthedocs.io/en/coverage-5.1/>`_ integration is simple. Make sure your ``.coveragerc`` file has this set:
+
+.. code-block:: ini
+
+  [run]
+  parallel = True
+
+and then you can run all your tests and get a report like this
+
+.. code-block:: shell
+
+  $ coverage erase
+  $ COVERAGE_PROCESS_START=.coveragerc testslide some.py tests.py
+  $ COVERAGE_PROCESS_START=.coveragerc testslide some_more_tests.py
+  $ coverage combine
+  $ coverage report
+
 Tip: Automatic Test Execution
 -----------------------------
 
