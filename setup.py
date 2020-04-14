@@ -30,6 +30,7 @@ setup(
             "coverage",
             "coveralls",
             "flake8",
+            "mypy",
             "ipython",
             "sphinx",
             "sphinx-autobuild",

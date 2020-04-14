@@ -65,8 +65,12 @@ install_local:
 	pip install -e .
 	testslide --help
 
+.PHONY: mypy
+mypy:
+	mypy testslide
+
 .PHONY: test
-test: unittest_tests testslide_tests coverage_report black_check flake8 docs sdist
+test: unittest_tests testslide_tests coverage_report flake8 mypy black_check docs sdist
 
 .PHONY: clean
 clean:

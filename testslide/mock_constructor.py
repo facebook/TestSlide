@@ -9,6 +9,7 @@ import inspect
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
 from .lib import _bail_if_private, _validate_function_signature
+from typing import List, Callable, Dict, Any
 
 _DO_NOT_COPY_CLASS_ATTRIBUTES = (
     "__dict__",
@@ -19,13 +20,13 @@ _DO_NOT_COPY_CLASS_ATTRIBUTES = (
 )
 
 
-_unpatchers = []
-_mocked_target_classes = {}
-_restore_dict = {}
+_unpatchers: List[Callable] = []
+_mocked_target_classes: Dict[int, type] = {}
+_restore_dict: Dict[int, Dict[str, Any]] = {}
 _init_args_from_original_callable = None
 _init_kwargs_from_original_callable = None
-_mocked_class_by_original_class_id = {}
-_target_class_id_by_original_class_id = {}
+_mocked_class_by_original_class_id: Dict[int, type] = {}
+_target_class_id_by_original_class_id: Dict[int, int] = {}
 
 
 def _get_class_or_mock(original_class):

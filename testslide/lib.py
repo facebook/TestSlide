@@ -54,6 +54,7 @@ def _validate_function_signature(
     callable_template: Callable, args: Tuple[Any], kwargs: Dict[str, Any]
 ):
     argspec = inspect.getfullargspec(callable_template)
+    signature: Optional[inspect.Signature]
     try:
         signature = inspect.signature(callable_template)
     except ValueError:

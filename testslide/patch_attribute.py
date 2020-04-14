@@ -7,8 +7,9 @@ import testslide
 from .patch import _patch
 from .lib import _bail_if_private
 from testslide.strict_mock import UndefinedAttribute
+from typing import List, Callable
 
-_unpatchers = []
+_unpatchers: List[Callable] = []
 
 
 def unpatch_all_mocked_attributes():

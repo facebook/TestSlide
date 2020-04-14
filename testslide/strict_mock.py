@@ -498,7 +498,7 @@ class StrictMock(object):
 
         self._setup_default_context_manager(default_context_manager)
 
-    @property
+    @property  # type: ignore
     def __class__(self):
         return self._template if self._template is not None else type(self)
 

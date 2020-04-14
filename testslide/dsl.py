@@ -20,6 +20,19 @@ def _validate_parameter(code, name, index):
         )
 
 
+def _require_context(action: str):
+    def wrapper(func):
+        @functools.wraps(func)
+        def func_with_context_validation(self, *args, **kwargs):
+            if not self.current_context:
+                raise TypeError("Can not {} without a parent context".format(action))
+            return func(self, *args, **kwargs)
+
+        return func_with_context_validation
+
+    return wrapper
+
+
 class _DSLContext(object):
     """
     This class implement TestSlide DSL. This is not intended to be used
@@ -66,20 +79,6 @@ class _DSLContext(object):
     def _reset(self):
         self.skip = False
         self.focus = False
-
-    def _require_context(action):  # noqa: B902
-        def wrapper(func):
-            @functools.wraps(func)
-            def func_with_context_validation(self, *args, **kwargs):
-                if not self.current_context:
-                    raise TypeError(
-                        "Can not {} without a parent context".format(action)
-                    )
-                return func(self, *args, **kwargs)
-
-            return func_with_context_validation
-
-        return wrapper
 
     # nested contexts
 
