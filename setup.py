@@ -27,6 +27,7 @@ setup(
     extras_require={
         "build": [
             "black",
+            "coverage",
             "ipython",
             "flake8",
             "sphinx",
