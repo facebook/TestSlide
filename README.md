@@ -1,6 +1,7 @@
 # TestSlide: Fluent Python Testing
 
 [![Build Status](https://travis-ci.com/facebookincubator/TestSlide.svg?branch=master)](https://travis-ci.com/facebookincubator/TestSlide)
+[![Coverage Status](https://coveralls.io/repos/github/facebookincubator/TestSlide/badge.svg?branch=coverage)](https://coveralls.io/github/facebookincubator/TestSlide?branch=coverage)
 [![Documentation Status](https://readthedocs.org/projects/testslide/badge/?version=master)](https://testslide.readthedocs.io/en/master/?badge=master)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyPI version](https://badge.fury.io/py/TestSlide.svg)](https://badge.fury.io/py/TestSlide)
