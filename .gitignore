@@ -1,6 +1,9 @@
 **/*.pyc
 **/__pycache__/
+.coverage
+.coverage.*.*.*
 dist/
 docs/_build/
+htmlcov/
 MANIFEST
 TestSlide.egg-info/
