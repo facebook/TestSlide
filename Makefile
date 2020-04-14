@@ -6,6 +6,14 @@
 .PHONY: all
 all: test
 
+.PHONY: coveralls
+coveralls:
+	coveralls
+
+.PHONY: travis
+travis: test install_local coveralls
+	testslide --help
+
 .PHONY: install_deps
 install_deps:
 	pip install -e .[test,build]

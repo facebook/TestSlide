@@ -6,4 +6,4 @@ python:
 install:
   - make install_deps
 script:
-  make test install_local
+  make travis
