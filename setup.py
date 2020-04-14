@@ -27,8 +27,10 @@ setup(
     extras_require={
         "build": [
             "black",
-            "ipython",
+            "coverage",
+            "coveralls",
             "flake8",
+            "ipython",
             "sphinx",
             "sphinx-autobuild",
             "sphinx_rtd_theme",

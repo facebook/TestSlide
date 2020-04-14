@@ -1,0 +1,7 @@
+[run]
+parallel = True
+
+[report]
+precision = 2
+fail_under = 92.31
+include = testslide/*
