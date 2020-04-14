@@ -6,7 +6,7 @@
 import asyncio
 import inspect
 import functools
-from typing import List, Callable  # noqa
+from typing import List, Callable, Tuple, Any, Dict
 import testslide
 from testslide.strict_mock import StrictMock
 from testslide.lib import _wrap_signature_validation, _validate_return_type
@@ -47,8 +47,8 @@ def _default_register_assertion(assertion):
 
 register_assertion = _default_register_assertion
 _call_order_assertion_registered = False
-_received_ordered_calls = []
-_expected_ordered_calls = []
+_received_ordered_calls: List[Tuple[Any, str, "_BaseRunner"]] = []
+_expected_ordered_calls: List[Tuple[Any, str, "_BaseRunner"]] = []
 
 
 def unpatch_all_callable_mocks():
@@ -521,7 +521,7 @@ class _CallableMock(object):
 
 class _MockCallableDSL(object):
 
-    CALLABLE_MOCKS = {}  # NOQA T484
+    CALLABLE_MOCKS: Dict[int, _CallableMock] = {}
 
     def _validate_patch(
         self,

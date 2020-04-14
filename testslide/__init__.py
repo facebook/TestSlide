@@ -27,7 +27,7 @@ import testslide.mock_constructor
 import testslide.matchers
 import testslide.patch_attribute
 from testslide.strict_mock import StrictMock  # noqa
-
+from typing import List
 
 if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
@@ -541,7 +541,7 @@ class Context(object):
     _SAME_CONTEXT_NAME_ERROR = "A context with the same name is already defined"
 
     # List of all top level contexts created
-    all_top_level_contexts = []
+    all_top_level_contexts: List["Context"] = []
 
     # Constructor
 
