@@ -1,5 +1,6 @@
 **/*.pyc
 **/__pycache__/
+.*.sw?
 .coverage
 .coverage.*.*.*
 .mypy_cache/

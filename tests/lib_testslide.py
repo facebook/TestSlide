@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import Type, TypeVar
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 import testslide.lib
 from . import sample_module
@@ -73,6 +74,34 @@ def _validate_function_signature(context):
             self.assert_passes("arg1", mock, kwarg1="kwarg1", kwarg2="kwarg2")
             self.assert_passes("arg1", "arg2", kwarg1=mock, kwarg2="kwarg2")
             self.assert_passes("arg1", "arg2", kwarg1="kwarg1", kwarg2=mock)
+
+        @context.example("TypeVar")
+        def typevar(self):
+            """We currently can't enforce typevars"""
+
+            def with_typevar(lolo: TypeVar("T")) -> None:
+                pass
+
+            testslide.lib._validate_function_signature(
+                with_typevar, args=["arg1"], kwargs={}
+            )
+            testslide.lib._validate_function_signature(
+                with_typevar, args=[], kwargs={"arg1": "arg1"}
+            )
+
+        @context.example("Nested TypeVar")
+        def nested_typevar(self):
+            """We currently can't enforce typevars"""
+
+            def with_typevar(arg1: Type[TypeVar("T")]) -> None:
+                pass
+
+            testslide.lib._validate_function_signature(
+                with_typevar, args=["arg1"], kwargs={}
+            )
+            testslide.lib._validate_function_signature(
+                with_typevar, args=[], kwargs={"arg1": "arg1"}
+            )
 
     @context.sub_context
     def invalid_types(context):

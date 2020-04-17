@@ -82,17 +82,35 @@ def _validate_function_signature(
                 expected_type = argspec.annotations.get(argname)
                 if not expected_type:
                     continue
+
+                if "~" in str(expected_type):
+                    # this means that we have a TypeVar type, and those require
+                    # checking all the types of all the params as a whole, but we
+                    # don't have a good way of getting right now
+                    # TODO: #165
+                    continue
+
                 _validate_argument_type(expected_type, argname, args[idx])
             except TypeError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
+
     for argname, value in kwargs.items():
         try:
             expected_type = argspec.annotations.get(argname)
             if not expected_type:
                 continue
+
+            if "~" in str(expected_type):
+                # this means that we have a TypeVar type, and those require
+                # checking all the types of all the params as a whole, but we
+                # don't have a good way of getting right now
+                # TODO: #165
+                continue
+
             _validate_argument_type(expected_type, argname, value)
         except TypeError as type_error:
             type_errors.append(f"{repr(argname)}: {type_error}")
+
     if type_errors:
         raise TypeError(
             "Call with incompatible argument types:\n  " + "\n  ".join(type_errors)
