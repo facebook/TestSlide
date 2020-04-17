@@ -578,7 +578,7 @@ class StrictMock(object):
                     if not callable(value):
                         raise NonCallableValue(self, name)
                     if self.__dict__["_signature_validation"]:
-                        signature_validation_wrapper = testslide.lib._wrap_signature_validation(
+                        signature_validation_wrapper = testslide.lib._wrap_signature_and_type_validation(
                             value,
                             self._template,
                             name,

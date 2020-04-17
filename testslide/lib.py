@@ -42,6 +42,23 @@ def _is_a_mock(maybe_mock: Any) -> bool:
     )
 
 
+def _validate_callable_signature(
+    skip_first_arg, callable_template, template, attr_name, args, kwargs
+):
+    if skip_first_arg and not inspect.ismethod(callable_template):
+        callable_template = functools.partial(callable_template, None)
+    try:
+        signature = inspect.signature(callable_template, follow_wrapped=False)
+    except ValueError:
+        return False
+
+    try:
+        signature.bind(*args, **kwargs)
+    except TypeError as e:
+        raise TypeError("{}, {}: {}".format(repr(template), repr(attr_name), str(e)))
+    return True
+
+
 def _validate_argument_type(expected_type, name: str, value) -> None:
     if _is_a_mock(value):
         template = _extract_mock_template(value)
@@ -50,34 +67,22 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
     typeguard.check_type(name, value, expected_type)
 
 
-def _validate_function_signature(
-    callable_template: Callable, args: Tuple[Any], kwargs: Dict[str, Any]
+def _validate_callable_arg_types(
+    skip_first_arg,
+    callable_template: Callable,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
 ):
     argspec = inspect.getfullargspec(callable_template)
-    signature: Optional[inspect.Signature]
-    try:
-        signature = inspect.signature(callable_template)
-    except ValueError:
-        signature = None
+    idx_offest = 1 if skip_first_arg else 0
     type_errors = []
     for idx in range(0, len(args)):
         if argspec.args:
-            # We use the signature whenever available because for class methods
-            # argspec has the extra 'cls' value
-            if signature:
-                argnames = list(signature.parameters.keys())
-                if len(argnames) - 1 < idx:
-                    # we might have some *args
-                    if not argspec.varargs:
-                        type_errors.append(
-                            f"Got extra argument with value '{args[idx]}'"
-                        )
-
+            if idx + idx_offest >= len(argspec.args):
+                if argspec.varargs:
                     continue
-
-                argname = argnames[idx]
-            else:
-                argname = argspec.args[idx]
+                raise TypeError("Extra argument given: ", repr(args[idx]))
+            argname = argspec.args[idx + idx_offest]
             try:
                 expected_type = argspec.annotations.get(argname)
                 if not expected_type:
@@ -117,7 +122,24 @@ def _validate_function_signature(
         )
 
 
-def _wrap_signature_validation(value, template, attr_name, validate_types):
+def _skip_first_arg(template, attr_name):
+    if not isinstance(template, type):
+        return False
+    for klass in template.__mro__:
+        if attr_name not in klass.__dict__:
+            continue
+        attr = klass.__dict__[attr_name]
+        if isinstance(attr, classmethod):
+            return True
+        elif isinstance(attr, staticmethod):
+            return False
+        else:
+            return True
+
+    return False
+
+
+def _wrap_signature_and_type_validation(value, template, attr_name, type_validation):
     if _is_a_mock(template):
         template = _extract_mock_template(template)
         if not template:
@@ -128,30 +150,20 @@ def _wrap_signature_validation(value, template, attr_name, validate_types):
         return value
 
     callable_template = getattr(template, attr_name)
-    # FIXME decouple from _must_skip. It tells when self should be skipped
-    # for signature validation.
-    if unittest.mock._must_skip(template, attr_name, isinstance(template, type)):
-        callable_template = functools.partial(callable_template, None)
 
-    try:
-        signature = inspect.signature(callable_template, follow_wrapped=False)
-    except ValueError:
-        signature = None
+    skip_first_arg = _skip_first_arg(template, attr_name)
 
-    def with_sig_check(*args, **kwargs):
-        if signature:
-            try:
-                signature.bind(*args, **kwargs)
-            except TypeError as e:
-                raise TypeError(
-                    "{}, {}: {}".format(repr(template), repr(attr_name), str(e))
+    def with_sig_and_type_validation(*args, **kwargs):
+        if _validate_callable_signature(
+            skip_first_arg, callable_template, template, attr_name, args, kwargs
+        ):
+            if type_validation:
+                _validate_callable_arg_types(
+                    skip_first_arg, callable_template, args, kwargs
                 )
-            if validate_types:
-                _validate_function_signature(callable_template, args, kwargs)
-
         return value(*args, **kwargs)
 
-    return with_sig_check
+    return with_sig_and_type_validation
 
 
 def _validate_return_type(template, value):
