@@ -43,6 +43,15 @@ def _validate_callable_arg_types(context):
                 False, object.__new__, (1, 2, 3), {"four": 5, "six": 6}
             )
 
+        @context.example
+        def args_as_starargs(self):
+            target = sample_module.SomeClass()
+            args = ("d", "x", "ddd")
+            kwargs = {"a": False, "b": 2, "c": None}
+            testslide.lib._validate_callable_arg_types(
+                False, target.instance_method_with_star_args, args, kwargs
+            )
+
         @context.example("testslide.StrictMock with valid template")
         def testslide_StrictMock_with_valid_template(self):
             strict_mock = StrictMock(template=str)
