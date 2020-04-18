@@ -33,7 +33,7 @@ endif
 ##
 
 .PHONY: all
-all: coverage_report
+all: tests coverage_report docs sdist
 
 # .PHONY does not work for implicit rules, so we FORCE them
 FORCE:
