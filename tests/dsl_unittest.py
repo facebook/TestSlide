@@ -15,6 +15,7 @@ from testslide.runner import QuietFormatter
 from testslide.dsl import context, xcontext, fcontext
 import os
 import subprocess
+from typing import List
 
 
 class SomeTestCase(unittest.TestCase):
@@ -22,7 +23,7 @@ class SomeTestCase(unittest.TestCase):
     Used to test TestSlide and unittest.TestCase integration.
     """
 
-    CALLS = []
+    CALLS: List[str] = []
 
     def setUp(self):
         self.CALLS.append("setUp")
@@ -53,7 +54,7 @@ class SomeTestCase2(unittest.TestCase):
     Used to test TestSlide and unittest.TestCase integration.
     """
 
-    CALLS = []
+    CALLS: List[str] = []
 
     def setUp(self):
         self.CALLS.append("setUp2")

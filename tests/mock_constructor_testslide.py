@@ -52,7 +52,7 @@ class Target(TargetParent):
         super().__init__(p3_super=True)
 
         if message is not None:
-            args = [message] + list(args)
+            args = tuple([message] + list(args))
         super(Target, self).__init__(*args, **kwargs)
 
         self.dynamic_attr = "dynamic_attr"

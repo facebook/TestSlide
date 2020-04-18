@@ -8,15 +8,22 @@
 ##
 
 TESTSLIDE_FORMAT?=documentation
-UNITTEST_VERBOSE?=--verbose
+UNITTEST_VERBOSE?=0
+ifeq ($(UNITTEST_VERBOSE),0)
+UNITTEST_ARGS := --verbose
+else
+UNITTEST_ARGS := 
+endif
 TESTS_SRCS = tests
 SRCS = testslide
 ALL_SRCS = $(TESTS_SRCS) $(SRCS)
+TERM_BRIGHT := $(shell tput bold)
+TERM_NONE := $(shell tput sgr0)
 
 # Verbose output: make V=1
 V?=0
 ifeq ($(V),0)
-Q := @python silent_if_successful.py
+Q := @python util/run_silent_if_successful.py
 else
 Q := 
 endif
@@ -26,7 +33,7 @@ endif
 ##
 
 .PHONY: all
-all: all_tests
+all: coverage_report
 
 # .PHONY does not work for implicit rules, so we FORCE them
 FORCE:
@@ -37,31 +44,31 @@ FORCE:
 
 .PHONY: docs
 docs:
-	@printf "DOCS\n"
+	@printf "${TERM_BRIGHT}DOCS\n${TERM_NONE}"
 	${Q} make -C docs/ html
 
 .PHONY: docs_clean
 docs_clean:
-	@printf "DOCS CLEAN\n"
+	@printf "${TERM_BRIGHT}DOCS CLEAN\n${TERM_NONE}"
 	${Q} rm -rf docs/_build/
 
 ##
 ## Tests
 ##
 
-%_unittest.py: FORCE
-	@printf "UNITTEST $@\n"
+%_unittest.py: FORCE coverage_erase
+	@printf "${TERM_BRIGHT}UNITTEST $@\n${TERM_NONE}"
 	${Q} coverage run \
 		-m unittest \
-		$(UNITTEST_VERBOSE) \
+		${UNITTEST_ARGS} \
 		--failfast \
 		$@
 
 .PHONY: unittest_tests
 unittest_tests: $(TESTS_SRCS)/*_unittest.py
 
-%_testslide.py: FORCE
-	@printf "TESTSLIDE $@\n"
+%_testslide.py: FORCE coverage_erase
+	@printf "${TERM_BRIGHT}TESTSLIDE $@\n${TERM_NONE}"
 	${Q} coverage run \
 		-m testslide.cli \
 		--format $(TESTSLIDE_FORMAT) \
@@ -70,65 +77,64 @@ unittest_tests: $(TESTS_SRCS)/*_unittest.py
 		--fail-if-focused \
 		$@
 
-.PHONY: testslide_tests
+.PHONY: testslide_tests coverage_erase
 testslide_tests: $(TESTS_SRCS)/*_testslide.py
 
 .PHONY: mypy
 mypy:
-	@printf "MYPY ${ALL_SRCS}\n"
+	@printf "${TERM_BRIGHT}MYPY ${ALL_SRCS}\n${TERM_NONE}"
 	${Q} mypy ${ALL_SRCS}
 
 .PHONY: flake8
 flake8:
-	@printf "FLAKE8 ${ALL_SRCS}\n"
+	@printf "${TERM_BRIGHT}FLAKE8 ${ALL_SRCS}\n${TERM_NONE}"
 	${Q} flake8 --select=F,C90 $(ALL_SRCS)
 
-.PHONY: black_check
-black_check:
-	@printf "BLACK ${ALL_SRCS}\n"
+.PHONY: black
+black:
+	@printf "${TERM_BRIGHT}BLACK ${ALL_SRCS}\n${TERM_NONE}"
 	${Q} black --check $(ALL_SRCS)
 
-.PHONY: coverage_tests
-coverage_tests: unittest_tests testslide_tests
-
-.PHONY: all_tests
-all_tests: \
-	coverage_tests \
+.PHONY: tests
+tests: \
+	unittest_tests \
+	testslide_tests \
 	mypy \
 	flake8 \
-	black_check
+	black
+
 ##
 ## Coverage
 ##
 
 .PHONY: coverage_erase
 coverage_erase:
-	@printf "COVERAGE ERASE\n"
+	@printf "${TERM_BRIGHT}COVERAGE ERASE\n${TERM_NONE}"
 	${Q} coverage erase
 
 .PHONY: coverage_combine
-coverage_combine: coverage_erase coverage_tests
-	@printf "COVERAGE COMBINE\n"
+coverage_combine: unittest_tests testslide_tests
+	@printf "${TERM_BRIGHT}COVERAGE COMBINE\n${TERM_NONE}"
 	${Q} coverage combine
 
 .PHONY: coverage_report
 coverage_report: coverage_combine
-	@printf "COVERAGE REPORT\n"
+	@printf "${TERM_BRIGHT}COVERAGE REPORT\n${TERM_NONE}"
 	${Q} coverage report
 
 .PHONY: coverage_html
 coverage_html: coverage_combine
-	@printf "COVERAGE HTML\n"
+	@printf "${TERM_BRIGHT}COVERAGE HTML\n${TERM_NONE}"
 	${Q} coverage html
 
 .PHONY: coverage_html_clean
 coverage_html_clean:
-	@printf "COVERAGE HTML CLEAN\n"
+	@printf "${TERM_BRIGHT}COVERAGE HTML CLEAN\n${TERM_NONE}"
 	${Q} rm -rf htmlcov/
 
 .PHONY: coveralls
 coveralls: coverage_combine
-	@printf "COVERALLS\n"
+	@printf "${TERM_BRIGHT}COVERALLS\n${TERM_NONE}"
 	${Q} coveralls
 
 ##
@@ -137,29 +143,29 @@ coveralls: coverage_combine
 
 .PHONY: install_build_deps
 install_build_deps:
-	@printf "INSTALL BUILD DEPS\n"
+	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
 	${Q} pip install -e .[test,build]
 
 .PHONY: sdist
 sdist:
-	@printf "SDIST\n"
+	@printf "${TERM_BRIGHT}SDIST\n${TERM_NONE}"
 	${Q} python setup.py sdist
 
 .PHONY: sdist_clean
 sdist_clean:
-	@printf "SDIST CLEAN\n"
+	@printf "${TERM_BRIGHT}SDIST CLEAN\n${TERM_NONE}"
 	${Q} rm -rf dist/ MANIFEST TestSlide.egg-info/
 
 .PHONY: install_local
 install_local:
-	@printf "INSTALL LOCAL\n"
+	@printf "${TERM_BRIGHT}INSTALL LOCAL\n${TERM_NONE}"
 	${Q} pip install -e .
 	${Q} testslide --help
 
 .PHONY: travis
 travis: \
 	install_build_deps \
-	all_tests \
+	tests \
 	coverage_report \
 	coveralls \
 	docs \
@@ -172,5 +178,5 @@ travis: \
 
 .PHONY: clean
 clean: sdist_clean docs_clean coverage_html_clean coverage_erase
-	@printf "CLEAN\n"
+	@printf "${TERM_BRIGHT}CLEAN\n${TERM_NONE}"
 	${Q} rm -rf */__pycache__/ */*.pyc
