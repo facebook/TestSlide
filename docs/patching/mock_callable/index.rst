@@ -455,6 +455,12 @@ Return Value Type
               # TypeError: type of return must be int; got str instead
               some_class_instance.one()
 
+Limitations
+^^^^^^^^^^^
+
+Currently `TypeVar` annotations are not being checked for.
+
+
 Test Framework Integration
 --------------------------
 
