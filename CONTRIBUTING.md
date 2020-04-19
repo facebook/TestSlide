@@ -24,7 +24,7 @@ Generally speaking:
 
 - Install a supported Python version (see `.travis.yml`) (suggestion: use [pyenv](https://github.com/pyenv/pyenv)).
 - Install the dependencies: `make install_build_deps`.
-- Run the tests: `make`.
+- Run the tests: `make` (or `make V=1` for verbose output).
 
 Here's a quick cookbook on how to have a Python installation working using Docker:
 
