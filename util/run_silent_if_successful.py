@@ -10,7 +10,6 @@ import threading
 
 master_pty_fd, slave_pty_fd = pty.openpty()
 read_data = []
-returncode = None
 
 
 def master_pty_fd_reader():
@@ -30,9 +29,33 @@ master_pty_fd_reader_thread = threading.Thread(target=master_pty_fd_reader)
 
 master_pty_fd_reader_thread.start()
 
-popen = subprocess.Popen(
-    sys.argv[1:], stdin=subprocess.DEVNULL, stdout=slave_pty_fd, stderr=slave_pty_fd,
-)
+pid = None
+
+
+def handler(signal_number, frame):
+    if not pid:
+        return
+    os.kill(pid, signal_number)
+
+
+signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGTERM, handler)
+signal.signal(signal.SIGHUP, handler)
+
+try:
+    popen = subprocess.Popen(
+        sys.argv[1:],
+        stdin=subprocess.DEVNULL,
+        stdout=slave_pty_fd,
+        stderr=slave_pty_fd,
+    )
+except FileNotFoundError as e:
+    print(str(e), file=sys.stderr)
+    os.close(slave_pty_fd)
+    master_pty_fd_reader_thread.join()
+    sys.exit(127)
+
+pid = popen.pid
 
 returncode = popen.wait()
 
