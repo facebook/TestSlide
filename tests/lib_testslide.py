@@ -91,11 +91,11 @@ def _validate_callable_arg_types(context):
             def with_typevar(lolo: TypeVar("T")) -> None:
                 pass
 
-            testslide.lib._validate_function_signature(
-                with_typevar, args=["arg1"], kwargs={}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=["arg1"], kwargs={}
             )
-            testslide.lib._validate_function_signature(
-                with_typevar, args=[], kwargs={"arg1": "arg1"}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=[], kwargs={"arg1": "arg1"}
             )
 
         @context.example("Nested TypeVar")
@@ -105,11 +105,11 @@ def _validate_callable_arg_types(context):
             def with_typevar(arg1: Type[TypeVar("T")]) -> None:
                 pass
 
-            testslide.lib._validate_function_signature(
-                with_typevar, args=["arg1"], kwargs={}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=["arg1"], kwargs={}
             )
-            testslide.lib._validate_function_signature(
-                with_typevar, args=[], kwargs={"arg1": "arg1"}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=[], kwargs={"arg1": "arg1"}
             )
 
     @context.sub_context
