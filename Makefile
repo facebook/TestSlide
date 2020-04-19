@@ -8,11 +8,11 @@
 ##
 
 TESTSLIDE_FORMAT?=documentation
-UNITTEST_VERBOSE?=0
+UNITTEST_VERBOSE?=1
 ifeq ($(UNITTEST_VERBOSE),0)
-UNITTEST_ARGS := --verbose
-else
 UNITTEST_ARGS := 
+else
+UNITTEST_ARGS := --verbose
 endif
 TESTS_SRCS = tests
 SRCS = testslide
