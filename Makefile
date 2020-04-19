@@ -15,7 +15,7 @@ else
 UNITTEST_ARGS := --verbose
 endif
 TESTS_SRCS = tests
-SRCS = testslide
+SRCS = testslide util
 ALL_SRCS = $(TESTS_SRCS) $(SRCS)
 TERM_BRIGHT := $(shell tput bold)
 TERM_NONE := $(shell tput sgr0)
