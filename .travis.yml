@@ -3,7 +3,5 @@ python:
   - 3.6
   - 3.7
   - 3.8
-install:
-  - make install_deps
 script:
-  TESTSLIDE_FORMAT="progress" UNITTEST_VERBOSE="" make travis
+  TESTSLIDE_FORMAT=progress UNITTEST_VERBOSE=1 make travis V=1
