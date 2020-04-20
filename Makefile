@@ -156,6 +156,10 @@ sdist_clean:
 	@printf "${TERM_BRIGHT}SDIST CLEAN\n${TERM_NONE}"
 	${Q} rm -rf dist/ MANIFEST TestSlide.egg-info/
 
+.PHONY: twine
+twine: sdist
+	twine upload dist/TestSlide-$(shell cat .version).tar.gz
+
 .PHONY: install_local
 install_local:
 	@printf "${TERM_BRIGHT}INSTALL LOCAL\n${TERM_NONE}"

@@ -15,5 +15,4 @@
 		- master
 	- Admin > Versions: make new version the default
 - Build & publish
-	- `make sdist`
-	- `twine upload dist/TestSlide-$VERSION.tar.gz`
+	- `make twine`
