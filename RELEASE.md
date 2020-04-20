@@ -5,6 +5,7 @@
   - `git add testslide/version.py`
   - `git commit -m "v$VERSION"`
   - `git tag $VERSION`
+  - `git push`
   - `git push master --tags`
 - https://travis-ci.com/facebookincubator/TestSlide/
 	- Check if master build is OK.
