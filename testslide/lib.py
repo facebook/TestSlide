@@ -60,11 +60,18 @@ def _validate_callable_signature(
 
 
 def _validate_argument_type(expected_type, name: str, value) -> None:
-    if _is_a_mock(value):
-        template = _extract_mock_template(value)
-        if not template:
-            return
-    typeguard.check_type(name, value, expected_type)
+    original_check_type = typeguard.check_type
+
+    def wrapped_check_type(argname, inner_value, inner_expected_type, *args, **kwargs):
+        if _is_a_mock(inner_value):
+            if _extract_mock_template(inner_value) is None:
+                return
+        return original_check_type(
+            argname, inner_value, inner_expected_type, *args, **kwargs
+        )
+
+    with unittest.mock.patch.object(typeguard, "check_type", new=wrapped_check_type):
+        typeguard.check_type(name, value, expected_type)
 
 
 def _validate_callable_arg_types(

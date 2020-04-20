@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional
+from typing import Optional, Dict, Union, Tuple
 
 attribute = "value"
 
@@ -110,3 +110,17 @@ async def async_test_function(
 ) -> str:
     "This function is used by some unit tests only"
     return "original response"
+
+
+UnionArgType = Dict[str, Union[str, int]]
+
+
+def test_union(arg: UnionArgType):
+    pass
+
+
+TupleArgType = Dict[str, Tuple[str, int]]
+
+
+def test_tuple(arg: TupleArgType):
+    pass
