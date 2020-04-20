@@ -182,3 +182,77 @@ def _validate_callable_arg_types(context):
             self.callable_template = with_typevar
             self.assert_passes("arg1")
             self.assert_passes(kwarg1="arg1")
+
+    @context.sub_context
+    def recursion_and_mocks(context):
+        @context.sub_context("typing.Union")
+        def typing_Union(context):
+            @context.memoize
+            def callable_template(self):
+                return sample_module.test_union
+
+            @context.example
+            def passes_with_StritMock_without_template(self):
+                self.assert_passes({"StrictMock": StrictMock()})
+
+            @context.example("it works with unittest.mock.Mock without spec")
+            def passes_with_unittest_mock_Mock_without_spec(self):
+                self.assert_passes({"Mock": unittest.mock.Mock()})
+
+            @context.example
+            def passes_with_StritMock_with_valid_template(self):
+                self.assert_passes(
+                    {"StrictMock(template=str)": StrictMock(template=str)}
+                )
+
+            @context.example("passes with unittest.mock.Mock with valid spec")
+            def passes_with_unittest_mock_Mock_with_valid_spec(self):
+                self.assert_passes({"Mock(spec=str)": unittest.mock.Mock(spec=str)})
+
+            @context.example
+            def fails_with_StritMock_with_invalid_template(self):
+                self.assert_fails(
+                    {"StrictMock(template=dict)": StrictMock(template=dict)}
+                )
+
+            @context.example("fails with unittest.mock.Mock with invalid spec")
+            def fails_with_unittest_mock_Mock_with_invalid_spec(self):
+                self.assert_fails({"Mock(spec=dict)": unittest.mock.Mock(spec=dict)})
+
+        @context.sub_context("typing.Tuple")
+        def typing_Tuple(context):
+            @context.memoize
+            def callable_template(self):
+                return sample_module.test_tuple
+
+            @context.example
+            def passes_with_StritMock_without_template(self):
+                self.assert_passes({"StrictMock": ("str", StrictMock(),)})
+
+            @context.example("it works with unittest.mock.Mock without spec")
+            def passes_with_unittest_mock_Mock_without_spec(self):
+                self.assert_passes({"Mock": ("str", unittest.mock.Mock(),)})
+
+            @context.example
+            def passes_with_StritMock_with_valid_template(self):
+                self.assert_passes(
+                    {"StrictMock(template=int)": ("str", StrictMock(template=int),)}
+                )
+
+            @context.example("passes with unittest.mock.Mock with valid spec")
+            def passes_with_unittest_mock_Mock_with_valid_spec(self):
+                self.assert_passes(
+                    {"Mock(spec=int)": ("str", unittest.mock.Mock(spec=int),)}
+                )
+
+            @context.example
+            def fails_with_StritMock_with_invalid_template(self):
+                self.assert_fails(
+                    {"StrictMock(template=dict)": ("str", StrictMock(template=dict),)}
+                )
+
+            @context.example("fails with unittest.mock.Mock with invalid spec")
+            def fails_with_unittest_mock_Mock_with_invalid_spec(self):
+                self.assert_fails(
+                    {"Mock(spec=dict)": ("str", unittest.mock.Mock(spec=dict),)}
+                )
