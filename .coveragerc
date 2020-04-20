@@ -3,5 +3,7 @@ parallel = True
 
 [report]
 precision = 2
-fail_under = 92.31
-include = testslide/*
+fail_under = 91.90
+include = 
+	testslide/*
+	util/*

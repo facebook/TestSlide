@@ -402,7 +402,11 @@ class Cli(object):
 def main():
     if "" not in sys.path:
         sys.path.insert(0, "")
-    sys.exit(Cli(sys.argv[1:]).run())
+    try:
+        sys.exit(Cli(sys.argv[1:]).run())
+    except KeyboardInterrupt:
+        print("SIGINT received, exiting.", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ else
 UNITTEST_ARGS := --verbose
 endif
 TESTS_SRCS = tests
-SRCS = testslide
+SRCS = testslide util
 ALL_SRCS = $(TESTS_SRCS) $(SRCS)
 TERM_BRIGHT := $(shell tput bold)
 TERM_NONE := $(shell tput sgr0)
@@ -23,7 +23,7 @@ TERM_NONE := $(shell tput sgr0)
 # Verbose output: make V=1
 V?=0
 ifeq ($(V),0)
-Q := @python util/run_silent_if_successful.py
+Q := @coverage run util/run_silent_if_successful.py
 else
 Q := 
 endif
