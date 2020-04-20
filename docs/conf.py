@@ -7,7 +7,7 @@ import sys
 
 sys.path.append("..")
 
-import testslide
+from testslide.version import VERSION
 
 # -*- coding: utf-8 -*-
 #
@@ -35,7 +35,7 @@ copyright = "Facebook, Inc. and its affiliates."
 author = "Fabio Pugliese Ornellas & Contributors"
 
 # The short X.Y version
-version = testslide.VERSION
+version = VERSION
 # The full version, including alpha/beta/rc tags
 release = version
 

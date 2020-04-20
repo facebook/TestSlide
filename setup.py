@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from setuptools import setup
-from testslide import VERSION
+from testslide.version import VERSION
 
 with open("README.md", encoding="utf8") as f:
     readme = f.read()
