@@ -9,7 +9,6 @@
   - `git push master --tags`
 - https://travis-ci.com/facebookincubator/TestSlide/
 	- Check if master build is OK.
-- Create & push tag.
 - https://readthedocs.org/projects/testslide/
 	- Trigger bulid for
 		- new version
