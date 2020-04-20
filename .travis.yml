@@ -4,4 +4,4 @@ python:
   - 3.7
   - 3.8
 script:
-  TESTSLIDE_FORMAT=progress UNITTEST_VERBOSE=1 make travis V=1
+  TESTSLIDE_FORMAT=progress UNITTEST_VERBOSE=0 make travis V=1
