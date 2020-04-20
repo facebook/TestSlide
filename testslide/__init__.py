@@ -33,6 +33,9 @@ if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
 
 
+VERSION = "2.5.0"
+
+
 def _importer(target):
     components = target.split(".")
     import_path = components.pop(0)

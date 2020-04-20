@@ -3,6 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
+
+sys.path.append("..")
+
+import testslide
+
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
@@ -29,7 +35,7 @@ copyright = "Facebook, Inc. and its affiliates."
 author = "Fabio Pugliese Ornellas & Contributors"
 
 # The short X.Y version
-version = "2.4.0"
+version = testslide.VERSION
 # The full version, including alpha/beta/rc tags
 release = version
 

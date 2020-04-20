@@ -1,6 +1,5 @@
 - Update version at:
-	- `setup.py`
-	- `docs/conf.py`
+	- `testslide/__init__.py`
 - https://travis-ci.com/facebookincubator/TestSlide/
 	- Check if master build is OK.
 - Create & push tag.
@@ -10,5 +9,5 @@
 		- master
 	- Admin > Versions: make new version the default
 - Build & publish
-	- `python setup.py sdist`
+	- `make sdist`
 	- `twine upload dist/TestSlide-$VERSION.tar.gz`

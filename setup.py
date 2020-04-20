@@ -4,13 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 from setuptools import setup
+from testslide import VERSION
 
 with open("README.md", encoding="utf8") as f:
     readme = f.read()
 
 setup(
     name="TestSlide",
-    version="2.4.0",
+    version=VERSION,
     packages=["testslide"],
     maintainer="Fabio Pugliese Ornellas",
     maintainer_email="fabio.ornellas@gmail.com",
