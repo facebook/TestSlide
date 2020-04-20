@@ -11,14 +11,14 @@ from testslide import StrictMock
 import unittest.mock
 
 
-@context("_validate_function_signature")
-def _validate_function_signature(context):
+@context("_validate_callable_arg_types")
+def _validate_callable_arg_types(context):
     @context.sub_context
     def valid_types(context):
         @context.function
         def assert_passes(self, *args, **kwargs):
-            testslide.lib._validate_function_signature(
-                sample_module.test_function, args, kwargs
+            testslide.lib._validate_callable_arg_types(
+                False, sample_module.test_function, args, kwargs
             )
 
         @context.example
@@ -39,8 +39,17 @@ def _validate_function_signature(context):
 
         @context.example
         def varargs_and_varkwargs(self):
-            testslide.lib._validate_function_signature(
-                object.__new__, (1, 2, 3), {"four": 5, "six": 6}
+            testslide.lib._validate_callable_arg_types(
+                False, object.__new__, (1, 2, 3), {"four": 5, "six": 6}
+            )
+
+        @context.example
+        def args_as_starargs(self):
+            target = sample_module.SomeClass()
+            args = ("d", "x", "ddd")
+            kwargs = {"a": False, "b": 2, "c": None}
+            testslide.lib._validate_callable_arg_types(
+                False, target.instance_method_with_star_args, args, kwargs
             )
 
         @context.example("testslide.StrictMock with valid template")
@@ -82,11 +91,11 @@ def _validate_function_signature(context):
             def with_typevar(lolo: TypeVar("T")) -> None:
                 pass
 
-            testslide.lib._validate_function_signature(
-                with_typevar, args=["arg1"], kwargs={}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=["arg1"], kwargs={}
             )
-            testslide.lib._validate_function_signature(
-                with_typevar, args=[], kwargs={"arg1": "arg1"}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=[], kwargs={"arg1": "arg1"}
             )
 
         @context.example("Nested TypeVar")
@@ -96,11 +105,11 @@ def _validate_function_signature(context):
             def with_typevar(arg1: Type[TypeVar("T")]) -> None:
                 pass
 
-            testslide.lib._validate_function_signature(
-                with_typevar, args=["arg1"], kwargs={}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=["arg1"], kwargs={}
             )
-            testslide.lib._validate_function_signature(
-                with_typevar, args=[], kwargs={"arg1": "arg1"}
+            testslide.lib._validate_callable_arg_types(
+                False, with_typevar, args=[], kwargs={"arg1": "arg1"}
             )
 
     @context.sub_context
@@ -110,8 +119,8 @@ def _validate_function_signature(context):
             with self.assertRaisesRegex(
                 TypeError, "Call with incompatible argument types"
             ):
-                testslide.lib._validate_function_signature(
-                    sample_module.test_function, args, kwargs
+                testslide.lib._validate_callable_arg_types(
+                    False, sample_module.test_function, args, kwargs
                 )
 
         @context.example
@@ -126,8 +135,8 @@ def _validate_function_signature(context):
                     "  'kwarg2': type of kwarg2 must be str; got int instead"
                 ),
             ):
-                testslide.lib._validate_function_signature(
-                    sample_module.test_function, (1, 2, 3, 4), {}
+                testslide.lib._validate_callable_arg_types(
+                    False, sample_module.test_function, (1, 2, 3, 4), {}
                 )
 
         @context.example

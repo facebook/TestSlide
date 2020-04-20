@@ -3,6 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import Optional
+
 attribute = "value"
 
 
@@ -17,6 +19,11 @@ class SomeClass:
 
     def method(self):
         pass
+
+    def instance_method_with_star_args(
+        self, first, *args: str, a: bool, b: int, c: Optional[int], d: int = 3
+    ) -> int:
+        return 3
 
 
 class TargetStr(object):

@@ -8,7 +8,11 @@ import inspect
 
 import testslide
 from testslide.mock_callable import _MockCallableDSL, _CallableMock
-from .lib import _bail_if_private, _validate_function_signature
+from .lib import (
+    _bail_if_private,
+    _validate_callable_arg_types,
+    _validate_callable_signature,
+)
 from typing import List, Callable, Dict, Any
 
 _DO_NOT_COPY_CLASS_ATTRIBUTES = (
@@ -158,10 +162,18 @@ class AttrAccessValidation(object):
         )
 
 
-def _wrap_type_validation(callable_mock, templates):
+def _wrap_type_validation(template, callable_mock, callable_templates):
     def callable_mock_with_type_validation(*args, **kwargs):
-        for template in templates:
-            _validate_function_signature(template, args, kwargs)
+        for callable_template in callable_templates:
+            if _validate_callable_signature(
+                False,
+                callable_template,
+                template,
+                callable_template.__name__,
+                args,
+                kwargs,
+            ):
+                _validate_callable_arg_types(False, callable_template, args, kwargs)
         return callable_mock(*args, **kwargs)
 
     return callable_mock_with_type_validation
@@ -193,7 +205,7 @@ def _get_mocked_class(original_class, target_class_id, callable_mock, type_valid
     # ...and reuse them...
     mocked_class_dict = {
         "__new__": _wrap_type_validation(
-            callable_mock, [original_class_new, original_class_init]
+            original_class, callable_mock, [original_class_new, original_class_init,]
         )
         if type_validation
         else callable_mock
