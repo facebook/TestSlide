@@ -22,7 +22,6 @@ import types
 import unittest
 import warnings
 
-import testslide.version
 import testslide.mock_callable
 import testslide.mock_constructor
 import testslide.matchers
@@ -32,8 +31,6 @@ from typing import List
 
 if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
-
-VERSION = testslide.version.VERSION
 
 
 def _importer(target):

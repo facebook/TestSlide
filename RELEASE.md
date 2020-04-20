@@ -1,5 +1,11 @@
 - Update version at:
-	- `testslide/__init__.py`
+	- `testslide/version.py`
+- Commit & push the tag:
+  - `git checkout master`
+  - `git add testslide/version.py`
+  - `git commit -m "v$VERSION"`
+  - `git tag $VERSION`
+  - `git push master --tags`
 - https://travis-ci.com/facebookincubator/TestSlide/
 	- Check if master build is OK.
 - Create & push tag.
