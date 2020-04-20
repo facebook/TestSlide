@@ -1,5 +1,5 @@
 - Update version at:
-	- `testslide/version.py`
+	- `.version`
 - Commit & push the tag:
   - `git checkout master`
   - `git add testslide/version.py`

@@ -5,10 +5,6 @@
 
 import sys
 
-sys.path.append("..")
-
-from testslide.version import VERSION
-
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
@@ -35,7 +31,7 @@ copyright = "Facebook, Inc. and its affiliates."
 author = "Fabio Pugliese Ornellas & Contributors"
 
 # The short X.Y version
-version = VERSION
+version = open("../.version").read().rstrip()
 # The full version, including alpha/beta/rc tags
 release = version
 
