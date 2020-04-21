@@ -6,6 +6,7 @@
 from typing import Type, TypeVar
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 import testslide.lib
+import testslide.mock_callable
 from . import sample_module
 from testslide import StrictMock
 import unittest.mock
@@ -87,16 +88,23 @@ def _validate_callable_arg_types(context):
 
     @context.example("Invalid return Type raises TypeError")
     def assert_raised_typeerror(self):
+        target_obj = sample_module.InvalidReturnType()
+
+        fake_runner = testslide.mock_callable._ReturnValueRunner(
+            target=target_obj,
+            method="invalid_return_type_function",
+            original_callable=target_obj.invalid_return_type_function,
+            value=target_obj.invalid_return_type_function(),
+        )
         with self.assertRaises(
             TypeError,
                 msg=(
-                "Call with incorrect return types at "
-                "/Users/jottosson/TestSlide/tests/sample_module.py:101:\n"
-                    "expected <class 'int'> got str"
+                    f"Call with incorrect return types, expected <class 'int'> got str.\n"
+                    f"Call initiated from object: {repr(target_obj)}"
             )
         ):
             testslide.lib._validate_return_type(
-                sample_module.invalid_return_type_function, "str"
+                fake_runner, "str"
             )
 
     @context.example("works with object.__new__")
