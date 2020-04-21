@@ -105,6 +105,10 @@ def test_function(arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = "") -> s
     return "original response"
 
 
+def invalid_return_type_function() -> int:
+    return "string response"
+
+
 async def async_test_function(
     arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
 ) -> str:

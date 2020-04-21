@@ -85,6 +85,20 @@ def _validate_callable_arg_types(context):
                 self.skip_first_arg, self.callable_template, (1, 2, 3, 4), {}
             )
 
+    @context.example("Invalid return Type raises TypeError")
+    def assert_raised_typeerror(self):
+        with self.assertRaises(
+            TypeError,
+                msg=(
+                "Call with incorrect return types at "
+                "/Users/jottosson/TestSlide/tests/sample_module.py:101:\n"
+                    "expected <class 'int'> got str"
+            )
+        ):
+            testslide.lib._validate_return_type(
+                sample_module.invalid_return_type_function, "str"
+            )
+
     @context.example("works with object.__new__")
     def works_with_object_new(self):
         self.callable_template = object.__new__

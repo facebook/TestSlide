@@ -178,9 +178,20 @@ def _validate_return_type(template, value):
         argspec = inspect.getfullargspec(template)
     except TypeError:
         return
+    source_file = inspect.getsourcefile(template)
+    source_line = inspect.getsourcelines(template)
+
     expected_type = argspec.annotations.get("return")
     if expected_type:
-        _validate_argument_type(expected_type, "return", value)
+        try:
+            _validate_argument_type(expected_type, "return", value)
+        except TypeError:
+            error_msg = (
+                f"Call with incorrect return types at {source_file}:{source_line[1]}:\n"
+                f"expected {expected_type} got {value}")
+            raise TypeError(
+                error_msg
+            )
 
 
 ##
