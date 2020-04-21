@@ -23,7 +23,7 @@ TERM_NONE := $(shell tput sgr0)
 # Verbose output: make V=1
 V?=0
 ifeq ($(V),0)
-Q := @coverage run util/run_silent_if_successful.py
+Q := @python util/run_silent_if_successful.py
 else
 Q := 
 endif
