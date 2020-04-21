@@ -86,6 +86,11 @@ mypy:
 	@printf "${TERM_BRIGHT}MYPY ${ALL_SRCS}\n${TERM_NONE}"
 	${Q} mypy ${ALL_SRCS}
 
+.PHONY: mypy_clean
+mypy_clean:
+	@printf "${TERM_BRIGHT}MYPY CLEAN\n${TERM_NONE}"
+	${Q} rm -rf .mypy_cache/
+
 .PHONY: flake8
 flake8:
 	@printf "${TERM_BRIGHT}FLAKE8 ${ALL_SRCS}\n${TERM_NONE}"
@@ -182,6 +187,6 @@ travis: \
 ##
 
 .PHONY: clean
-clean: sdist_clean docs_clean coverage_html_clean coverage_erase
+clean: sdist_clean docs_clean coverage_html_clean coverage_erase mypy_clean
 	@printf "${TERM_BRIGHT}CLEAN\n${TERM_NONE}"
 	${Q} rm -rf */__pycache__/ */*.pyc
