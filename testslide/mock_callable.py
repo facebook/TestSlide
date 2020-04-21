@@ -448,11 +448,12 @@ class _AsyncCallOriginalRunner(_AsyncRunner):
 
 
 class _CallableMock(object):
-    def __init__(self, target, method, is_async=False):
+    def __init__(self, target, method, is_async=False, type_validation=True):
         self.target = target
         self.method = method
         self.runners = []
         self.is_async = is_async
+        self.type_validation = type_validation
 
     def _get_runner(self, *args, **kwargs):
         for runner in self.runners:
@@ -461,7 +462,11 @@ class _CallableMock(object):
         return None
 
     def _validate_return_type(self, runner, value):
-        if runner.TYPE_VALIDATION and runner.original_callable is not None:
+        if (
+            self.type_validation
+            and runner.TYPE_VALIDATION
+            and runner.original_callable is not None
+        ):
             _validate_return_type(runner.original_callable, value)
 
     def __call__(self, *args, **kwargs):
@@ -638,7 +643,9 @@ class _MockCallableDSL(object):
         return original_callable, unpatcher
 
     def _get_callable_mock(self):
-        return _CallableMock(self._original_target, self._method)
+        return _CallableMock(
+            self._original_target, self._method, type_validation=self.type_validation
+        )
 
     def __init__(
         self,
@@ -955,7 +962,12 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         )
 
     def _get_callable_mock(self):
-        return _CallableMock(self._original_target, self._method, is_async=True)
+        return _CallableMock(
+            self._original_target,
+            self._method,
+            is_async=True,
+            type_validation=self.type_validation,
+        )
 
     def with_implementation(self, func):
         """
