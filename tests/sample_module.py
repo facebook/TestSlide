@@ -128,3 +128,8 @@ TupleArgType = Dict[str, Tuple[str, int]]
 
 def test_tuple(arg: TupleArgType):
     pass
+
+
+class InvalidReturnType(object):
+    def invalid_return_type_function(self) -> int:
+        return "somereturnstring"
