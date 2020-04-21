@@ -16,7 +16,12 @@ from . import AggregatedExceptions, Skip, _ExampleRunner
 from contextlib import redirect_stdout, redirect_stderr
 
 
-class BaseFormatter(object):
+##
+## Base
+##
+
+
+class BaseFormatter:
     """
     Formatter base class. To be paired with Runner, to process / output example
     execution results.
@@ -41,14 +46,6 @@ class BaseFormatter(object):
         self.start_time = psutil.Process(os.getpid()).create_time()
         self.end_time = None
         self.duration_secs = None
-        if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
-            self.print_yellow(
-                "Warning: Importing test modules alone took %.1fs! To remove this slow "
-                "down remove object construction from module level. If not possible, "
-                "consider using/ lazy_import(). Try using --import-profiler to profile "
-                "your imports." % (self.import_secs)
-            )
-            self._import_secs_warn = False
 
     # Example Discovery
 
@@ -148,11 +145,12 @@ class BaseFormatter(object):
         pass
 
 
-class QuietFormatter(BaseFormatter):
-    pass
+##
+## Mixins
+##
 
 
-class ColorFormatter(BaseFormatter):
+class ColorFormatterMixin(BaseFormatter):
     def _print_attrs(self, attrs, *values, **kwargs):
         stream = kwargs.get("file", sys.stdout)
         if stream.isatty() or self.force_color:
@@ -179,6 +177,19 @@ class ColorFormatter(BaseFormatter):
 
     def print_cyan(self, *values, **kwargs):
         self._print_attrs("36", *values, **kwargs)
+
+
+class SlowImportWarningMixin(ColorFormatterMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
+            self.print_yellow(
+                "Warning: Importing test modules alone took %.1fs! To remove this slow "
+                "down remove object construction from module level. If not possible, "
+                "consider using/ lazy_import(). Try using --import-profiler to profile "
+                "your imports." % (self.import_secs)
+            )
+            self._import_secs_warn = False
 
 
 class DSLDebugMixin:
@@ -237,7 +248,16 @@ class DSLDebugMixin:
         self._dsl_print(example, "function", code)
 
 
-class ProgressFormatter(DSLDebugMixin, ColorFormatter):
+##
+## Formatters
+##
+
+
+class QuietFormatter(BaseFormatter):
+    pass
+
+
+class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
     """
     Simple formatter that outputs "." when an example passes or "F" w
     """
@@ -264,7 +284,7 @@ class ProgressFormatter(DSLDebugMixin, ColorFormatter):
         print("")
 
 
-class DocumentFormatter(DSLDebugMixin, ColorFormatter):
+class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
     def get_dsl_debug_indent(self, example):
         return "  " * (example.context.depth + 1)
 
@@ -379,7 +399,7 @@ class DocumentFormatter(DSLDebugMixin, ColorFormatter):
             self.print_cyan("  Not executed: ", len(not_executed_examples))
 
 
-class LongFormatter(DSLDebugMixin, ColorFormatter):
+class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
     def get_dsl_debug_indent(self, example):
         return "  "
 
@@ -503,6 +523,11 @@ class LongFormatter(DSLDebugMixin, ColorFormatter):
             self.print_yellow("  Skipped: ", skip)
         if not_executed_examples:
             self.print_cyan("  Not executed: ", len(not_executed_examples))
+
+
+##
+## Runner
+##
 
 
 class Runner(object):
