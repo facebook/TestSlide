@@ -2,7 +2,7 @@
 	- `.version`
 - Commit & push the tag:
   - `git checkout master`
-  - `git add testslide/version.py`
+  - `git add .version`
   - `git commit -m "v$VERSION"`
   - `git tag $VERSION`
   - `git push`
