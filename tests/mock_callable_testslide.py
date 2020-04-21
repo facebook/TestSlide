@@ -718,6 +718,23 @@ def mock_callable_tests(context):
                         self.original_callable(*self.call_args, **self.call_kwargs),
                     )
 
+                if not empty_args:
+
+                    @context.sub_context("with type_validation=False")
+                    def with_type_validation_False(context):
+                        context.memoize("type_validation", lambda self: False)
+
+                        @context.example
+                        def it_doest_not_type_validate(self):
+                            call_args = [1 for arg in self.call_args]
+                            call_kwargs = {key: 1 for key in self.call_kwargs.keys()}
+                            mock_callable(
+                                self.target_arg,
+                                self.callable_arg,
+                                type_validation=self.type_validation,
+                            ).for_call(*call_args, **call_kwargs).to_return_value(None)
+                            self.callable_target(*call_args, **call_kwargs)
+
             else:
 
                 @context.example
