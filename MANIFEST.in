@@ -1,1 +1,5 @@
-include CODE_OF_CONDUCT.md CONTRIBUTING.md LICENSE README.md
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+include LICENSE 
+include README.md
+include testslide/version

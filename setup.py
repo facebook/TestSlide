@@ -5,7 +5,7 @@
 
 from setuptools import setup
 
-version = open(".version").read().rstrip()
+version = open("testslide/version").read().rstrip()
 readme = open("README.md", encoding="utf8").read()
 
 setup(

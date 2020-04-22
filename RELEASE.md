@@ -1,8 +1,8 @@
 - Update version at:
-	- `.version`
+	- `testslide/version`
 - Commit & push the tag:
   - `git checkout master`
-  - `git add .version`
+  - `git add testslide/version`
   - `git commit -m "v$VERSION"`
   - `git tag $VERSION`
   - `git push`

@@ -31,7 +31,7 @@ copyright = "Facebook, Inc. and its affiliates."
 author = "Fabio Pugliese Ornellas & Contributors"
 
 # The short X.Y version
-version = open("../.version").read().rstrip()
+version = open("../testslide/version").read().rstrip()
 # The full version, including alpha/beta/rc tags
 release = version
 
