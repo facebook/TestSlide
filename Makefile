@@ -19,6 +19,7 @@ SRCS = testslide util
 ALL_SRCS = $(TESTS_SRCS) $(SRCS)
 TERM_BRIGHT := $(shell tput bold)
 TERM_NONE := $(shell tput sgr0)
+DIST_TAR_GZ = dist/TestSlide-$(shell cat testslide/version).tar.gz
 
 # Verbose output: make V=1
 V?=0
@@ -158,12 +159,12 @@ sdist_clean:
 
 .PHONY: twine
 twine: sdist
-	twine upload dist/TestSlide-$(shell cat .version).tar.gz
+	twine upload $(DIST_TAR_GZ)
 
 .PHONY: install_local
-install_local:
+install_local: sdist
 	@printf "${TERM_BRIGHT}INSTALL LOCAL\n${TERM_NONE}"
-	${Q} pip install -e .
+	${Q} pip install $(DIST_TAR_GZ)
 	${Q} testslide --help
 
 .PHONY: travis
