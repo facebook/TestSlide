@@ -60,6 +60,13 @@ def _validate_callable_signature(
 
 
 def _validate_argument_type(expected_type, name: str, value) -> None:
+    if "~" in str(expected_type):
+        # this means that we have a TypeVar type, and those require
+        # checking all the types of all the params as a whole, but we
+        # don't have a good way of getting right now
+        # TODO: #165
+        return
+
     original_check_type = typeguard.check_type
 
     def wrapped_check_type(argname, inner_value, inner_expected_type, *args, **kwargs):
@@ -95,13 +102,6 @@ def _validate_callable_arg_types(
                 if not expected_type:
                     continue
 
-                if "~" in str(expected_type):
-                    # this means that we have a TypeVar type, and those require
-                    # checking all the types of all the params as a whole, but we
-                    # don't have a good way of getting right now
-                    # TODO: #165
-                    continue
-
                 _validate_argument_type(expected_type, argname, args[idx])
             except TypeError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
@@ -110,13 +110,6 @@ def _validate_callable_arg_types(
         try:
             expected_type = argspec.annotations.get(argname)
             if not expected_type:
-                continue
-
-            if "~" in str(expected_type):
-                # this means that we have a TypeVar type, and those require
-                # checking all the types of all the params as a whole, but we
-                # don't have a good way of getting right now
-                # TODO: #165
                 continue
 
             _validate_argument_type(expected_type, argname, value)
