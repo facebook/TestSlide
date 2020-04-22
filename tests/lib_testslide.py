@@ -86,27 +86,6 @@ def _validate_callable_arg_types(context):
                 self.skip_first_arg, self.callable_template, (1, 2, 3, 4), {}
             )
 
-    @context.example("Invalid return Type raises TypeError")
-    def assert_raised_typeerror(self):
-        target_obj = sample_module.InvalidReturnType()
-
-        fake_runner = testslide.mock_callable._ReturnValueRunner(
-            target=target_obj,
-            method="invalid_return_type_function",
-            original_callable=target_obj.invalid_return_type_function,
-            value=target_obj.invalid_return_type_function(),
-        )
-        with self.assertRaises(
-            TypeError,
-                msg=(
-                    f"Call with incorrect return types, expected <class 'int'> got str.\n"
-                    f"Call initiated from object: {repr(target_obj)}"
-            )
-        ):
-            testslide.lib._validate_return_type(
-                fake_runner, "str"
-            )
-
     @context.example("works with object.__new__")
     def works_with_object_new(self):
         self.callable_template = object.__new__

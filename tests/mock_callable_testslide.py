@@ -194,10 +194,16 @@ def mock_callable_tests(context):
 
                                     @context.example
                                     def raises_TypeError(self):
-                                        with self.assertRaises(TypeError):
-                                            self.callable_target(
+                                        print(self.value)
+                                        #with self.assertRaises(TypeError):
+                                        #    self.callable_target(
+                                        #        *self.call_args, **self.call_kwargs
+                                        #    )
+                                        self.callable_target(
                                                 *self.call_args, **self.call_kwargs
-                                            )
+                                        )
+                                        self.assertTrue(False)
+
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):

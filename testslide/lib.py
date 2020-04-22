@@ -173,23 +173,24 @@ def _wrap_signature_and_type_validation(value, template, attr_name, type_validat
     return with_sig_and_type_validation
 
 
-def _validate_return_type(runner, value):
+def _validate_return_type(template, value):
     try:
-        argspec = inspect.getfullargspec(runner.original_callable)
+        argspec = inspect.getfullargspec(template)
     except TypeError:
         return
 
     expected_type = argspec.annotations.get("return")
     if expected_type:
-        try:
-            _validate_argument_type(expected_type, "return", value)
-
-        except ValueError:
-            target = runner.target
-            raise ValueError(
-                f"Call with incorrect return types, expected {expected_type} got {value}.\n"
-                f"Call initiated from object: {repr(target)}"
-            )
+        #try:
+        _validate_argument_type(expected_type, "return", value)
+        print(expected_type)
+        print(value)
+        #except ValueError:
+        #    target = runner.target
+        #    raise ValueError(
+        #        f"Call with incorrect return types, expected {expected_type} got {value}.\n"
+        #        f"Call initiated from object: {repr(target)}"
+        #    )
 
 
 ##
