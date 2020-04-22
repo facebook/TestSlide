@@ -462,7 +462,11 @@ class _CallableMock(object):
         return None
 
     def _validate_return_type(self, runner, value):
-        if runner.TYPE_VALIDATION and runner.original_callable is not None:
+        if (
+            self.type_validation
+            and runner.TYPE_VALIDATION
+            and runner.original_callable is not None
+        ):
             _validate_return_type(runner, value)
 
     def __call__(self, *args, **kwargs):
