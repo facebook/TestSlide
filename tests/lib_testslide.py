@@ -256,3 +256,52 @@ def _validate_callable_arg_types(context):
                 self.assert_fails(
                     {"Mock(spec=dict)": ("str", unittest.mock.Mock(spec=dict),)}
                 )
+
+
+@context("_validate_return_type")
+def _validate_return_type(context):
+    @context.memoize
+    def callable_template(self):
+        return sample_module.test_function
+
+    @context.function
+    def assert_passes(self, value):
+        testslide.lib._validate_return_type(self.callable_template, value)
+
+    @context.function
+    def assert_fails(self, value):
+        with self.assertRaisesRegex(TypeError, "type of return must be"):
+            testslide.lib._validate_return_type(self.callable_template, value)
+
+    @context.example
+    def passes_for_correct_type(self):
+        self.assert_passes("arg1")
+
+    @context.example
+    def passes_for_mock_without_template(self):
+        self.assert_passes(StrictMock())
+
+    @context.example
+    def passes_for_mock_with_correct_template(self):
+        self.assert_passes(StrictMock(template=str))
+
+    @context.example
+    def passes_if_TypeVar_in_signature(self):
+        """
+        We currently can't enforce TypeVar:
+        https://github.com/facebookincubator/TestSlide/issues/165
+        """
+
+        def with_typevar_return() -> Type[TypeVar("T")]:
+            pass
+
+        self.callable_template = with_typevar_return
+        self.assert_passes("arg1")
+
+    @context.example
+    def fails_for_wrong_type(self):
+        self.assert_fails(42)
+
+    @context.example
+    def fails_for_mock_with_wrong_template(self):
+        self.assert_fails(StrictMock(template=int))
