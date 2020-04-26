@@ -166,14 +166,19 @@ def _wrap_signature_and_type_validation(value, template, attr_name, type_validat
     return with_sig_and_type_validation
 
 
-def _validate_return_type(template, value):
+def _validate_return_type(template, value, caller_frame_info):
     try:
         argspec = inspect.getfullargspec(template)
     except TypeError:
         return
     expected_type = argspec.annotations.get("return")
     if expected_type:
-        _validate_argument_type(expected_type, "return", value)
+        try:
+            _validate_argument_type(expected_type, "return", value)
+        except TypeError as type_error:
+            raise TypeError(
+                f"{str(type_error)}: {repr(value)} (at {caller_frame_info.filename}:{caller_frame_info.lineno})"
+            )
 
 
 ##
