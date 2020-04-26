@@ -4,6 +4,7 @@
 .coverage
 .coverage.*.*.*
 .mypy_cache/
+.vscode
 dist/
 docs/_build/
 htmlcov/
