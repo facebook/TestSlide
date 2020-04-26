@@ -279,7 +279,9 @@ def _validate_return_type(context):
 
     @context.function
     def assert_fails(self, value):
-        assert_regex = r"type of return must be .+; got .+ instead: .+ \(at .+:\d+\)"
+        assert_regex = (
+            r"(?s)type of return must be .+; got .+ instead: .+Defined at .+:\d+"
+        )
         with self.assertRaisesRegex(TypeError, assert_regex):
             testslide.lib._validate_return_type(
                 self.callable_template, value, self.caller_frame_info
@@ -313,6 +315,11 @@ def _validate_return_type(context):
     @context.example
     def fails_for_wrong_type(self):
         self.assert_fails(42)
+        # assert_regex = r"(?s)type of return must be .+; got .+ instead: .+Defined"
+        # with self.assertRaisesRegex(TypeError, assert_regex):
+        #    testslide.lib._validate_return_type(
+        #        self.callable_template, 42, self.caller_frame_info
+        #    )
 
     @context.example
     def fails_for_mock_with_wrong_template(self):

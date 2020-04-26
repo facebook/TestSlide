@@ -184,7 +184,9 @@ def _validate_return_type(template, value, caller_frame_info):
             _validate_argument_type(expected_type, "return", value)
         except TypeError as type_error:
             raise TypeError(
-                f"{str(type_error)}: {repr(value)} (at {caller_frame_info.filename}:{caller_frame_info.lineno})"
+                f"{str(type_error)}: {repr(value)}\n"
+                f"Defined at {caller_frame_info.filename}:"
+                f"{caller_frame_info.lineno}"
             )
 
 

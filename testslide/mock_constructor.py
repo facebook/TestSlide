@@ -64,9 +64,12 @@ class _MockConstructorDSL(_MockCallableDSL):
 
     def __init__(self, target, method, cls, callable_mock=None, original_callable=None):
         self.cls = cls
+        caller_frame = inspect.currentframe().f_back
+        caller_frame_info = inspect.getframeinfo(caller_frame)
         super(_MockConstructorDSL, self).__init__(
             target,
             method,
+            caller_frame_info,
             callable_mock=callable_mock,
             original_callable=original_callable,
         )
@@ -323,7 +326,10 @@ def mock_constructor(target, class_name, allow_private=False, type_validation=Tr
             raise ValueError("Target must be a class.")
         elif not issubclass(original_class, object):
             raise ValueError("Old style classes are not supported.")
-        callable_mock = _CallableMock(original_class, "__new__")
+
+        caller_frame = inspect.currentframe().f_back
+        caller_frame_info = inspect.getframeinfo(caller_frame)
+        callable_mock = _CallableMock(original_class, "__new__", caller_frame_info)
         mocked_class = _patch_and_return_mocked_class(
             target,
             class_name,

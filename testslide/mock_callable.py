@@ -20,9 +20,9 @@ def mock_callable(target, method, allow_private=False, type_validation=True):
     return _MockCallableDSL(
         target,
         method,
+        caller_frame_info,
         allow_private=allow_private,
         type_validation=type_validation,
-        caller_frame_info=caller_frame_info,
     )
 
 
@@ -38,10 +38,10 @@ def mock_async_callable(
     return _MockAsyncCallableDSL(
         target,
         method,
+        caller_frame_info,
         callable_returns_coroutine,
         allow_private,
         type_validation,
-        caller_frame_info=caller_frame_info,
     )
 
 
@@ -462,12 +462,7 @@ class _AsyncCallOriginalRunner(_AsyncRunner):
 
 class _CallableMock(object):
     def __init__(
-        self,
-        target,
-        method,
-        is_async=False,
-        type_validation=True,
-        caller_frame_info=None,
+        self, target, method, caller_frame_info, is_async=False, type_validation=True,
     ):
         self.target = target
         self.method = method
@@ -669,19 +664,19 @@ class _MockCallableDSL(object):
         return _CallableMock(
             self._original_target,
             self._method,
+            self.caller_frame_info,
             type_validation=self.type_validation,
-            caller_frame_info=self.caller_frame_info,
         )
 
     def __init__(
         self,
         target,
         method,
+        caller_frame_info,
         callable_mock=None,
         original_callable=None,
         allow_private=False,
         type_validation=True,
-        caller_frame_info=None,
     ):
         if not _is_setup():
             raise RuntimeError(
@@ -972,18 +967,18 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         self,
         target,
         method,
+        caller_frame_info,
         callable_returns_coroutine,
         allow_private=False,
         type_validation=True,
-        caller_frame_info=None,
     ):
         self._callable_returns_coroutine = callable_returns_coroutine
         super().__init__(
             target,
             method,
+            caller_frame_info,
             allow_private=allow_private,
             type_validation=type_validation,
-            caller_frame_info=caller_frame_info,
         )
 
     def _validate_patch(self):
@@ -998,9 +993,9 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         return _CallableMock(
             self._original_target,
             self._method,
+            self.caller_frame_info,
             is_async=True,
             type_validation=self.type_validation,
-            caller_frame_info=self.caller_frame_info,
         )
 
     def with_implementation(self, func):
