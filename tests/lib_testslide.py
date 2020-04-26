@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import inspect
 from typing import Type, TypeVar
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 import testslide.lib
@@ -264,14 +265,25 @@ def _validate_return_type(context):
     def callable_template(self):
         return sample_module.test_function
 
+    @context.memoize
+    def caller_frame_info(self):
+        caller_frame = inspect.currentframe().f_back
+        caller_frame_info = inspect.getframeinfo(caller_frame)
+        return caller_frame_info
+
     @context.function
     def assert_passes(self, value):
-        testslide.lib._validate_return_type(self.callable_template, value)
+        testslide.lib._validate_return_type(
+            self.callable_template, value, self.caller_frame_info
+        )
 
     @context.function
     def assert_fails(self, value):
-        with self.assertRaisesRegex(TypeError, "type of return must be"):
-            testslide.lib._validate_return_type(self.callable_template, value)
+        assert_regex = r"type of return must be .+; got .+ instead: .+ \(at .+:\d+\)"
+        with self.assertRaisesRegex(TypeError, assert_regex):
+            testslide.lib._validate_return_type(
+                self.callable_template, value, self.caller_frame_info
+            )
 
     @context.example
     def passes_for_correct_type(self):

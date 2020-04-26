@@ -1031,6 +1031,8 @@ def mock_callable_tests(context):
             alternative_target_module = testslide.cli.os.path
             original_function = os.path.exists
 
+            # this is needed because `inspect.getframeinfo` calls `os.exist` under the hood
+            self.mock_callable(target, "exists").to_call_original()
             self.mock_callable(target, "exists").for_call("found").to_return_value(True)
             self.mock_callable(alternative_target, "exists").for_call(
                 "not_found"
