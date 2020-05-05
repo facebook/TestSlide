@@ -93,3 +93,13 @@ See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 ## License
 
 TestSlide is MIT licensed, as found in the [LICENSE](LICENSE) file.
+
+
+## Terms of Use
+
+https://opensource.facebook.com/legal/terms
+
+
+## Privacy Policy
+
+https://opensource.facebook.com/legal/privacy
