@@ -123,9 +123,16 @@ def _validate_callable_arg_types(
 
 
 def _skip_first_arg(template, attr_name):
-    if not isinstance(template, type):
+
+    if inspect.ismodule(template):
         return False
-    for klass in template.__mro__:
+
+    if inspect.isclass(template):
+        mro = template.__mro__
+    else:
+        mro = template.__class__.__mro__
+
+    for klass in mro:
         if attr_name not in klass.__dict__:
             continue
         attr = klass.__dict__[attr_name]
