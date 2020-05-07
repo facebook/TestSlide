@@ -494,6 +494,10 @@ class StrictMock(object):
         self.__dict__["_type_validation"] = type_validation
         self.__dict__["__caller"] = self._get_caller(1)
 
+        caller_frame = inspect.currentframe().f_back
+        caller_frame_info = inspect.getframeinfo(caller_frame)
+        self.__dict__["_caller_frame_info"] = caller_frame_info
+
         self._setup_magic_methods()
 
         self._setup_default_context_manager(default_context_manager)
@@ -601,7 +605,9 @@ class StrictMock(object):
                                     value, testslide.mock_callable._CallableMock
                                 ):
                                     testslide.lib._validate_return_type(
-                                        template_value, return_value
+                                        template_value,
+                                        return_value,
+                                        self.__dict__["_caller_frame_info"],
                                     )
                                 return return_value
 
@@ -616,7 +622,9 @@ class StrictMock(object):
                                     value, testslide.mock_callable._CallableMock
                                 ):
                                     testslide.lib._validate_return_type(
-                                        template_value, return_value
+                                        template_value,
+                                        return_value,
+                                        self.__dict__["_caller_frame_info"],
                                     )
                                 return return_value
 

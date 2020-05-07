@@ -15,8 +15,14 @@ from .lib import _bail_if_private
 
 
 def mock_callable(target, method, allow_private=False, type_validation=True):
+    caller_frame = inspect.currentframe().f_back
+    caller_frame_info = inspect.getframeinfo(caller_frame)
     return _MockCallableDSL(
-        target, method, allow_private=allow_private, type_validation=type_validation
+        target,
+        method,
+        caller_frame_info,
+        allow_private=allow_private,
+        type_validation=type_validation,
     )
 
 
@@ -27,8 +33,15 @@ def mock_async_callable(
     allow_private=False,
     type_validation=True,
 ):
+    caller_frame = inspect.currentframe().f_back
+    caller_frame_info = inspect.getframeinfo(caller_frame)
     return _MockAsyncCallableDSL(
-        target, method, callable_returns_coroutine, allow_private, type_validation
+        target,
+        method,
+        caller_frame_info,
+        callable_returns_coroutine,
+        allow_private,
+        type_validation,
     )
 
 
@@ -448,12 +461,15 @@ class _AsyncCallOriginalRunner(_AsyncRunner):
 
 
 class _CallableMock(object):
-    def __init__(self, target, method, is_async=False, type_validation=True):
+    def __init__(
+        self, target, method, caller_frame_info, is_async=False, type_validation=True,
+    ):
         self.target = target
         self.method = method
         self.runners = []
         self.is_async = is_async
         self.type_validation = type_validation
+        self.caller_frame_info = caller_frame_info
 
     def _get_runner(self, *args, **kwargs):
         for runner in self.runners:
@@ -467,7 +483,9 @@ class _CallableMock(object):
             and runner.TYPE_VALIDATION
             and runner.original_callable is not None
         ):
-            _validate_return_type(runner.original_callable, value)
+            _validate_return_type(
+                runner.original_callable, value, self.caller_frame_info
+            )
 
     def __call__(self, *args, **kwargs):
         runner = self._get_runner(*args, **kwargs)
@@ -644,13 +662,17 @@ class _MockCallableDSL(object):
 
     def _get_callable_mock(self):
         return _CallableMock(
-            self._original_target, self._method, type_validation=self.type_validation
+            self._original_target,
+            self._method,
+            self.caller_frame_info,
+            type_validation=self.type_validation,
         )
 
     def __init__(
         self,
         target,
         method,
+        caller_frame_info,
         callable_mock=None,
         original_callable=None,
         allow_private=False,
@@ -668,6 +690,7 @@ class _MockCallableDSL(object):
         self._next_runner_accepted_args = None
         self.allow_private = allow_private
         self.type_validation = type_validation
+        self.caller_frame_info = caller_frame_info
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -944,13 +967,18 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         self,
         target,
         method,
+        caller_frame_info,
         callable_returns_coroutine,
         allow_private=False,
         type_validation=True,
     ):
         self._callable_returns_coroutine = callable_returns_coroutine
         super().__init__(
-            target, method, allow_private=allow_private, type_validation=type_validation
+            target,
+            method,
+            caller_frame_info,
+            allow_private=allow_private,
+            type_validation=type_validation,
         )
 
     def _validate_patch(self):
@@ -965,6 +993,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         return _CallableMock(
             self._original_target,
             self._method,
+            self.caller_frame_info,
             is_async=True,
             type_validation=self.type_validation,
         )
