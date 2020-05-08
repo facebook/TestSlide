@@ -1,12 +1,5 @@
-- Update version at:
-	- `testslide/version`
-- Commit & push the tag:
-  - `git checkout master`
-  - `git add testslide/version`
-  - `git commit -m "v$VERSION"`
-  - `git tag $VERSION`
-  - `git push`
-  - `git push master --tags`
+- Create a new release tag by running:
+	- `./release.sh $new_version`
 - https://travis-ci.com/facebookincubator/TestSlide/
 	- Check if master build is OK.
 - https://readthedocs.org/projects/testslide/
