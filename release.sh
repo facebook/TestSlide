@@ -1,9 +1,13 @@
 #!/bin/bash
+
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 set -euxo pipefail
 
-USAGE="No release version specified. Please try again like this: $0 <release_version>"
-
-release_version=${1?$USAGE}
+release_version=${1?"Usage: $0 <release_version>"}
 
 git checkout master
 git pull
