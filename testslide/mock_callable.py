@@ -16,7 +16,7 @@ from .lib import _bail_if_private
 
 def mock_callable(target, method, allow_private=False, type_validation=True):
     caller_frame = inspect.currentframe().f_back
-    caller_frame_info = inspect.getframeinfo(caller_frame)
+    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
     return _MockCallableDSL(
         target,
         method,
@@ -34,7 +34,7 @@ def mock_async_callable(
     type_validation=True,
 ):
     caller_frame = inspect.currentframe().f_back
-    caller_frame_info = inspect.getframeinfo(caller_frame)
+    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
     return _MockAsyncCallableDSL(
         target,
         method,
