@@ -15,6 +15,13 @@ import unittest.mock
 ##
 
 
+class WrappedMock(unittest.mock.NonCallableMock):
+    """Needed to be able to show the useful qualified name for mock specs"""
+
+    def get_qualified_name(self):
+        return typeguard.qualified_name(self._spec_class)
+
+
 def _extract_NonCallableMock_template(mock_obj) -> Optional[Any]:
     if "_spec_class" in mock_obj.__dict__ and mock_obj._spec_class is not None:
         return mock_obj._spec_class
@@ -68,16 +75,33 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
         return
 
     original_check_type = typeguard.check_type
+    original_qualified_name = typeguard.qualified_name
+
+    def wrapped_qualified_name(obj):
+        """Needed to be able to show the useful qualified name for mock specs"""
+        if isinstance(obj, WrappedMock):
+            return obj.get_qualified_name()
+
+        return original_qualified_name(obj)
 
     def wrapped_check_type(argname, inner_value, inner_expected_type, *args, **kwargs):
         if _is_a_mock(inner_value):
-            if _extract_mock_template(inner_value) is None:
+            inner_type = _extract_mock_template(inner_value)
+            if inner_type is None:
                 return
+
+            # Ugly hack to make mock objects not be subclass of Mock
+            inner_value = WrappedMock(spec=inner_type)
+
         return original_check_type(
             argname, inner_value, inner_expected_type, *args, **kwargs
         )
 
-    with unittest.mock.patch.object(typeguard, "check_type", new=wrapped_check_type):
+    with unittest.mock.patch.object(
+        typeguard, "check_type", new=wrapped_check_type
+    ), unittest.mock.patch.object(
+        typeguard, "qualified_name", new=wrapped_qualified_name
+    ):
         typeguard.check_type(name, value, expected_type)
 
 
@@ -88,15 +112,15 @@ def _validate_callable_arg_types(
     kwargs: Dict[str, Any],
 ):
     argspec = inspect.getfullargspec(callable_template)
-    idx_offest = 1 if skip_first_arg else 0
+    idx_offset = 1 if skip_first_arg else 0
     type_errors = []
     for idx in range(0, len(args)):
         if argspec.args:
-            if idx + idx_offest >= len(argspec.args):
+            if idx + idx_offset >= len(argspec.args):
                 if argspec.varargs:
                     continue
                 raise TypeError("Extra argument given: ", repr(args[idx]))
-            argname = argspec.args[idx + idx_offest]
+            argname = argspec.args[idx + idx_offset]
             try:
                 expected_type = argspec.annotations.get(argname)
                 if not expected_type:
