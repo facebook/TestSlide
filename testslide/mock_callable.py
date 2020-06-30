@@ -16,6 +16,8 @@ from .lib import _bail_if_private
 
 def mock_callable(target, method, allow_private=False, type_validation=True):
     caller_frame = inspect.currentframe().f_back
+    # loading the context ends up reading files from disk and that might block
+    # the event loop, so we don't do it.
     caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
     return _MockCallableDSL(
         target,
@@ -34,6 +36,8 @@ def mock_async_callable(
     type_validation=True,
 ):
     caller_frame = inspect.currentframe().f_back
+    # loading the context ends up reading files from disk and that might block
+    # the event loop, so we don't do it.
     caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
     return _MockAsyncCallableDSL(
         target,
