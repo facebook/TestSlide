@@ -12,6 +12,9 @@ from testslide import StrictMock
 import unittest.mock
 
 
+T = TypeVar("T")
+
+
 @context("_validate_callable_arg_types")
 def _validate_callable_arg_types(context):
     @context.memoize
@@ -163,7 +166,7 @@ def _validate_callable_arg_types(context):
             https://github.com/facebookincubator/TestSlide/issues/165
             """
 
-            def with_typevar(lolo: TypeVar("T")) -> None:
+            def with_typevar(lolo: T) -> None:
                 pass
 
             self.callable_template = with_typevar
@@ -177,7 +180,7 @@ def _validate_callable_arg_types(context):
             https://github.com/facebookincubator/TestSlide/issues/165
             """
 
-            def with_typevar(arg1: Type[TypeVar("T")]) -> None:
+            def with_typevar(arg1: Type[T]) -> None:
                 pass
 
             self.callable_template = with_typevar

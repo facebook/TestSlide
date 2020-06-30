@@ -1119,8 +1119,8 @@ def strict_mock(context):
                     async def default_raises_UndefinedAttribute(self):
                         with self.assertRaisesWithRegexMessage(
                             UndefinedAttribute,
-                            f"'__aiter__' is not set.\n"
-                            f"<StrictMock .+> must have a value set "
+                            "'__aiter__' is not set.\n"
+                            "<StrictMock .+> must have a value set "
                             "for this attribute if it is going to be accessed.",
                         ):
                             async for _ in self.strict_mock:
@@ -1151,8 +1151,8 @@ def strict_mock(context):
                     async def default_raises_UndefinedAttribute(self):
                         with self.assertRaisesWithRegexMessage(
                             UndefinedAttribute,
-                            f"'__aenter__' is not set.\n"
-                            f"<StrictMock .+> must have a value set "
+                            "'__aenter__' is not set.\n"
+                            "<StrictMock .+> must have a value set "
                             "for this attribute if it is going to be accessed.",
                         ):
                             async with self.strict_mock:
