@@ -142,7 +142,10 @@ def _validate_callable_arg_types(
 
     if type_errors:
         raise TypeError(
-            "Call with incompatible argument types:\n  " + "\n  ".join(type_errors)
+            "Call to "
+            + callable_template.__name__
+            + " has incompatible argument types:\n  "
+            + "\n  ".join(type_errors)
         )
 
 
