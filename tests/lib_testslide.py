@@ -33,7 +33,12 @@ def _validate_callable_arg_types(context):
 
     @context.function
     def assert_fails(self, *args, **kwargs):
-        with self.assertRaisesRegex(TypeError, "Call with incompatible argument types"):
+        with self.assertRaisesRegex(
+            TypeError,
+            "Call to "
+            + self.callable_template.__name__
+            + " has incompatible argument types",
+        ):
             testslide.lib._validate_callable_arg_types(
                 self.skip_first_arg, self.callable_template, args, kwargs
             )
@@ -78,7 +83,7 @@ def _validate_callable_arg_types(context):
         with self.assertRaises(
             TypeError,
             msg=(
-                "Call with incompatible argument types:\n"
+                "Call to test_function has incompatible argument types:\n"
                 "  'arg1': type of arg1 must be str; got int instead\n"
                 "  'arg2': type of arg2 must be str; got int instead\n"
                 "  'kwarg1': type of kwarg1 must be str; got int instead\n"
