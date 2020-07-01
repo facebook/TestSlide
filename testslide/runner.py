@@ -281,6 +281,17 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMix
 
     def finish(self, not_executed_examples):
         super().finish(not_executed_examples)
+        if self.results["fail"] and not self.dsl_debug:
+            self.print_red("\nFAILED EXAMPLES:")
+            for fail in self.results["fail"]:
+                self.print_red(
+                    "\t{example}: {ex_class}: {ex_message}".format(
+                        example=fail["example"],
+                        ex_class=type(fail["exception"]).__name__,
+                        ex_message=str(fail["exception"]).split("\n")[0],
+                    )
+                )
+
         print("")
 
 
