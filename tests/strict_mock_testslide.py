@@ -280,7 +280,6 @@ def strict_mock(context):
             @context.sub_context
             def sync_attributes(context):
                 context.memoize("default_context_manager", lambda self: False)
-                context.memoize("signature_validation", lambda self: True)
                 context.memoize("type_validation", lambda self: True)
 
                 @context.memoize
@@ -306,7 +305,6 @@ def strict_mock(context):
                         self.template,
                         runtime_attrs=[self.runtime_attr],
                         default_context_manager=self.default_context_manager,
-                        signature_validation=self.signature_validation,
                         type_validation=self.type_validation,
                     )
 
@@ -520,10 +518,9 @@ def strict_mock(context):
                                     self.assertEqual(method("hello"), "mock: hello")
 
                                 @context.shared_context
-                                def common_examples(
-                                    context, signature_validation, type_validation
-                                ):
-                                    if signature_validation:
+                                def common_examples(context, type_validation):
+
+                                    if type_validation:
 
                                         @context.example
                                         def fails_on_invalid_signature_call(self):
@@ -537,25 +534,6 @@ def strict_mock(context):
                                                     self.strict_mock,
                                                     self.test_method_name,
                                                 )("message", "extra")
-
-                                    else:
-
-                                        @context.example
-                                        def passes_on_invalid_signature_call(self):
-                                            setattr(
-                                                self.strict_mock,
-                                                self.test_method_name,
-                                                lambda message, extra: "mock",
-                                            )
-                                            self.assertEqual(
-                                                getattr(
-                                                    self.strict_mock,
-                                                    self.test_method_name,
-                                                )("message", "extra"),
-                                                "mock",
-                                            )
-
-                                    if type_validation:
 
                                         @context.example
                                         def fails_on_invalid_argument_type_call(self):
@@ -615,66 +593,20 @@ def strict_mock(context):
                                                 1234,
                                             )
 
-                                @context.sub_context(
-                                    "with signature_validation=True, type_validation=True"
-                                )
-                                def with_signature_validation_True_type_validation_True(
-                                    context,
-                                ):
+                                @context.sub_context("with type_validation=True")
+                                def with_type_validation_True(context,):
                                     context.merge_context(
-                                        "common examples",
-                                        signature_validation=True,
-                                        type_validation=True,
+                                        "common examples", type_validation=True,
                                     )
 
-                                @context.sub_context(
-                                    "with signature_validation=False, type_validation=True"
-                                )
-                                def with_signature_validation_False_type_validation_True(
-                                    context,
-                                ):
-                                    context.memoize(
-                                        "signature_validation", lambda self: False
-                                    )
-
-                                    @context.example
-                                    def it_raises_ValueError(self):
-                                        with self.assertRaises(ValueError):
-                                            self.strict_mock
-
-                                @context.sub_context(
-                                    "with signature_validation=True, type_validation=False"
-                                )
-                                def with_signature_validation_True_type_validation_False(
-                                    context,
-                                ):
+                                @context.sub_context("with type_validation=False")
+                                def with_type_validation_False(context,):
                                     context.memoize(
                                         "type_validation", lambda self: False
                                     )
 
                                     context.merge_context(
-                                        "common examples",
-                                        signature_validation=True,
-                                        type_validation=False,
-                                    )
-
-                                @context.sub_context(
-                                    "with signature_validation=False, type_validation=False"
-                                )
-                                def with_signature_validation_False_type_validation_False(
-                                    context,
-                                ):
-                                    context.memoize(
-                                        "signature_validation", lambda self: False
-                                    )
-                                    context.memoize(
-                                        "type_validation", lambda self: False
-                                    )
-
-                                    context.merge_context(
-                                        "common examples",
-                                        signature_validation=False,
-                                        type_validation=False,
+                                        "common examples", type_validation=False,
                                     )
 
                                     @context.example
@@ -849,10 +781,6 @@ def strict_mock(context):
                     return False
 
                 @context.memoize_before
-                async def signature_validation(self):
-                    return True
-
-                @context.memoize_before
                 async def type_validation(self):
                     return True
 
@@ -861,14 +789,9 @@ def strict_mock(context):
                     get_strict_mock = lambda: StrictMock(
                         template=Template,
                         default_context_manager=self.default_context_manager,
-                        signature_validation=self.signature_validation,
                         type_validation=self.type_validation,
                     )
-                    if not self.signature_validation and self.type_validation:
-                        with self.assertRaises(ValueError):
-                            get_strict_mock()
-                    else:
-                        return get_strict_mock()
+                    return get_strict_mock()
 
                 @context.shared_context
                 def async_method_tests(context):
@@ -886,10 +809,8 @@ def strict_mock(context):
                     @context.sub_context
                     def signature_and_type_validation(context):
                         @context.shared_context
-                        def common_examples(
-                            context, signature_validation, type_validation
-                        ):
-                            if signature_validation:
+                        def common_examples(context, type_validation):
+                            if type_validation:
 
                                 @context.example
                                 async def fails_on_wrong_signature_call(self):
@@ -925,6 +846,30 @@ def strict_mock(context):
                                         await getattr(
                                             self.strict_mock, self.method_name
                                         )("hello"),
+
+                                @context.example
+                                async def fails_on_wrong_type_call(self):
+                                    async def mock(msg):
+                                        return "mock "
+
+                                    setattr(self.strict_mock, self.method_name, mock)
+                                    with self.assertRaises(TypeError):
+                                        await getattr(
+                                            self.strict_mock, self.method_name
+                                        )(1)
+
+                                @context.example
+                                async def fails_on_invalid_return_type(self):
+                                    async def mock(message):
+                                        return 1234
+
+                                    setattr(
+                                        self.strict_mock, self.method_name, mock,
+                                    )
+                                    with self.assertRaises(TypeError):
+                                        await getattr(
+                                            self.strict_mock, self.method_name,
+                                        )("message")
 
                             else:
 
@@ -964,34 +909,6 @@ def strict_mock(context):
                                         "mock hello",
                                     )
 
-                            if type_validation:
-
-                                @context.example
-                                async def fails_on_wrong_type_call(self):
-                                    async def mock(msg):
-                                        return "mock "
-
-                                    setattr(self.strict_mock, self.method_name, mock)
-                                    with self.assertRaises(TypeError):
-                                        await getattr(
-                                            self.strict_mock, self.method_name
-                                        )(1)
-
-                                @context.example
-                                async def fails_on_invalid_return_type(self):
-                                    async def mock(message):
-                                        return 1234
-
-                                    setattr(
-                                        self.strict_mock, self.method_name, mock,
-                                    )
-                                    with self.assertRaises(TypeError):
-                                        await getattr(
-                                            self.strict_mock, self.method_name,
-                                        )("message")
-
-                            else:
-
                                 @context.example
                                 async def passes_on_wrong_type_call(self):
                                     async def mock(msg):
@@ -1015,67 +932,20 @@ def strict_mock(context):
                                         1234,
                                     )
 
-                        @context.sub_context(
-                            "with signature_validation=True, type_validation=True"
-                        )
-                        def with_signature_validation_True_type_validation_True(
-                            context,
-                        ):
+                        @context.sub_context("with type_validation=True")
+                        def with_type_validation_True(context,):
                             context.merge_context(
-                                "common examples",
-                                signature_validation=True,
-                                type_validation=True,
+                                "common examples", type_validation=True,
                             )
 
-                        @context.sub_context(
-                            "with signature_validation=False, type_validation=True"
-                        )
-                        def with_signature_validation_False_type_validation_True(
-                            context,
-                        ):
-                            @context.memoize_before
-                            async def signature_validation(self):
-                                return False
-
-                            @context.example
-                            async def it_raises_ValueError(self):
-                                # Assertion at strict_mock memoize_before
-                                pass
-
-                        @context.sub_context(
-                            "with signature_validation=True, type_validation=False"
-                        )
-                        def with_signature_validation_True_type_validation_False(
-                            context,
-                        ):
+                        @context.sub_context("with type_validation=False")
+                        def with_type_validation_False(context,):
                             @context.memoize_before
                             async def type_validation(self):
                                 return False
 
                             context.merge_context(
-                                "common examples",
-                                signature_validation=True,
-                                type_validation=False,
-                            )
-
-                        @context.sub_context(
-                            "with signature_validation=False, type_validation=False"
-                        )
-                        def with_signature_validation_False_type_validation_False(
-                            context,
-                        ):
-                            @context.memoize_before
-                            async def signature_validation(self):
-                                return False
-
-                            @context.memoize_before
-                            async def type_validation(self):
-                                return False
-
-                            context.merge_context(
-                                "common examples",
-                                signature_validation=False,
-                                type_validation=False,
+                                "common examples", type_validation=False,
                             )
 
                             @context.example

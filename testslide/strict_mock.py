@@ -351,7 +351,6 @@ class StrictMock(object):
         runtime_attrs=None,
         name=None,
         default_context_manager=False,
-        signature_validation=True,
         type_validation=True,
     ):
         """
@@ -457,7 +456,6 @@ class StrictMock(object):
         runtime_attrs=None,
         name=None,
         default_context_manager=False,
-        signature_validation=True,
         type_validation=True,
     ):
         """
@@ -469,28 +467,17 @@ class StrictMock(object):
         default_context_manager: If the template class is a context manager,
         setup a mock for __enter__/__aenter__ that yields itself and an empty function
         for __exit__/__aexit__.
-        signature_validation: validate callable attributes calls against the
-        template's method signature, raising TypeError if they don't match. This
-        is accomplished by wrapping the callable attribute with another
-        function. While attribute access is proxied correctly, the type() of
-        the attribute will change. Setting this value to False disables
-        signature validation, and should only be used when type() is required
-        to not change.
-        type_validation: use type hinting information from template to validate
-        that mock attribute types match them. Type validation also happens for
-        callable attributes (instance/static/class methods) calls.
+        type_validation: validate callable attributes calls against the
+        template's method signature and use type hinting information from template
+        to validate that mock attribute types match them. Type validation also
+        happens forcallable attributes (instance/static/class methods) calls.
         """
-        if not signature_validation and type_validation:
-            raise ValueError(
-                "Type Validation is only available with Signature validation turned on"
-            )
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
         self.__dict__["_template"] = template
 
         self.__dict__["_runtime_attrs"] = runtime_attrs or []
         self.__dict__["_name"] = name
-        self.__dict__["_signature_validation"] = signature_validation
         self.__dict__["_type_validation"] = type_validation
         self.__dict__["__caller"] = self._get_caller(1)
 
@@ -581,7 +568,7 @@ class StrictMock(object):
                 if callable(template_value):
                     if not callable(value):
                         raise NonCallableValue(self, name)
-                    if self.__dict__["_signature_validation"]:
+                    if self.__dict__["_type_validation"]:
                         signature_validation_wrapper = testslide.lib._wrap_signature_and_type_validation(
                             value,
                             self._template,
@@ -601,7 +588,7 @@ class StrictMock(object):
                                     raise NonAwaitableReturn(self, name)
 
                                 return_value = await result_awaitable
-                                if self.__dict__["_type_validation"] and not isinstance(
+                                if not isinstance(
                                     value, testslide.mock_callable._CallableMock
                                 ):
                                     testslide.lib._validate_return_type(
@@ -700,7 +687,6 @@ class StrictMock(object):
             template=self._template,
             runtime_attrs=self._runtime_attrs,
             name=self._name,
-            signature_validation=self._signature_validation,
             type_validation=self._type_validation,
         )
         self_copy.__dict__["__caller"] = self._get_caller(2)

@@ -15,10 +15,10 @@ Sounds complicated, but it is not:
 
   import os
   from testslide import TestCase
-  
+
   def rm(path):
     os.remove(path)
-  
+
   class TestRm(TestCase):
     def test_remove_from_filesystem(self):
       path = '/some/file'
@@ -41,9 +41,9 @@ For example, if the code is broken and does ``os.remove('/wrong/file')``:
   $ testslide rm_test.py
   rm_test.TestRm
     test_remove_from_filesystem: AggregatedExceptions: 2 failures.
-  
+
   Failures:
-  
+
     1) rm_test.TestRm: test_remove_from_filesystem
       1) UnexpectedCallArguments: <module 'os' from '/opt/python/lib/python3.6/os.py'>, 'remove':
         Received call:
@@ -53,7 +53,7 @@ For example, if the code is broken and does ``os.remove('/wrong/file')``:
         These are the registered calls:
           ('/some/file',)
           {}
-      
+
         File "rm_test.py", line 14, in test_remove_from_filesystem
           rm(path)
         File "rm_test.py", line 5, in rm
@@ -72,7 +72,7 @@ For example, if the code is broken and does ``os.remove('/wrong/file')``:
           yield
         File "/opt/python/lib/python3.6/unittest/case.py", line 646, in doCleanups
           function(*args, **kwargs)
-  
+
   Finished 1 example(s) in 0.0s:
     Failed: 1
 
@@ -219,7 +219,7 @@ Replace the original implementation with something else:
 
   def func():
     return 33
-  
+
   self.mock_callable(some_object, 'some_method_name')\
     .with_implementation(func)
   some_object.some_method_name()  # => 33
@@ -237,7 +237,7 @@ When the target is a real object (not a mock), it can be useful to still call th
 
   def trim_query(original_callable):
     return original_callable()[0:5]
-  
+
   self.mock_callable(some_service, 'big_query')\
     .with_wrapper(trim_query)
   some_service.big_query()  # => returns trimmed list
@@ -361,11 +361,11 @@ Mocking magic methods (eg: ``__str__``) for an instance can be quite tricky, as 
 
   import time
   from testslide import TestCase
-  
+
   class A:
     def __str__(self):
       return 'original'
-  
+
   class TestMagicMethodMocking(TestCase):
     def test_str(self):
       a = A()
@@ -378,34 +378,10 @@ Mocking magic methods (eg: ``__str__``) for an instance can be quite tricky, as 
 
 The mock works for the target instance, but does not affect other instances.
 
-Signature Validation
---------------------
-
-mock_callable implements signature validation. When you use it, the mock will raise ``TypeError`` if it is called with a signature that does not match the original method:
-
-.. code-block:: python
-
-  import time
-  from testslide import TestCase
-  
-  class A:
-    def one_arg(self, arg):
-      return 'original'
-  
-  class TestSignature(TestCase):
-    def test_signature(self):
-      a = A()
-      self.mock_callable(a, 'one_arg')\
-        .to_return_value('mocked')
-      self.assertEqual(a.one_arg('one'), 'mocked')
-      with self.assertRaises(TypeError):
-        a.one_arg('one', 'invalid')
-
-This is particularly helpful when changes are introduced to the code: if a mocked method changes the signature, even when mocked, mock_callable will give you the signal that there's something broken.
-
 
 Type Validation
 ---------------
+When you use it, the mock will raise ``TypeError`` if it is called with a signature that does not match the original method:
 
 If typing annotation information is available, ``mock_callable()`` validates types of objects passing through the mock. If an invalid type is detected, it will raise ``TypeError``.
 
@@ -417,11 +393,25 @@ Call Argument Types
 .. code-block:: python
 
   import testslide
-  
+
+  class A:
+    def one_arg(self, arg):
+      return 'original'
+
+  class TestSignature(TestCase):
+    def test_signature(self):
+      a = A()
+      self.mock_callable(a, 'one_arg')\
+        .to_return_value('mocked')
+      self.assertEqual(a.one_arg('one'), 'mocked')
+      with self.assertRaises(TypeError):
+        a.one_arg('one', 'invalid')
+
+
   class SomeClass:
       def some_method(self, message: str):
           return "world"
-  
+
   class TestArgumentTypeValidation(testslide.TestCase):
       def test_argument_type_validation(self):
           some_class_instance = SomeClass()
@@ -440,11 +430,11 @@ Return Value Type
 .. code-block:: python
 
   import testslide
-  
+
   class SomeClass:
       def one(self) -> int:
           return 1
-  
+
   class TestReturnTypeValidation(testslide.TestCase):
       def test_return_type_validation(self):
           some_class_instance = SomeClass()
