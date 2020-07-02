@@ -255,7 +255,7 @@ class TestCliQuiet(TestCliBase):
         )
 
 
-class TestCliDocumentationFormatter(TestCliBase):
+class TestCliDocumentFormatter(TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "documentation"] + self.argv
