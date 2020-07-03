@@ -65,7 +65,9 @@ class _MockConstructorDSL(_MockCallableDSL):
     def __init__(self, target, method, cls, callable_mock=None, original_callable=None):
         self.cls = cls
         caller_frame = inspect.currentframe().f_back
-        caller_frame_info = inspect.getframeinfo(caller_frame)
+        # loading the context ends up reading files from disk and that might block
+        # the event loop, so we don't do it.
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
         super(_MockConstructorDSL, self).__init__(
             target,
             method,
@@ -328,7 +330,9 @@ def mock_constructor(target, class_name, allow_private=False, type_validation=Tr
             raise ValueError("Old style classes are not supported.")
 
         caller_frame = inspect.currentframe().f_back
-        caller_frame_info = inspect.getframeinfo(caller_frame)
+        # loading the context ends up reading files from disk and that might block
+        # the event loop, so we don't do it.
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
         callable_mock = _CallableMock(original_class, "__new__", caller_frame_info)
         mocked_class = _patch_and_return_mocked_class(
             target,

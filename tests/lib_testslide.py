@@ -276,7 +276,9 @@ def _validate_return_type(context):
     @context.memoize
     def caller_frame_info(self):
         caller_frame = inspect.currentframe().f_back
-        caller_frame_info = inspect.getframeinfo(caller_frame)
+        # loading the context ends up reading files from disk and that might block
+        # the event loop, so we don't do it.
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
         return caller_frame_info
 
     @context.function

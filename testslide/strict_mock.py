@@ -439,6 +439,8 @@ class StrictMock(object):
         # and that is really slow, this only retrieves the minimum, and does
         # not read the file contents.
         caller_frame = self._get_caller_frame(depth)
+        # loading the context ends up reading files from disk and that might block
+        # the event loop, so we don't do it.
         frameinfo = inspect.getframeinfo(caller_frame, context=0)
         filename = frameinfo.filename
         lineno = frameinfo.lineno
@@ -495,7 +497,9 @@ class StrictMock(object):
         self.__dict__["__caller"] = self._get_caller(1)
 
         caller_frame = inspect.currentframe().f_back
-        caller_frame_info = inspect.getframeinfo(caller_frame)
+        # loading the context ends up reading files from disk and that might block
+        # the event loop, so we don't do it.
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
         self.__dict__["_caller_frame_info"] = caller_frame_info
 
         self._setup_magic_methods()
