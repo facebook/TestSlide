@@ -555,15 +555,7 @@ class TestCliProgressFormatter(TestCliBase):
     def test_ouputs_dots(self):
         self.run_testslide(
             expected_return_code=1,
-            expected_stdout=(
-                ".F.SS.F.S"
-                + "\nFAILED EXAMPLES:"
-                + "\n"
-                + "\tfailing example: SimulatedFailure: test failure (extra)"
-                + "\n"
-                + "\ttest_failing: AssertionError: "
-                + "\n\n"
-            ),
+            expected_stdout_startswith=(".F.SS.F.S" + "\nFailures:"),
         )
 
     def test_ouputs_colored_dots_with_terminal(self):
@@ -571,7 +563,7 @@ class TestCliProgressFormatter(TestCliBase):
         self.run_testslide(
             tty_stdout=True,
             expected_return_code=1,
-            expected_stdout=(
+            expected_stdout_startswith=(
                 self.green(".")
                 + self.red("F")
                 + self.green(".")
@@ -581,12 +573,7 @@ class TestCliProgressFormatter(TestCliBase):
                 + self.red("F")
                 + self.green(".")
                 + self.yellow("S")
-                + self.red("\r\nFAILED EXAMPLES:")
-                + "\r\n"
-                + self.red("\tfailing example: SimulatedFailure: test failure (extra)")
-                + "\r\n"
-                + self.red("\ttest_failing: AssertionError: ")
-                + "\r\n\r\n"
+                + self.red("\r\nFailures:")
             ),
         )
 

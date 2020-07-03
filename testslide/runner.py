@@ -178,6 +178,7 @@ class ColorFormatterMixin(BaseFormatter):
     def print_cyan(self, *values, **kwargs):
         self._print_attrs("36", *values, **kwargs)
 
+
 class FailurePrinterMixin(ColorFormatterMixin):
     def print_failed_example(self, number, example, exception):
         self.print_white(
@@ -212,6 +213,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
                     '      File "{}", line {}, in {}\n'
                     "        {}".format(path, line, function_name, text)
                 )
+
 
 class SlowImportWarningMixin(ColorFormatterMixin):
     def __init__(self, *args, **kwargs):
@@ -376,7 +378,6 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
                 skip_text="" if self._color_output() else ": SKIP",
             )
         )
-
 
     def finish(self, not_executed_examples):
         super().finish(not_executed_examples)
