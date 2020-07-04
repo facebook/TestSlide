@@ -141,7 +141,7 @@ And its output:
       2) AssertionError:
         (...)
   
-  Finished 1 examples in 0.0s:
+  Finished 1 examples in 0.0s
     Failed: 1
 
 Around

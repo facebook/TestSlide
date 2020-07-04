@@ -385,10 +385,12 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMix
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs: ." % (total, self.duration_secs)
+            "Finished %s example(s) in %.1fs " % (total, self.duration_secs), end=""
         )
         if self.import_secs > 2:
-            self.print_white("Imports took: %.1fs" % (self.import_secs))
+            self.print_white("(Imports took: %.1fs)" % (self.import_secs))
+        else:
+            print("")
         if success:
             self.print_green("  Successful: ", success)
         if fail:
@@ -511,10 +513,12 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs: ." % (total, self.duration_secs)
+            "Finished %s example(s) in %.1fs " % (total, self.duration_secs), end=""
         )
         if self.import_secs > 2:
-            self.print_white("Imports took: %.1fs" % (self.import_secs))
+            self.print_white("(Imports took: %.1fs)" % (self.import_secs))
+        else:
+            print("")
         if success:
             self.print_green("  Successful: ", success)
         if fail:
