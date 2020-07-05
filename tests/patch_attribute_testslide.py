@@ -127,6 +127,7 @@ def patch_attribute_tests(context):
 
             @context.sub_context
             def and_attribute_is_a_property(context):
+                context.memoize("attribute", lambda self: "property_attribute")
                 context.merge_context("common", fails_if_class_attribute=False)
 
     @context.sub_context
