@@ -41,7 +41,7 @@ This describes the basic behavior of a calculator class. Here's what you get whe
     subtraction
       subtracts given numbers: PASS
   
-  Finished 2 examples in 0.0s:
+  Finished 2 examples in 0.0s
     Successful: 2
 
 Note how TestSlide parses the Python code, and yields a close to spoken language version of it.
@@ -87,7 +87,7 @@ When executed, TestSlide understands all cases, and report them properly:
         File "sub_examples_test.py", line 11, in shows_individual_failures
           raise AssertionError('{} failed'.format(i))
   
-  Finished 1 example(s) in 0.0s:
+  Finished 1 example(s) in 0.0s
     Failed: 1
 
 Explicit names

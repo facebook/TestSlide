@@ -116,7 +116,7 @@ Every called coroutine must be awaited. If they are not, it means their code nev
         File "/opt/python/lib/python3.7/contextlib.py", line 119, in __exit__
           next(self.gen)
 
-  Finished 2 example(s) in 1.0s:
+  Finished 2 example(s) in 1.0s
     Successful: 1
     Failed: 1
 
@@ -154,7 +154,7 @@ If during the test execution a task blocks the event loop, it will trigger a tes
         File "/opt/python/lib/python3.7/contextlib.py", line 119, in __exit__
           next(self.gen)
 
-  Finished 1 example(s) in 1.0s:
+  Finished 1 example(s) in 1.0s
     Failed: 1
 
 Python's default threshold for triggering this event loop lock up failure is **100ms**. If your problem domain requires something smaller or bigger, you can easily customize it:
@@ -182,5 +182,5 @@ Python's default threshold for triggering this event loop lock up failure is **1
   Custom slow callback duration
     blocking sleep
 
-  Finished 1 example(s) in 1.0s:
+  Finished 1 example(s) in 1.0s
     Successful: 1

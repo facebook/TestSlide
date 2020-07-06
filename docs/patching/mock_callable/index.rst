@@ -73,7 +73,7 @@ For example, if the code is broken and does ``os.remove('/wrong/file')``:
         File "/opt/python/lib/python3.6/unittest/case.py", line 646, in doCleanups
           function(*args, **kwargs)
   
-  Finished 1 example(s) in 0.0s:
+  Finished 1 example(s) in 0.0s
     Failed: 1
 
 Note how you get two failed assertions, instead of just one:

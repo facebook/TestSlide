@@ -15,7 +15,7 @@ To use, simply give it a list of ``.py`` files containing the tests:
     test_sub_negative: PASS
     test_sub_positive: PASS
   
-  Finished 4 example(s) in 0.0s:
+  Finished 4 example(s) in 0.0s
     Successful:  4
 
 .. note::
@@ -108,7 +108,7 @@ And then run your tests with ``--focus``:
   calc.TestCalcSub
     *ftest_sub_positive: PASS
   
-  Finished 1 example(s) in 0.0s:
+  Finished 1 example(s) in 0.0s
     Successful: 1
     Not executed: 3
 
@@ -138,7 +138,7 @@ And this test will be skipped:
     test_sub_negative: PASS
     xtest_sub_positive: SKIP
   
-  Finished 4 example(s) in 0.0s:
+  Finished 4 example(s) in 0.0s
     Successful: 3
     Skipped: 1
 

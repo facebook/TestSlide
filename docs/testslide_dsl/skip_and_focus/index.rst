@@ -46,7 +46,7 @@ And when run with ``--focus``:
     *Focused context
       *inherits focus from context: PASS
   
-  Finished 2 example(s) in 0.0s:
+  Finished 2 example(s) in 0.0s
     Successful:  2
     Not executed:  2
 
@@ -104,6 +104,6 @@ Skipping works just the same, but you have to use a ``x``:
     Focused context
       inherits focus from context: SKIP
   
-  Finished 4 example(s) in 0.0s:
+  Finished 4 example(s) in 0.0s
     Successful:  2
     Skipped:  2
