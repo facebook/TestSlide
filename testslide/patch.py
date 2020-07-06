@@ -83,12 +83,25 @@ def _mock_instance_attribute(instance, attr, value):
 def _patch(target, attribute, new_value, restore, restore_value=None):
     if _is_instance_method(target, attribute):
         unpatcher = _mock_instance_attribute(target, attribute, new_value)
+    elif hasattr(type(target), attribute) and isinstance(
+        getattr(type(target), attribute), property
+    ):
+        original_property = getattr(type(target), attribute)
+        setattr(type(target), attribute, property(fget=lambda _: new_value))
+
+        def unpatcher():
+            if restore_value:
+                setattr(type(target), attribute, original_property)
+            else:
+                delattr(target, attribute)
+
     else:
         setattr(target, attribute, new_value)
 
         def unpatcher():
             if restore_value:
                 setattr(target, attribute, restore_value)
+
             else:
                 delattr(target, attribute)
 
