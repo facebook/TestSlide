@@ -32,11 +32,11 @@ Add "N/A" to the end of each line that's irrelevant to your changes
 -->
 
 
-- [ ] Add tests, if you've added code that should be tested
-- [ ] Update the documentation, if you've changed APIs
-- [ ] Ensure the test suite passes.
-- [ ] Make sure your code lints.
-- [ ] Complete the Contributor License Agreement ("CLA").
+- [ ] Added tests, if you've added code that should be tested
+- [ ] Updated the documentation, if you've changed APIs
+- [ ] Ensured the test suite passes
+- [ ] Made sure your code lints
+- [ ] Completed the Contributor License Agreement ("CLA")
 
 
 <!-- feel free to add additional comments -->
