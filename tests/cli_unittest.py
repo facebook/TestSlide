@@ -102,7 +102,6 @@ class TestCliBase(unittest.TestCase):
             output += f"STDOUT:\n{stdout_output}\n"
         if stderr_output:
             output += f"STDERR:\n{stderr_output}\n"
-
         self.assertEqual(
             return_code,
             expected_return_code,
@@ -256,7 +255,7 @@ class TestCliQuiet(TestCliBase):
         )
 
 
-class TestCliDocumentationFormatter(TestCliBase):
+class TestCliDocumentFormatter(TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "documentation"] + self.argv
@@ -554,13 +553,17 @@ class TestCliProgressFormatter(TestCliBase):
         self.argv.append("progress")
 
     def test_ouputs_dots(self):
-        self.run_testslide(expected_return_code=1, expected_stdout=(".F.SS.F.S\n"))
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(".F.SS.F.S" + "\nFailures:"),
+        )
 
     def test_ouputs_colored_dots_with_terminal(self):
+        self.maxDiff = None
         self.run_testslide(
             tty_stdout=True,
             expected_return_code=1,
-            expected_stdout=(
+            expected_stdout_startswith=(
                 self.green(".")
                 + self.red("F")
                 + self.green(".")
@@ -570,7 +573,7 @@ class TestCliProgressFormatter(TestCliBase):
                 + self.red("F")
                 + self.green(".")
                 + self.yellow("S")
-                + "\r\n"
+                + self.red("\r\nFailures:")
             ),
         )
 
