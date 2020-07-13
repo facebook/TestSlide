@@ -3,12 +3,15 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import inspect
 import functools
-import typeguard
-from typing import Any, Callable, Dict, Optional, Type, Tuple
-
+import inspect
+import os
+import sys
 import unittest.mock
+from typing import Any, Callable, Dict, Optional, Tuple, Type
+
+import typeguard
+
 
 ##
 ## Type validation
@@ -49,6 +52,30 @@ def _is_a_mock(maybe_mock: Any) -> bool:
     )
 
 
+def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Retrieves the globals and locals of the first frame that is not from TestSlide code.
+    """
+
+    def _should_skip_frame(frame):
+        is_testslide = (
+            os.path.dirname(__file__) in frame.f_code.co_filename
+            # we need not to skip tests
+            and "/tests/" not in frame.f_code.co_filename
+        )
+        is_typeguard = os.path.dirname(typeguard.__file__) in frame.f_code.co_filename
+
+        return is_testslide or is_typeguard
+
+    next_stack_count = 1
+    next_frame = sys._getframe(next_stack_count)
+    while _should_skip_frame(next_frame):
+        next_stack_count += 1
+        next_frame = sys._getframe(next_stack_count)
+
+    return (next_frame.f_globals, next_frame.f_locals)
+
+
 def _validate_callable_signature(
     skip_first_arg, callable_template, template, attr_name, args, kwargs
 ):
@@ -84,7 +111,16 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
 
         return original_qualified_name(obj)
 
-    def wrapped_check_type(argname, inner_value, inner_expected_type, *args, **kwargs):
+    def wrapped_check_type(
+        argname,
+        inner_value,
+        inner_expected_type,
+        *args,
+        globals: Optional[Dict[str, Any]] = None,
+        locals: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ):
+
         if _is_a_mock(inner_value):
             inner_type = _extract_mock_template(inner_value)
             if inner_type is None:
@@ -93,8 +129,20 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
             # Ugly hack to make mock objects not be subclass of Mock
             inner_value = WrappedMock(spec=inner_type)
 
+        # typeguard only checks the previous caller stack, so in order to be
+        # able to do forward type references we have to extract the caller
+        # stack ourselves.
+        if kwargs.get("memo") is None and globals is None and locals is None:
+            globals, locals = _get_caller_vars()
+
         return original_check_type(
-            argname, inner_value, inner_expected_type, *args, **kwargs
+            argname,
+            inner_value,
+            inner_expected_type,
+            *args,
+            globals=globals,
+            locals=locals,
+            **kwargs,
         )
 
     with unittest.mock.patch.object(
