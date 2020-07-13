@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Optional
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 import testslide.lib
 from . import sample_module
@@ -13,6 +13,12 @@ import unittest.mock
 
 
 T = TypeVar("T")
+
+
+class Foo:
+    @classmethod
+    def get_maybe_foo(cls) -> Optional["Foo"]:
+        return cls()
 
 
 @context("_validate_callable_arg_types")
@@ -334,3 +340,18 @@ def _validate_return_type(context):
     @context.example
     def fails_for_mock_with_wrong_template(self):
         self.assert_fails(StrictMock(template=int))
+
+    @context.example
+    def passes_for_valid_forward_reference(self):
+        testslide.lib._validate_return_type(
+            Foo.get_maybe_foo, Foo(), self.caller_frame_info
+        )
+
+    @context.example
+    def fails_for_valid_forward_reference_but_bad_type_passed(self):
+        with self.assertRaisesRegex(
+            TypeError, "type of return must be one of .*; got int instead:"
+        ):
+            testslide.lib._validate_return_type(
+                Foo.get_maybe_foo, 33, self.caller_frame_info
+            )
