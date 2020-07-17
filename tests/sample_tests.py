@@ -66,7 +66,13 @@ class SampleTestCase(unittest.TestCase):
 
     def test_failing(self):
         _cond_print("test_fail")
-        assert False
+        try:
+            try:
+                raise AssertionError("First")
+            except AssertionError as cause:
+                raise AssertionError("Second") from cause
+        except AssertionError as cause:
+            raise AssertionError("Third") from cause
 
     @unittest.skip("skip")
     def test_skipped(self):
