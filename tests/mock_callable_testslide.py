@@ -16,6 +16,7 @@ import contextlib
 from testslide.strict_mock import StrictMock
 import os
 from . import sample_module
+from testslide.lib import RuntimeTypeError
 
 
 @context("mock_callable()")
@@ -156,12 +157,12 @@ def mock_callable_tests(context):
                         @context.sub_context
                         def arguments(context):
                             @context.example
-                            def raises_TypeError_for_invalid_types(self):
+                            def raises_RuntimeTypeError_for_invalid_types(self):
                                 bad_signature_args = (1234 for arg in self.call_args)
                                 bad_signature_kargs = {
                                     k: 1234 for k, v in self.call_kwargs.items()
                                 }
-                                with self.assertRaises(TypeError):
+                                with self.assertRaises(RuntimeTypeError):
                                     self.callable_target(
                                         *bad_signature_args, **bad_signature_kargs
                                     )
@@ -193,8 +194,8 @@ def mock_callable_tests(context):
                                     context.memoize("value", lambda self: 1)
 
                                     @context.example
-                                    def raises_TypeError(self):
-                                        with self.assertRaises(TypeError):
+                                    def raises_RuntimeTypeError(self):
+                                        with self.assertRaises(RuntimeTypeError):
                                             self.callable_target(
                                                 *self.call_args, **self.call_kwargs
                                             )

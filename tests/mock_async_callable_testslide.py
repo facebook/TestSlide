@@ -15,6 +15,7 @@ from testslide.mock_callable import (
 import contextlib
 from testslide.strict_mock import StrictMock
 from . import sample_module
+from testslide.lib import RuntimeTypeError
 
 
 @context("mock_async_callable()")
@@ -122,8 +123,8 @@ def mock_async_callable_tests(context):
                         return 1
 
                     @context.example
-                    async def raises_TypeError(self):
-                        with self.assertRaises(TypeError):
+                    async def raises_RuntimeTypeError(self):
+                        with self.assertRaises(RuntimeTypeError):
                             await self.callable_target(
                                 *self.call_args, **self.call_kwargs
                             )

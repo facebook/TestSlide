@@ -21,6 +21,7 @@ import unittest
 import os
 
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
+from testslide.lib import RuntimeTypeError
 
 
 def extra_arg_with_wraps(f):
@@ -441,19 +442,19 @@ def strict_mock(context):
                             self.strict_mock.non_callable = StrictMock()
 
                         @context.example
-                        def raises_TypeError_when_setting_invalid_type(self):
-                            with self.assertRaises(TypeError):
+                        def raises_RuntimeTypeError_when_setting_invalid_type(self):
+                            with self.assertRaises(RuntimeTypeError):
                                 self.strict_mock.non_callable = 1
 
                         @context.example
-                        def raises_TypeError_when_setting_with_mock_with_invalid_type_template(
+                        def raises_RuntimeTypeError_when_setting_with_mock_with_invalid_type_template(
                             self,
                         ):
-                            with self.assertRaises(TypeError):
+                            with self.assertRaises(RuntimeTypeError):
                                 self.strict_mock.non_callable = unittest.mock.Mock(
                                     spec=int
                                 )
-                            with self.assertRaises(TypeError):
+                            with self.assertRaises(RuntimeTypeError):
                                 self.strict_mock.non_callable = StrictMock(template=int)
 
                         @context.sub_context("with type_validation=False")
@@ -564,7 +565,7 @@ def strict_mock(context):
                                                 self.test_method_name,
                                                 lambda message: None,
                                             )
-                                            with self.assertRaises(TypeError):
+                                            with self.assertRaises(RuntimeTypeError):
                                                 getattr(
                                                     self.strict_mock,
                                                     self.test_method_name,
@@ -577,7 +578,7 @@ def strict_mock(context):
                                                 self.test_method_name,
                                                 lambda message: 1234,
                                             )
-                                            with self.assertRaises(TypeError):
+                                            with self.assertRaises(RuntimeTypeError):
                                                 getattr(
                                                     self.strict_mock,
                                                     self.test_method_name,
@@ -972,7 +973,7 @@ def strict_mock(context):
                                         return "mock "
 
                                     setattr(self.strict_mock, self.method_name, mock)
-                                    with self.assertRaises(TypeError):
+                                    with self.assertRaises(RuntimeTypeError):
                                         await getattr(
                                             self.strict_mock, self.method_name
                                         )(1)
@@ -985,7 +986,7 @@ def strict_mock(context):
                                     setattr(
                                         self.strict_mock, self.method_name, mock,
                                     )
-                                    with self.assertRaises(TypeError):
+                                    with self.assertRaises(RuntimeTypeError):
                                         await getattr(
                                             self.strict_mock, self.method_name,
                                         )("message")

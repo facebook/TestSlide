@@ -24,6 +24,7 @@ class RuntimeTypeError(BaseException):
     BaseException to prevent the exception being caught and hidden by the code
     being tested, letting it surface to the test runner.
     """
+
     pass
 
 
@@ -98,7 +99,7 @@ def _validate_callable_signature(
     try:
         signature.bind(*args, **kwargs)
     except TypeError as e:
-        raise RuntimeTypeError("{}, {}: {}".format(repr(template), repr(attr_name), str(e)))
+        raise TypeError("{}, {}: {}".format(repr(template), repr(attr_name), str(e)))
     return True
 
 
@@ -187,7 +188,7 @@ def _validate_callable_arg_types(
                     continue
 
                 _validate_argument_type(expected_type, argname, args[idx])
-            except TypeError as type_error:
+            except RuntimeTypeError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
 
     for argname, value in kwargs.items():
@@ -197,7 +198,7 @@ def _validate_callable_arg_types(
                 continue
 
             _validate_argument_type(expected_type, argname, value)
-        except TypeError as type_error:
+        except RuntimeTypeError as type_error:
             type_errors.append(f"{repr(argname)}: {type_error}")
 
     if type_errors:
@@ -269,9 +270,9 @@ def _validate_return_type(template, value, caller_frame_info):
     if expected_type:
         try:
             _validate_argument_type(expected_type, "return", value)
-        except TypeError as type_error:
+        except RuntimeTypeError as runtime_type_error:
             raise RuntimeTypeError(
-                f"{str(type_error)}: {repr(value)}\n"
+                f"{str(runtime_type_error)}: {repr(value)}\n"
                 f"Defined at {caller_frame_info.filename}:"
                 f"{caller_frame_info.lineno}"
             )
