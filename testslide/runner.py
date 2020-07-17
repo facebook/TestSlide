@@ -180,15 +180,15 @@ class ColorFormatterMixin(BaseFormatter):
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
-    def _print_stack_trace(self, exception: BaseException, cause: int) -> None:
-        indent = "  " * cause
-        if cause:
+    def _print_stack_trace(self, exception: BaseException, cause_depth: int) -> None:
+        indent = "  " * cause_depth
+        if cause_depth:
             self.print_red(f"\n    {indent}Caused by ", end="")
 
         self.print_red(
             "{exception_class}: {message}".format(
                 exception_class=exception.__class__.__name__,
-                message="\n    ".join(str(exception).split("\n")),
+                message=f"\n{indent}    ".join(str(exception).split("\n")),
             )
         )
         for path, line, function_name, text in traceback.extract_tb(
@@ -214,7 +214,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
             )
 
         if exception.__cause__:
-            self._print_stack_trace(exception.__cause__, cause=cause + 1)
+            self._print_stack_trace(exception.__cause__, cause_depth=cause_depth + 1)
 
     def print_failed_example(self, number, example, exception):
         self.print_white(
@@ -230,7 +230,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
             self.print_red(
                 "    {number}) ".format(number=number + 1,), end="",
             )
-            self._print_stack_trace(exception, cause=0)
+            self._print_stack_trace(exception, cause_depth=0)
 
 
 class SlowImportWarningMixin(ColorFormatterMixin):
