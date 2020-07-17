@@ -407,7 +407,7 @@ This is particularly helpful when changes are introduced to the code: if a mocke
 Type Validation
 ---------------
 
-If typing annotation information is available, ``mock_callable()`` validates types of objects passing through the mock. If an invalid type is detected, it will raise ``TypeError``.
+If typing annotation information is available, ``mock_callable()`` validates types of objects passing through the mock. If an invalid type is detected, it will raise ``testslide.lib.TypeCheckError``.
 
 This feature is enabled by default. If you need to disable it (potentially due to a bug, please report!), you can do so by ``mock_callable(target, name, type_validation=False)``.
 
@@ -416,7 +416,7 @@ Call Argument Types
 
 .. code-block:: python
 
-  import testslide
+  import testslide, testslide.lib
   
   class SomeClass:
       def some_method(self, message: str):
@@ -429,8 +429,8 @@ Call Argument Types
               "mocked world"
           )
           self.assertEqual(some_class_instance.some_method("hello"), "mocked world")
-          with self.assertRaises(TypeError):
-              # TypeError: Call with incompatible argument types:
+          with self.assertRaises(testslide.lib.TypeCheckError):
+              # TypeCheckError: Call with incompatible argument types:
               # 'message': type of message must be str; got int instead
               some_class_instance.some_method(1)
 
@@ -439,7 +439,7 @@ Return Value Type
 
 .. code-block:: python
 
-  import testslide
+  import testslide, testslide.lib
   
   class SomeClass:
       def one(self) -> int:
@@ -451,8 +451,8 @@ Return Value Type
           self.mock_callable(some_class_instance, "one").to_return_value(
               "one"
           )
-          with self.assertRaises(TypeError):
-              # TypeError: type of return must be int; got str instead
+          with self.assertRaises(testslide.lib.TypeCheckError):
+              # TypeCheckError: type of return must be int; got str instead
               some_class_instance.one()
 
 Limitations
