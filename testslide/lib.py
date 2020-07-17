@@ -18,7 +18,7 @@ import typeguard
 ##
 
 
-class RuntimeTypeError(BaseException):
+class TypeCheckError(BaseException):
     """
     Raised when bad typing is detected during runtime. It inherits from
     BaseException to prevent the exception being caught and hidden by the code
@@ -163,7 +163,7 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
         try:
             typeguard.check_type(name, value, expected_type)
         except TypeError as type_error:
-            raise RuntimeTypeError(str(type_error))
+            raise TypeCheckError(str(type_error))
 
 
 def _validate_callable_arg_types(
@@ -188,7 +188,7 @@ def _validate_callable_arg_types(
                     continue
 
                 _validate_argument_type(expected_type, argname, args[idx])
-            except RuntimeTypeError as type_error:
+            except TypeCheckError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
 
     for argname, value in kwargs.items():
@@ -198,11 +198,11 @@ def _validate_callable_arg_types(
                 continue
 
             _validate_argument_type(expected_type, argname, value)
-        except RuntimeTypeError as type_error:
+        except TypeCheckError as type_error:
             type_errors.append(f"{repr(argname)}: {type_error}")
 
     if type_errors:
-        raise RuntimeTypeError(
+        raise TypeCheckError(
             "Call to "
             + callable_template.__name__
             + " has incompatible argument types:\n  "
@@ -270,8 +270,8 @@ def _validate_return_type(template, value, caller_frame_info):
     if expected_type:
         try:
             _validate_argument_type(expected_type, "return", value)
-        except RuntimeTypeError as runtime_type_error:
-            raise RuntimeTypeError(
+        except TypeCheckError as runtime_type_error:
+            raise TypeCheckError(
                 f"{str(runtime_type_error)}: {repr(value)}\n"
                 f"Defined at {caller_frame_info.filename}:"
                 f"{caller_frame_info.lineno}"

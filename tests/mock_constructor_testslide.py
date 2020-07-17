@@ -10,7 +10,7 @@ from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 from testslide.mock_callable import _MockCallableDSL
 from testslide.strict_mock import StrictMock
 from typing import Optional
-from testslide.lib import RuntimeTypeError
+from testslide.lib import TypeCheckError
 
 
 class _PrivateClass(object):
@@ -521,7 +521,7 @@ def mock_constructor(context):
 
         @context.example
         def it_fails_with_invalid_types(self):
-            with self.assertRaises(RuntimeTypeError):
+            with self.assertRaises(TypeCheckError):
                 self.target(message=1234)
 
         @context.sub_context("with type_validation=False")

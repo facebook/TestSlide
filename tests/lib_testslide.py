@@ -40,7 +40,7 @@ def _validate_callable_arg_types(context):
     @context.function
     def assert_fails(self, *args, **kwargs):
         with self.assertRaisesRegex(
-            testslide.lib.RuntimeTypeError,
+            testslide.lib.TypeCheckError,
             "Call to "
             + self.callable_template.__name__
             + " has incompatible argument types",
@@ -87,7 +87,7 @@ def _validate_callable_arg_types(context):
     @context.example
     def gives_correct_error_message_for_invalid_types(self):
         with self.assertRaises(
-            testslide.lib.RuntimeTypeError,
+            testslide.lib.TypeCheckError,
             msg=(
                 "Call to test_function has incompatible argument types:\n"
                 "  'arg1': type of arg1 must be str; got int instead\n"
@@ -298,7 +298,7 @@ def _validate_return_type(context):
         assert_regex = (
             r"(?s)type of return must be .+; got .+ instead: .+Defined at .+:\d+"
         )
-        with self.assertRaisesRegex(testslide.lib.RuntimeTypeError, assert_regex):
+        with self.assertRaisesRegex(testslide.lib.TypeCheckError, assert_regex):
             testslide.lib._validate_return_type(
                 self.callable_template, value, self.caller_frame_info
             )
@@ -350,7 +350,7 @@ def _validate_return_type(context):
     @context.example
     def fails_for_valid_forward_reference_but_bad_type_passed(self):
         with self.assertRaisesRegex(
-            testslide.lib.RuntimeTypeError,
+            testslide.lib.TypeCheckError,
             "type of return must be one of .*; got int instead:",
         ):
             testslide.lib._validate_return_type(
