@@ -18,6 +18,16 @@ import typeguard
 ##
 
 
+class TypeCheckError(BaseException):
+    """
+    Raised when bad typing is detected during runtime. It inherits from
+    BaseException to prevent the exception being caught and hidden by the code
+    being tested, letting it surface to the test runner.
+    """
+
+    pass
+
+
 class WrappedMock(unittest.mock.NonCallableMock):
     """Needed to be able to show the useful qualified name for mock specs"""
 
@@ -150,7 +160,10 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
     ), unittest.mock.patch.object(
         typeguard, "qualified_name", new=wrapped_qualified_name
     ):
-        typeguard.check_type(name, value, expected_type)
+        try:
+            typeguard.check_type(name, value, expected_type)
+        except TypeError as type_error:
+            raise TypeCheckError(str(type_error))
 
 
 def _validate_callable_arg_types(
@@ -175,7 +188,7 @@ def _validate_callable_arg_types(
                     continue
 
                 _validate_argument_type(expected_type, argname, args[idx])
-            except TypeError as type_error:
+            except TypeCheckError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
 
     for argname, value in kwargs.items():
@@ -185,11 +198,11 @@ def _validate_callable_arg_types(
                 continue
 
             _validate_argument_type(expected_type, argname, value)
-        except TypeError as type_error:
+        except TypeCheckError as type_error:
             type_errors.append(f"{repr(argname)}: {type_error}")
 
     if type_errors:
-        raise TypeError(
+        raise TypeCheckError(
             "Call to "
             + callable_template.__name__
             + " has incompatible argument types:\n  "
@@ -257,9 +270,9 @@ def _validate_return_type(template, value, caller_frame_info):
     if expected_type:
         try:
             _validate_argument_type(expected_type, "return", value)
-        except TypeError as type_error:
-            raise TypeError(
-                f"{str(type_error)}: {repr(value)}\n"
+        except TypeCheckError as runtime_type_error:
+            raise TypeCheckError(
+                f"{str(runtime_type_error)}: {repr(value)}\n"
                 f"Defined at {caller_frame_info.filename}:"
                 f"{caller_frame_info.lineno}"
             )
