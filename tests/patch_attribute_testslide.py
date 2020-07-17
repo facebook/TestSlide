@@ -110,7 +110,7 @@ def patch_attribute_tests(context):
             def with_class_attributes(context):
                 context.merge_context("patching works")
 
-        @context.example
+        @context.xexample
         def it_fails_if_new_value_is_of_incompatible_type(self):
             pass
 
