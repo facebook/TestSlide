@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
+from typing import Callable, Any
 
 
 class _DescriptorProxy(object):
@@ -37,7 +38,7 @@ class _DescriptorProxy(object):
             del self.instance_attr_map[instance]
 
 
-def _is_instance_method(target, method):
+def _is_instance_method(target: Any, method):
     if inspect.ismodule(target):
         return False
 
@@ -56,7 +57,7 @@ def _is_instance_method(target, method):
     return False
 
 
-def _mock_instance_attribute(instance, attr, value):
+def _mock_instance_attribute(instance: Any, attr: str, value: Any):
     """
     Patch attribute at instance with given value. This works for any instance
     attribute, even when the attribute is defined via the descriptor protocol using
@@ -80,7 +81,9 @@ def _mock_instance_attribute(instance, attr, value):
     return unpatch_class
 
 
-def _patch(target, attribute, new_value, restore, restore_value=None):
+def _patch(
+    target: Any, attribute: str, new_value: Any, restore: Any, restore_value: Any = None
+) -> Callable:
     if _is_instance_method(target, attribute):
         unpatcher = _mock_instance_attribute(target, attribute, new_value)
     elif hasattr(type(target), attribute) and isinstance(
