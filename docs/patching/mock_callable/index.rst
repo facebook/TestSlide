@@ -73,7 +73,7 @@ For example, if the code is broken and does ``os.remove('/wrong/file')``:
         File "/opt/python/lib/python3.6/unittest/case.py", line 646, in doCleanups
           function(*args, **kwargs)
 
-  Finished 1 example(s) in 0.0s:
+  Finished 1 example(s) in 0.0s
     Failed: 1
 
 Note how you get two failed assertions, instead of just one:
@@ -379,11 +379,11 @@ Mocking magic methods (eg: ``__str__``) for an instance can be quite tricky, as 
 The mock works for the target instance, but does not affect other instances.
 
 
+
 Type Validation
 ---------------
-When you use it, the mock will raise ``TypeError`` if it is called with a signature that does not match the original method:
 
-If typing annotation information is available, ``mock_callable()`` validates types of objects passing through the mock. If an invalid type is detected, it will raise ``TypeError``.
+If typing annotation information is available, ``mock_callable()`` validates types of objects passing through the mock. If an invalid type is detected, it will raise ``testslide.lib.TypeCheckError``.
 
 This feature is enabled by default. If you need to disable it (potentially due to a bug, please report!), you can do so by ``mock_callable(target, name, type_validation=False)``.
 
@@ -392,21 +392,7 @@ Call Argument Types
 
 .. code-block:: python
 
-  import testslide
-
-  class A:
-    def one_arg(self, arg):
-      return 'original'
-
-  class TestSignature(TestCase):
-    def test_signature(self):
-      a = A()
-      self.mock_callable(a, 'one_arg')\
-        .to_return_value('mocked')
-      self.assertEqual(a.one_arg('one'), 'mocked')
-      with self.assertRaises(TypeError):
-        a.one_arg('one', 'invalid')
-
+  import testslide, testslide.lib
 
   class SomeClass:
       def some_method(self, message: str):
@@ -419,17 +405,19 @@ Call Argument Types
               "mocked world"
           )
           self.assertEqual(some_class_instance.some_method("hello"), "mocked world")
-          with self.assertRaises(TypeError):
-              # TypeError: Call with incompatible argument types:
+          with self.assertRaises(testslide.lib.TypeCheckError):
+              # TypeCheckError: Call with incompatible argument types:
               # 'message': type of message must be str; got int instead
               some_class_instance.some_method(1)
+
+This is particularly helpful when changes are introduced to the code: if a mocked method changes the signature, even when mocked, mock_callable will give you the signal that there's something broken.
 
 Return Value Type
 ^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-  import testslide
+  import testslide, testslide.lib
 
   class SomeClass:
       def one(self) -> int:
@@ -441,8 +429,8 @@ Return Value Type
           self.mock_callable(some_class_instance, "one").to_return_value(
               "one"
           )
-          with self.assertRaises(TypeError):
-              # TypeError: type of return must be int; got str instead
+          with self.assertRaises(testslide.lib.TypeCheckError):
+              # TypeCheckError: type of return must be int; got str instead
               some_class_instance.one()
 
 Limitations

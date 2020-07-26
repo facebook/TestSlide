@@ -64,7 +64,7 @@ Type Validation
 .. code-block:: python
 
   import sys
-  import testslide
+  import testslide, testslide.lib
   
   class Messenger:
       def __init__(self, message: str):
@@ -74,8 +74,8 @@ Type Validation
       def test_argument_type_validation(self):
           messenger_mock = testslide.StrictMock(template=Messenger)
           self.mock_constructor(sys.modules[__name__], "Messenger").to_return_value(messenger_mock)
-          with self.assertRaises(TypeError):
-              # TypeError: Call with incompatible argument types:
+          with self.assertRaises(testslide.lib.TypeCheckError):
+              # TypeCheckError: Call with incompatible argument types:
               # 'message': type of message must be str; got int instead
               Messenger(message=1)
 

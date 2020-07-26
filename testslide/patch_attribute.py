@@ -7,9 +7,10 @@ import testslide
 from .patch import _patch
 from .lib import _bail_if_private
 from testslide.strict_mock import UndefinedAttribute
-from typing import List, Callable
+from typing import Callable, Any, Dict, Tuple
 
-_unpatchers: List[Callable] = []
+_restore_values: Dict[Tuple[Any, str], Any] = {}
+_unpatchers: Dict[Tuple[Any, str], Callable] = {}
 
 
 def unpatch_all_mocked_attributes():
@@ -18,19 +19,22 @@ def unpatch_all_mocked_attributes():
     active patch_attribute() patches.
     """
     unpatch_exceptions = []
-    for unpatcher in _unpatchers:
+    for unpatcher in _unpatchers.values():
         try:
             unpatcher()
         except Exception as e:
             unpatch_exceptions.append(e)
-    del _unpatchers[:]
+    _restore_values.clear()
+    _unpatchers.clear()
     if unpatch_exceptions:
         raise RuntimeError(
             "Exceptions raised when unpatching: {}".format(unpatch_exceptions)
         )
 
 
-def patch_attribute(target, attribute, new_value, allow_private=False):
+def patch_attribute(
+    target: Any, attribute: str, new_value: Any, allow_private: bool = False
+) -> None:
     """
     Patch target's attribute with new_value. The target can be any Python
     object, such as modules, classes or instances; attribute is a string with
@@ -42,8 +46,12 @@ def patch_attribute(target, attribute, new_value, allow_private=False):
     class, which may affect other instances. patch_attribute() takes care of
     what's needed, so only the target instance is affected.
     """
+    _bail_if_private(attribute, allow_private)
+
     if isinstance(target, str):
         target = testslide._importer(target)
+
+    key = (id(target), attribute)
 
     if isinstance(target, testslide.StrictMock):
         template_class = target._template
@@ -55,21 +63,28 @@ def patch_attribute(target, attribute, new_value, allow_private=False):
                     "You can either use mock_callable() / mock_async_callable() instead."
                 )
 
-        def sm_hasattr(obj, name):
+        def strict_mock_hasattr(obj, name):
             try:
                 return hasattr(obj, name)
             except UndefinedAttribute:
                 return False
 
-        if sm_hasattr(target, attribute):
+        if strict_mock_hasattr(target, attribute) and key not in _unpatchers:
             restore = True
             restore_value = getattr(target, attribute)
         else:
             restore = False
             restore_value = None
+        skip_unpatcher = False
     else:
-        restore = True
-        restore_value = getattr(target, attribute)
+        if key in _unpatchers:
+            restore = False
+            restore_value = _restore_values[key]
+            skip_unpatcher = True
+        else:
+            restore = True
+            restore_value = getattr(target, attribute)
+            skip_unpatcher = False
         if isinstance(restore_value, type):
             raise ValueError(
                 "Attribute can not be a class!\n"
@@ -80,6 +95,11 @@ def patch_attribute(target, attribute, new_value, allow_private=False):
                 "Attribute can not be callable!\n"
                 "You can either use mock_callable() / mock_async_callable() instead."
             )
-    _bail_if_private(attribute, allow_private)
+
+    if restore:
+        _restore_values[key] = restore_value
+
     unpatcher = _patch(target, attribute, new_value, restore, restore_value)
-    _unpatchers.append(unpatcher)
+
+    if not skip_unpatcher:
+        _unpatchers[key] = unpatcher

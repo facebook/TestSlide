@@ -3,16 +3,29 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import inspect
 import functools
-import typeguard
-from typing import Any, Callable, Dict, Optional, Type, Tuple
-
+import inspect
+import os
+import sys
 import unittest.mock
+from typing import Any, Callable, Dict, Optional, Tuple, Type
+
+import typeguard
+
 
 ##
 ## Type validation
 ##
+
+
+class TypeCheckError(BaseException):
+    """
+    Raised when bad typing is detected during runtime. It inherits from
+    BaseException to prevent the exception being caught and hidden by the code
+    being tested, letting it surface to the test runner.
+    """
+
+    pass
 
 
 class WrappedMock(unittest.mock.NonCallableMock):
@@ -47,6 +60,30 @@ def _is_a_mock(maybe_mock: Any) -> bool:
         isinstance(maybe_mock, mock_class)
         for mock_class in MOCK_TEMPLATE_EXTRACTORS.keys()
     )
+
+
+def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Retrieves the globals and locals of the first frame that is not from TestSlide code.
+    """
+
+    def _should_skip_frame(frame):
+        is_testslide = (
+            os.path.dirname(__file__) in frame.f_code.co_filename
+            # we need not to skip tests
+            and "/tests/" not in frame.f_code.co_filename
+        )
+        is_typeguard = os.path.dirname(typeguard.__file__) in frame.f_code.co_filename
+
+        return is_testslide or is_typeguard
+
+    next_stack_count = 1
+    next_frame = sys._getframe(next_stack_count)
+    while _should_skip_frame(next_frame):
+        next_stack_count += 1
+        next_frame = sys._getframe(next_stack_count)
+
+    return (next_frame.f_globals, next_frame.f_locals)
 
 
 def _validate_callable_signature(
@@ -84,7 +121,16 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
 
         return original_qualified_name(obj)
 
-    def wrapped_check_type(argname, inner_value, inner_expected_type, *args, **kwargs):
+    def wrapped_check_type(
+        argname,
+        inner_value,
+        inner_expected_type,
+        *args,
+        globals: Optional[Dict[str, Any]] = None,
+        locals: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ):
+
         if _is_a_mock(inner_value):
             inner_type = _extract_mock_template(inner_value)
             if inner_type is None:
@@ -93,8 +139,20 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
             # Ugly hack to make mock objects not be subclass of Mock
             inner_value = WrappedMock(spec=inner_type)
 
+        # typeguard only checks the previous caller stack, so in order to be
+        # able to do forward type references we have to extract the caller
+        # stack ourselves.
+        if kwargs.get("memo") is None and globals is None and locals is None:
+            globals, locals = _get_caller_vars()
+
         return original_check_type(
-            argname, inner_value, inner_expected_type, *args, **kwargs
+            argname,
+            inner_value,
+            inner_expected_type,
+            *args,
+            globals=globals,
+            locals=locals,
+            **kwargs,
         )
 
     with unittest.mock.patch.object(
@@ -102,7 +160,10 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
     ), unittest.mock.patch.object(
         typeguard, "qualified_name", new=wrapped_qualified_name
     ):
-        typeguard.check_type(name, value, expected_type)
+        try:
+            typeguard.check_type(name, value, expected_type)
+        except TypeError as type_error:
+            raise TypeCheckError(str(type_error))
 
 
 def _validate_callable_arg_types(
@@ -127,7 +188,7 @@ def _validate_callable_arg_types(
                     continue
 
                 _validate_argument_type(expected_type, argname, args[idx])
-            except TypeError as type_error:
+            except TypeCheckError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
 
     for argname, value in kwargs.items():
@@ -137,11 +198,11 @@ def _validate_callable_arg_types(
                 continue
 
             _validate_argument_type(expected_type, argname, value)
-        except TypeError as type_error:
+        except TypeCheckError as type_error:
             type_errors.append(f"{repr(argname)}: {type_error}")
 
     if type_errors:
-        raise TypeError(
+        raise TypeCheckError(
             "Call to "
             + callable_template.__name__
             + " has incompatible argument types:\n  "
@@ -209,9 +270,9 @@ def _validate_return_type(template, value, caller_frame_info):
     if expected_type:
         try:
             _validate_argument_type(expected_type, "return", value)
-        except TypeError as type_error:
-            raise TypeError(
-                f"{str(type_error)}: {repr(value)}\n"
+        except TypeCheckError as runtime_type_error:
+            raise TypeCheckError(
+                f"{str(runtime_type_error)}: {repr(value)}\n"
                 f"Defined at {caller_frame_info.filename}:"
                 f"{caller_frame_info.lineno}"
             )

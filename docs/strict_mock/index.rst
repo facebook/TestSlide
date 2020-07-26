@@ -170,7 +170,7 @@ When type annotation is available for attributes, ``StrictMock`` won't allow set
 
   In [5]: mock.VERSION = 1.2
   (...)
-  TypeError: type of VERSION must be str; got float instead
+  TypeCheckError: type of VERSION must be str; got float instead
 
 Method Signature
 ================
@@ -192,7 +192,7 @@ Method signatures must match the signature of the equivalent method at the templ
 
   In [5]: mock.is_odd(2, 'invalid')
   (...)
-  TypeError: too many positional arguments
+  TypeCheckError: too many positional arguments
 
 Method Argument Type
 ====================
@@ -217,7 +217,7 @@ Methods with type annotation will have call arguments validated against it and i
 
   In [6]: mock.is_odd("1")
   (...)
-  TypeError: Call with incompatible argument types:
+  TypeCheckError: Call with incompatible argument types:
     'x': type of x must be int; got str instead
 
 Method Return Type
@@ -238,7 +238,7 @@ Methods with return type annotated will have its return value type validated as 
 
   In [4]: mock.is_odd = lambda x: 1
   (...)
-  TypeError: type of return must be bool; got int instead
+  TypeCheckError: type of return must be bool; got int instead
 
 Setting Methods With Callables
 ==============================

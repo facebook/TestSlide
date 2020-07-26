@@ -33,32 +33,58 @@ def patch_attribute_tests(context):
 
     @context.shared_context
     def patching_works(context):
-        @context.example
-        def patching_works(self):
-            def sm_hasattr(obj, name):
-                try:
-                    return hasattr(obj, name)
-                except UndefinedAttribute:
-                    return False
+        @context.function
+        def strict_mock_hasattr(self, obj, name):
+            try:
+                return hasattr(obj, name)
+            except UndefinedAttribute:
+                return False
 
-            if sm_hasattr(self.real_target, self.attribute):
-                original_value = getattr(self.real_target, self.attribute)
+        @context.before
+        def before(self):
+            if self.strict_mock_hasattr(self.real_target, self.attribute):
+                self.original_value = getattr(self.real_target, self.attribute)
             else:
-                original_value = None
-            self.assertNotEqual(original_value, self.new_value)
-            self.patch_attribute(self.target, self.attribute, self.new_value)
-            self.assertEqual(getattr(self.real_target, self.attribute), self.new_value)
+                self.original_value = None
+            self.assertNotEqual(
+                self.original_value,
+                self.new_value,
+                "Previous test tainted this result!",
+            )
+
+        @context.after
+        def after(self):
+            self.assertEqual(
+                getattr(self.real_target, self.attribute),
+                self.new_value,
+                "Patching did not work",
+            )
+
             unpatch_all_mocked_attributes()
-            if original_value:
+            if self.original_value:
                 self.assertEqual(
-                    getattr(self.real_target, self.attribute), original_value
+                    getattr(self.real_target, self.attribute),
+                    self.original_value,
+                    "Unpatching did not work.",
                 )
             else:
-                self.assertFalse(sm_hasattr(self.real_target, self.attribute))
+                self.assertFalse(
+                    self.strict_mock_hasattr(self.real_target, self.attribute),
+                    "Unpatching did not work",
+                )
+
+        @context.example
+        def patching_works(self):
+            self.patch_attribute(self.target, self.attribute, self.new_value)
+
+        @context.example
+        def double_patching_works(self):
+            self.patch_attribute(self.target, self.attribute, "whatever")
+            self.patch_attribute(self.target, self.attribute, self.new_value)
 
     @context.shared_context
     def common(context, fails_if_class_attribute):
-        context.merge_context("patching works")
+        context.nest_context("patching works")
 
         @context.example
         def it_fails_if_attribute_is_callable(self):
@@ -127,6 +153,7 @@ def patch_attribute_tests(context):
 
             @context.sub_context
             def and_attribute_is_a_property(context):
+                context.memoize("attribute", lambda self: "property_attribute")
                 context.merge_context("common", fails_if_class_attribute=False)
 
     @context.sub_context

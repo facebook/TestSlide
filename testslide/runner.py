@@ -179,6 +179,60 @@ class ColorFormatterMixin(BaseFormatter):
         self._print_attrs("36", *values, **kwargs)
 
 
+class FailurePrinterMixin(ColorFormatterMixin):
+    def _print_stack_trace(self, exception: BaseException, cause_depth: int) -> None:
+        indent = "  " * cause_depth
+        if cause_depth:
+            self.print_red(f"\n    {indent}Caused by ", end="")
+
+        self.print_red(
+            "{exception_class}: {message}".format(
+                exception_class=exception.__class__.__name__,
+                message=f"\n{indent}    ".join(str(exception).split("\n")),
+            )
+        )
+        for path, line, function_name, text in traceback.extract_tb(
+            exception.__traceback__
+        ):
+            if not self.show_testslide_stack_trace and path.startswith(
+                os.path.dirname(__file__)
+            ):
+                continue
+            if self.trim_path_prefix:
+                split = path.split(self.trim_path_prefix)
+                if len(split) == 2 and not split[0]:
+                    path = split[1]
+            self.print_cyan(
+                '{indent}      File "{path}", line {line}, in {function_name}\n'
+                "{indent}        {text}".format(
+                    indent=indent,
+                    path=path,
+                    line=line,
+                    function_name=function_name,
+                    text=text,
+                )
+            )
+
+        if exception.__cause__:
+            self._print_stack_trace(exception.__cause__, cause_depth=cause_depth + 1)
+
+    def print_failed_example(self, number, example, exception):
+        self.print_white(
+            "  {number}) {context}: {example}".format(
+                number=number, context=example.context.full_name, example=example
+            )
+        )
+        if type(exception) is AggregatedExceptions:
+            exception_list = exception.exceptions
+        else:
+            exception_list = [exception]
+        for number, exception in enumerate(exception_list):
+            self.print_red(
+                "    {number}) ".format(number=number + 1,), end="",
+            )
+            self._print_stack_trace(exception, cause_depth=0)
+
+
 class SlowImportWarningMixin(ColorFormatterMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -257,7 +311,7 @@ class QuietFormatter(BaseFormatter):
     pass
 
 
-class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
+class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
     """
     Simple formatter that outputs "." when an example passes or "F" w
     """
@@ -281,10 +335,17 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMix
 
     def finish(self, not_executed_examples):
         super().finish(not_executed_examples)
+        if self.results["fail"] and not self.dsl_debug:
+            self.print_red("\nFailures:")
+            for number, result in enumerate(self.results["fail"]):
+                print("")
+                self.print_failed_example(
+                    number + 1, result["example"], result["exception"]
+                )
         print("")
 
 
-class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
+class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
     def get_dsl_debug_indent(self, example):
         return "  " * (example.context.depth + 1)
 
@@ -336,40 +397,6 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMix
             )
         )
 
-    def print_failed_example(self, number, example, exception):
-        self.print_white(
-            "  {number}) {context}: {example}".format(
-                number=number, context=example.context.full_name, example=example
-            )
-        )
-        if type(exception) is AggregatedExceptions:
-            exception_list = exception.exceptions
-        else:
-            exception_list = [exception]
-        for number, exception in enumerate(exception_list):
-            self.print_red(
-                "    {number}) {exception_class}: {message}".format(
-                    number=number + 1,
-                    exception_class=exception.__class__.__name__,
-                    message="\n    ".join(str(exception).split("\n")),
-                )
-            )
-            for path, line, function_name, text in traceback.extract_tb(
-                exception.__traceback__
-            ):
-                if not self.show_testslide_stack_trace and path.startswith(
-                    os.path.dirname(__file__)
-                ):
-                    continue
-                if self.trim_path_prefix:
-                    split = path.split(self.trim_path_prefix)
-                    if len(split) == 2 and not split[0]:
-                        path = split[1]
-                self.print_cyan(
-                    '      File "{}", line {}, in {}\n'
-                    "        {}".format(path, line, function_name, text)
-                )
-
     def finish(self, not_executed_examples):
         super().finish(not_executed_examples)
         success = len(self.results["success"])
@@ -385,10 +412,12 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMix
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs: ." % (total, self.duration_secs)
+            "Finished %s example(s) in %.1fs " % (total, self.duration_secs), end=""
         )
         if self.import_secs > 2:
-            self.print_white("Imports took: %.1fs" % (self.import_secs))
+            self.print_white("(Imports took: %.1fs)" % (self.import_secs))
+        else:
+            print("")
         if success:
             self.print_green("  Successful: ", success)
         if fail:
@@ -399,7 +428,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMix
             self.print_cyan("  Not executed: ", len(not_executed_examples))
 
 
-class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
+class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
     def get_dsl_debug_indent(self, example):
         return "  "
 
@@ -462,40 +491,6 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
             )
         )
 
-    def print_failed_example(self, number, example, exception):
-        self.print_white(
-            "  {number}) {context}: {example}".format(
-                number=number, context=example.context.full_name, example=example
-            )
-        )
-        if type(exception) is AggregatedExceptions:
-            exception_list = exception.exceptions
-        else:
-            exception_list = [exception]
-        for number, exception in enumerate(exception_list):
-            self.print_red(
-                "    {number}) {exception_class}: {message}".format(
-                    number=number + 1,
-                    exception_class=exception.__class__.__name__,
-                    message="\n    ".join(str(exception).split("\n")),
-                )
-            )
-            for path, line, function_name, text in traceback.extract_tb(
-                exception.__traceback__
-            ):
-                if not self.show_testslide_stack_trace and path.startswith(
-                    os.path.dirname(__file__)
-                ):
-                    continue
-                if self.trim_path_prefix:
-                    split = path.split(self.trim_path_prefix)
-                    if len(split) == 2 and not split[0]:
-                        path = split[1]
-                self.print_cyan(
-                    '      File "{}", line {}, in {}\n'
-                    "        {}".format(path, line, function_name, text)
-                )
-
     def finish(self, not_executed_examples):
         super().finish(not_executed_examples)
         success = len(self.results["success"])
@@ -511,10 +506,12 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, ColorFormatterMixin):
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs: ." % (total, self.duration_secs)
+            "Finished %s example(s) in %.1fs " % (total, self.duration_secs), end=""
         )
         if self.import_secs > 2:
-            self.print_white("Imports took: %.1fs" % (self.import_secs))
+            self.print_white("(Imports took: %.1fs)" % (self.import_secs))
+        else:
+            print("")
         if success:
             self.print_green("  Successful: ", success)
         if fail:

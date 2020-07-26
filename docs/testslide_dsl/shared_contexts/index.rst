@@ -62,7 +62,7 @@ Will result in:
       common example
       another thing example
   
-  Finished 4 example(s) in 0.0s:
+  Finished 4 example(s) in 0.0s
     Successful: 4
 
 Nesting
@@ -126,7 +126,7 @@ Will result in:
       some shared things
         common example
   
-  Finished 4 example(s) in 0.0s:
+  Finished 4 example(s) in 0.0s
     Successful: 4
 
 Parameterized shared contexts

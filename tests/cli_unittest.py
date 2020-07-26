@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import unittest
+import re
 
 
 class TestCliBase(unittest.TestCase):
@@ -30,6 +31,7 @@ class TestCliBase(unittest.TestCase):
         expected_stdout=None,
         expected_stdout_startswith=None,
         expected_in_stdout=None,
+        expected_regex_in_stdout=None,
     ):
         args = [
             sys.executable,
@@ -102,7 +104,6 @@ class TestCliBase(unittest.TestCase):
             output += f"STDOUT:\n{stdout_output}\n"
         if stderr_output:
             output += f"STDERR:\n{stderr_output}\n"
-
         self.assertEqual(
             return_code,
             expected_return_code,
@@ -116,7 +117,7 @@ class TestCliBase(unittest.TestCase):
                 f"Command {args} expected to have have this stdout:\n\n"
                 f"{expected_stdout}\n\n"
                 f"But output was different:\n"
-                f"{output}",
+                f"{stdout_output}",
             )
         if expected_stdout_startswith:
             self.assertTrue(
@@ -124,7 +125,7 @@ class TestCliBase(unittest.TestCase):
                 f"Command {args} expected to have have its stdout starting with:\n\n"
                 f"{expected_stdout_startswith}\n\n"
                 f"But output was different:\n"
-                f"{output}",
+                f"{stdout_output}",
             )
         if expected_in_stdout:
             self.assertTrue(
@@ -132,7 +133,15 @@ class TestCliBase(unittest.TestCase):
                 f"Command {args} expected to have have in its stdout:\n\n"
                 f"{expected_stdout_startswith}\n\n"
                 f"But output was different:\n"
-                f"{output}",
+                f"{stdout_output}",
+            )
+        if expected_regex_in_stdout:
+            self.assertTrue(
+                re.fullmatch(expected_regex_in_stdout, stdout_output, flags=re.DOTALL),
+                f"Command {args} expected to have have its stdout matching the regexp:\n\n"
+                f"{expected_regex_in_stdout}\n\n"
+                f"But output was different:\n\n"
+                f"{stdout_output}",
             )
 
     @staticmethod
@@ -214,7 +223,7 @@ class TestCliQuiet(TestCliBase):
                 "stderr:\n"
                 "test_fail stderr\n"
                 "\n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
                 "\n"
@@ -245,7 +254,7 @@ class TestCliQuiet(TestCliBase):
                 "    passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase\n"
                 "test_fail stdout\n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "test_pass stdout\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
@@ -256,7 +265,32 @@ class TestCliQuiet(TestCliBase):
         )
 
 
-class TestCliDocumentationFormatter(TestCliBase):
+class ExceptionCauseTest:
+    def test_prints_exceptions_with_cause(self):
+        self.run_testslide(
+            tty_stdout=False,
+            expected_return_code=1,
+            expected_regex_in_stdout=(
+                (
+                    ".*1\) AssertionError: Third\n"
+                    ".*\n *"
+                    + '  File "tests/sample_tests.py", line [0-9]+, in test_failing\n *'
+                    + '    raise AssertionError\("Third"\) from cause\n *'
+                    + "\n *"
+                    + "  Caused by AssertionError: Second\n *"
+                    + '    File "tests/sample_tests.py", line [0-9]+, in test_failing\n *'
+                    + '      raise AssertionError\("Second"\) from cause\n *'
+                    + "\n *"
+                    + "    Caused by AssertionError: First\n *"
+                    + '      File "tests/sample_tests.py", line [0-9]+, in test_failing\n *'
+                    + '        raise AssertionError\("First"\)\n *'
+                    + ".*"
+                )
+            ),
+        )
+
+
+class TestCliDocumentFormatter(ExceptionCauseTest, TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "documentation"] + self.argv
@@ -334,7 +368,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "  nested context\n"
                 "    passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase\n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
                 "\n"
@@ -362,7 +396,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "tests.sample_tests.SampleTestCase\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "top context\n"
                 "  skipped example: SKIP\n"
                 "  *focused example: PASS\n"
@@ -404,7 +438,7 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "  nested context\n"
                 "    passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase\n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
                 "\n"
@@ -540,27 +574,31 @@ class TestCliDocumentationFormatter(TestCliBase):
                 "    example: passing_nested_example @ tests/sample_tests.py:58\n"
                 "    passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase\n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
             ),
         )
 
 
-class TestCliProgressFormatter(TestCliBase):
+class TestCliProgressFormatter(ExceptionCauseTest, TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv.append("--format")
         self.argv.append("progress")
 
     def test_ouputs_dots(self):
-        self.run_testslide(expected_return_code=1, expected_stdout=(".F.SS.F.S\n"))
+        self.run_testslide(
+            expected_return_code=1,
+            expected_stdout_startswith=(".F.SS.F.S" + "\nFailures:"),
+        )
 
     def test_ouputs_colored_dots_with_terminal(self):
+        self.maxDiff = None
         self.run_testslide(
             tty_stdout=True,
             expected_return_code=1,
-            expected_stdout=(
+            expected_stdout_startswith=(
                 self.green(".")
                 + self.red("F")
                 + self.green(".")
@@ -570,7 +608,7 @@ class TestCliProgressFormatter(TestCliBase):
                 + self.red("F")
                 + self.green(".")
                 + self.yellow("S")
-                + "\r\n"
+                + self.red("\r\nFailures:")
             ),
         )
 
@@ -598,7 +636,7 @@ class TestCliProgressFormatter(TestCliBase):
         )
 
 
-class TestCliLongFormatter(TestCliBase):
+class TestCliLongFormatter(ExceptionCauseTest, TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "long"] + self.argv
@@ -632,7 +670,7 @@ class TestCliLongFormatter(TestCliBase):
                 + "\r\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
                 + self.red("test_failing: ")
-                + "AssertionError: "
+                + "AssertionError: Third"
                 + "\r\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
                 + self.green("test_passing")
@@ -674,7 +712,7 @@ class TestCliLongFormatter(TestCliBase):
                 + "\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
                 + self.red("test_failing: ")
-                + "AssertionError: "
+                + "AssertionError: Third"
                 + "\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
                 + self.green("test_passing")
@@ -699,7 +737,7 @@ class TestCliLongFormatter(TestCliBase):
                 "top context: skipped example: SKIP\n"
                 "top context: unittest SkipTest: SKIP\n"
                 "top context, nested context: passing nested example: PASS\n"
-                "tests.sample_tests.SampleTestCase: test_failing: AssertionError: \n"
+                "tests.sample_tests.SampleTestCase: test_failing: AssertionError: Third\n"
                 "tests.sample_tests.SampleTestCase: test_passing: PASS\n"
                 "tests.sample_tests.SampleTestCase: test_skipped: SKIP\n"
                 # TODO add remaining bits of the output (using regexes)
@@ -729,7 +767,7 @@ class TestCliLongFormatter(TestCliBase):
                 "  example: passing_nested_example @ tests/sample_tests.py:58\n"
                 "  passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase: \n"
-                "  test_failing: AssertionError: \n"
+                "  test_failing: AssertionError: Third\n"
                 "tests.sample_tests.SampleTestCase: \n"
                 "  test_passing: PASS\n"
                 "tests.sample_tests.SampleTestCase: \n"

@@ -20,6 +20,10 @@ class SomeClass:
     def method(self):
         pass
 
+    @property
+    def property_attribute(self):
+        return "property_attribute"
+
     def instance_method_with_star_args(
         self, first, *args: str, a: bool, b: int, c: Optional[int], d: int = 3
     ) -> int:

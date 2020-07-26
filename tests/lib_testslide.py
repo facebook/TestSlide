@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Optional
 from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
 import testslide.lib
 from . import sample_module
@@ -13,6 +13,12 @@ import unittest.mock
 
 
 T = TypeVar("T")
+
+
+class Foo:
+    @classmethod
+    def get_maybe_foo(cls) -> Optional["Foo"]:
+        return cls()
 
 
 @context("_validate_callable_arg_types")
@@ -34,7 +40,7 @@ def _validate_callable_arg_types(context):
     @context.function
     def assert_fails(self, *args, **kwargs):
         with self.assertRaisesRegex(
-            TypeError,
+            testslide.lib.TypeCheckError,
             "Call to "
             + self.callable_template.__name__
             + " has incompatible argument types",
@@ -81,7 +87,7 @@ def _validate_callable_arg_types(context):
     @context.example
     def gives_correct_error_message_for_invalid_types(self):
         with self.assertRaises(
-            TypeError,
+            testslide.lib.TypeCheckError,
             msg=(
                 "Call to test_function has incompatible argument types:\n"
                 "  'arg1': type of arg1 must be str; got int instead\n"
@@ -276,7 +282,9 @@ def _validate_return_type(context):
     @context.memoize
     def caller_frame_info(self):
         caller_frame = inspect.currentframe().f_back
-        caller_frame_info = inspect.getframeinfo(caller_frame)
+        # loading the context ends up reading files from disk and that might block
+        # the event loop, so we don't do it.
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
         return caller_frame_info
 
     @context.function
@@ -290,7 +298,7 @@ def _validate_return_type(context):
         assert_regex = (
             r"(?s)type of return must be .+; got .+ instead: .+Defined at .+:\d+"
         )
-        with self.assertRaisesRegex(TypeError, assert_regex):
+        with self.assertRaisesRegex(testslide.lib.TypeCheckError, assert_regex):
             testslide.lib._validate_return_type(
                 self.callable_template, value, self.caller_frame_info
             )
@@ -332,3 +340,19 @@ def _validate_return_type(context):
     @context.example
     def fails_for_mock_with_wrong_template(self):
         self.assert_fails(StrictMock(template=int))
+
+    @context.example
+    def passes_for_valid_forward_reference(self):
+        testslide.lib._validate_return_type(
+            Foo.get_maybe_foo, Foo(), self.caller_frame_info
+        )
+
+    @context.example
+    def fails_for_valid_forward_reference_but_bad_type_passed(self):
+        with self.assertRaisesRegex(
+            testslide.lib.TypeCheckError,
+            "type of return must be one of .*; got int instead:",
+        ):
+            testslide.lib._validate_return_type(
+                Foo.get_maybe_foo, 33, self.caller_frame_info
+            )
