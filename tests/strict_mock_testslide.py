@@ -530,7 +530,7 @@ def strict_mock(context):
                                                 self.test_method_name,
                                                 lambda message, extra: None,
                                             )
-                                            with self.assertRaises(TypeCheckError):
+                                            with self.assertRaises(TypeError):
                                                 getattr(
                                                     self.strict_mock,
                                                     self.test_method_name,
@@ -819,7 +819,7 @@ def strict_mock(context):
                                         return "mock "
 
                                     setattr(self.strict_mock, self.method_name, mock)
-                                    with self.assertRaises(TypeCheckError):
+                                    with self.assertRaises(TypeError):
                                         await getattr(
                                             self.strict_mock, self.method_name
                                         )("hello", "wrong")
