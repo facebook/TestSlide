@@ -166,7 +166,7 @@ When type annotation is available for attributes, ``StrictMock`` won't allow set
 
   In [3]: mock = testslide.StrictMock(template=Calculator)
 
-  In [4]: mock.VERSION = "1.1"                                                                                                  
+  In [4]: mock.VERSION = "1.1"
 
   In [5]: mock.VERSION = 1.2
   (...)
@@ -524,7 +524,7 @@ By default, ``StrictMock`` will validate arguments passed to callable attributes
   In [5]: type(s.attr)
   Out[5]: testslide.strict_mock._MethodProxy
 
-  In [6]: s = StrictMock(signature_validation=False, type_validation=False)
+  In [6]: s = StrictMock(type_validation=False)
 
   In [7]: s.attr = CallableObject()
 
