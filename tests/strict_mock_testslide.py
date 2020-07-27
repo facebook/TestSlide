@@ -430,6 +430,11 @@ def strict_mock(context):
                             self.strict_mock.non_callable = "valid"
 
                         @context.example
+                        def raises_with_invalid_template(self):
+                            with self.assertRaises(ValueError):
+                                StrictMock(Template.instance_method)
+
+                        @context.example
                         def allows_setting_valid_type_with_templated_mock(self):
                             self.strict_mock.non_callable = unittest.mock.Mock(spec=str)
                             self.strict_mock.non_callable = StrictMock(template=str)
