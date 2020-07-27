@@ -6,15 +6,15 @@
 import inspect
 import io
 import os
-import psutil
 import random
 import sys
 import time
 import traceback
+from contextlib import redirect_stderr, redirect_stdout
+
+import psutil
 
 from . import AggregatedExceptions, Skip, _ExampleRunner
-from contextlib import redirect_stdout, redirect_stderr
-
 
 ##
 ## Base

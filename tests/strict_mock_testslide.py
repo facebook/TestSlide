@@ -3,6 +3,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import contextlib
+import copy
+import functools
+import inspect
+import os
+import re
+import sys
+import unittest
+
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+from testslide.lib import TypeCheckError
 from testslide.strict_mock import (
     NonAwaitableReturn,
     NonCallableValue,
@@ -10,18 +21,6 @@ from testslide.strict_mock import (
     StrictMock,
     UndefinedAttribute,
 )
-
-import contextlib
-import copy
-import functools
-import inspect
-import sys
-import re
-import unittest
-import os
-
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
-from testslide.lib import TypeCheckError
 
 
 def extra_arg_with_wraps(f):

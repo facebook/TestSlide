@@ -5,9 +5,10 @@
 
 import asyncio
 import csv
-import testslide
-import unittest
 import sys
+import unittest
+
+import testslide
 
 
 class SomeClass:

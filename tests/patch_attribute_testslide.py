@@ -3,12 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
-from . import sample_module
 from testslide import StrictMock
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+from testslide.patch_attribute import unpatch_all_mocked_attributes
 from testslide.strict_mock import UndefinedAttribute
 
-from testslide.patch_attribute import unpatch_all_mocked_attributes
+from . import sample_module
 
 
 @context("patch_attribute()")

@@ -3,20 +3,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import testslide
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
-
-from testslide.mock_callable import (
-    mock_callable,
-    UndefinedBehaviorForCall,
-    UnexpectedCallReceived,
-    UnexpectedCallArguments,
-)
 import contextlib
-from testslide.strict_mock import StrictMock
 import os
-from . import sample_module
+
+import testslide
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
 from testslide.lib import TypeCheckError
+from testslide.mock_callable import (
+    UndefinedBehaviorForCall,
+    UnexpectedCallArguments,
+    UnexpectedCallReceived,
+    mock_callable,
+)
+from testslide.strict_mock import StrictMock
+
+from . import sample_module
 
 
 @context("mock_callable()")

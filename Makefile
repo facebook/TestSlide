@@ -10,7 +10,7 @@
 TESTSLIDE_FORMAT?=documentation
 UNITTEST_VERBOSE?=1
 ifeq ($(UNITTEST_VERBOSE),0)
-UNITTEST_ARGS := 
+UNITTEST_ARGS :=
 else
 UNITTEST_ARGS := --verbose
 endif
@@ -26,7 +26,7 @@ V?=0
 ifeq ($(V),0)
 Q := @python util/run_silent_if_successful.py
 else
-Q := 
+Q :=
 endif
 
 ##
@@ -99,7 +99,22 @@ flake8:
 .PHONY: black
 black:
 	@printf "${TERM_BRIGHT}BLACK ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} black --check $(ALL_SRCS)
+	${Q} black --check $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
+
+.PHONY: isort
+isort:
+	@printf "${TERM_BRIGHT}ISORT ${ALL_SRCS}\n${TERM_NONE}"
+	${Q} isort --check-only --profile black $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
+
+.PHONY: format_isort
+format_isort:
+	@printf "${TERM_BRIGHT}FORMAT PYFMT ${ALL_SRCS}\n${TERM_NONE}"
+	${Q} isort --profile black $(ALL_SRCS)
+
+.PHONY: format_black
+format_black:
+	@printf "${TERM_BRIGHT}FORMAT BLACK ${ALL_SRCS}\n${TERM_NONE}"
+	${Q} black $(ALL_SRCS)
 
 .PHONY: tests
 tests: \
@@ -107,7 +122,13 @@ tests: \
 	testslide_tests \
 	mypy \
 	flake8 \
+	isort \
 	black
+
+.PHONY: format
+format: \
+    format_isort \
+	format_black
 
 ##
 ## Coverage

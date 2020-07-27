@@ -6,15 +6,15 @@
 import argparse
 import os
 import re
-from time import time
 import sys
-
-from contextlib import contextmanager
-
-from . import _TestSlideTestResult, Context
-from .runner import Runner, ProgressFormatter, DocumentFormatter, LongFormatter
 import unittest
+from contextlib import contextmanager
+from time import time
+
 import testslide.dsl
+
+from . import Context, _TestSlideTestResult
+from .runner import DocumentFormatter, LongFormatter, ProgressFormatter, Runner
 from .strict_mock import StrictMock
 
 _unittest_testcase_loaded = False

@@ -3,19 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 import asyncio
-import unittest
-import time
-
-from unittest.mock import Mock, call, patch
-
-from testslide import Context, AggregatedExceptions, SlowCallback, reset, _ExampleRunner
-from testslide.runner import QuietFormatter
-from testslide.dsl import context, xcontext, fcontext
 import os
 import subprocess
+import sys
+import time
+import unittest
 from typing import List
+from unittest.mock import Mock, call, patch
+
+from testslide import AggregatedExceptions, Context, SlowCallback, _ExampleRunner, reset
+from testslide.dsl import context, fcontext, xcontext
+from testslide.runner import QuietFormatter
 
 
 class SomeTestCase(unittest.TestCase):

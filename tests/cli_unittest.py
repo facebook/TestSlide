@@ -7,11 +7,11 @@ import copy
 import os
 import os.path
 import pty
+import re
 import subprocess
 import sys
 import threading
 import unittest
-import re
 
 
 class TestCliBase(unittest.TestCase):
@@ -559,24 +559,25 @@ class TestCliDocumentFormatter(ExceptionCauseTest, TestCliBase):
         self.argv.append("--dsl-debug")
         self.run_testslide(
             expected_return_code=1,
-            expected_stdout_startswith=(
+            expected_regex_in_stdout=(
                 "top context\n"
-                "  example: passing_example @ tests/sample_tests.py:34\n"
+                "  example: passing_example @ tests/sample_tests.py:\d+\n"
                 "  passing example: PASS\n"
-                "  example: failing_example @ tests/sample_tests.py:38\n"
-                "  failing example: SimulatedFailure: test failure (extra)\n"
-                "  example: focused_example @ tests/sample_tests.py:43\n"
-                "  *focused example: PASS\n"
+                "  example: failing_example @ tests/sample_tests.py:\d+\n"
+                "  failing example: SimulatedFailure: test failure \(extra\)\n"
+                "  example: focused_example @ tests/sample_tests.py:\d+\n"
+                "  \*focused example: PASS\n"
                 "  skipped example: SKIP\n"
-                "  example: unittest_SkipTest @ tests/sample_tests.py:51\n"
+                "  example: unittest_SkipTest @ tests/sample_tests.py:\d+\n"
                 "  unittest SkipTest: SKIP\n"
                 "  nested context\n"
-                "    example: passing_nested_example @ tests/sample_tests.py:58\n"
+                "    example: passing_nested_example @ tests/sample_tests.py:\d+\n"
                 "    passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase\n"
                 "  test_failing: AssertionError: Third\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
+                ".*"
             ),
         )
 
@@ -616,18 +617,18 @@ class TestCliProgressFormatter(ExceptionCauseTest, TestCliBase):
         self.argv.append("--dsl-debug")
         self.run_testslide(
             expected_return_code=1,
-            expected_stdout_startswith=(
+            expected_regex_in_stdout=(
                 "\n"
-                "example: passing_example @ tests/sample_tests.py:34\n"
+                "example: passing_example @ tests/sample_tests.py:\d+\n"
                 ".\n"
-                "example: failing_example @ tests/sample_tests.py:38\n"
+                "example: failing_example @ tests/sample_tests.py:\d+\n"
                 "F\n"
-                "example: focused_example @ tests/sample_tests.py:43\n"
+                "example: focused_example @ tests/sample_tests.py:\d+\n"
                 ".\n"
                 "S\n"
-                "example: unittest_SkipTest @ tests/sample_tests.py:51\n"
+                "example: unittest_SkipTest @ tests/sample_tests.py:\d+\n"
                 "S\n"
-                "example: passing_nested_example @ tests/sample_tests.py:58\n"
+                "example: passing_nested_example @ tests/sample_tests.py:\d+\n"
                 ".\n"
                 "F\n"
                 ".\n"
@@ -748,23 +749,23 @@ class TestCliLongFormatter(ExceptionCauseTest, TestCliBase):
         self.argv.append("--dsl-debug")
         self.run_testslide(
             expected_return_code=1,
-            expected_stdout_startswith=(
+            expected_regex_in_stdout=(
                 "top context: \n"
-                "  example: passing_example @ tests/sample_tests.py:34\n"
+                "  example: passing_example @ tests/sample_tests.py:\d+\n"
                 "  passing example: PASS\n"
                 "top context: \n"
-                "  example: failing_example @ tests/sample_tests.py:38\n"
-                "  failing example: SimulatedFailure: test failure (extra)\n"
+                "  example: failing_example @ tests/sample_tests.py:\d+\n"
+                "  failing example: SimulatedFailure: test failure \(extra\)\n"
                 "top context: \n"
-                "  example: focused_example @ tests/sample_tests.py:43\n"
-                "  *focused example: PASS\n"
+                "  example: focused_example @ tests/sample_tests.py:\d+\n"
+                "  \*focused example: PASS\n"
                 "top context: \n"
                 "  skipped example: SKIP\n"
                 "top context: \n"
-                "  example: unittest_SkipTest @ tests/sample_tests.py:51\n"
+                "  example: unittest_SkipTest @ tests/sample_tests.py:\d+\n"
                 "  unittest SkipTest: SKIP\n"
                 "top context, nested context: \n"
-                "  example: passing_nested_example @ tests/sample_tests.py:58\n"
+                "  example: passing_nested_example @ tests/sample_tests.py:\d+\n"
                 "  passing nested example: PASS\n"
                 "tests.sample_tests.SampleTestCase: \n"
                 "  test_failing: AssertionError: Third\n"
@@ -772,5 +773,6 @@ class TestCliLongFormatter(ExceptionCauseTest, TestCliBase):
                 "  test_passing: PASS\n"
                 "tests.sample_tests.SampleTestCase: \n"
                 "  test_skipped: SKIP\n"
+                ".*"
             ),
         )

@@ -10,8 +10,6 @@ if "COVERAGE_PROCESS_START" in os.environ:
 
     coverage.process_startup()
 
-from contextlib import contextmanager
-
 import asyncio
 import asyncio.log
 import contextlib
@@ -21,13 +19,14 @@ import sys
 import types
 import unittest
 import warnings
+from contextlib import contextmanager
+from typing import List
 
+import testslide.matchers
 import testslide.mock_callable
 import testslide.mock_constructor
-import testslide.matchers
 import testslide.patch_attribute
 from testslide.strict_mock import StrictMock  # noqa
-from typing import List
 
 if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")

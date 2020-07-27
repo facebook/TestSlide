@@ -4,14 +4,16 @@
 # LICENSE file in the root directory of this source tree.
 
 import asyncio
-import inspect
 import functools
-from typing import List, Callable, Tuple, Any, Dict
+import inspect
+from typing import Any, Callable, Dict, List, Tuple
+
 import testslide
+from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
 from testslide.strict_mock import StrictMock
-from testslide.lib import _wrap_signature_and_type_validation, _validate_return_type
-from .patch import _patch, _is_instance_method
+
 from .lib import _bail_if_private
+from .patch import _is_instance_method, _patch
 
 
 def mock_callable(target, method, allow_private=False, type_validation=True):
