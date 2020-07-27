@@ -12,7 +12,6 @@ from typing import Any, Callable, Dict, Optional, Tuple, Type
 
 import typeguard
 
-
 ##
 ## Type validation
 ##

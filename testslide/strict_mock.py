@@ -2,13 +2,13 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import dis
 import copy
+import dis
 import inspect
 import os.path
-import testslide.lib
-from typing import Optional, Any
+from typing import Any, Optional
 
+import testslide.lib
 import testslide.mock_callable
 
 

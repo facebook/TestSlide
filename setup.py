@@ -27,6 +27,7 @@ setup(
             "coverage",
             "coveralls",
             "flake8",
+            "isort~=5.1",
             "mypy",
             "ipython",
             "sphinx",

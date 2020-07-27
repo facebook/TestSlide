@@ -3,10 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from testslide.dsl import context
-import unittest
 import os
 import sys
+import unittest
+
+from testslide.dsl import context
 
 
 class SimulatedFailure(Exception):

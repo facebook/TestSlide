@@ -3,14 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 import contextlib
+import sys
+from typing import Optional
 
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+from testslide.lib import TypeCheckError
 from testslide.mock_callable import _MockCallableDSL
 from testslide.strict_mock import StrictMock
-from typing import Optional
-from testslide.lib import TypeCheckError
 
 
 class _PrivateClass(object):

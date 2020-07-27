@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
-from typing import Callable, Any
+from typing import Any, Callable
 
 
 class _DescriptorProxy(object):

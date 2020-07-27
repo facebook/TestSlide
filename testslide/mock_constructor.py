@@ -5,15 +5,16 @@
 
 import gc
 import inspect
+from typing import Any, Callable, Dict, List
 
 import testslide
-from testslide.mock_callable import _MockCallableDSL, _CallableMock
+from testslide.mock_callable import _CallableMock, _MockCallableDSL
+
 from .lib import (
     _bail_if_private,
     _validate_callable_arg_types,
     _validate_callable_signature,
 )
-from typing import List, Callable, Dict, Any
 
 _DO_NOT_COPY_CLASS_ATTRIBUTES = (
     "__dict__",

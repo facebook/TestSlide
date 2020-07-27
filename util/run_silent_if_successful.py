@@ -12,7 +12,6 @@ import subprocess
 import sys
 import threading
 
-
 master_pty_fd, slave_pty_fd = pty.openpty()
 read_data = []
 

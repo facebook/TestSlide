@@ -4,13 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
-from typing import Type, TypeVar, Optional
-from testslide.dsl import context, xcontext, fcontext, Skip  # noqa: F401
-import testslide.lib
-from . import sample_module
-from testslide import StrictMock
 import unittest.mock
+from typing import Optional, Type, TypeVar
 
+import testslide.lib
+from testslide import StrictMock
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+
+from . import sample_module
 
 T = TypeVar("T")
 

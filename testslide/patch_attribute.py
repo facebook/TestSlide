@@ -3,11 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import Any, Callable, Dict, Tuple
+
 import testslide
-from .patch import _patch
-from .lib import _bail_if_private
 from testslide.strict_mock import UndefinedAttribute
-from typing import Callable, Any, Dict, Tuple
+
+from .lib import _bail_if_private
+from .patch import _patch
 
 _restore_values: Dict[Tuple[Any, str], Any] = {}
 _unpatchers: Dict[Tuple[Any, str], Callable] = {}

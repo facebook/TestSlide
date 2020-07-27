@@ -3,8 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import inspect
 import functools
+import inspect
 from re import sub as _sub
 
 from . import Context as _Context
