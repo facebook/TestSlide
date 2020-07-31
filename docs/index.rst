@@ -1,6 +1,10 @@
 TestSlide: Fluent Python Testing
 ================================
 
+.. image:: testslide_logo.png
+   :alt: Test pass
+   :align: center
+
 TestSlide makes writing tests fluid and easy. Whether you prefer classic `unit testing <https://docs.python.org/3/library/unittest.html>`_, `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ or `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_, it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.
 
 It is designed to work well with other test frameworks, so you can use it on top of existing ``unittest.TestCase`` without rewriting everything.
@@ -27,7 +31,7 @@ Write a test case ``backup_test.py`` describing the expected behavior:
 .. code-block:: python
 
   import testslide, backup, storage
-  
+
   class TestBackupDelete(testslide.TestCase):
     def setUp(self):
       super().setUp()
@@ -36,7 +40,7 @@ Write a test case ``backup_test.py`` describing the expected behavior:
       self.mock_constructor(storage, 'Client')\
         .for_call(timeout=60)\
         .to_return_value(self.storage_mock)
-  
+
     def test_delete_from_storage(self):
       # Set behavior and assertion for the call at the mock
       self.mock_callable(self.storage_mock, 'delete')\
@@ -58,11 +62,11 @@ TestSlide's mocks failure messages guide you towards the solution, that you can 
 .. code-block:: python
 
   import storage
-  
+
   class Backup(object):
     def __init__(self):
       self.storage = storage.Client(timeout=60)
-  
+
     def delete(self, path):
       self.storage.delete(path)
 
