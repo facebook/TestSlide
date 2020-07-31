@@ -2,7 +2,7 @@ TestSlide: Fluent Python Testing
 ================================
 
 .. image:: testslide_logo.png
-   :alt: Test pass
+   :alt: TestSlide
    :align: center
 
 TestSlide makes writing tests fluid and easy. Whether you prefer classic `unit testing <https://docs.python.org/3/library/unittest.html>`_, `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ or `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_, it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.
