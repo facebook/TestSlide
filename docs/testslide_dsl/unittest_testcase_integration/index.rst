@@ -6,7 +6,7 @@ TestSlide's DSL builtin integration with `Python's unittest <https://docs.python
 Assertions
 ----------
 
-TestSlide (currently) has on assertion framework. It comes however, with all ``self.assert*`` methods that you find at ``unittest.TestCase`` (`see the docs <https://docs.python.org/3/library/unittest.html#assert-methods>`_):
+TestSlide (currently) has no assertion framework. It comes however, with all ``self.assert*`` methods that you find at ``unittest.TestCase`` (`see the docs <https://docs.python.org/3/library/unittest.html#assert-methods>`_):
 
 .. code-block:: python
 
