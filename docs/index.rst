@@ -1,7 +1,11 @@
 TestSlide
 =========
 
-A test framework for Python that enable `unit testing <https://docs.python.org/3/library/unittest.html>`_ / `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_/ `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_ to be productive and enjoyable. Its well behaved mocks with thorough API validations catches bugs both when code is first written or long in the future when it is changed. The flexibility of using them with existing ``unittest.TestCase`` or TestSlide's own test runner let users get its benefits without requiring refactoring existing code.
+A test framework for Python that enable `unit testing <https://docs.python.org/3/library/unittest.html>`_ / `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_/ `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_ to be productive and enjoyable.
+
+Its well behaved mocks with thorough API validations catches bugs both when code is first written or long in the future when it is changed.
+
+The flexibility of using them with existing ``unittest.TestCase`` or TestSlide's own test runner let users get its benefits without requiring refactoring existing code.
 
 Quickstart
 ----------
