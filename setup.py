@@ -32,7 +32,7 @@ setup(
             "ipython",
             "sphinx",
             "sphinx-autobuild",
-            "sphinx-kr-theme",
+            "sphinx_rtd_theme",
             "twine",
         ]
     },
