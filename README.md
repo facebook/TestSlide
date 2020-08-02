@@ -1,5 +1,3 @@
-# TestSlide: Fluent Python Testing
-
 ![TestSlide](./docs/testslide_logo.png)
 
 [![Build Status](https://travis-ci.com/facebookincubator/TestSlide.svg?branch=master)](https://travis-ci.com/facebookincubator/TestSlide)
@@ -9,9 +7,11 @@
 [![PyPI version](https://badge.fury.io/py/TestSlide.svg)](https://badge.fury.io/py/TestSlide)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-TestSlide makes writing tests fluid and easy. Whether you prefer classic [unit testing](https://docs.python.org/3/library/unittest.html), [TDD](https://en.wikipedia.org/wiki/Test-driven_development) or [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development), it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.
+A test framework for Python that enable [unit testing](https://docs.python.org/3/library/unittest.html) / [TDD](https://en.wikipedia.org/wiki/Test-driven_development) / [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development) to be productive and enjoyable.
 
-It is designed to work well with other test frameworks, so you can use it on top of existing `unittest.TestCase` without rewriting everything.
+Its well behaved mocks with thorough API validations catches bugs both when code is first written or long in the future when it is changed.
+
+The flexibility of using them with existing `unittest.TestCase` or TestSlide's own test runner let users get its benefits without requiring refactoring existing code.
 
 ## Quickstart
 

@@ -1,13 +1,11 @@
-TestSlide: Fluent Python Testing
-================================
+TestSlide
+=========
 
-.. image:: testslide_logo.png
-   :alt: TestSlide
-   :align: center
+A test framework for Python that enable `unit testing <https://docs.python.org/3/library/unittest.html>`_ / `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_/ `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_ to be productive and enjoyable.
 
-TestSlide makes writing tests fluid and easy. Whether you prefer classic `unit testing <https://docs.python.org/3/library/unittest.html>`_, `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ or `BDD <https://en.wikipedia.org/wiki/Behavior-driven_development>`_, it helps you be productive, with its easy to use well behaved mocks and its awesome test runner.
+Its well behaved mocks with thorough API validations catches bugs both when code is first written or long in the future when it is changed.
 
-It is designed to work well with other test frameworks, so you can use it on top of existing ``unittest.TestCase`` without rewriting everything.
+The flexibility of using them with existing ``unittest.TestCase`` or TestSlide's own test runner let users get its benefits without requiring refactoring existing code.
 
 Quickstart
 ----------
