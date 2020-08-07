@@ -10,3 +10,6 @@ docs/_build/
 htmlcov/
 MANIFEST
 TestSlide.egg-info/
+**/node_modules
+*.vsix
+**/package-lock.json

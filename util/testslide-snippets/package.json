@@ -1,0 +1,26 @@
+{
+    "name": "testslide-snippets",
+    "displayName": "TestSlide Snippets collection",
+    "description": "Snippets for easy and quick TestSlide tests writing",
+    "publisher": "testslide-snippets",
+    "icon": "icon.png",
+    "repository": {
+        "type": "github",
+        "url": "https://github.com/facebookincubator/TestSlide"
+    },
+    "version": "2.5.9",
+    "engines": {
+        "vscode": "^1.40.0"
+    },
+    "categories": [
+        "Snippets"
+    ],
+    "contributes": {
+        "snippets": [
+            {
+                "language": "python",
+                "path": "./snippets/snippets.code-snippets"
+            }
+        ]
+    }
+}
