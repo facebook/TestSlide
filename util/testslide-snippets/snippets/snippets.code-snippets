@@ -1,0 +1,354 @@
+{
+	"Add Testslide context.before": {
+		"scope": "python",
+		"prefix": "tsb",
+		"body": [
+			"@context.before",
+			"def ${1:before}(self) -> None:",
+			"    ${2:pass}",
+		],
+		"description": "Add TestSlide context.before boilerplate"
+	},
+	"Add Testslide context.after": {
+		"scope": "python",
+		"prefix": "tsa",
+		"body": [
+			"@context.after",
+			"def ${1:after}(self) -> None:",
+			"    ${2:pass}",
+		],
+		"description": "Add TestSlide context.after boilerplate"
+	},
+	"Add Testslide context.around": {
+		"scope": "python",
+		"prefix": "tsr",
+		"body": [
+			"@context.around",
+			"def ${1:around}(self) -> None:",
+			"    ${2:pass}",
+		],
+		"description": "Add TestSlide context.around boilerplate"
+	},
+	"Add Testslide context.example": {
+		"scope": "python",
+		"prefix": "tsex",
+		"body": [
+			"@context.example",
+			"def ${1:example_name}$0(self) -> None:",
+			"   ${2:self.assertTrue(True)}"
+		],
+		"description": "Add TestSlide context.example boilerplate"
+	},
+	"Add Testslide context.sub_context": {
+		"scope": "python",
+		"prefix": "tssub",
+		"body": [
+			"@context.sub_context",
+			"def ${1:context_name}(context) -> None:",
+			"    $0",
+		],
+		"description": "Add decorator TestSlide context.sub_context"
+	},
+	"Add Testslide context.memoized": {
+		"scope": "python",
+		"prefix": "tsmem",
+		"body": [
+			"@context.memoized",
+			"def ${1:memoized_value}(self) -> ${2:str}:",
+			"    ${3:return \"some value\"}",
+		],
+		"description": "Add decorator TestSlide context.memoized for lazily set memoized attributes."
+	},
+	"Add Testslide context.function": {
+		"scope": "python",
+		"prefix": "tsfunc",
+		"body": [
+			"@context.function",
+			"def ${1:helper_function}(self) -> ${2:str}:",
+			"    ${3:return \"some value\"}",
+		],
+		"description": "Add TestSlide context.function for helper functions."
+	},
+	"Add Testslide context.shared_context": {
+		"scope": "python",
+		"prefix": "tsshared",
+		"body": [
+			"@context.shared_context",
+			"def ${1:shared_context}(context${2:, param1=None}) -> None:",
+			"    $0",
+		],
+		"description": "Add TestSlide context.shared_context to create a context for reusage."
+	},
+	"Add Testslide context.merge_context": {
+		"scope": "python",
+		"prefix": "tsmerge",
+		"body": [
+			"context.merge_context(\"${1:shared context name}\"${2:, param1=None})",
+		],
+		"description": "Add TestSlide context.merge_context to merge a shared context."
+	},
+	"Add Testslide context.nest_context": {
+		"scope": "python",
+		"prefix": "tsnest",
+		"body": [
+			"context.nest_context(\"${1:shared context name}\"${2:, param1=None})",
+		],
+		"description": "Add TestSlide context.nest_context to nest a shared context."
+	},
+	"Add boilerplate Testslide context.sub_context with before": {
+		"scope": "python",
+		"prefix": "tsb_sub",
+		"body": [
+			"@context.sub_context",
+			"def ${1:context_name}(context) -> None:",
+			"    @context.before",
+			"    def ${2:before}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.example",
+			"    def ${3:example_name}(self) -> None:",
+			"        ${4:self.assertTrue(True)}"
+		],
+		"description": "Add boilerplate TestSlide context.sub_context with before clause"
+	},
+	"Add boilerplate Testslide context.sub_context with after": {
+		"scope": "python",
+		"prefix": "tsa_sub",
+		"body": [
+			"@context.sub_context",
+			"def ${1:context_name}(context) -> None:",
+			"    @context.after",
+			"    def ${2:after}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.example",
+			"    def ${3:example_name}(self) -> None:",
+			"        ${4:self.assertTrue(True)}"
+		],
+		"description": "Add boilerplate TestSlide context.sub_context with after clause"
+	},
+	"Add boilerplate Testslide context.sub_context with after and before": {
+		"scope": "python",
+		"prefix": "tsab_sub",
+		"body": [
+			"@context.sub_context",
+			"def ${1:context_name}(context) -> None:",
+			"    @context.before",
+			"    def ${2:before}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.after",
+			"    def ${3:after}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.example",
+			"    def ${4:example_name}(self) -> None:",
+			"        ${5:self.assertTrue(True)}"
+		],
+		"description": "Add boilerplate TestSlide context.sub_context with after and before clauses"
+	},
+	"Create TestSlide boilerplate": {
+		"scope": "python",
+		"prefix": "tsb_full",
+		"description": "Set up a new testslide file",
+		"body": [
+			"#!/usr/bin/env python3",
+			"",
+			"from testsile import dsl",
+			"${1:from testslide import strict_mock}",
+			"",
+			"",
+			"@dsl.context",
+			"def ${2:context_name}(context) -> None:",
+			"    @context.before",
+			"    def ${3:before}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.after",
+			"    def ${4:after}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.sub_context",
+			"    def ${5:sub_context_name}(context) -> None:",
+			"        @context.before",
+			"        def ${6:before}(self) -> None:",
+			"            pass",
+			"",
+			"        @context.after",
+			"        def ${7:after}(self) -> None:",
+			"            pass",
+			"",
+			"        @context.example",
+			"        def ${8:example_name}(self) -> None:",
+			"            ${9:self.assertTrue(True)}",
+		]
+	},
+	"Add async Testslide context.before": {
+		"scope": "python",
+		"prefix": "tsab",
+		"body": [
+			"@context.before",
+			"async def ${1:before}(self) -> None:",
+			"    ${2:pass}",
+		],
+		"description": "Add TestSlide context.before boilerplate"
+	},
+	"Add async Testslide context.after": {
+		"scope": "python",
+		"prefix": "tsaa",
+		"body": [
+			"@context.after",
+			"async def ${1:after}(self) -> None:",
+			"    ${2:pass}",
+		],
+		"description": "Add TestSlide context.after boilerplate"
+	},
+	"Add async Testslide context.around": {
+		"scope": "python",
+		"prefix": "tsar",
+		"body": [
+			"@context.around",
+			"async def ${1:around}(self) -> None:",
+			"    ${2:pass}",
+		],
+		"description": "Add TestSlide context.around boilerplate"
+	},
+	"Add async Testslide context.example": {
+		"scope": "python",
+		"prefix": "tsaex",
+		"body": [
+			"@context.example",
+			"async def ${1:example_name}$0(self) -> None:",
+			"   ${2:self.assertTrue(True)}"
+		],
+		"description": "Add TestSlide context.example boilerplate"
+	},
+	"Add async Testslide context.sub_context": {
+		"scope": "python",
+		"prefix": "tsasub",
+		"body": [
+			"@context.sub_context",
+			"async def ${1:context_name}(context) -> None:",
+			"    $0",
+		],
+		"description": "Add decorator TestSlide context.sub_context"
+	},
+	"Add async Testslide context.memoized": {
+		"scope": "python",
+		"prefix": "tsamem",
+		"body": [
+			"@context.memoized",
+			"async def ${1:memoized_value}(self) -> ${2:str}:",
+			"    ${3:return \"some value\"}",
+		],
+		"description": "Add decorator TestSlide context.memoized for lazily set memoized attributes."
+	},
+	"Add async Testslide context.function": {
+		"scope": "python",
+		"prefix": "tsafunc",
+		"body": [
+			"@context.function",
+			"async def ${1:helper_function}(self) -> ${2:str}:",
+			"    ${3:return \"some value\"}",
+		],
+		"description": "Add TestSlide context.function for helper functions."
+	},
+	"Add async Testslide context.shared_context": {
+		"scope": "python",
+		"prefix": "tsashared",
+		"body": [
+			"@context.shared_context",
+			"async def ${1:shared_context}(context${2:, param1=None}) -> None:",
+			"    $0",
+		],
+		"description": "Add TestSlide context.shared_context to create a context for reusage."
+	},
+	"Add boilerplate async Testslide context.sub_context with before": {
+		"scope": "python",
+		"prefix": "tsab_sub",
+		"body": [
+			"@context.sub_context",
+			"async def ${1:context_name}(context) -> None:",
+			"    @context.before",
+			"    async def ${2:before}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.example",
+			"    async def ${3:example_name}(self) -> None:",
+			"        ${4:self.assertTrue(True)}"
+		],
+		"description": "Add boilerplate TestSlide context.sub_context with before clause"
+	},
+	"Add boilerplate async Testslide context.sub_context with after": {
+		"scope": "python",
+		"prefix": "tsaa_sub",
+		"body": [
+			"@context.sub_context",
+			"async def ${1:context_name}(context) -> None:",
+			"    @context.after",
+			"    async def ${2:after}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.example",
+			"    async def ${3:example_name}(self) -> None:",
+			"        ${4:self.assertTrue(True)}"
+		],
+		"description": "Add boilerplate TestSlide context.sub_context with after clause"
+	},
+	"Add boilerplate async Testslide context.sub_context with after and before": {
+		"scope": "python",
+		"prefix": "tsaab_sub",
+		"body": [
+			"@context.sub_context",
+			"async def ${1:context_name}(context) -> None:",
+			"    @context.before",
+			"    async def ${2:before}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.after",
+			"    async def ${3:after}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.example",
+			"    async def ${4:example_name}(self) -> None:",
+			"        ${5:self.assertTrue(True)}"
+		],
+		"description": "Add boilerplate TestSlide context.sub_context with after and before clauses"
+	},
+	"Create async TestSlide boilerplate": {
+		"scope": "python",
+		"prefix": "tsab_full",
+		"description": "Set up a new testslide file",
+		"body": [
+			"#!/usr/bin/env python3",
+			"",
+			"from testsile import dsl",
+			"${1:from testslide import strict_mock}",
+			"",
+			"",
+			"@dsl.context",
+			"async def ${2:context_name}(context) -> None:",
+			"    @context.before",
+			"    async def ${3:before}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.after",
+			"    async def ${4:after}(self) -> None:",
+			"        pass",
+			"",
+			"    @context.sub_context",
+			"    async def ${5:sub_context_name}(context) -> None:",
+			"        @context.before",
+			"        async def ${6:before}(self) -> None:",
+			"            pass",
+			"",
+			"        @context.after",
+			"        async def ${7:after}(self) -> None:",
+			"            pass",
+			"",
+			"        @context.example",
+			"        async def ${8:example_name}(self) -> None:",
+			"            ${9:self.assertTrue(True)}",
+		]
+	}
+}

@@ -9,3 +9,8 @@
 	- Admin > Versions: make new version the default
 - Build & publish
 	- `make twine`
+
+- After the above (should have changed the version on package.json), publish a
+  new version of testslide-snippets VSCode extension
+	- You'll have to be logged in to the publisher `vsce login testslide-snippets`
+	- run: `vsce publish`
