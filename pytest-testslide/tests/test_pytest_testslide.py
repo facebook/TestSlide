@@ -7,7 +7,9 @@
 def test_pass(testdir):
     testdir.makepyfile(
         """
-		import pytest_testslide
+		from pytest_testslide import testslide
+		from tests import sample_module
+		from testslide import StrictMock
 
 		def test_has_mock_callable(testslide):
 			testslide.mock_callable
@@ -41,6 +43,16 @@ def test_pass(testdir):
 
 		def test_patch_attribute_unpaches(testslide):
 			testslide.patch_attribute
+
+		def test_aggregated_exceptions(testslide):
+			mocked_cls = StrictMock(sample_module.CallOrderTarget)
+			testslide.mock_callable(mocked_cls, 'f1')\
+				.for_call("a").to_return_value("mocked")\
+				.and_assert_called_once()
+			testslide.mock_callable(mocked_cls, 'f1')\
+				.for_call("b").to_return_value("mocked2")\
+				.and_assert_called_once()
+			assert sample_module.CallOrderTarget("a").f1("a") == "mocked"
 		"""
     )
     result = testdir.runpytest("-v")

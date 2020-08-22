@@ -21,6 +21,7 @@ class _TestSlideFixture:
             # FIXME aggregated failures
             for assertion in self._assertions:
                 assertion()
+
         finally:
             testslide_module.mock_callable.unpatch_all_callable_mocks
             testslide_module.mock_constructor.unpatch_all_constructor_mocks
