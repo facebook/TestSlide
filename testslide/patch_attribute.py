@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Tuple
 import testslide
 from testslide.strict_mock import UndefinedAttribute
 
-from .lib import _bail_if_private
+from .lib import _bail_if_private, _validate_argument_type
 from .patch import _patch
 
 _restore_values: Dict[Tuple[Any, str], Any] = {}
@@ -35,7 +35,11 @@ def unpatch_all_mocked_attributes():
 
 
 def patch_attribute(
-    target: Any, attribute: str, new_value: Any, allow_private: bool = False
+    target: Any,
+    attribute: str,
+    new_value: Any,
+    allow_private: bool = False,
+    type_validation=True,
 ) -> None:
     """
     Patch target's attribute with new_value. The target can be any Python
@@ -56,6 +60,7 @@ def patch_attribute(
     key = (id(target), attribute)
 
     if isinstance(target, testslide.StrictMock):
+        target.__dict__["_type_validation"] = type_validation
         template_class = target._template
         if template_class:
             value = getattr(template_class, attribute)
@@ -97,6 +102,8 @@ def patch_attribute(
                 "Attribute can not be callable!\n"
                 "You can either use mock_callable() / mock_async_callable() instead."
             )
+        if type_validation:
+            _validate_argument_type(type(restore_value), attribute, new_value)
 
     if restore:
         _restore_values[key] = restore_value
