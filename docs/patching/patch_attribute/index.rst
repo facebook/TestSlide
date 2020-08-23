@@ -41,3 +41,8 @@ Properties are tricky to patch because of the quirky mechanics that `Python's De
       with_property = WithProperty()
       self.patch_attribute(with_property, "prop", "mock")
       self.assertEqual(with_property.prop, "mock")
+
+Type Validation
+---------------
+
+patch_attribute implements type validation. When you use it, the mock will raise ``TypeCheckerError`` if it is called with a type that does not match the original attribute type. This feature can be disabled with ``type_validation=False``
