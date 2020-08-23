@@ -20,6 +20,13 @@ from testslide.strict_mock import StrictMock
 from . import sample_module
 
 
+async def coro_fun(*args):
+    return 1
+
+
+coro_fun()
+
+
 @context("mock_callable()")
 def mock_callable_tests(context):
 
@@ -100,6 +107,28 @@ def mock_callable_tests(context):
             "This fun is private"
         ).and_assert_called_once()
         t._privatefun()
+
+    @context.example
+    def return_value_raises_with_coroutine(self):
+        with self.assertRaises(ValueError):
+            self.mock_callable(
+                sample_module, "test_function", type_validation=False
+            ).to_return_value(coro_fun())
+
+    @context.example
+    def return_values_raises_with_coroutine(self):
+        with self.assertRaises(ValueError):
+            self.mock_callable(
+                sample_module, "test_function", type_validation=False
+            ).to_return_values([1, 2, coro_fun()])
+
+    @context.example
+    def with_implementation_raises_with_coroutine(self):
+        with self.assertRaises(ValueError):
+            self.mock_callable(
+                sample_module, "test_function", type_validation=False
+            ).with_implementation(coro_fun)
+            sample_module.test_function("a", "b")
 
     ##
     ## Shared Contexts

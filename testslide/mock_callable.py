@@ -366,8 +366,12 @@ class _AsyncRunner(_BaseRunner):
 
 
 class _ReturnValueRunner(_Runner):
-    def __init__(self, target, method, original_callable, value):
+    def __init__(self, target, method, original_callable, value, allow_coro=False):
         super().__init__(target, method, original_callable)
+        if not allow_coro and _is_coroutine(value):
+            raise ValueError(
+                "Setting coroutines as return value is not recommended. Use mock_async_callable instead"
+            )
         self.return_value = value
 
     def run(self, *args, **kwargs):
@@ -376,9 +380,16 @@ class _ReturnValueRunner(_Runner):
 
 
 class _ReturnValuesRunner(_Runner):
-    def __init__(self, target, method, original_callable, values_list):
+    def __init__(
+        self, target, method, original_callable, values_list, allow_coro=False
+    ):
         super(_ReturnValuesRunner, self).__init__(target, method, original_callable)
         # Reverse original list for popping efficiency
+        for rv in values_list:
+            if not allow_coro and _is_coroutine(rv):
+                raise ValueError(
+                    "Setting coroutines as return value is not recommended. Use mock_async_callable instead"
+                )
         self.values_list = list(reversed(values_list))
 
     def run(self, *args, **kwargs):
@@ -424,13 +435,21 @@ class _RaiseRunner(_Runner):
 
 
 class _ImplementationRunner(_Runner):
-    def __init__(self, target, method, original_callable, new_implementation):
+    def __init__(
+        self, target, method, original_callable, new_implementation, allow_coro=False
+    ):
         super(_ImplementationRunner, self).__init__(target, method, original_callable)
         self.new_implementation = new_implementation
+        self._allow_coro = allow_coro
 
     def run(self, *args, **kwargs):
         super(_ImplementationRunner, self).run(*args, **kwargs)
-        return self.new_implementation(*args, **kwargs)
+        new_impl = self.new_implementation(*args, **kwargs)
+        if not self._allow_coro and _is_coroutine(new_impl):
+            raise ValueError(
+                "Setting coroutines as implementation is not recommended. Use mock_async_callable instead"
+            )
+        return new_impl
 
 
 class _AsyncImplementationRunner(_AsyncRunner):
@@ -697,6 +716,7 @@ class _MockCallableDSL(object):
         self.allow_private = allow_private
         self.type_validation = type_validation
         self.caller_frame_info = caller_frame_info
+        self._allow_coro = False
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -774,7 +794,11 @@ class _MockCallableDSL(object):
         """
         self._add_runner(
             _ReturnValueRunner(
-                self._original_target, self._method, self._original_callable, value
+                self._original_target,
+                self._method,
+                self._original_callable,
+                value,
+                self._allow_coro,
             )
         )
         return self
@@ -792,6 +816,7 @@ class _MockCallableDSL(object):
                 self._method,
                 self._original_callable,
                 values_list,
+                self._allow_coro,
             )
         )
         return self
@@ -843,7 +868,11 @@ class _MockCallableDSL(object):
             raise ValueError("{} must be callable.".format(func))
         self._add_runner(
             _ImplementationRunner(
-                self._original_target, self._method, self._original_callable, func
+                self._original_target,
+                self._method,
+                self._original_callable,
+                func,
+                self._allow_coro,
             )
         )
         return self
@@ -986,6 +1015,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             allow_private=allow_private,
             type_validation=type_validation,
         )
+        self._allow_coro = True
 
     def _validate_patch(self):
         return super()._validate_patch(
