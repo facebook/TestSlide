@@ -352,6 +352,7 @@ class StrictMock(object):
         name=None,
         default_context_manager=False,
         type_validation=True,
+        attributes_to_skip_type_validation=[]
     ):
         """
         For every new instance of StrictMock we dynamically create a subclass of
@@ -459,6 +460,7 @@ class StrictMock(object):
         name=None,
         default_context_manager=False,
         type_validation=True,
+        attributes_to_skip_type_validation = []
     ):
         """
         template: Template class to be used as a template for the mock.
@@ -482,6 +484,7 @@ class StrictMock(object):
         self.__dict__["_name"] = name
         self.__dict__["_type_validation"] = type_validation
         self.__dict__["__caller"] = self._get_caller(1)
+        self.__dict__["_attributes_to_skip_type_validation"] = attributes_to_skip_type_validation
 
         caller_frame = inspect.currentframe().f_back
         # loading the context ends up reading files from disk and that might block
@@ -552,7 +555,7 @@ class StrictMock(object):
         return name.startswith("__") and name.endswith("__")
 
     def _validate_attribute_type(self, name, value):
-        if not self.__dict__["_type_validation"]:
+        if not self.__dict__["_type_validation"] or name in self.__dict__["_attributes_to_skip_type_validation"]:
             return
 
         if hasattr(self._template, "__annotations__"):
@@ -692,6 +695,7 @@ class StrictMock(object):
             runtime_attrs=self._runtime_attrs,
             name=self._name,
             type_validation=self._type_validation,
+            attributes_to_skip_type_validation=self._attributes_to_skip_type_validation
         )
         self_copy.__dict__["__caller"] = self._get_caller(2)
         return self_copy
