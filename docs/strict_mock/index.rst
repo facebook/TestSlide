@@ -503,8 +503,8 @@ The mock itself is yielded.
 
   This also works for `asynchronous context managers <https://docs.python.org/3/reference/datamodel.html#asynchronous-context-managers>`_.
 
-Signature Validation (and Attribute Types)
-==========================================
+Signature Validation
+====================
 
 By default, ``StrictMock`` will validate arguments passed to callable attributes and the return value when called. This is done by inserting a proxy object in between the attribute and the value. In some rare situations, this proxy object can cause issues (eg if you ``assert type(self.attr) == Foo``). If having ``type()`` return the correct value is more important than having API validation, you can disable them:
 
@@ -521,7 +521,7 @@ By default, ``StrictMock`` will validate arguments passed to callable attributes
 
   In [4]: s.attr = CallableObject()
 
-  In [5]: type(s.attr)
+  In [5]: type(s.attr)  
   Out[5]: testslide.strict_mock._MethodProxy
 
   In [6]: s = StrictMock(type_validation=False)
@@ -542,8 +542,29 @@ If this type validation yields bad results (likely a bug, please report it), you
 
   StrictMock(template=SomeClass, type_validation=False)
 
+If you don't want to disable type validation for the entire ``StrictMock``, just for specific attributes, pass ``attributes_to_skip_type_validation`` to the constructor of ``StrictMock``
+
+.. code-block:: ipython
+
+  In [1]: from testslide import StrictMock
+
+  In [2]: class ObjectWithAttr():
+    ...:     a:str=""
+    ...:
+
+  In [3]: s = StrictMock(ObjectWithAttr, attributes_to_skip_type_validation=["a"])
+    ...:
+
+  In [4]: s
+  Out[4]: <__main__.ObjectWithAttr at 0x1076796d8>
+
+  In [5]: s.a=2
+
+  In [6]: s.a
+  Out[6]: 2
+
 Misc Functionality
 ******************
 
-* ``copy.copy()`` and ``copy.deepcopy()`` works, and give back another StrictMock, with the same behavior.
+* ``copy.copy()`` and ``copy.deepcopy()`` works, and gives back another StrictMock, with the same behavior.
 * Template classes that use ``__slots__`` are supported.

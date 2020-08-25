@@ -475,6 +475,8 @@ class StrictMock(object):
         template's method signature and use type hinting information from template
         to validate that mock attribute types match them. Type validation also
         happens forcallable attributes (instance/static/class methods) calls.
+        _attributes_to_skip_type_validation: do not validate type for these attributes
+        of the strictmock instance.
         """
         if template and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
