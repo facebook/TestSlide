@@ -60,7 +60,8 @@ def patch_attribute(
     key = (id(target), attribute)
 
     if isinstance(target, testslide.StrictMock):
-        target.__dict__["_type_validation"] = type_validation
+        if not type_validation:
+            target.__dict__["_attributes_to_skip_type_validation"].append(attribute)
         template_class = target._template
         if template_class:
             value = getattr(template_class, attribute)
