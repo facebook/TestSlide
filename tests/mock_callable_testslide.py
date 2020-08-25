@@ -24,9 +24,6 @@ async def coro_fun(*args):
     return 1
 
 
-coro_fun()
-
-
 @context("mock_callable()")
 def mock_callable_tests(context):
 
@@ -107,28 +104,6 @@ def mock_callable_tests(context):
             "This fun is private"
         ).and_assert_called_once()
         t._privatefun()
-
-    @context.example
-    def return_value_raises_with_coroutine(self):
-        with self.assertRaises(ValueError):
-            self.mock_callable(
-                sample_module, "test_function", type_validation=False
-            ).to_return_value(coro_fun())
-
-    @context.example
-    def return_values_raises_with_coroutine(self):
-        with self.assertRaises(ValueError):
-            self.mock_callable(
-                sample_module, "test_function", type_validation=False
-            ).to_return_values([1, 2, coro_fun()])
-
-    @context.example
-    def with_implementation_raises_with_coroutine(self):
-        with self.assertRaises(ValueError):
-            self.mock_callable(
-                sample_module, "test_function", type_validation=False
-            ).with_implementation(coro_fun)
-            sample_module.test_function("a", "b")
 
     ##
     ## Shared Contexts
@@ -525,6 +500,13 @@ def mock_callable_tests(context):
                     self.callable_target(*other_args, **other_kwargs), self.value
                 )
 
+            @context.example
+            def return_value_raises_with_coroutine(self):
+                with self.assertRaises(ValueError):
+                    self.mock_callable(
+                        sample_module, "test_function", type_validation=False
+                    ).to_return_value(coro_fun())
+
         @context.sub_context(".to_return_values(values_list)")
         def to_return_values_values_list(context):
             context.memoize("value", lambda self: "first")
@@ -545,6 +527,13 @@ def mock_callable_tests(context):
                     self.assertEqual(
                         self.callable_target(*self.call_args, **self.call_kwargs), value
                     )
+
+            @context.example
+            def return_values_raises_with_coroutine(self):
+                with self.assertRaises(ValueError):
+                    self.mock_callable(
+                        sample_module, "test_function", type_validation=False
+                    ).to_return_values([1, 2, coro_fun()])
 
             @context.sub_context
             def when_list_is_exhausted(context):
@@ -685,6 +674,14 @@ def mock_callable_tests(context):
                     self.callable_target(*self.call_args, **self.call_kwargs),
                     self.func_return,
                 )
+
+            @context.example
+            def with_implementation_raises_with_coroutine(self):
+                with self.assertRaises(ValueError):
+                    self.mock_callable(
+                        sample_module, "test_function", type_validation=False
+                    ).with_implementation(coro_fun)
+                    sample_module.test_function("a", "b")
 
         @context.sub_context(".with_wrapper(wrapper_func)")
         def with_wrapper_wrappr_func(context):
