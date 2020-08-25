@@ -115,6 +115,16 @@ class _ContextData(object):
     def _all_memoizable_attributes(self):
         return self._context.all_context_data_memoizable_attributes
 
+    def __setattr__(self, name, value):
+        if self.__dict__.get(name) and self.__dict__[name] != value:
+            raise AttributeError(
+                f"Attribute: {name} is already set.\
+        Resetting attributes in sub-contexts is not allowed, as it breaks composition.\
+            Use memoize and composition instead"
+            )
+        else:
+            super(_ContextData, self).__setattr__(name, value)
+
     def __getattr__(self, name):
         if name in self._all_methods.keys():
 
