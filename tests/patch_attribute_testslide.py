@@ -111,20 +111,24 @@ def patch_attribute_tests(context):
             def with_class_attributes(context):
                 context.merge_context("patching works")
 
-        @context.example
-        def it_fails_if_new_value_is_of_incompatible_type(self):
-            with self.assertRaises(TypeCheckError):
-                self.patch_attribute(self.target, "typedattr", 123)
+        @context.sub_context
+        def type_validation(context):
+            @context.example
+            def it_fails_if_new_value_is_of_incompatible_type(self):
+                with self.assertRaises(TypeCheckError):
+                    self.patch_attribute(self.target, "typedattr", 123)
 
-        @context.example
-        def it_passes_if_new_value_is_of_incompatible_type_with_type_validation_false(
-            self,
-        ):
-            self.patch_attribute(self.target, "typedattr", 123, type_validation=False)
+            @context.example
+            def it_passes_if_new_value_is_of_incompatible_type_with_type_validation_false(
+                self,
+            ):
+                self.patch_attribute(
+                    self.target, "typedattr", 123, type_validation=False
+                )
 
-        @context.example
-        def it_passes_if_new_value_is_of_matching_type(self,):
-            self.patch_attribute(self.target, "typedattr", "mocked")
+            @context.example
+            def it_passes_if_new_value_is_of_matching_type(self,):
+                self.patch_attribute(self.target, "typedattr", "mocked")
 
     ##
     ## Contexts
