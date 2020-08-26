@@ -27,6 +27,11 @@ class TypeCheckError(BaseException):
     pass
 
 
+class CoroutineValueError(BaseException):
+    def __init__(self):
+        self.message = "Setting coroutines as return value is not allowed. Use mock_async_callable instead"
+
+
 class WrappedMock(unittest.mock.NonCallableMock):
     """Needed to be able to show the useful qualified name for mock specs"""
 

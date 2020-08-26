@@ -12,7 +12,7 @@ import testslide
 from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
 from testslide.strict_mock import StrictMock
 
-from .lib import _bail_if_private
+from .lib import CoroutineValueError, _bail_if_private
 from .patch import _is_instance_method, _patch
 
 
@@ -369,9 +369,7 @@ class _ReturnValueRunner(_Runner):
     def __init__(self, target, method, original_callable, value, allow_coro=False):
         super().__init__(target, method, original_callable)
         if not allow_coro and _is_coroutine(value):
-            raise ValueError(
-                "Setting coroutines as return value is not recommended. Use mock_async_callable instead"
-            )
+            raise CoroutineValueError()
         self.return_value = value
 
     def run(self, *args, **kwargs):
@@ -385,11 +383,8 @@ class _ReturnValuesRunner(_Runner):
     ):
         super(_ReturnValuesRunner, self).__init__(target, method, original_callable)
         # Reverse original list for popping efficiency
-        for rv in values_list:
-            if not allow_coro and _is_coroutine(rv):
-                raise ValueError(
-                    "Setting coroutines as return value is not recommended. Use mock_async_callable instead"
-                )
+        if not allow_coro and any(_is_coroutine(rv) for rv in values_list):
+            raise CoroutineValueError()
         self.values_list = list(reversed(values_list))
 
     def run(self, *args, **kwargs):
@@ -403,10 +398,14 @@ class _ReturnValuesRunner(_Runner):
 class _YieldValuesRunner(_Runner):
     TYPE_VALIDATION = False
 
-    def __init__(self, target, method, original_callable, values_list):
+    def __init__(
+        self, target, method, original_callable, values_list, allow_coro=False
+    ):
         super(_YieldValuesRunner, self).__init__(target, method, original_callable)
         self.values_list = values_list
         self.index = 0
+        if not allow_coro and any(_is_coroutine(rv) for rv in values_list):
+            raise CoroutineValueError()
 
     def __iter__(self):
         return self
@@ -446,9 +445,7 @@ class _ImplementationRunner(_Runner):
         super(_ImplementationRunner, self).run(*args, **kwargs)
         new_impl = self.new_implementation(*args, **kwargs)
         if not self._allow_coro and _is_coroutine(new_impl):
-            raise ValueError(
-                "Setting coroutines as implementation is not recommended. Use mock_async_callable instead"
-            )
+            raise CoroutineValueError()
         return new_impl
 
 
@@ -834,6 +831,7 @@ class _MockCallableDSL(object):
                 self._method,
                 self._original_callable,
                 values_list,
+                self._allow_coro,
             )
         )
         return self
@@ -898,7 +896,11 @@ class _MockCallableDSL(object):
 
         self._add_runner(
             _ImplementationRunner(
-                self._original_target, self._method, self._original_callable, wrapper
+                self._original_target,
+                self._method,
+                self._original_callable,
+                wrapper,
+                self._allow_coro,
             )
         )
         return self

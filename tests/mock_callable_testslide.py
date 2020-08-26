@@ -8,7 +8,7 @@ import os
 
 import testslide
 from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
-from testslide.lib import TypeCheckError
+from testslide.lib import CoroutineValueError, TypeCheckError
 from testslide.mock_callable import (
     UndefinedBehaviorForCall,
     UnexpectedCallArguments,
@@ -502,7 +502,7 @@ def mock_callable_tests(context):
 
             @context.example
             def return_value_raises_with_coroutine(self):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(CoroutineValueError):
                     self.mock_callable(
                         sample_module, "test_function", type_validation=False
                     ).to_return_value(coro_fun())
@@ -530,7 +530,7 @@ def mock_callable_tests(context):
 
             @context.example
             def return_values_raises_with_coroutine(self):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(CoroutineValueError):
                     self.mock_callable(
                         sample_module, "test_function", type_validation=False
                     ).to_return_values([1, 2, coro_fun()])
@@ -577,6 +577,13 @@ def mock_callable_tests(context):
                 def yield_values_from_list_in_order(self):
                     for value in self.values_list:
                         self.assertEqual(next(self.iterable), value)
+
+                @context.example
+                def yield_values_raises_with_coroutine(self):
+                    with self.assertRaises(CoroutineValueError):
+                        self.mock_callable(
+                            sample_module, "test_function", type_validation=False
+                        ).to_yield_values([1, 2, coro_fun()])
 
                 @context.sub_context
                 def when_list_is_empty(context):
@@ -677,7 +684,7 @@ def mock_callable_tests(context):
 
             @context.example
             def with_implementation_raises_with_coroutine(self):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(CoroutineValueError):
                     self.mock_callable(
                         sample_module, "test_function", type_validation=False
                     ).with_implementation(coro_fun)
@@ -714,6 +721,18 @@ def mock_callable_tests(context):
                         self.callable_target(*self.call_args, **self.call_kwargs),
                         self.func_return,
                     )
+
+                @context.example
+                def with_wrapper_raises_with_coroutine(self):
+                    async def _wrapper_coro_func(original_function, *args, **kwargs):
+                        self.assertEqual(original_function, self.original_callable)
+                        return self.func_return
+
+                    with self.assertRaises(CoroutineValueError):
+                        self.mock_callable(
+                            sample_module, "test_function", type_validation=False
+                        ).with_wrapper(_wrapper_coro_func)
+                        sample_module.test_function("a", "b")
 
             else:
 
