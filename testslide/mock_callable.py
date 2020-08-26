@@ -484,7 +484,12 @@ class _AsyncCallOriginalRunner(_AsyncRunner):
 
 class _CallableMock(object):
     def __init__(
-        self, target, method, caller_frame_info, is_async=False, type_validation=True,
+        self,
+        target,
+        method,
+        caller_frame_info,
+        is_async=False,
+        type_validation=True,
     ):
         self.target = target
         self.method = method
