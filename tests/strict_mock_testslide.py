@@ -599,19 +599,25 @@ def strict_mock(context):
                                             )
 
                                 @context.sub_context("with type_validation=True")
-                                def with_type_validation_True(context,):
+                                def with_type_validation_True(
+                                    context,
+                                ):
                                     context.merge_context(
-                                        "common examples", type_validation=True,
+                                        "common examples",
+                                        type_validation=True,
                                     )
 
                                 @context.sub_context("with type_validation=False")
-                                def with_type_validation_False(context,):
+                                def with_type_validation_False(
+                                    context,
+                                ):
                                     context.memoize(
                                         "type_validation", lambda self: False
                                     )
 
                                     context.merge_context(
-                                        "common examples", type_validation=False,
+                                        "common examples",
+                                        type_validation=False,
                                     )
 
                                     @context.example
@@ -869,11 +875,14 @@ def strict_mock(context):
                                         return 1234
 
                                     setattr(
-                                        self.strict_mock, self.method_name, mock,
+                                        self.strict_mock,
+                                        self.method_name,
+                                        mock,
                                     )
                                     with self.assertRaises(TypeCheckError):
                                         await getattr(
-                                            self.strict_mock, self.method_name,
+                                            self.strict_mock,
+                                            self.method_name,
                                         )("message")
 
                             else:
@@ -928,29 +937,38 @@ def strict_mock(context):
                                         return 1234
 
                                     setattr(
-                                        self.strict_mock, self.method_name, mock,
+                                        self.strict_mock,
+                                        self.method_name,
+                                        mock,
                                     )
                                     self.assertEqual(
                                         await getattr(
-                                            self.strict_mock, self.method_name,
+                                            self.strict_mock,
+                                            self.method_name,
                                         )("message"),
                                         1234,
                                     )
 
                         @context.sub_context("with type_validation=True")
-                        def with_type_validation_True(context,):
+                        def with_type_validation_True(
+                            context,
+                        ):
                             context.merge_context(
-                                "common examples", type_validation=True,
+                                "common examples",
+                                type_validation=True,
                             )
 
                         @context.sub_context("with type_validation=False")
-                        def with_type_validation_False(context,):
+                        def with_type_validation_False(
+                            context,
+                        ):
                             @context.memoize_before
                             async def type_validation(self):
                                 return False
 
                             context.merge_context(
-                                "common examples", type_validation=False,
+                                "common examples",
+                                type_validation=False,
                             )
 
                             @context.example
