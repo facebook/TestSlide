@@ -431,7 +431,7 @@ def strict_mock(context):
                         @context.example
                         def raises_with_invalid_template(self):
                             with self.assertRaises(ValueError):
-                                StrictMock(Template.instance_method)
+                                StrictMock(dict())
 
                         @context.example
                         def allows_setting_valid_type_with_templated_mock(self):
