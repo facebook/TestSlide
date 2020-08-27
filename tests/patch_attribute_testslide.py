@@ -127,7 +127,9 @@ def patch_attribute_tests(context):
                 )
 
             @context.example
-            def it_passes_if_new_value_is_of_matching_type(self,):
+            def it_passes_if_new_value_is_of_matching_type(
+                self,
+            ):
                 self.patch_attribute(self.target, "typedattr", "mocked")
 
     ##

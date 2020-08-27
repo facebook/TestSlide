@@ -228,7 +228,10 @@ class FailurePrinterMixin(ColorFormatterMixin):
             exception_list = [exception]
         for number, exception in enumerate(exception_list):
             self.print_red(
-                "    {number}) ".format(number=number + 1,), end="",
+                "    {number}) ".format(
+                    number=number + 1,
+                ),
+                end="",
             )
             self._print_stack_trace(exception, cause_depth=0)
 
@@ -468,7 +471,8 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             print("  ", end="")
         self.print_red(
             "{focus}{example}: ".format(
-                focus="*" if example.focus else "", example=example,
+                focus="*" if example.focus else "",
+                example=example,
             ),
             end="",
         )
