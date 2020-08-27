@@ -41,3 +41,8 @@ Properties are tricky to patch because of the quirky mechanics that `Python's De
       with_property = WithProperty()
       self.patch_attribute(with_property, "prop", "mock")
       self.assertEqual(with_property.prop, "mock")
+
+Type Validation
+---------------
+
+``patch_attribute`` implements type validation and will only allow attributes to be mocked with values of types that match the available typing annotation. ``TypeCheckerError`` will be raised if a bad type is given. This check is expected to work 100% of times, but if it does not (possibly a bug in TestSlide, please report!), you can disable it by ``doing patch_attribute(obj, "attr", "newval", type_validation=False)``.

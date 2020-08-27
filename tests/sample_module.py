@@ -6,6 +6,7 @@
 from typing import Dict, Optional, Tuple, Union
 
 attribute = "value"
+typedattr: str = "bruh"
 
 
 class OtherClass:
@@ -16,6 +17,7 @@ class SomeClass:
     attribute = "value"
     _private_attr = "sooprivate"
     other_class_attribute = OtherClass
+    typedattr: str = "bruh"
 
     def method(self):
         pass
