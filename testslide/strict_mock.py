@@ -474,7 +474,7 @@ class StrictMock(object):
         to validate that mock attribute types match them. Type validation also
         happens forcallable attributes (instance/static/class methods) calls.
         """
-        if template and not inspect.isclass(template):
+        if template is not None and not inspect.isclass(template):
             raise ValueError("Template must be a class.")
         self.__dict__["_template"] = template
 
@@ -573,11 +573,13 @@ class StrictMock(object):
                     if not callable(value):
                         raise NonCallableValue(self, name)
                     if self.__dict__["_type_validation"]:
-                        signature_validation_wrapper = testslide.lib._wrap_signature_and_type_validation(
-                            value,
-                            self._template,
-                            name,
-                            self.__dict__["_type_validation"],
+                        signature_validation_wrapper = (
+                            testslide.lib._wrap_signature_and_type_validation(
+                                value,
+                                self._template,
+                                name,
+                                self.__dict__["_type_validation"],
+                            )
                         )
 
                         if inspect.iscoroutinefunction(template_value):

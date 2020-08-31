@@ -211,7 +211,12 @@ def _get_mocked_class(original_class, target_class_id, callable_mock, type_valid
     # ...and reuse them...
     mocked_class_dict = {
         "__new__": _wrap_type_validation(
-            original_class, callable_mock, [original_class_new, original_class_init,]
+            original_class,
+            callable_mock,
+            [
+                original_class_new,
+                original_class_init,
+            ],
         )
         if type_validation
         else callable_mock
