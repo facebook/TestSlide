@@ -11,6 +11,7 @@ import sys
 import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
+from importlib import import_module
 
 import psutil
 
@@ -29,12 +30,14 @@ class BaseFormatter:
 
     def __init__(
         self,
+        import_module_names,
         force_color=False,
         import_secs=None,
         trim_path_prefix=None,
         show_testslide_stack_trace=False,
         dsl_debug=False,
     ):
+        self.import_module_names = import_module_names
         self.force_color = force_color
         self.import_secs = import_secs
         self._import_secs_warn = True
@@ -191,12 +194,25 @@ class FailurePrinterMixin(ColorFormatterMixin):
                 message=f"\n{indent}    ".join(str(exception).split("\n")),
             )
         )
-        for path, line, function_name, text in traceback.extract_tb(
-            exception.__traceback__
-        ):
-            if not self.show_testslide_stack_trace and path.startswith(
-                os.path.dirname(__file__)
-            ):
+
+        tb = traceback.extract_tb(exception.__traceback__)
+
+        test_module_index = len(tb) - 1
+
+        test_module_paths = [
+            import_module(import_module_name).__file__
+            for import_module_name in self.import_module_names
+        ]
+
+        for index, value in enumerate(tb):
+            path = value[0]
+            if path in test_module_paths:
+                if index < test_module_index:
+                    test_module_index = index
+
+        for index, value in enumerate(tb):
+            path, line, function_name, text = value
+            if not self.show_testslide_stack_trace and index < test_module_index:
                 continue
             if self.trim_path_prefix:
                 split = path.split(self.trim_path_prefix)

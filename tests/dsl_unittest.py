@@ -98,7 +98,7 @@ class TestDSLBase(unittest.TestCase):
         reset()
 
     def run_example(self, exapmle):
-        _ExampleRunner(exapmle, QuietFormatter()).run()
+        _ExampleRunner(exapmle, QuietFormatter(import_module_names=__name__)).run()
 
     def run_all_examples(self):
         for each_context in Context.all_top_level_contexts:

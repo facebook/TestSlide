@@ -369,6 +369,7 @@ class Cli(object):
         else:
             import_secs = self._load_all_examples(config.import_module_names)
             formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
+                import_module_names=config.import_module_names,
                 force_color=config.force_color,
                 import_secs=import_secs,
                 trim_path_prefix=config.trim_path_prefix,
