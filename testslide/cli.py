@@ -354,7 +354,7 @@ class Cli(object):
             ]
         return config
 
-    def run(self):
+    def run(self) -> int:
         try:
             parsed_args = self.parser.parse_args(self.args)
         except SystemExit as e:

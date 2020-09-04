@@ -691,7 +691,7 @@ class Context(object):
         return final_list
 
     @property
-    def hierarchy(self):
+    def hierarchy(self) -> List["Context"]:
         """
         Returns a list of all contexts in this hierarchy.
         """
