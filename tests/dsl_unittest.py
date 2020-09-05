@@ -12,7 +12,14 @@ import unittest
 from typing import List
 from unittest.mock import Mock, call, patch
 
-from testslide import AggregatedExceptions, Context, SlowCallback, _ExampleRunner, reset
+from testslide import (
+    AggregatedExceptions,
+    Context,
+    Example,
+    SlowCallback,
+    _ExampleRunner,
+    reset,
+)
 from testslide.dsl import context, fcontext, xcontext
 from testslide.runner import QuietFormatter
 
@@ -97,8 +104,8 @@ class TestDSLBase(unittest.TestCase):
     def setUp(self):
         reset()
 
-    def run_example(self, exapmle):
-        _ExampleRunner(exapmle, QuietFormatter()).run()
+    def run_example(self, exapmle: Example) -> None:
+        _ExampleRunner(exapmle, QuietFormatter(import_module_names=[__name__])).run()
 
     def run_all_examples(self):
         for each_context in Context.all_top_level_contexts:
