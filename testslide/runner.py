@@ -11,10 +11,12 @@ import sys
 import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
+from importlib import import_module
+from typing import Dict, List, Optional, Union, cast
 
 import psutil
 
-from . import AggregatedExceptions, Skip, _ExampleRunner
+from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
 
 ##
 ## Base
@@ -29,23 +31,31 @@ class BaseFormatter:
 
     def __init__(
         self,
+        import_module_names: List[str],
         force_color=False,
         import_secs=None,
         trim_path_prefix=None,
         show_testslide_stack_trace=False,
         dsl_debug=False,
-    ):
+    ) -> None:
+        self.import_module_names = import_module_names
         self.force_color = force_color
         self.import_secs = import_secs
         self._import_secs_warn = True
         self.trim_path_prefix = trim_path_prefix
         self.show_testslide_stack_trace = show_testslide_stack_trace
         self.dsl_debug = dsl_debug
-        self.current_hierarchy = []
-        self.results = {"success": [], "fail": [], "skip": []}
+        self.current_hierarchy: List[Context] = []
+        self.results: Dict[
+            str, List[Union[Example, Dict[str, Union[Example, BaseException]]]]
+        ] = {
+            "success": [],
+            "fail": [],
+            "skip": [],
+        }
         self.start_time = psutil.Process(os.getpid()).create_time()
-        self.end_time = None
-        self.duration_secs = None
+        self.end_time: Optional[float] = None
+        self.duration_secs: Optional[float] = None
 
     # Example Discovery
 
@@ -96,25 +106,25 @@ class BaseFormatter:
         """
         pass
 
-    def success(self, example):
+    def success(self, example: Example) -> None:
         """
         Called when an example was Successfuly executed.
         """
         self.results["success"].append(example)
 
-    def fail(self, example, exception):
+    def fail(self, example: Example, exception: BaseException) -> None:
         """
         Called when an example failed on execution.
         """
         self.results["fail"].append({"example": example, "exception": exception})
 
-    def skip(self, example):
+    def skip(self, example: Example) -> None:
         """
         Called when an example had the execution skipped.
         """
         self.results["skip"].append(example)
 
-    def finish(self, not_executed_examples):
+    def finish(self, not_executed_examples: List[Example]) -> None:
         """
         Called when all examples finished execution.
         """
@@ -191,12 +201,25 @@ class FailurePrinterMixin(ColorFormatterMixin):
                 message=f"\n{indent}    ".join(str(exception).split("\n")),
             )
         )
-        for path, line, function_name, text in traceback.extract_tb(
-            exception.__traceback__
-        ):
-            if not self.show_testslide_stack_trace and path.startswith(
-                os.path.dirname(__file__)
-            ):
+
+        tb = traceback.extract_tb(exception.__traceback__)
+
+        test_module_index = len(tb) - 1
+
+        test_module_paths = [
+            import_module(import_module_name).__file__
+            for import_module_name in self.import_module_names
+        ]
+
+        for index, value in enumerate(tb):
+            path = value[0]
+            if path in test_module_paths:
+                if index < test_module_index:
+                    test_module_index = index
+
+        for index, value in enumerate(tb):
+            path, line, function_name, text = value
+            if not self.show_testslide_stack_trace and index < test_module_index:
                 continue
             if self.trim_path_prefix:
                 split = path.split(self.trim_path_prefix)
@@ -324,23 +347,24 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
         if self.dsl_debug:
             print("")
 
-    def success(self, example):
+    def success(self, example: Example) -> None:
         super().success(example)
         self.print_green(".", end="")
 
-    def fail(self, example, exception):
+    def fail(self, example: Example, exception: BaseException) -> None:
         super().fail(example, exception)
         self.print_red("F", end="")
 
-    def skip(self, example):
+    def skip(self, example: Example) -> None:
         super().skip(example)
         self.print_yellow("S", end="")
 
-    def finish(self, not_executed_examples):
+    def finish(self, not_executed_examples: List[Example]) -> None:
         super().finish(not_executed_examples)
         if self.results["fail"] and not self.dsl_debug:
             self.print_red("\nFailures:")
             for number, result in enumerate(self.results["fail"]):
+                result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(
                     number + 1, result["example"], result["exception"]
@@ -360,7 +384,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
     def _color_output(self):
         return sys.stdout.isatty() or self.force_color
 
-    def success(self, example):
+    def success(self, example: Example) -> None:
         super().success(example)
         self.print_green(
             "{indent}{focus}{example}{pass_text}".format(
@@ -371,7 +395,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             )
         )
 
-    def fail(self, example, exception):
+    def fail(self, example: Example, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions) and 1 == len(
             exception.exceptions
         ):
@@ -389,7 +413,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             )
         )
 
-    def skip(self, example):
+    def skip(self, example: Example) -> None:
         super().skip(example)
         self.print_yellow(
             "{indent}{focus}{example}{skip_text}".format(
@@ -400,7 +424,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             )
         )
 
-    def finish(self, not_executed_examples):
+    def finish(self, not_executed_examples: List[Example]) -> None:
         super().finish(not_executed_examples)
         success = len(self.results["success"])
         fail = len(self.results["fail"])
@@ -409,13 +433,16 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
         if self.results["fail"]:
             self.print_red("\nFailures:")
             for number, result in enumerate(self.results["fail"]):
+                result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(
                     number + 1, result["example"], result["exception"]
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs " % (total, self.duration_secs), end=""
+            "Finished %s example(s) in %.1fs "
+            % (total, cast(float, self.duration_secs)),
+            end="",
         )
         if self.import_secs > 2:
             self.print_white("(Imports took: %.1fs)" % (self.import_secs))
@@ -448,7 +475,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
     def _color_output(self):
         return sys.stdout.isatty() or self.force_color
 
-    def success(self, example):
+    def success(self, example: Example) -> None:
         super().success(example)
         if self.dsl_debug:
             print("  ", end="")
@@ -460,7 +487,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             )
         )
 
-    def fail(self, example, exception):
+    def fail(self, example: Example, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions) and 1 == len(
             exception.exceptions
         ):
@@ -483,7 +510,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             )
         )
 
-    def skip(self, example):
+    def skip(self, example: Example) -> None:
         super().skip(example)
         if self.dsl_debug:
             print("  ", end="")
@@ -495,7 +522,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             )
         )
 
-    def finish(self, not_executed_examples):
+    def finish(self, not_executed_examples: List[Example]) -> None:
         super().finish(not_executed_examples)
         success = len(self.results["success"])
         fail = len(self.results["fail"])
@@ -504,13 +531,16 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
         if self.results["fail"]:
             self.print_red("\nFailures:")
             for number, result in enumerate(self.results["fail"]):
+                result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(
                     number + 1, result["example"], result["exception"]
                 )
         print("")
         self.print_white(
-            "Finished %s example(s) in %.1fs " % (total, self.duration_secs), end=""
+            "Finished %s example(s) in %.1fs "
+            % (total, cast(float, self.duration_secs)),
+            end="",
         )
         if self.import_secs > 2:
             self.print_white("(Imports took: %.1fs)" % (self.import_secs))
@@ -587,7 +617,7 @@ class Runner(object):
         else:
             _ExampleRunner(example, self.formatter).run()
 
-    def run(self):
+    def run(self) -> int:
         """
         Execute all examples in all contexts.
         """

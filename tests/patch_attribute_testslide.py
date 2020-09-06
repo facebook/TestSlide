@@ -5,6 +5,7 @@
 
 from testslide import StrictMock
 from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+from testslide.lib import TypeCheckError
 from testslide.patch_attribute import unpatch_all_mocked_attributes
 from testslide.strict_mock import UndefinedAttribute
 
@@ -110,9 +111,26 @@ def patch_attribute_tests(context):
             def with_class_attributes(context):
                 context.merge_context("patching works")
 
-        @context.xexample
-        def it_fails_if_new_value_is_of_incompatible_type(self):
-            pass
+        @context.sub_context
+        def type_validation(context):
+            @context.example
+            def it_fails_if_new_value_is_of_incompatible_type(self):
+                with self.assertRaises(TypeCheckError):
+                    self.patch_attribute(self.target, "typedattr", 123)
+
+            @context.example
+            def it_passes_if_new_value_is_of_incompatible_type_with_type_validation_false(
+                self,
+            ):
+                self.patch_attribute(
+                    self.target, "typedattr", 123, type_validation=False
+                )
+
+            @context.example
+            def it_passes_if_new_value_is_of_matching_type(
+                self,
+            ):
+                self.patch_attribute(self.target, "typedattr", "mocked")
 
     ##
     ## Contexts
