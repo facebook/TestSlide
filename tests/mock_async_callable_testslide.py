@@ -28,6 +28,7 @@ def mock_async_callable_tests(context):
     @context.memoize
     def call_args(self):
         return ()
+
     @context.memoize
     def call_kwargs(self):
         return {}
@@ -421,8 +422,8 @@ def mock_async_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_function(context):
-            context.memoize('call_args', lambda self: ("1", "2"))
-            context.memoize('call_kwargs', lambda self: {"kwarg1": "1", "kwarg2": "2"})
+            context.memoize("call_args", lambda self: ("1", "2"))
+            context.memoize("call_kwargs", lambda self: {"kwarg1": "1", "kwarg2": "2"})
 
             @context.before
             async def before(self):
@@ -432,12 +433,13 @@ def mock_async_callable_tests(context):
                     self.target_arg, self.callable_arg
                 )
                 self.callable_target = getattr(self.real_target, self.callable_arg)
+
             context.merge_context("mock configuration examples")
 
     @context.sub_context
     def when_target_is_a_class(context):
-        context.memoize('call_args', lambda self: ("1", "2"))
-        context.memoize('call_kwargs', lambda self: {"kwarg1": "1", "kwarg2": "2"})
+        context.memoize("call_args", lambda self: ("1", "2"))
+        context.memoize("call_kwargs", lambda self: {"kwarg1": "1", "kwarg2": "2"})
 
         @context.before
         async def before(self):
@@ -504,13 +506,15 @@ def mock_async_callable_tests(context):
 
     @context.sub_context
     def an_instance(context):
-        context.memoize('call_args', lambda self: ("1", "2"))
-        context.memoize('call_kwargs', lambda self: {"kwarg1": "1", "kwarg2": "2"})
+        context.memoize("call_args", lambda self: ("1", "2"))
+        context.memoize("call_kwargs", lambda self: {"kwarg1": "1", "kwarg2": "2"})
+
         @context.before
         async def before(self):
             target = sample_module.Target()
             self.real_target = target
             self.target_arg = target
+
         context.merge_context("sync methods examples")
 
         @context.sub_context
@@ -557,8 +561,9 @@ def mock_async_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_magic_method(context):
-            context.memoize('call_args', lambda self: ())
-            context.memoize('call_kwargs', lambda self: {})
+            context.memoize("call_args", lambda self: ())
+            context.memoize("call_kwargs", lambda self: {})
+
             @context.before
             async def before(self):
                 self.callable_arg = "__aiter__"
@@ -574,8 +579,9 @@ def mock_async_callable_tests(context):
 
     @context.sub_context
     def when_target_is_a_StrictMock(context):
-        context.memoize('call_args', lambda self: ("1", "2"))
-        context.memoize('call_kwargs', lambda self: {"kwarg1": "1", "kwarg2": "2"})
+        context.memoize("call_args", lambda self: ("1", "2"))
+        context.memoize("call_kwargs", lambda self: {"kwarg1": "1", "kwarg2": "2"})
+
         @context.before
         async def before(self):
             self.original_callable = None
@@ -628,8 +634,9 @@ def mock_async_callable_tests(context):
 
         @context.sub_context
         def and_callable_is_an_async_magic_method(context):
-            context.memoize('call_args', lambda self: ())
-            context.memoize('call_kwargs', lambda self: {})
+            context.memoize("call_args", lambda self: ())
+            context.memoize("call_kwargs", lambda self: {})
+
             @context.before
             async def before(self):
                 self.callable_arg = "__aiter__"

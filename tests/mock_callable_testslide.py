@@ -1128,10 +1128,10 @@ def mock_callable_tests(context):
         @context.memoize_before
         def real_target(self):
             return sample_module.Target
+
         @context.memoize_before
         def target_arg(self):
             return sample_module.Target
-
 
         context.merge_context(
             "async methods examples", not_in_class_instance_method=True
@@ -1193,6 +1193,7 @@ def mock_callable_tests(context):
             @context.memoize_before
             def _original_target(self):
                 return sample_module.Target.static_method
+
             context.merge_context("mock configuration examples")
 
         @context.sub_context
@@ -1353,7 +1354,6 @@ def mock_callable_tests(context):
                 def callable_target(self):
                     return lambda: str(self.target)
 
-
                 @context.memoize_before
                 def _original_target(self):
                     return lambda: str(self.target)
@@ -1387,7 +1387,7 @@ def mock_callable_tests(context):
             return StrictMock(template=sample_module.Target)
 
         @context.memoize_before
-        def real_arget(self):
+        def real_target(self):
             return self.target
 
         @context.memoize_before
@@ -1461,7 +1461,7 @@ def mock_callable_tests(context):
                     )
 
                 @context.memoize_before
-                def real_arget(self):
+                def real_target(self):
                     return self.target
 
                 @context.memoize_before
@@ -1478,11 +1478,11 @@ def mock_callable_tests(context):
 
                 @context.memoize_before
                 def callable_target(self):
-                    return self.target.dynamic_instance_method
+                    return self.real_target.dynamic_instance_method
 
                 @context.memoize_before
                 def _original_target(self):
-                    return self.target.dynamic_instance_method
+                    return self.real_target.dynamic_instance_method
 
                 context.merge_context(
                     "mock configuration examples", has_original_callable=False
@@ -1509,7 +1509,6 @@ def mock_callable_tests(context):
             def _original_target(self):
                 return self.real_target.class_method
 
-
             context.merge_context(
                 "mock configuration examples", has_original_callable=False
             )
@@ -1526,6 +1525,10 @@ def mock_callable_tests(context):
 
             @context.memoize_before
             def callable_target(self):
+                return self.real_target.static_method
+
+            @context.memoize_before
+            def _original_target(self):
                 return self.real_target.static_method
 
             context.merge_context(
