@@ -606,6 +606,10 @@ def mock_callable_tests(context):
             @context.shared_context
             def integration(context):
                 @context.memoize_before
+                def _original_target(self):
+                    return getattr(self.real_target, self.callable_arg)
+
+                @context.memoize_before
                 def callable_target(self):
                     original_callable_target = self._original_target
 
@@ -1109,10 +1113,6 @@ def mock_callable_tests(context):
 
             @context.memoize_before
             def callable_target(self):
-                return getattr(self.real_target, self.callable_arg)
-
-            @context.memoize_before
-            def _original_target(self):
                 return getattr(self.real_target, self.callable_arg)
 
             context.merge_context("mock configuration examples")

@@ -118,9 +118,14 @@ class _ContextData(object):
     def __setattr__(self, name, value):
         if self.__dict__.get(name) and self.__dict__[name] != value:
             raise AttributeError(
-                f"Attribute: {name} is already set.\
-        Resetting attributes in sub-contexts is not allowed, as it breaks composition.\
-            Use memoize and composition instead"
+                f"Attribute {repr(name)} is already set.\n"
+                "Changing the value of attributes after they have been set "
+                "can lead to unexpected test results. Eg: when a sub context "
+                "resets an attribute after a parent context has set and used "
+                "it, they will have different objects for the same attribute.\n"
+                "You can safely override attributes from parent contexts by "
+                "using @context.before, @context.memoize_before or "
+                "@context.function, so the inner-most definition is used."
             )
         else:
             super(_ContextData, self).__setattr__(name, value)
