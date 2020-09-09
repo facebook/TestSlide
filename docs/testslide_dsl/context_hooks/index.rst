@@ -76,7 +76,7 @@ The after hook is pretty much the opposite of before hooks: they are called *aft
         .and_assert_called_once()
   
     @context.example
-    def falis(self):
+    def fails(self):
       self.mock_callable(os, 'remove')\
         .for_call('/tmp/WRONG')\
         .to_return_value(None)\
