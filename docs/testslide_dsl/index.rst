@@ -16,7 +16,7 @@ Let's say we want to test this class:
     def delete(self, path):
       self.storage.delete(path)
 
-We can test use it with:
+We can test it with:
 
 .. code-block:: python
 
