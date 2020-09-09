@@ -1910,6 +1910,29 @@ class SmokeTestAsync(TestDSLBase):
             with self.assertRaisesRegex(SlowCallback, "^Executing .+ took .+ seconds"):
                 self.run_first_context_first_example()
 
+    def test_resetting_attribute_raises_ValueError(self):
+        @context
+        def top(context):
+            @context.before
+            def first_before(self):
+                self.base = "base"
+                self.derived = f"derived: {self.base}"
+
+            @context.sub_context
+            def inner(context):
+                @context.before
+                def second_before(self):
+                    self.base = "new base"
+
+                @context.example
+                def example(self):
+                    self.assertEqual(self.derived, "derived: new base")
+
+        with self.assertRaisesRegex(
+            AttributeError, "^Attribute 'base' is already set.*"
+        ):
+            self.run_all_examples()
+
 
 class TestPatchAttributeIntegration(TestDSLBase):
     def test_patch_attribute_integration(self):

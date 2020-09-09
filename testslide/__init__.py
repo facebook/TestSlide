@@ -115,6 +115,21 @@ class _ContextData(object):
     def _all_memoizable_attributes(self):
         return self._context.all_context_data_memoizable_attributes
 
+    def __setattr__(self, name, value):
+        if self.__dict__.get(name) and self.__dict__[name] != value:
+            raise AttributeError(
+                f"Attribute {repr(name)} is already set.\n"
+                "Changing the value of attributes after they have been set "
+                "can lead to unexpected test results. Eg: when a sub context "
+                "resets an attribute after a parent context has set and used "
+                "it, they will have different objects for the same attribute.\n"
+                "You can safely override attributes from parent contexts by "
+                "using @context.before, @context.memoize_before or "
+                "@context.function, so the inner-most definition is used."
+            )
+        else:
+            super(_ContextData, self).__setattr__(name, value)
+
     def __getattr__(self, name):
         if name in self._all_methods.keys():
 
