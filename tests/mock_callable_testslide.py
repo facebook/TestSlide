@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import contextlib
 import os
 
@@ -444,6 +445,26 @@ def mock_callable_tests(context):
                     ValueError, "^You must first define a behavior.+"
                 ):
                     self.mock_callable_dsl.and_assert_called_exactly(1)
+
+            @context.example
+            def mock_callable_can_not_assert_if_already_received_call(self):
+                t = sample_module.SomeClass()
+                with self.assertRaisesRegex(
+                    ValueError, "^No extra configuration is allowed after mock_callable.+self.mock_callable"
+                ):
+                    mock = self.mock_callable(t, "method").to_return_value("value")
+                    t.method()
+                    mock.and_assert_called_once()
+
+            @context.example
+            def mock_async_callable_can_not_assert_if_already_received_call(self):
+                t = sample_module.ParentTarget()
+                with self.assertRaisesRegex(
+                    ValueError, "^No extra configuration is allowed after mock_async_callable.+self.mock_async_callable"
+                ):
+                    mock = self.mock_async_callable(t, "async_instance_method").to_return_value("value")
+                    asyncio.run(t.async_instance_method("", ""))
+                    mock.and_assert_called_once()
 
             @context.sub_context(".and_assert_not_called()")
             def and_assert_not_called(context):

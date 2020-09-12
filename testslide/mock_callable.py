@@ -572,10 +572,11 @@ class _CallableMock(object):
 class _MockCallableDSL(object):
 
     CALLABLE_MOCKS: Dict[int, _CallableMock] = {}
+    _NAME: str = "mock_callable"
 
     def _validate_patch(
         self,
-        name="mock_callable",
+        name=_NAME,
         other_name="mock_async_callable",
         coroutine_function=False,
         callable_returns_coroutine=False,
@@ -770,6 +771,15 @@ class _MockCallableDSL(object):
                 "self.mock_callable(target, 'func')"
                 ".to_return_value(value)"
                 ".and_assert_called_exactly(times)"
+            )
+        if self._runner._call_count > 0:
+            raise ValueError(
+                f"No extra configuration is allowed after {self._NAME} "
+                f"receives its first call, it received {self._runner._call_count} "
+                f"call{'s' if self._runner._call_count > 1 else ''} already. "
+                "You should instead define it all at once, "
+                f"eg: self.{self._NAME}(target, 'func')"
+                ".to_return_value(value).and_assert_called_once()"
             )
 
     ##
@@ -1005,6 +1015,9 @@ class _MockCallableDSL(object):
 
 
 class _MockAsyncCallableDSL(_MockCallableDSL):
+
+    _NAME: str = "mock_async_callable"
+
     def __init__(
         self,
         target,
@@ -1026,7 +1039,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
 
     def _validate_patch(self):
         return super()._validate_patch(
-            name="mock_async_callable",
+            name=self._NAME,
             other_name="mock_callable",
             coroutine_function=True,
             callable_returns_coroutine=self._callable_returns_coroutine,

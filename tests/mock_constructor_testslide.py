@@ -311,6 +311,20 @@ def mock_constructor(context):
             self.assertIsNone(t1)
             self.assertIsNone(t2)
 
+        @context.example
+        def mock_constructor_can_not_assert_if_already_received_call(self):
+            with self.assertRaisesRegex(
+                ValueError, "^No extra configuration is allowed after mock_constructor.+self.mock_constructor"
+            ):
+                mock = self.mock_constructor(self.target_module, self.target_class_name).for_call(
+                    "Hello", "World"
+                ).to_return_value(None)
+
+                target_class = self.get_target_class()
+                t1 = target_class("Hello", "World")
+
+                mock.and_assert_called_once()
+
         @context.sub_context
         def behavior(context):
             @context.example(".to_call_original() works")
