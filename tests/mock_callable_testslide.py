@@ -445,6 +445,17 @@ def mock_callable_tests(context):
                 ):
                     self.mock_callable_dsl.and_assert_called_exactly(1)
 
+            @context.example
+            def mock_callable_can_not_assert_if_already_received_call(self):
+                t = sample_module.SomeClass()
+                mock = self.mock_callable(t, "method").to_return_value("value")
+                t.method()
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "^No extra configuration is allowed after mock_callable.+self.mock_callable",
+                ):
+                    mock.and_assert_called_once()
+
             @context.sub_context(".and_assert_not_called()")
             def and_assert_not_called(context):
                 @context.before

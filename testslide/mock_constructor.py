@@ -63,6 +63,8 @@ class _MockConstructorDSL(_MockCallableDSL):
     Specialized version of _MockCallableDSL to call __new__ with correct args
     """
 
+    _NAME: str = "mock_constructor"
+
     def __init__(self, target, method, cls, callable_mock=None, original_callable=None):
         self.cls = cls
         caller_frame = inspect.currentframe().f_back
