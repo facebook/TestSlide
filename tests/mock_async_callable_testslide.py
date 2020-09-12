@@ -344,6 +344,18 @@ def mock_async_callable_tests(context):
             ):
                 self.assert_all()
 
+        @context.example
+        async def mock_async_callable_can_not_assert_if_already_received_call(self):
+            mock = self.mock_async_callable(
+                self.target_arg, self.callable_arg
+            ).to_return_value("mocked")
+            await self.callable_target(*self.call_args, **self.call_kwargs)
+            with self.assertRaisesRegex(
+                ValueError,
+                "^No extra configuration is allowed after mock_async_callable.+self.mock_async_callable",
+            ):
+                mock.and_assert_called_once()
+
     @context.shared_context
     def sync_methods_examples(context, not_in_class_instance_method=False):
         @context.sub_context
