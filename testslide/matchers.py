@@ -382,7 +382,7 @@ class DictSupersetOf(_RichComparison):
 
 class Any(Matcher):
     def __eq__(self, other):
-        return other is not None
+        return True
 
 
 class AnyTruthy(Matcher):

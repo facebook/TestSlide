@@ -121,7 +121,7 @@ class GenericTestCase(testslide.TestCase):
         self.assertEqual(testslide.matchers.Any(), [])
         self.assertEqual(testslide.matchers.Any(), ())
         self.assertEqual(testslide.matchers.Any(), "")
-        self.assertNotEqual(testslide.matchers.Any(), None)
+        self.assertEqual(testslide.matchers.Any(), None)
         self.assertEqual(testslide.matchers.Any(), 0)
         self.assertEqual(testslide.matchers.Any(), {"a": "b"})
         self.assertEqual(testslide.matchers.Any(), ["a", "b"])
