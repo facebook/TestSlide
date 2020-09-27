@@ -12,7 +12,7 @@ import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from importlib import import_module
-from typing import Callable, Dict, List, Optional, Union, cast, Type, Pattern
+from typing import Any, Callable, Dict, List, Optional, Union, cast, Type, Pattern
 
 import psutil
 
@@ -65,7 +65,7 @@ class BaseFormatter:
         """
         pass
 
-    def example_discovered(self, example) -> None:
+    def example_discovered(self, example: Example) -> None:
         """
         To be called when a new example is discovered.
         """
@@ -93,7 +93,7 @@ class BaseFormatter:
         self.new_example(example)
         self.current_hierarchy = example.context.hierarchy
 
-    def new_context(self, context):
+    def new_context(self, context: Context) -> None:
         """
         Called before an example execution, when its context is different from
         previous executed example.
@@ -151,7 +151,7 @@ class BaseFormatter:
     def dsl_memoize_before(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_function(self, example, code) -> None:
+    def dsl_function(self, example: Example, code: Callable) -> None:
         pass
 
 
@@ -161,7 +161,7 @@ class BaseFormatter:
 
 
 class ColorFormatterMixin(BaseFormatter):
-    def _print_attrs(self, attrs: str, *values, **kwargs) -> None:
+    def _print_attrs(self, attrs: str, *values: Any, **kwargs: Any) -> None:
         stream = kwargs.get("file", sys.stdout)
         if stream.isatty() or self.force_color:
             print(
@@ -173,19 +173,19 @@ class ColorFormatterMixin(BaseFormatter):
         else:
             print(*values, **kwargs)
 
-    def print_white(self, *values, **kwargs) -> None:
+    def print_white(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("1", *values, **kwargs)
 
-    def print_green(self, *values, **kwargs) -> None:
+    def print_green(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("32", *values, **kwargs)
 
-    def print_red(self, *values, **kwargs) -> None:
+    def print_red(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("31", *values, **kwargs)
 
-    def print_yellow(self, *values, **kwargs) -> None:
+    def print_yellow(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("33", *values, **kwargs)
 
-    def print_cyan(self, *values, **kwargs) -> None:
+    def print_cyan(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("36", *values, **kwargs)
 
 
@@ -239,14 +239,14 @@ class FailurePrinterMixin(ColorFormatterMixin):
         if exception.__cause__:
             self._print_stack_trace(exception.__cause__, cause_depth=cause_depth + 1)
 
-    def print_failed_example(self, number, example, exception) -> None:
+    def print_failed_example(self, number: int, example: Example, exception: Union[Exception, AggregatedExceptions]) -> None:
         self.print_white(
             "  {number}) {context}: {example}".format(
                 number=number, context=example.context.full_name, example=example
             )
         )
         if type(exception) is AggregatedExceptions:
-            exception_list = exception.exceptions
+            exception_list = exception.exceptions #type: ignore
         else:
             exception_list = [exception]
         for number, exception in enumerate(exception_list):
@@ -260,7 +260,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
 
 
 class SlowImportWarningMixin(ColorFormatterMixin):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
             self.print_yellow(
@@ -273,7 +273,7 @@ class SlowImportWarningMixin(ColorFormatterMixin):
 
 
 class DSLDebugMixin:
-    def get_dsl_debug_indent(self, example) -> str:
+    def get_dsl_debug_indent(self, example: Example) -> str:
         return ""
 
     def _dsl_print(self, example: Example, description: str, code: Callable) -> None:
@@ -367,7 +367,7 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example(
+                self.print_failed_example( #type: ignore
                     number + 1, result["example"], result["exception"]
                 )
         print("")
@@ -436,7 +436,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example(
+                self.print_failed_example( #type: ignore
                     number + 1, result["example"], result["exception"]
                 )
         print("")
@@ -534,7 +534,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example(
+                self.print_failed_example( #type: ignore
                     number + 1, result["example"], result["exception"]
                 )
         print("")

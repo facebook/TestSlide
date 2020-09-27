@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import re
-from typing import Any as AnyType, Optional, Type, Union, Callable, Dict, List, TypeVar
+from typing import Any as AnyType, Optional, Type, Union, Callable, Dict, List, TypeVar, NoReturn
 
 
 class AlreadyChainedException(Exception):
@@ -16,16 +16,16 @@ class _AlreadyChainedMatcher:
     Disallow further chaining of equality of objects.
     """
 
-    def __and__(self, other):
+    def __and__(self, other: object) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
-    def __xor__(self, other):
+    def __xor__(self, other: object) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
-    def __invert__(self):
+    def __invert__(self) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
-    def __or__(self, other):
+    def __or__(self, other: object) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
 
@@ -221,7 +221,7 @@ class IntLessOrEquals(_IntComparison):
 
 # floats
 class AnyFloat(_FloatComparison):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 

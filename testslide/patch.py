@@ -92,7 +92,7 @@ def _patch(
         original_property = getattr(type(target), attribute)
         setattr(type(target), attribute, property(fget=lambda _: new_value))
 
-        def unpatcher():
+        def unpatcher() -> None:
             if restore_value:
                 setattr(type(target), attribute, original_property)
             else:
@@ -101,7 +101,7 @@ def _patch(
     else:
         setattr(target, attribute, new_value)
 
-        def unpatcher():
+        def unpatcher() -> None:
             if restore_value:
                 setattr(target, attribute, restore_value)
 
