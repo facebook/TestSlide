@@ -8,9 +8,17 @@ import inspect
 import os
 import sys
 import unittest.mock
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import TypeVar, Union, Any, Callable, Dict, Optional, Tuple, Type
+from types import FrameType
 
 import typeguard
+from inspect import Traceback
+from unittest.mock import Mock
+
+if False:
+    # hack to remove mypy warnings about types not being defined
+    from testslide.mock_callable import _CallableMock
+    from testslide.strict_mock import _DefaultMagic, StrictMock
 
 ##
 ## Type validation
@@ -28,18 +36,18 @@ class TypeCheckError(BaseException):
 
 
 class CoroutineValueError(BaseException):
-    def __init__(self):
+    def __init__(self) -> None:
         self.message = "Setting coroutines as return value is not allowed. Use mock_async_callable instead"
 
 
 class WrappedMock(unittest.mock.NonCallableMock):
     """Needed to be able to show the useful qualified name for mock specs"""
 
-    def get_qualified_name(self):
+    def get_qualified_name(self) -> str:
         return typeguard.qualified_name(self._spec_class)
 
 
-def _extract_NonCallableMock_template(mock_obj) -> Optional[Any]:
+def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
     if "_spec_class" in mock_obj.__dict__ and mock_obj._spec_class is not None:
         return mock_obj._spec_class
 
@@ -51,7 +59,7 @@ MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Type], Optional[Any]]] = {
 }
 
 
-def _extract_mock_template(mock):
+def _extract_mock_template(mock: Union[Mock, "StrictMock"]) -> Optional[Union[Type[str], Type[dict], Type[int]]]:
     template = None
     for mock_class, extract_mock_template in MOCK_TEMPLATE_EXTRACTORS.items():
         if isinstance(mock, mock_class):
@@ -71,7 +79,7 @@ def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     Retrieves the globals and locals of the first frame that is not from TestSlide code.
     """
 
-    def _should_skip_frame(frame):
+    def _should_skip_frame(frame: FrameType) -> bool:
         is_testslide = (
             os.path.dirname(__file__) in frame.f_code.co_filename
             # we need not to skip tests
@@ -91,8 +99,8 @@ def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
 
 def _validate_callable_signature(
-    skip_first_arg, callable_template, template, attr_name, args, kwargs
-):
+    skip_first_arg: bool, callable_template: Callable, template: Any, attr_name: str, args: Any, kwargs: Dict[str, Any]
+) -> bool:
     if skip_first_arg and not inspect.ismethod(callable_template):
         callable_template = functools.partial(callable_template, None)
     try:
@@ -107,7 +115,7 @@ def _validate_callable_signature(
     return True
 
 
-def _validate_argument_type(expected_type, name: str, value) -> None:
+def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
     if "~" in str(expected_type):
         # this means that we have a TypeVar type, and those require
         # checking all the types of all the params as a whole, but we
@@ -118,7 +126,7 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
     original_check_type = typeguard.check_type
     original_qualified_name = typeguard.qualified_name
 
-    def wrapped_qualified_name(obj):
+    def wrapped_qualified_name(obj: object) -> str:
         """Needed to be able to show the useful qualified name for mock specs"""
         if isinstance(obj, WrappedMock):
             return obj.get_qualified_name()
@@ -126,14 +134,14 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
         return original_qualified_name(obj)
 
     def wrapped_check_type(
-        argname,
-        inner_value,
-        inner_expected_type,
-        *args,
+        argname: str,
+        inner_value: Any,
+        inner_expected_type: Type,
+        *args: Any,
         globals: Optional[Dict[str, Any]] = None,
         locals: Optional[Dict[str, Any]] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
 
         if _is_a_mock(inner_value):
             inner_type = _extract_mock_template(inner_value)
@@ -171,11 +179,11 @@ def _validate_argument_type(expected_type, name: str, value) -> None:
 
 
 def _validate_callable_arg_types(
-    skip_first_arg,
+    skip_first_arg: bool,
     callable_template: Callable,
-    args: Tuple[Any],
+    args: Any,
     kwargs: Dict[str, Any],
-):
+) -> None:
     argspec = inspect.getfullargspec(callable_template)
     idx_offset = 1 if skip_first_arg else 0
     type_errors = []
@@ -214,7 +222,7 @@ def _validate_callable_arg_types(
         )
 
 
-def _skip_first_arg(template, attr_name):
+def _skip_first_arg(template: Any, attr_name: str) -> bool:
 
     if inspect.ismodule(template):
         return False
@@ -238,7 +246,7 @@ def _skip_first_arg(template, attr_name):
     return False
 
 
-def _wrap_signature_and_type_validation(value, template, attr_name, type_validation):
+def _wrap_signature_and_type_validation(value: Union["_DefaultMagic", Callable, "_CallableMock"], template: Any, attr_name: str, type_validation: bool) -> Union[Callable, "_CallableMock"]:
     if _is_a_mock(template):
         template = _extract_mock_template(template)
         if not template:
@@ -252,7 +260,7 @@ def _wrap_signature_and_type_validation(value, template, attr_name, type_validat
 
     skip_first_arg = _skip_first_arg(template, attr_name)
 
-    def with_sig_and_type_validation(*args, **kwargs):
+    def with_sig_and_type_validation(*args: Any, **kwargs: Any) -> Callable:
         if _validate_callable_signature(
             skip_first_arg, callable_template, template, attr_name, args, kwargs
         ):
@@ -265,7 +273,7 @@ def _wrap_signature_and_type_validation(value, template, attr_name, type_validat
     return with_sig_and_type_validation
 
 
-def _validate_return_type(template, value, caller_frame_info):
+def _validate_return_type(template: Union[Mock, Callable], value: Any, caller_frame_info: Traceback) -> None:
     try:
         argspec = inspect.getfullargspec(template)
     except TypeError:
@@ -287,7 +295,7 @@ def _validate_return_type(template, value, caller_frame_info):
 ##
 
 
-def _bail_if_private(candidate: str, allow_private: bool):
+def _bail_if_private(candidate: str, allow_private: bool) -> None:
     if (
         candidate.startswith("_")
         and not allow_private
