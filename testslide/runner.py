@@ -12,7 +12,7 @@ import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from importlib import import_module
-from typing import Dict, List, Optional, Union, cast
+from typing import Callable, Dict, List, Optional, Union, cast, Type, Pattern
 
 import psutil
 
@@ -32,11 +32,11 @@ class BaseFormatter:
     def __init__(
         self,
         import_module_names: List[str],
-        force_color=False,
-        import_secs=None,
-        trim_path_prefix=None,
-        show_testslide_stack_trace=False,
-        dsl_debug=False,
+        force_color: bool=False,
+        import_secs: Optional[float]=None,
+        trim_path_prefix: Optional[str]=None,
+        show_testslide_stack_trace: bool=False,
+        dsl_debug: bool=False,
     ) -> None:
         self.import_module_names = import_module_names
         self.force_color = force_color
@@ -59,19 +59,19 @@ class BaseFormatter:
 
     # Example Discovery
 
-    def discovery_start(self):
+    def discovery_start(self) -> None:
         """
         To be called before example discovery starts.
         """
         pass
 
-    def example_discovered(self, example):
+    def example_discovered(self, example) -> None:
         """
         To be called when a new example is discovered.
         """
         print(example.full_name)
 
-    def discovery_finish(self):
+    def discovery_finish(self) -> None:
         """
         To be called before example discovery finishes.
         """
@@ -79,7 +79,7 @@ class BaseFormatter:
 
     # Test Execution
 
-    def start(self, example):
+    def start(self, example: Example) -> None:
         """
         To be called before each example execution.
         """
@@ -100,7 +100,7 @@ class BaseFormatter:
         """
         pass
 
-    def new_example(self, example):
+    def new_example(self, example: Example) -> None:
         """
         Called before an example execution.
         """
@@ -133,25 +133,25 @@ class BaseFormatter:
 
     # DSL
 
-    def dsl_example(self, example, code):
+    def dsl_example(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_before(self, example, code):
+    def dsl_before(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_after(self, example, code):
+    def dsl_after(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_around(self, example, code):
+    def dsl_around(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_memoize(self, example, code):
+    def dsl_memoize(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_memoize_before(self, example, code):
+    def dsl_memoize_before(self, example: Example, code: Callable) -> None:
         pass
 
-    def dsl_function(self, example, code):
+    def dsl_function(self, example, code) -> None:
         pass
 
 
@@ -161,7 +161,7 @@ class BaseFormatter:
 
 
 class ColorFormatterMixin(BaseFormatter):
-    def _print_attrs(self, attrs, *values, **kwargs):
+    def _print_attrs(self, attrs: str, *values, **kwargs) -> None:
         stream = kwargs.get("file", sys.stdout)
         if stream.isatty() or self.force_color:
             print(
@@ -173,19 +173,19 @@ class ColorFormatterMixin(BaseFormatter):
         else:
             print(*values, **kwargs)
 
-    def print_white(self, *values, **kwargs):
+    def print_white(self, *values, **kwargs) -> None:
         self._print_attrs("1", *values, **kwargs)
 
-    def print_green(self, *values, **kwargs):
+    def print_green(self, *values, **kwargs) -> None:
         self._print_attrs("32", *values, **kwargs)
 
-    def print_red(self, *values, **kwargs):
+    def print_red(self, *values, **kwargs) -> None:
         self._print_attrs("31", *values, **kwargs)
 
-    def print_yellow(self, *values, **kwargs):
+    def print_yellow(self, *values, **kwargs) -> None:
         self._print_attrs("33", *values, **kwargs)
 
-    def print_cyan(self, *values, **kwargs):
+    def print_cyan(self, *values, **kwargs) -> None:
         self._print_attrs("36", *values, **kwargs)
 
 
@@ -239,7 +239,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
         if exception.__cause__:
             self._print_stack_trace(exception.__cause__, cause_depth=cause_depth + 1)
 
-    def print_failed_example(self, number, example, exception):
+    def print_failed_example(self, number, example, exception) -> None:
         self.print_white(
             "  {number}) {context}: {example}".format(
                 number=number, context=example.context.full_name, example=example
@@ -260,7 +260,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
 
 
 class SlowImportWarningMixin(ColorFormatterMixin):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
             self.print_yellow(
@@ -273,11 +273,12 @@ class SlowImportWarningMixin(ColorFormatterMixin):
 
 
 class DSLDebugMixin:
-    def get_dsl_debug_indent(self, example):
+    def get_dsl_debug_indent(self, example) -> str:
         return ""
 
-    def _dsl_print(self, example, description, code):
-        if not self.dsl_debug:
+    def _dsl_print(self, example: Example, description: str, code: Callable) -> None:
+        lineno: Union[str, int]
+        if not self.dsl_debug: #type: ignore
             return
         name = code.__name__
         try:
@@ -289,15 +290,15 @@ class DSLDebugMixin:
                 file = "?"
         if file.startswith(os.path.dirname(__file__)):
             return
-        if self.trim_path_prefix:
-            split = file.split(self.trim_path_prefix)
+        if self.trim_path_prefix: #type: ignore
+            split = file.split(self.trim_path_prefix) #type: ignore
             if len(split) == 2 and not split[0]:
                 file = split[1]
         try:
             _lines, lineno = inspect.getsourcelines(code)
         except OSError:
             lineno = "?"
-        self.print_cyan(
+        self.print_cyan( #type: ignore
             "{indent}{description}: {name} @ {file_lineno}".format(
                 indent=self.get_dsl_debug_indent(example),
                 description=description,
@@ -306,25 +307,25 @@ class DSLDebugMixin:
             )
         )
 
-    def dsl_example(self, example, code):
+    def dsl_example(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "example", code)
 
-    def dsl_before(self, example, code):
+    def dsl_before(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "before", code)
 
-    def dsl_after(self, example, code):
+    def dsl_after(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "after", code)
 
-    def dsl_around(self, example, code):
+    def dsl_around(self, example : Example, code: Callable) -> None:
         self._dsl_print(example, "around", code)
 
-    def dsl_memoize(self, example, code):
+    def dsl_memoize(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "memoize", code)
 
-    def dsl_memoize_before(self, example, code):
+    def dsl_memoize_before(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "memoize_before", code)
 
-    def dsl_function(self, example, code):
+    def dsl_function(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "function", code)
 
 
@@ -342,7 +343,7 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
     Simple formatter that outputs "." when an example passes or "F" w
     """
 
-    def new_example(self, example):
+    def new_example(self, example: Example) -> None:
         super().new_example(example)
         if self.dsl_debug:
             print("")
@@ -373,15 +374,15 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
 
 
 class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
-    def get_dsl_debug_indent(self, example):
+    def get_dsl_debug_indent(self, example: Example) -> str:
         return "  " * (example.context.depth + 1)
 
-    def new_context(self, context):
+    def new_context(self, context: Context) -> None:
         self.print_white(
             "{}{}{}".format("  " * context.depth, "*" if context.focus else "", context)
         )
 
-    def _color_output(self):
+    def _color_output(self) -> bool:
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example: Example) -> None:
@@ -444,7 +445,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             % (total, cast(float, self.duration_secs)),
             end="",
         )
-        if self.import_secs > 2:
+        if self.import_secs and self.import_secs > 2:
             self.print_white("(Imports took: %.1fs)" % (self.import_secs))
         else:
             print("")
@@ -459,10 +460,10 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
 
 
 class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
-    def get_dsl_debug_indent(self, example):
+    def get_dsl_debug_indent(self, example: Example) -> str:
         return "  "
 
-    def new_example(self, example):
+    def new_example(self, example: Example) -> None:
         self.print_white(
             "{}{}: ".format(
                 "*" if example.context.focus else "", example.context.full_name
@@ -472,7 +473,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
         if self.dsl_debug:
             print("")
 
-    def _color_output(self):
+    def _color_output(self) -> bool:
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example: Example) -> None:
@@ -542,7 +543,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             % (total, cast(float, self.duration_secs)),
             end="",
         )
-        if self.import_secs > 2:
+        if self.import_secs and self.import_secs > 2:
             self.print_white("(Imports took: %.1fs)" % (self.import_secs))
         else:
             print("")
@@ -568,18 +569,18 @@ class Runner(object):
 
     def __init__(
         self,
-        contexts,
-        formatter,
-        shuffle=False,
-        seed=None,
-        focus=False,
-        fail_fast=False,
-        fail_if_focused=False,
-        names_text_filter=None,
-        names_regex_filter=None,
-        names_regex_exclude=None,
-        quiet=False,
-    ):
+        contexts: List[Context],
+        formatter: DocumentFormatter,
+        shuffle: bool=False,
+        seed: None=None,
+        focus: bool=False,
+        fail_fast: bool=False,
+        fail_if_focused: bool=False,
+        names_text_filter: Optional[str]=None,
+        names_regex_filter: Optional[Pattern]=None,
+        names_regex_exclude: Optional[Pattern]=None,
+        quiet: bool=False,
+    ) -> None:
         self.contexts = contexts
         self.formatter = formatter
         self.shuffle = shuffle
@@ -592,7 +593,7 @@ class Runner(object):
         self.names_regex_exclude = names_regex_exclude
         self.quiet = quiet
 
-    def _run_example(self, example):
+    def _run_example(self, example: Example) -> None:
         if example.focus and self.fail_if_focused:
             raise AssertionError(
                 "Focused example not allowed with --fail-if-focused"
@@ -651,7 +652,7 @@ class Runner(object):
         sys.stderr.flush()
         return exit_code
 
-    def _filter(self, example, focus):
+    def _filter(self, example: Example, focus: bool) -> bool:
         if focus and not example.focus:
             return False
 
@@ -670,7 +671,7 @@ class Runner(object):
         return True
 
     @property
-    def _all_examples(self):
+    def _all_examples(self) -> List[Example]:
         examples = [
             example for context in self.contexts for example in context.all_examples
         ]
@@ -681,7 +682,7 @@ class Runner(object):
         return examples
 
     @property
-    def _to_execute_examples(self):
+    def _to_execute_examples(self) -> List[Example]:
         examples = [
             example
             for example in self._all_examples
