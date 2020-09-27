@@ -54,7 +54,7 @@ def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
     return None
 
 
-MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Type], Optional[Any]]] = {
+MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Union["StrictMock", Type]], Optional[Any]]] = {
     unittest.mock.NonCallableMock: _extract_NonCallableMock_template
 }
 
@@ -260,7 +260,7 @@ def _wrap_signature_and_type_validation(value: Union["_DefaultMagic", Callable, 
 
     skip_first_arg = _skip_first_arg(template, attr_name)
 
-    def with_sig_and_type_validation(*args: Any, **kwargs: Any) -> Callable:
+    def with_sig_and_type_validation(*args: Any, **kwargs: Any) -> Any:
         if _validate_callable_signature(
             skip_first_arg, callable_template, template, attr_name, args, kwargs
         ):
