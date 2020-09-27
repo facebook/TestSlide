@@ -15,7 +15,7 @@ _restore_values: Dict[Tuple[Any, str], Any] = {}
 _unpatchers: Dict[Tuple[Any, str], Callable] = {}
 
 
-def unpatch_all_mocked_attributes():
+def unpatch_all_mocked_attributes() -> None:
     """
     This method must be called after every test unconditionally to remove all
     active patch_attribute() patches.
@@ -39,7 +39,7 @@ def patch_attribute(
     attribute: str,
     new_value: Any,
     allow_private: bool = False,
-    type_validation=True,
+    type_validation: bool=True,
 ) -> None:
     """
     Patch target's attribute with new_value. The target can be any Python
@@ -71,7 +71,7 @@ def patch_attribute(
                     "You can either use mock_callable() / mock_async_callable() instead."
                 )
 
-        def strict_mock_hasattr(obj, name):
+        def strict_mock_hasattr(obj: object, name: str) -> bool:
             try:
                 return hasattr(obj, name)
             except UndefinedAttribute:
