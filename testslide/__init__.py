@@ -47,6 +47,11 @@ if TYPE_CHECKING:
 if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
 
+if sys.version_info < (3, 8):
+    get_all_tasks = asyncio.Task.all_tasks
+else:
+    get_all_tasks = asyncio.all_tasks
+
 
 def _importer(target: str) -> Any:
     components = target.split(".")
@@ -64,6 +69,21 @@ def _importer(target: str) -> Any:
         import_path += ".%s" % comp
         thing = dot_lookup(thing, comp, import_path)
     return thing
+
+
+async def _async_ensure_no_leaked_tasks(coro):
+    before_example_tasks = get_all_tasks()
+    result = await coro
+    after_example_tasks = get_all_tasks()
+    new_still_running_tasks = set(after_example_tasks) - set(before_example_tasks)
+    if new_still_running_tasks:
+        tasks_str = "\n".join(str(task) for task in new_still_running_tasks)
+        raise RuntimeError(
+            "Some tasks were started but did not finish yet, are you missing "
+            f"an `await` somewhere?\nRunning tasks:\n {tasks_str}"
+        )
+
+    return result
 
 
 class _ContextData(object):
@@ -303,21 +323,24 @@ class _ExampleRunner:
                         before_code, context_data
                     )
                 self.formatter.dsl_example(self.example, self.example.code)
-                await self._fail_if_not_coroutine_function(
-                    self.example.code, context_data
+                await _async_ensure_no_leaked_tasks(
+                    self._fail_if_not_coroutine_function(
+                        self.example.code, context_data
+                    )
                 )
             after_functions: List[Callable] = []
             after_functions.extend(context_data._mock_callable_after_functions)
             after_functions.extend(self.example.context.all_after_functions)
             after_functions.extend(context_data._after_functions)
+
             for after_code in reversed(after_functions):
                 with aggregated_exceptions.catch():
                     self.formatter.dsl_after(self.example, after_code)
                     await self._fail_if_not_coroutine_function(after_code, context_data)
             aggregated_exceptions.raise_correct_exception()
             return
-        around_code = around_functions.pop()
 
+        around_code = around_functions.pop()
         wrapped_called: List[bool] = []
 
         async def async_wrapped() -> None:
