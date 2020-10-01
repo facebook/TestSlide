@@ -20,6 +20,7 @@ import types
 import unittest
 import warnings
 from contextlib import contextmanager
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -46,6 +47,24 @@ if TYPE_CHECKING:
 
 if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")
+
+if sys.version_info < (3, 7):
+
+    def asyncio_run(coro):
+        loop = asyncio.events.new_event_loop()
+        try:
+            loop.set_debug(True)
+            loop.run_until_complete(coro)
+        finally:
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            finally:
+                loop.close()
+
+
+else:
+    asyncio_run = partial(asyncio.run, debug=True)
+
 
 if sys.version_info < (3, 8):
     get_all_tasks = asyncio.Task.all_tasks
@@ -210,6 +229,15 @@ class _ContextData(object):
         """
         with self._sub_examples_agg_ex.catch():
             yield
+
+    def async_run(self, coro):
+        """
+        Runs the given coroutine in a new event loop, and ensuring there's no
+        task leakage.
+        """
+        result = asyncio_run(_async_ensure_no_leaked_tasks(coro))
+
+        return result
 
 
 class AggregatedExceptions(Exception):
@@ -422,18 +450,7 @@ class _ExampleRunner:
     def _async_run_all_hooks_and_example(self, context_data: _ContextData) -> None:
         coro = self._real_async_run_all_hooks_and_example(context_data)
         with self._raise_if_asyncio_warnings(context_data):
-            if sys.version_info < (3, 7):
-                loop = asyncio.events.new_event_loop()
-                try:
-                    loop.set_debug(True)
-                    loop.run_until_complete(coro)
-                finally:
-                    try:
-                        loop.run_until_complete(loop.shutdown_asyncgens())
-                    finally:
-                        loop.close()
-            else:
-                asyncio.run(coro, debug=True)
+            asyncio_run(coro)
 
     @staticmethod
     def _fail_if_coroutine_function(
