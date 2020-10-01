@@ -43,7 +43,7 @@ like this:
       assert self.memoize_before == "memoize_before"
       assert self.function == "function"
 
-The test runner will create a new event look to execute each example.
+The test runner will create a new event loop to execute each example.
 
 .. note::
 
@@ -184,3 +184,36 @@ Python's default threshold for triggering this event loop lock up failure is **1
 
   Finished 1 example(s) in 1.0s
     Successful: 1
+
+Leaked Tasks
+^^^^^^^^^^^^
+
+If your async code creates a task in the asyncio loop, but finished before that task has ended (ex. you forgot to await for it), testslide will catch it and fail the test.
+
+This is enabled by default for async tests, but to get that behaviour also when running async code from sync tests, for example:
+
+
+.. code-block:: python
+
+  import asyncio
+  from testslide.dsl import context
+
+  @context
+  def my_test_suite(context):
+        @context.example
+        def test_something_async(self):
+            asyncio.run(my_async_function())
+
+
+Has to use the `async_run` function from the context, so instead, you should use:
+
+.. code-block:: python
+
+  import asyncio
+  from testslide.dsl import context
+
+  @context
+  def my_test_suite(context):
+        @context.example
+        def test_something_async(self):
+            self.async_run(my_async_function())
