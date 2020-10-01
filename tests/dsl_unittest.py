@@ -24,6 +24,15 @@ from testslide.dsl import context, fcontext, xcontext
 from testslide.runner import QuietFormatter
 
 
+def _get_name_to_examples():
+    examples = {}
+    for all_top_level_context in Context.all_top_level_contexts:
+        for example in all_top_level_context.all_examples:
+            examples[example.name] = example
+
+    return examples
+
+
 class SomeTestCase(unittest.TestCase):
     """
     Used to test TestSlide and unittest.TestCase integration.
@@ -1950,11 +1959,7 @@ class TestPatchAttributeIntegration(TestDSLBase):
             def unpatching_works(self):
                 self.assertEqual(SomeClass.attribute, "original_value")
 
-        examples = {}
-
-        for all_top_level_context in Context.all_top_level_contexts:
-            for example in all_top_level_context.all_examples:
-                examples[example.name] = example
+        examples = _get_name_to_examples()
 
         self.run_example(examples["can patch attribute"])
         self.run_example(examples["unpatching works"])
@@ -1983,11 +1988,7 @@ class TestMockCallableIntegration(TestDSLBase):
                     ).and_assert_called_once()
                     assert os.getcwd() == "mocked_cwd"
 
-        examples = {}
-
-        for all_top_level_context in Context.all_top_level_contexts:
-            for example in all_top_level_context.all_examples:
-                examples[example.name] = example
+        examples = _get_name_to_examples()
 
         self.run_example(examples["expect pass"])
 
@@ -2023,16 +2024,30 @@ class TestMockAsyncCallableIntegration(TestDSLBase):
                     ).for_call().to_return_value("mocked").and_assert_called_once()
                     assert await SomeClass.do_something() == "mocked"
 
-        examples = {}
-
-        for all_top_level_context in Context.all_top_level_contexts:
-            for example in all_top_level_context.all_examples:
-                examples[example.name] = example
+        examples = _get_name_to_examples()
 
         self.run_example(examples["expect pass"])
 
         with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
             self.run_example(examples["expect fail"])
+
+    def test_leaked_tasks_fails_test_run(self):
+        async def dummy_async_func():
+            pass
+
+        @context
+        def fail_top(context):
+            @context.example
+            async def spawn_task_but_dont_await(self):
+                # once we stop supporting python 3.6 we can use
+                # asyncio.create_task instead
+                loop = asyncio.get_event_loop()
+                loop.create_task(dummy_async_func())
+
+        examples = _get_name_to_examples()
+
+        with self.assertRaisesRegex(RuntimeError, "Some tasks were started"):
+            self.run_example(examples["spawn task but dont await"])
 
 
 class TestMockConstructorIntegration(TestDSLBase):
