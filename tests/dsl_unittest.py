@@ -2081,37 +2081,6 @@ class TestMockConstructorIntegration(TestDSLBase):
             self.run_example(examples["expect fail"])
 
 
-class TestMock(TestDSLBase):
-    def test_mock_constructor_integration(self):
-        @context
-        def fail_top(context):
-            @context.sub_context
-            def fail_sub_context(context):
-                @context.example
-                def expect_fail(self):
-                    self.mock_constructor("subprocess", "Popen").for_call(
-                        ["cmd"]
-                    ).to_return_value("mocked_popen").and_assert_called_once()
-
-        @context
-        def pass_top(context):
-            @context.sub_context
-            def pass_sub_context(context):
-                @context.example
-                def expect_pass(self):
-                    self.mock_constructor("subprocess", "Popen").for_call(
-                        ["cmd"]
-                    ).to_return_value("mocked_popen").and_assert_called_once()
-                    assert subprocess.Popen(["cmd"]) == "mocked_popen"
-
-        examples = _get_name_to_examples()
-
-        self.run_example(examples["expect pass"])
-
-        with self.assertRaisesRegex(AssertionError, "calls did not match assertion"):
-            self.run_example(examples["expect fail"])
-
-
 class TestAsyncRun(TestDSLBase):
     def test_catches_leaked_tasks(self):
         async def dummy_async_func():
