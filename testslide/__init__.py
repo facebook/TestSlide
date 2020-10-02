@@ -72,6 +72,12 @@ else:
     get_all_tasks = asyncio.all_tasks
 
 
+class LeftOverActiveTasks(BaseException):
+    """Risen when unfinished asynchronous tasks are detected."""
+
+    pass
+
+
 def _importer(target: str) -> Any:
     components = target.split(".")
     import_path = components.pop(0)
@@ -97,7 +103,7 @@ async def _async_ensure_no_leaked_tasks(coro):
     new_still_running_tasks = set(after_example_tasks) - set(before_example_tasks)
     if new_still_running_tasks:
         tasks_str = "\n".join(str(task) for task in new_still_running_tasks)
-        raise RuntimeError(
+        raise LeftOverActiveTasks(
             "Some tasks were started but did not finish yet, are you missing "
             f"an `await` somewhere?\nRunning tasks:\n {tasks_str}"
         )

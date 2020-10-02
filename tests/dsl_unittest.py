@@ -16,6 +16,7 @@ from testslide import (
     AggregatedExceptions,
     Context,
     Example,
+    LeftOverActiveTasks,
     SlowCallback,
     _ExampleRunner,
     reset,
@@ -2046,7 +2047,7 @@ class TestMockAsyncCallableIntegration(TestDSLBase):
 
         examples = _get_name_to_examples()
 
-        with self.assertRaisesRegex(RuntimeError, "Some tasks were started"):
+        with self.assertRaisesRegex(LeftOverActiveTasks, "Some tasks were started"):
             self.run_example(examples["spawn task but dont await"])
 
 
@@ -2100,5 +2101,5 @@ class TestAsyncRun(TestDSLBase):
 
         examples = _get_name_to_examples()
 
-        with self.assertRaisesRegex(RuntimeError, "Some tasks were started"):
+        with self.assertRaisesRegex(LeftOverActiveTasks, "Some tasks were started"):
             self.run_example(examples["raise on leaked task"])
