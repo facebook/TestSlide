@@ -62,6 +62,7 @@ class _MockConstructorDSL(_MockCallableDSL):
     """
     Specialized version of _MockCallableDSL to call __new__ with correct args
     """
+
     _NAME: str = "mock_constructor"
 
     def __init__(
