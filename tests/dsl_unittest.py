@@ -2040,10 +2040,11 @@ class TestMockAsyncCallableIntegration(TestDSLBase):
         def fail_top(context):
             @context.example
             async def spawn_task_but_dont_await(self):
-                # once we stop supporting python 3.6 we can use
-                # asyncio.create_task instead
-                loop = asyncio.get_event_loop()
-                loop.create_task(dummy_async_func())
+                if sys.version_info < (3, 7):
+                    loop = asyncio.get_event_loop()
+                    loop.create_task(dummy_async_func())
+                else:
+                    asyncio.create_task(dummy_async_func())
 
         examples = _get_name_to_examples()
 
@@ -2088,10 +2089,11 @@ class TestAsyncRun(TestDSLBase):
             pass
 
         async def spawn_task_but_dont_await():
-            # once we stop supporting python 3.6 we can use
-            # asyncio.create_task instead
-            loop = asyncio.get_event_loop()
-            loop.create_task(dummy_async_func())
+            if sys.version_info < (3, 7):
+                loop = asyncio.get_event_loop()
+                loop.create_task(dummy_async_func())
+            else:
+                asyncio.create_task(dummy_async_func())
 
         @context
         def fail_top(context):
