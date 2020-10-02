@@ -6,10 +6,15 @@ import copy
 import dis
 import inspect
 import os.path
-from typing import Any, Optional
+from types import FrameType
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
 
 import testslide.lib
 import testslide.mock_callable
+
+if TYPE_CHECKING:
+    # Hack to enable typing information for mypy
+    from testslide.mock_callable import _CallableMock, _YieldValuesRunner  # noqa: F401
 
 
 class UndefinedAttribute(BaseException):
@@ -18,13 +23,15 @@ class UndefinedAttribute(BaseException):
     Inherits from BaseException to avoid being caught by tested code.
     """
 
-    def __init__(self, strict_mock, name, extra_msg=None):
+    def __init__(
+        self, strict_mock: "StrictMock", name: str, extra_msg: Optional[str] = None
+    ) -> None:
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
         self.extra_msg = extra_msg
 
-    def __str__(self):
+    def __str__(self) -> str:
         message = (
             f"'{self.name}' is not set.\n"
             f"{self.strict_mock} must have a value set for this attribute "
@@ -42,12 +49,12 @@ class NonExistentAttribute(BaseException):
     Inherits from BaseException to avoid being caught by tested code.
     """
 
-    def __init__(self, strict_mock, name):
+    def __init__(self, strict_mock: "StrictMock", name: str) -> None:
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"'{self.name}' can not be set.\n"
             f"{self.strict_mock} template class does not have this attribute "
@@ -62,12 +69,12 @@ class NonCallableValue(BaseException):
     a StrictMock instance.
     """
 
-    def __init__(self, strict_mock, name):
+    def __init__(self, strict_mock: "StrictMock", name: str) -> None:
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"'{self.name}' can not be set with a non-callable value.\n"
             f"{self.strict_mock} template class requires this attribute to "
@@ -81,12 +88,12 @@ class NonAwaitableReturn(BaseException):
     callable function.
     """
 
-    def __init__(self, strict_mock, name):
+    def __init__(self, strict_mock: "StrictMock", name: str) -> None:
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"'{self.name}' can not be set with a callable that does not "
             "return an awaitable.\n"
@@ -102,23 +109,23 @@ class UnsupportedMagic(BaseException):
     instance.
     """
 
-    def __init__(self, strict_mock, name):
+    def __init__(self, strict_mock: "StrictMock", name: str) -> None:
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"setting '{self.name}' is not supported."
 
 
 class _DefaultMagic:
     CONTEXT_MANAGER_METHODS = ["__enter__", "__exit__", "__aenter__", "__aexit__"]
 
-    def __init__(self, strict_mock, name):
+    def __init__(self, strict_mock: "StrictMock", name: str):
         self.strict_mock = strict_mock
         self.name = name
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> None:
         message = None
         if self.name in self.CONTEXT_MANAGER_METHODS:
             message = (
@@ -127,10 +134,10 @@ class _DefaultMagic:
             )
         raise UndefinedAttribute(self.strict_mock, self.name, message)
 
-    def __copy__(self):
+    def __copy__(self) -> "_DefaultMagic":
         return type(self)(strict_mock=self.strict_mock, name=self.name)
 
-    def __deepcopy__(self, memo=None):
+    def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "_DefaultMagic":
         if memo is None:
             memo = {}
         self_copy = type(self)(strict_mock=self.strict_mock, name=self.name)
@@ -147,35 +154,37 @@ class _MethodProxy(object):
     access is forwarded to the new value.
     """
 
-    def __init__(self, value, callable_value=None):
+    def __init__(self, value: Any, callable_value: Optional[Callable] = None) -> None:
         self.__dict__["_value"] = value
         self.__dict__["_callable_value"] = callable_value if callable_value else value
 
-    def __get__(self, instance, owner=None):
+    def __get__(
+        self, instance: "StrictMock", owner: Optional[Type["StrictMock"]] = None
+    ) -> Union[object, Callable]:
         if self.__dict__["_value"] is self.__dict__["_callable_value"]:
             return self.__dict__["_callable_value"]
         else:
             return self
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> str:
         return getattr(self.__dict__["_value"], name)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: str) -> None:
         return setattr(self.__dict__["_value"], name, value)
 
-    def __delattr__(self, name):
+    def __delattr__(self, name: str) -> None:
         return delattr(self.__dict__["_value"], name)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Optional[Any]:
         return self.__dict__["_callable_value"](*args, **kwargs)
 
-    def __copy__(self):
+    def __copy__(self) -> "_MethodProxy":
         return type(self)(
             callable_value=self.__dict__["_callable_value"],
             value=self.__dict__["_value"],
         )
 
-    def __deepcopy__(self, memo=None):
+    def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "_MethodProxy":
         if memo is None:
             memo = {}
         self_copy = type(self)(
@@ -347,13 +356,13 @@ class StrictMock(object):
 
     def __new__(
         cls,
-        template=None,
-        runtime_attrs=None,
-        name=None,
-        default_context_manager=False,
-        type_validation=True,
-        attributes_to_skip_type_validation=[],
-    ):
+        template: Optional[type] = None,
+        runtime_attrs: Optional[List[Any]] = None,
+        name: Optional[str] = None,
+        default_context_manager: bool = False,
+        type_validation: bool = True,
+        attributes_to_skip_type_validation: List[str] = [],
+    ) -> "StrictMock":
         """
         For every new instance of StrictMock we dynamically create a subclass of
         StrictMock and return an instance of it. This allows us to use this new
@@ -368,7 +377,7 @@ class StrictMock(object):
         strict_mock_instance = object.__new__(strict_mock_subclass)
         return strict_mock_instance
 
-    def _setup_magic_methods(self):
+    def _setup_magic_methods(self) -> None:
         """
         Populate all template's magic methods with expected default behavior.
         This is important as things such as bool() depend on they existing
@@ -398,7 +407,7 @@ class StrictMock(object):
                 ):
                     setattr(self, name, _DefaultMagic(self, name))
 
-    def _setup_default_context_manager(self, default_context_manager):
+    def _setup_default_context_manager(self, default_context_manager: bool) -> None:
         if self._template and default_context_manager:
             if hasattr(self._template, "__enter__") and hasattr(
                 self._template, "__exit__"
@@ -418,7 +427,7 @@ class StrictMock(object):
                 self.__aenter__ = aenter
                 self.__aexit__ = aexit
 
-    def _get_caller_frame(self, depth):
+    def _get_caller_frame(self, depth: int) -> FrameType:
         # Adding extra 3 to account for the stack:
         #   _get_caller_frame
         #   _get_caller
@@ -432,9 +441,9 @@ class StrictMock(object):
 
             current_frame = current_frame.f_back
 
-        return current_frame
+        return current_frame  # type: ignore
 
-    def _get_caller(self, depth):
+    def _get_caller(self, depth: int) -> Optional[str]:
         # Doing inspect.stack will retrieve the whole stack, including context
         # and that is really slow, this only retrieves the minimum, and does
         # not read the file contents.
@@ -455,13 +464,13 @@ class StrictMock(object):
 
     def __init__(
         self,
-        template=None,
-        runtime_attrs=None,
-        name=None,
-        default_context_manager=False,
-        type_validation=True,
-        attributes_to_skip_type_validation=[],
-    ):
+        template: Optional[type] = None,
+        runtime_attrs: Optional[List[Any]] = None,
+        name: Optional[str] = None,
+        default_context_manager: bool = False,
+        type_validation: bool = True,
+        attributes_to_skip_type_validation: List[str] = [],
+    ) -> None:
         """
         template: Template class to be used as a template for the mock.
         runtime_attrs: Often attributes are created within an instance's
@@ -490,10 +499,10 @@ class StrictMock(object):
             "_attributes_to_skip_type_validation"
         ] = attributes_to_skip_type_validation
 
-        caller_frame = inspect.currentframe().f_back
+        caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
-        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
         self.__dict__["_caller_frame_info"] = caller_frame_info
 
         self._setup_magic_methods()
@@ -501,11 +510,11 @@ class StrictMock(object):
         self._setup_default_context_manager(default_context_manager)
 
     @property  # type: ignore
-    def __class__(self):
+    def __class__(self) -> type:
         return self._template if self._template is not None else type(self)
 
     @property
-    def _template(self):
+    def _template(self) -> None:
         import testslide.mock_constructor  # Avoid cyclic dependencies
 
         # If the template class was mocked with mock_constructor(), this will
@@ -514,11 +523,11 @@ class StrictMock(object):
         return testslide.mock_constructor._get_class_or_mock(self.__dict__["_template"])
 
     @property
-    def _runtime_attrs(self):
+    def _runtime_attrs(self) -> Optional[List[Any]]:
         return self.__dict__["_runtime_attrs"]
 
-    def _template_has_attr(self, name):
-        def get_class_init(klass):
+    def _template_has_attr(self, name: str) -> bool:
+        def get_class_init(klass: type) -> Callable:
             import testslide.mock_constructor  # Avoid cyclic dependencies
 
             if testslide.mock_constructor._is_mocked_class(klass):
@@ -531,9 +540,9 @@ class StrictMock(object):
                     original_class, instance=None, owner=mocked_class
                 )
             else:
-                return klass.__init__
+                return klass.__init__  # type: ignore
 
-        def is_runtime_attr():
+        def is_runtime_attr() -> bool:
             if self._template:
                 for klass in self._template.mro():
                     template_init = get_class_init(klass)
@@ -549,16 +558,16 @@ class StrictMock(object):
 
         return (
             hasattr(self._template, name)
-            or name in self._runtime_attrs
+            or name in self._runtime_attrs  # type: ignore
             or name in getattr(self._template, "__slots__", [])
             or is_runtime_attr()
         )
 
     @staticmethod
-    def _is_magic_method(name):
+    def _is_magic_method(name: str) -> bool:
         return name.startswith("__") and name.endswith("__")
 
-    def _validate_attribute_type(self, name, value):
+    def _validate_attribute_type(self, name: str, value: Any) -> None:
         if (
             not self.__dict__["_type_validation"]
             or name in self.__dict__["_attributes_to_skip_type_validation"]
@@ -570,7 +579,7 @@ class StrictMock(object):
             if name in annotations:
                 testslide.lib._validate_argument_type(annotations[name], name, value)
 
-    def _validate_and_wrap_mock_value(self, name, value):
+    def _validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
         if self._template:
             if not self._template_has_attr(name):
                 raise NonExistentAttribute(self, name)
@@ -648,7 +657,7 @@ class StrictMock(object):
 
         return value
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         if self._is_magic_method(name):
             # ...check whether we're allowed to mock...
             if name in self._UNSETTABLE_MAGICS or (
@@ -664,19 +673,19 @@ class StrictMock(object):
         mock_value = self._validate_and_wrap_mock_value(name, value)
         setattr(type(self), name, mock_value)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if self._template and self._template_has_attr(name):
             raise UndefinedAttribute(self, name)
         else:
             raise AttributeError(f"'{name}' was not set for {self}.")
 
-    def __delattr__(self, name):
+    def __delattr__(self, name: str) -> None:
         if name in type(self).__dict__:
             delattr(type(self), name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         template_str = (
-            " template={}.{}".format(self._template.__module__, self._template.__name__)
+            " template={}.{}".format(self._template.__module__, self._template.__name__)  # type: ignore
             if self._template
             else ""
         )
@@ -695,10 +704,10 @@ class StrictMock(object):
             id(self), name=name_str, template=template_str, caller=caller_str
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
-    def _get_copy(self):
+    def _get_copy(self) -> "StrictMock":
         self_copy = type(self)(
             template=self._template,
             runtime_attrs=self._runtime_attrs,
@@ -709,7 +718,7 @@ class StrictMock(object):
         self_copy.__dict__["__caller"] = self._get_caller(2)
         return self_copy
 
-    def _get_copyable_attrs(self, self_copy):
+    def _get_copyable_attrs(self, self_copy: "StrictMock") -> List[str]:
         attrs = []
         for name in type(self).__dict__:
             if name not in self_copy.__dict__:
@@ -722,7 +731,7 @@ class StrictMock(object):
                 attrs.append(name)
         return attrs
 
-    def __copy__(self):
+    def __copy__(self) -> "StrictMock":
         self_copy = self._get_copy()
 
         for name in self._get_copyable_attrs(self_copy):
@@ -730,7 +739,7 @@ class StrictMock(object):
 
         return self_copy
 
-    def __deepcopy__(self, memo=None):
+    def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "StrictMock":
         if memo is None:
             memo = {}
         self_copy = self._get_copy()
@@ -742,11 +751,11 @@ class StrictMock(object):
         return self_copy
 
 
-def _extract_StrictMock_template(mock_obj) -> Optional[Any]:
+def _extract_StrictMock_template(mock_obj: StrictMock) -> Optional[Any]:
     if "_template" in mock_obj.__dict__ and mock_obj._template is not None:
         return mock_obj._template
 
     return None
 
 
-testslide.lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template
+testslide.lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template  # type: ignore
