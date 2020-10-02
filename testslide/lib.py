@@ -8,7 +8,7 @@ import inspect
 import os
 import sys
 import unittest.mock
-from typing import TypeVar, Union, Any, Callable, Dict, Optional, Tuple, Type
+from typing import Union, Any, Callable, Dict, Optional, Tuple, Type
 from types import FrameType
 
 import typeguard

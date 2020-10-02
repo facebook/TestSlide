@@ -11,7 +11,7 @@ from . import Context as _Context
 from . import Skip  # noqa: F401
 from functools import partial
 from testslide import Context, TestCase
-from typing import Callable, Optional, Type, Union, Any
+from typing import Callable, Optional, Union, Any
 
 
 def _validate_parameter(code: Callable, name: str, index: int) -> None:

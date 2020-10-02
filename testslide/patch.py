@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
-from typing import Optional, Type, Union, Any, Callable, Dict
+from typing import Optional, Union, Any, Callable, Dict
 
 
 class _DescriptorProxy(object):

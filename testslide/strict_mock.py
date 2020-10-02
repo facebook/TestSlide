@@ -13,7 +13,7 @@ import testslide.mock_callable
 
 if False:
     # Hack to enable typing information for mypy
-    from testslide.mock_callable import _CallableMock, _YieldValuesRunner
+    from testslide.mock_callable import _CallableMock, _YieldValuesRunner # noqa: F401
 
 
 class UndefinedAttribute(BaseException):

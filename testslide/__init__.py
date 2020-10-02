@@ -42,7 +42,6 @@ from testslide.strict_mock import StrictMock  # noqa
 if False:
     # hack for Mypy
     from testslide.runner import BaseFormatter
-    from unittest.mock import Mock
 
 if sys.version_info < (3, 6):
     raise RuntimeError("Python >=3.6 required.")

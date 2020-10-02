@@ -10,7 +10,7 @@ import sys
 import unittest
 from contextlib import contextmanager
 from time import time
-from typing import Callable, List, Iterator, ValuesView, Type, Any, Pattern, Optional
+from typing import Callable, List, Iterator, Type, Any, Pattern, Optional
 import testslide.dsl
 
 from . import Context, _TestSlideTestResult, TestCase

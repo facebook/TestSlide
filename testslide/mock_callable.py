@@ -18,8 +18,8 @@ from inspect import Traceback
 from unittest.mock import Mock
 
 if False:
-    from testslide.matchers import RegexMatches
-    from testslide.mock_constructor import _MockConstructorDSL
+    from testslide.matchers import RegexMatches # noqa: F401
+    from testslide.mock_constructor import _MockConstructorDSL # noqa: F401
 
 
 def mock_callable(
