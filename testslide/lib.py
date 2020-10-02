@@ -54,12 +54,14 @@ def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
     return None
 
 
-MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Union["StrictMock", Type]], Optional[Any]]] = {
-    unittest.mock.NonCallableMock: _extract_NonCallableMock_template
-}
+MOCK_TEMPLATE_EXTRACTORS: Dict[
+    Type, Callable[[Union["StrictMock", Type]], Optional[Any]]
+] = {unittest.mock.NonCallableMock: _extract_NonCallableMock_template}
 
 
-def _extract_mock_template(mock: Union[Mock, "StrictMock"]) -> Optional[Union[Type[str], Type[dict], Type[int]]]:
+def _extract_mock_template(
+    mock: Union[Mock, "StrictMock"]
+) -> Optional[Union[Type[str], Type[dict], Type[int]]]:
     template = None
     for mock_class, extract_mock_template in MOCK_TEMPLATE_EXTRACTORS.items():
         if isinstance(mock, mock_class):
@@ -99,7 +101,12 @@ def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
 
 def _validate_callable_signature(
-    skip_first_arg: bool, callable_template: Callable, template: Any, attr_name: str, args: Any, kwargs: Dict[str, Any]
+    skip_first_arg: bool,
+    callable_template: Callable,
+    template: Any,
+    attr_name: str,
+    args: Any,
+    kwargs: Dict[str, Any],
 ) -> bool:
     if skip_first_arg and not inspect.ismethod(callable_template):
         callable_template = functools.partial(callable_template, None)
@@ -246,7 +253,12 @@ def _skip_first_arg(template: Any, attr_name: str) -> bool:
     return False
 
 
-def _wrap_signature_and_type_validation(value: Union["_DefaultMagic", Callable, "_CallableMock"], template: Any, attr_name: str, type_validation: bool) -> Union[Callable, "_CallableMock"]:
+def _wrap_signature_and_type_validation(
+    value: Union["_DefaultMagic", Callable, "_CallableMock"],
+    template: Any,
+    attr_name: str,
+    type_validation: bool,
+) -> Union[Callable, "_CallableMock"]:
     if _is_a_mock(template):
         template = _extract_mock_template(template)
         if not template:
@@ -273,7 +285,9 @@ def _wrap_signature_and_type_validation(value: Union["_DefaultMagic", Callable, 
     return with_sig_and_type_validation
 
 
-def _validate_return_type(template: Union[Mock, Callable], value: Any, caller_frame_info: Traceback) -> None:
+def _validate_return_type(
+    template: Union[Mock, Callable], value: Any, caller_frame_info: Traceback
+) -> None:
     try:
         argspec = inspect.getfullargspec(template)
     except TypeError:

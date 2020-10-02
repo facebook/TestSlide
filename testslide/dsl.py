@@ -26,7 +26,9 @@ def _validate_parameter(code: Callable, name: str, index: int) -> None:
 def _require_context(action: str) -> Callable:
     def wrapper(func: Callable) -> Callable:
         @functools.wraps(func)
-        def func_with_context_validation(self: "_DSLContext", *args: Any, **kwargs: Any) -> None:
+        def func_with_context_validation(
+            self: "_DSLContext", *args: Any, **kwargs: Any
+        ) -> None:
             if not self.current_context:
                 raise TypeError("Can not {} without a parent context".format(action))
             return func(self, *args, **kwargs)
@@ -42,20 +44,27 @@ class _DSLContext(object):
     directly.
     """
 
-    def __init__(self, current_context: Optional[Context]=None, skip: bool=False, focus: bool=False) -> None:
+    def __init__(
+        self,
+        current_context: Optional[Context] = None,
+        skip: bool = False,
+        focus: bool = False,
+    ) -> None:
         self.current_context = current_context
         self.skip = skip
         self.focus = focus
 
     @staticmethod
-    def _not_callable(*args: Any, **kwargs: Any) -> None: 
+    def _not_callable(*args: Any, **kwargs: Any) -> None:
         raise BaseException("This function should not be called outside test code.")
 
     @staticmethod
     def _name_from_function(func: Callable) -> str:
         return _sub("_", " ", func.__name__)
 
-    def _create_context(self, name: str, context_code: Callable, *args: Any, **kwargs:Any) -> Callable:
+    def _create_context(
+        self, name: str, context_code: Callable, *args: Any, **kwargs: Any
+    ) -> Callable:
         if not self.current_context:
             new_context = _Context(name, skip=self.skip, focus=self.focus)
         else:
@@ -102,21 +111,29 @@ class _DSLContext(object):
     # Examples
 
     @_require_context("create example")
-    def _create_example(self, name: Optional[str], example_code: Callable, skip: bool, focus: bool) -> Callable:
+    def _create_example(
+        self, name: Optional[str], example_code: Callable, skip: bool, focus: bool
+    ) -> Callable:
         if name is None:
             name = self._name_from_function(example_code)
         _validate_parameter(example_code, "self", 0)
-        self.current_context.add_example(name, example_code, skip=skip, focus=focus) #type: ignore
+        self.current_context.add_example(name, example_code, skip=skip, focus=focus)  # type: ignore
         return self._not_callable
 
-    def example(self, arg: Optional[Union[str, Callable]]=None, skip: bool=False, focus: bool=False, skip_unless: bool=True) -> Union[partial, Callable]:
+    def example(
+        self,
+        arg: Optional[Union[str, Callable]] = None,
+        skip: bool = False,
+        focus: bool = False,
+        skip_unless: bool = True,
+    ) -> Union[partial, Callable]:
         skip = skip or not skip_unless
         if callable(arg):
-            example_code = arg 
+            example_code = arg
             name = self._name_from_function(example_code)
             return self._create_example(name, example_code, skip=skip, focus=focus)
         else:
-            name = arg #type: ignore
+            name = arg  # type: ignore
             return functools.partial(self._create_example, name, skip=skip, focus=focus)
 
     def xexample(self, arg: Union[str, Callable]) -> Callable:
@@ -128,9 +145,11 @@ class _DSLContext(object):
     # Shared contexts
 
     @_require_context("create a shared context")
-    def _create_shared_context(self, name: str, shared_context_code: Callable) -> Callable:
+    def _create_shared_context(
+        self, name: str, shared_context_code: Callable
+    ) -> Callable:
         _validate_parameter(shared_context_code, "context", 0)
-        self.current_context.add_shared_context(name, shared_context_code) #type: ignore
+        self.current_context.add_shared_context(name, shared_context_code)  # type: ignore
         return self._not_callable
 
     def shared_context(self, arg: Union[str, Callable]) -> Union[partial, Callable]:
@@ -144,21 +163,21 @@ class _DSLContext(object):
 
     @_require_context("merge a shared context")
     def merge_context(self, name: str, *args: Any, **kwargs: Any) -> None:
-        if name not in self.current_context.all_shared_contexts: #type: ignore
+        if name not in self.current_context.all_shared_contexts:  # type: ignore
             raise TypeError('Shared context "{}" does not exist'.format(name))
-        self.current_context.all_shared_contexts[name](self, *args, **kwargs) #type: ignore
+        self.current_context.all_shared_contexts[name](self, *args, **kwargs)  # type: ignore
 
     @_require_context("merge a TestCase")
     def merge_test_case(self, test_case: "TestCase", attr_name: str) -> Callable:
-        self.current_context.add_test_case(test_case, attr_name) #type:ignore
+        self.current_context.add_test_case(test_case, attr_name)  # type:ignore
         return self._not_callable
 
     @_require_context("nest a shared context")
     def nest_context(self, name: str, *args: Any, **kwargs: Any) -> None:
-        if name not in self.current_context.all_shared_contexts: #type:ignore
+        if name not in self.current_context.all_shared_contexts:  # type:ignore
             raise TypeError('Shared context "{}" does not exist'.format(name))
         self._create_context(
-            name, self.current_context.all_shared_contexts[name], *args, **kwargs #type: ignore
+            name, self.current_context.all_shared_contexts[name], *args, **kwargs  # type: ignore
         )
 
     # Helper function
@@ -166,13 +185,18 @@ class _DSLContext(object):
     @_require_context("create functions")
     def function(self, function_code: Callable) -> Callable:
         _validate_parameter(function_code, "self", 0)
-        self.current_context.add_function(function_code.__name__, function_code) #type: ignore
+        self.current_context.add_function(function_code.__name__, function_code)  # type: ignore
         return self._not_callable
 
     # Memoizable attributes
 
     @_require_context("create memoizable attributes")
-    def memoize(self, name_or_code: Optional[Union[str, Callable]]=None, memoizable_code: Optional[Callable]=None, **kwargs: Any) -> Callable:
+    def memoize(
+        self,
+        name_or_code: Optional[Union[str, Callable]] = None,
+        memoizable_code: Optional[Callable] = None,
+        **kwargs: Any,
+    ) -> Callable:
         _memoizable_code: Callable
         if name_or_code:
             if kwargs:
@@ -181,10 +205,10 @@ class _DSLContext(object):
                 name = name_or_code
                 _memoizable_code = memoizable_code
             else:  # used as decorator
-                name = name_or_code.__name__ #type: ignore
-                _memoizable_code = name_or_code #type: ignore
+                name = name_or_code.__name__  # type: ignore
+                _memoizable_code = name_or_code  # type: ignore
             _validate_parameter(_memoizable_code, "self", 0)
-            self.current_context.add_memoized_attribute(name, _memoizable_code) #type: ignore
+            self.current_context.add_memoized_attribute(name, _memoizable_code)  # type: ignore
         else:  # kwargs
             if name_or_code or memoizable_code:
                 raise ValueError("Invalid arguments!")
@@ -193,18 +217,22 @@ class _DSLContext(object):
         return self._not_callable
 
     @_require_context("create a memoize before attribute")
-    def memoize_before(self, name_or_code: Union[str, Callable], memoizable_code: Optional[Callable]=None) -> Callable:
-        _memoizable_code : Callable
+    def memoize_before(
+        self,
+        name_or_code: Union[str, Callable],
+        memoizable_code: Optional[Callable] = None,
+    ) -> Callable:
+        _memoizable_code: Callable
         if memoizable_code:  # Got a lambda
             name = name_or_code
             _memoizable_code = memoizable_code
         else:  # Got a function
-            name = name_or_code.__name__ #type: ignore
-            _memoizable_code = name_or_code #type: ignore
+            name = name_or_code.__name__  # type: ignore
+            _memoizable_code = name_or_code  # type: ignore
 
         _validate_parameter(_memoizable_code, "self", 0)
 
-        self.current_context.add_memoized_attribute(name, _memoizable_code, before=True) #type: ignore
+        self.current_context.add_memoized_attribute(name, _memoizable_code, before=True)  # type: ignore
 
         return self._not_callable
 
@@ -221,7 +249,7 @@ class _DSLContext(object):
     @_require_context("register after hook")
     def after(self, after_code: Callable) -> Callable:
         _validate_parameter(after_code, "self", 0)
-        self.current_context.after_functions.append(after_code) #type: ignore
+        self.current_context.after_functions.append(after_code)  # type: ignore
         return self._not_callable
 
     @_require_context("register around hook")

@@ -39,7 +39,7 @@ def patch_attribute(
     attribute: str,
     new_value: Any,
     allow_private: bool = False,
-    type_validation: bool=True,
+    type_validation: bool = True,
 ) -> None:
     """
     Patch target's attribute with new_value. The target can be any Python

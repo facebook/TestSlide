@@ -38,13 +38,15 @@ def _filename_to_module_name(name: str) -> str:
 
 def _get_all_test_case_subclasses() -> List[TestCase]:
     def get_all_subclasses(base: Type[unittest.TestCase]) -> List[TestCase]:
-        return list({ #type: ignore
-            "{}.{}".format(c.__module__, c.__name__): c
-            for c in (
-                base.__subclasses__() #type: ignore
-                + [g for s in base.__subclasses__() for g in get_all_subclasses(s)] #type: ignore
-            )
-        }.values())
+        return list(  # type: ignore
+            {
+                "{}.{}".format(c.__module__, c.__name__): c
+                for c in (
+                    base.__subclasses__()  # type: ignore
+                    + [g for s in base.__subclasses__() for g in get_all_subclasses(s)]  # type: ignore
+                )
+            }.values()
+        )
 
     return get_all_subclasses(unittest.TestCase)
 
@@ -92,7 +94,9 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
 
         # This extra method is needed so context_code is evaluated with different
         # values of test_case.
-        def get_context_code(test_case: unittest.TestCase) -> Callable[[testslide.dsl._DSLContext], None]:
+        def get_context_code(
+            test_case: unittest.TestCase,
+        ) -> Callable[[testslide.dsl._DSLContext], None]:
             def context_code(context: testslide.dsl._DSLContext) -> None:
 
                 for test_method_name in test_method_names:
@@ -110,11 +114,11 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
                         test_case.tearDownClass()
 
                     # Same trick as above.
-                    def gen_example_code(test_method_name : str) -> Callable:
+                    def gen_example_code(test_method_name: str) -> Callable:
                         def example_code(self: Any) -> None:
                             with test_result() as result:
                                 with setup_and_teardown():
-                                    test_case(methodName=test_method_name)( #type: ignore
+                                    test_case(methodName=test_method_name)(  # type: ignore
                                         result=result
                                     )
 
@@ -138,7 +142,7 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
 
             return context_code
 
-        testslide.dsl.context("{}.{}".format(test_case.__module__, test_case.__name__))( #type: ignore
+        testslide.dsl.context("{}.{}".format(test_case.__module__, test_case.__name__))(  # type: ignore
             get_context_code(test_case)
         )
 
@@ -276,7 +280,12 @@ class Cli(object):
             )
         return parser
 
-    def __init__(self, args: Any, default_trim_path_prefix: Optional[str]=None, modules:Optional[List[str]]=None):
+    def __init__(
+        self,
+        args: Any,
+        default_trim_path_prefix: Optional[str] = None,
+        modules: Optional[List[str]] = None,
+    ):
         self.args = args
         self._default_trim_path_prefix = (
             default_trim_path_prefix
@@ -287,7 +296,9 @@ class Cli(object):
         self._modules = modules
 
     @staticmethod
-    def _do_imports(import_module_names: List[str], profile_threshold_ms: Optional[int]=None) -> float:
+    def _do_imports(
+        import_module_names: List[str], profile_threshold_ms: Optional[int] = None
+    ) -> float:
         def import_all() -> None:
             for module_name in import_module_names:
                 __import__(module_name, level=0)
@@ -320,35 +331,35 @@ class Cli(object):
     def _get_config_from_parsed_args(self, parsed_args: Any) -> _Config:
         config = _Config()
 
-        config.profile_threshold_ms = ( #type: ignore
+        config.profile_threshold_ms = (  # type: ignore
             parsed_args.import_profiler[0] if parsed_args.import_profiler else None
         )
 
-        config.format = parsed_args.format #type: ignore
-        config.force_color = parsed_args.force_color #type: ignore 
-        config.trim_path_prefix = parsed_args.trim_path_prefix[0] #type: ignore 
-        config.show_testslide_stack_trace = parsed_args.show_testslide_stack_trace #type: ignore 
-        config.shuffle = parsed_args.shuffle #type: ignore 
-        config.list = parsed_args.list #type: ignore
-        config.seed = parsed_args.seed[0] if parsed_args.seed else None #type: ignore 
-        config.focus = parsed_args.focus #type: ignore 
-        config.fail_if_focused = parsed_args.fail_if_focused #type: ignore 
-        config.fail_fast = parsed_args.fail_fast #type: ignore
-        config.names_text_filter = ( #type: ignore
-            parsed_args.filter_text[0] if parsed_args.filter_text else None 
+        config.format = parsed_args.format  # type: ignore
+        config.force_color = parsed_args.force_color  # type: ignore
+        config.trim_path_prefix = parsed_args.trim_path_prefix[0]  # type: ignore
+        config.show_testslide_stack_trace = parsed_args.show_testslide_stack_trace  # type: ignore
+        config.shuffle = parsed_args.shuffle  # type: ignore
+        config.list = parsed_args.list  # type: ignore
+        config.seed = parsed_args.seed[0] if parsed_args.seed else None  # type: ignore
+        config.focus = parsed_args.focus  # type: ignore
+        config.fail_if_focused = parsed_args.fail_if_focused  # type: ignore
+        config.fail_fast = parsed_args.fail_fast  # type: ignore
+        config.names_text_filter = (  # type: ignore
+            parsed_args.filter_text[0] if parsed_args.filter_text else None
         )
-        config.names_regex_filter = ( #type: ignore
+        config.names_regex_filter = (  # type: ignore
             parsed_args.filter_regex[0] if parsed_args.filter_regex else None
         )
-        config.names_regex_exclude = ( #type: ignore 
+        config.names_regex_exclude = (  # type: ignore
             parsed_args.exclude_regex[0] if parsed_args.exclude_regex else None
         )
-        config.quiet = parsed_args.quiet #type: ignore 
-        config.dsl_debug = parsed_args.dsl_debug #type: ignore
+        config.quiet = parsed_args.quiet  # type: ignore
+        config.dsl_debug = parsed_args.dsl_debug  # type: ignore
         if self._modules:
-            config.import_module_names = self._modules #type: ignore
+            config.import_module_names = self._modules  # type: ignore
         else:
-            config.import_module_names = [ #type: ignore
+            config.import_module_names = [  # type: ignore
                 _filename_to_module_name(test_file)
                 for test_file in parsed_args.test_files
             ]
@@ -359,25 +370,25 @@ class Cli(object):
             parsed_args = self.parser.parse_args(self.args)
         except SystemExit as e:
             return e.code
-        config = self._get_config_from_parsed_args(parsed_args) #type: ignore
+        config = self._get_config_from_parsed_args(parsed_args)  # type: ignore
 
-        if config.profile_threshold_ms is not None: #type: ignore
+        if config.profile_threshold_ms is not None:  # type: ignore
             import_secs = self._do_imports(
-                config.import_module_names, config.profile_threshold_ms #type: ignore
+                config.import_module_names, config.profile_threshold_ms  # type: ignore
             )
             return 0
         else:
-            import_secs = self._load_all_examples(config.import_module_names) #type: ignore
-            formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format]( #type: ignore
-                import_module_names=config.import_module_names, #type: ignore
-                force_color=config.force_color, #type: ignore
+            import_secs = self._load_all_examples(config.import_module_names)  # type: ignore
+            formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](  # type: ignore
+                import_module_names=config.import_module_names,  # type: ignore
+                force_color=config.force_color,  # type: ignore
                 import_secs=import_secs,
-                trim_path_prefix=config.trim_path_prefix, #type: ignore
-                show_testslide_stack_trace=config.show_testslide_stack_trace, #type: ignore
-                dsl_debug=config.dsl_debug, #type: ignore
+                trim_path_prefix=config.trim_path_prefix,  # type: ignore
+                show_testslide_stack_trace=config.show_testslide_stack_trace,  # type: ignore
+                dsl_debug=config.dsl_debug,  # type: ignore
             )
-            StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix #type: ignore
-            if config.list: #type: ignore
+            StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix  # type: ignore
+            if config.list:  # type: ignore
                 formatter.discovery_start()
                 for context in Context.all_top_level_contexts:
                     for example in context.all_examples:
@@ -388,15 +399,15 @@ class Cli(object):
                 return Runner(
                     contexts=Context.all_top_level_contexts,
                     formatter=formatter,
-                    shuffle=config.shuffle, #type: ignore
-                    seed=config.seed, #type: ignore
-                    focus=config.focus, #type: ignore
-                    fail_fast=config.fail_fast, #type: ignore
-                    fail_if_focused=config.fail_if_focused, #type: ignore
-                    names_text_filter=config.names_text_filter, #type: ignore
-                    names_regex_filter=config.names_regex_filter, #type: ignore
-                    names_regex_exclude=config.names_regex_exclude, #type: ignore
-                    quiet=config.quiet, #type: ignore
+                    shuffle=config.shuffle,  # type: ignore
+                    seed=config.seed,  # type: ignore
+                    focus=config.focus,  # type: ignore
+                    fail_fast=config.fail_fast,  # type: ignore
+                    fail_if_focused=config.fail_if_focused,  # type: ignore
+                    names_text_filter=config.names_text_filter,  # type: ignore
+                    names_regex_filter=config.names_regex_filter,  # type: ignore
+                    names_regex_exclude=config.names_regex_exclude,  # type: ignore
+                    quiet=config.quiet,  # type: ignore
                 ).run()
 
 

@@ -20,7 +20,18 @@ import types
 import unittest
 import warnings
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Iterator, Optional, Type, Union, List, TextIO, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    Optional,
+    Type,
+    Union,
+    List,
+    TextIO,
+    Tuple,
+)
 
 import testslide.matchers
 import testslide.mock_callable
@@ -75,7 +86,7 @@ class _ContextData(object):
 
         else:
 
-            def assert_sub_examples(self: "_ContextData") -> None: #type: ignore
+            def assert_sub_examples(self: "_ContextData") -> None:  # type: ignore
                 real_assert_sub_examples(self)
 
         self.after(assert_sub_examples)
@@ -171,7 +182,7 @@ class _ContextData(object):
         return self._not_callable
 
     @contextmanager
-    def sub_example(self, name: Optional[str]=None) -> Iterator[None]:
+    def sub_example(self, name: Optional[str] = None) -> Iterator[None]:
         """
         Use this as a context manager many times inside the same
         example. Failures in the code inside the context manager
@@ -188,9 +199,11 @@ class AggregatedExceptions(Exception):
 
     def __init__(self) -> None:
         super(AggregatedExceptions, self).__init__()
-        self.exceptions: List[Union[Exception, BaseException]]= []
+        self.exceptions: List[Union[Exception, BaseException]] = []
 
-    def append_exception(self, exception: Union[Exception, "AggregatedExceptions", BaseException]) -> None:
+    def append_exception(
+        self, exception: Union[Exception, "AggregatedExceptions", BaseException]
+    ) -> None:
         if isinstance(exception, AggregatedExceptions):
             self.exceptions.extend(exception.exceptions)
         else:
@@ -251,13 +264,17 @@ class _ExampleRunner:
         self.trim_path_prefix = self.formatter.trim_path_prefix
 
     @staticmethod
-    async def _fail_if_not_coroutine_function(func: Callable, *args: Any, **kwargs: Any) -> None:
+    async def _fail_if_not_coroutine_function(
+        func: Callable, *args: Any, **kwargs: Any
+    ) -> None:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(f"Function must be a coroutine function: {repr(func)}")
         return await func(*args, **kwargs)
 
     async def _real_async_run_all_hooks_and_example(
-        self, context_data: _ContextData, around_functions: Optional[List[Callable]]=None
+        self,
+        context_data: _ContextData,
+        around_functions: Optional[List[Callable]] = None,
     ) -> None:
         """
         ***********************************************************************
@@ -301,7 +318,7 @@ class _ExampleRunner:
             return
         around_code = around_functions.pop()
 
-        wrapped_called: List[bool]= []
+        wrapped_called: List[bool] = []
 
         async def async_wrapped() -> None:
             wrapped_called.append(True)
@@ -324,12 +341,19 @@ class _ExampleRunner:
     @contextlib.contextmanager
     def _raise_if_asyncio_warnings(self, context_data: _ContextData) -> Iterator[None]:
         if sys.version_info < (3, 7):
-            yield   
+            yield
             return
         original_showwarning = warnings.showwarning
-        caught_failures: List[Union[Exception, str]]= []
+        caught_failures: List[Union[Exception, str]] = []
 
-        def showwarning(message: str, category: Type[Warning], filename: str, lineno: int, file: Optional[TextIO]=None, line: Optional[str]=None) -> None:
+        def showwarning(
+            message: str,
+            category: Type[Warning],
+            filename: str,
+            lineno: int,
+            file: Optional[TextIO] = None,
+            line: Optional[str] = None,
+        ) -> None:
             failure_warning_messages: Dict[Any, str] = {
                 RuntimeWarning: "^coroutine '.+' was never awaited"
             }
@@ -369,7 +393,7 @@ class _ExampleRunner:
             asyncio.log.logger.warning = original_logger_warning
             for failure in caught_failures:
                 with aggregated_exceptions.catch():
-                    raise failure #type: ignore
+                    raise failure  # type: ignore
             aggregated_exceptions.raise_correct_exception()
 
     def _async_run_all_hooks_and_example(self, context_data: _ContextData) -> None:
@@ -389,12 +413,18 @@ class _ExampleRunner:
                 asyncio.run(coro, debug=True)
 
     @staticmethod
-    def _fail_if_coroutine_function(func: Callable, *args: Any, **kwargs: Any) -> Optional[Any]:
+    def _fail_if_coroutine_function(
+        func: Callable, *args: Any, **kwargs: Any
+    ) -> Optional[Any]:
         if inspect.iscoroutinefunction(func):
             raise ValueError(f"Function can not be a coroutine function: {repr(func)}")
         return func(*args, **kwargs)
 
-    def _sync_run_all_hooks_and_example(self, context_data: _ContextData, around_functions: Optional[List[Callable]]=None) -> None:
+    def _sync_run_all_hooks_and_example(
+        self,
+        context_data: _ContextData,
+        around_functions: Optional[List[Callable]] = None,
+    ) -> None:
         """
         ***********************************************************************
         ***********************************************************************
@@ -433,7 +463,7 @@ class _ExampleRunner:
             return
         around_code = around_functions.pop()
 
-        wrapped_called: List[bool]= []
+        wrapped_called: List[bool] = []
 
         def wrapped() -> None:
             wrapped_called.append(True)
@@ -471,7 +501,14 @@ class Example(object):
     Individual example.
     """
 
-    def __init__(self, name: str, code: Callable, context: "Context", skip: bool=False, focus: bool=False) -> None:
+    def __init__(
+        self,
+        name: str,
+        code: Callable,
+        context: "Context",
+        skip: bool = False,
+        focus: bool = False,
+    ) -> None:
         self.name = name
         self.code = code
         self.is_async = inspect.iscoroutinefunction(self.code)
@@ -513,43 +550,66 @@ class _TestSlideTestResult(unittest.TestResult):
         super(_TestSlideTestResult, self).__init__()
         self.aggregated_exceptions = AggregatedExceptions()
 
-    def _add_exception(self, err: Tuple[Union[Type[Exception], Type[BaseException]], Union[Exception, BaseException], Optional[types.TracebackType]]) -> None:
+    def _add_exception(
+        self,
+        err: Tuple[
+            Union[Type[Exception], Type[BaseException]],
+            Union[Exception, BaseException],
+            Optional[types.TracebackType],
+        ],
+    ) -> None:
         exc_type, exc_value, exc_traceback = err
         self.aggregated_exceptions.append_exception(exc_value)
 
-    def addError(self, test: "TestCase", err: Tuple[Union[Type[Exception], Type[BaseException]], Union[Exception, BaseException], types.TracebackType]) -> None: #type:ignore
+    def addError(  # type:ignore
+        self,
+        test: "TestCase",
+        err: Tuple[
+            Union[Type[Exception], Type[BaseException]],
+            Union[Exception, BaseException],
+            types.TracebackType,
+        ],
+    ) -> None:
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info().
         """
-        super(_TestSlideTestResult, self).addError(test, err) #type: ignore
+        super(_TestSlideTestResult, self).addError(test, err)  # type: ignore
         self._add_exception(err)
 
-    def addFailure(self, test: "TestCase", err: Tuple[Union[Type[Exception], Type[BaseException]], Union[Exception, BaseException], types.TracebackType]) -> None: #type:ignore
+    def addFailure(  # type:ignore
+        self,
+        test: "TestCase",
+        err: Tuple[
+            Union[Type[Exception], Type[BaseException]],
+            Union[Exception, BaseException],
+            types.TracebackType,
+        ],
+    ) -> None:
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info()."""
         super(_TestSlideTestResult, self).addFailure(test, err)
         self._add_exception(err)
 
-    def addSkip(self, test: "TestCase", reason: str) -> None: #type: ignore
+    def addSkip(self, test: "TestCase", reason: str) -> None:  # type: ignore
         """Called when the test case test is skipped. reason is the reason
         the test gave for skipping."""
         super(_TestSlideTestResult, self).addSkip(test, reason)
-        self._add_exception((type(Skip), Skip(), None)) #type: ignore
+        self._add_exception((type(Skip), Skip(), None))  # type: ignore
 
-    def addUnexpectedSuccess(self, test: "TestCase") -> None: #type: ignore
+    def addUnexpectedSuccess(self, test: "TestCase") -> None:  # type: ignore
         """Called when the test case test was marked with the expectedFailure()
         decorator, but succeeded."""
         super(_TestSlideTestResult, self).addUnexpectedSuccess(test)
-        self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None)) #type: ignore
+        self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None))  # type: ignore
 
-    def addSubTest(self, test: "TestCase", subtest:  "TestCase", err: Tuple[Optional[Union[Type[Exception], Type[BaseException]]], Optional[Union[Exception, BaseException]], Optional[types.TracebackType]]) -> None: #type: ignore
+    def addSubTest(self, test: "TestCase", subtest: "TestCase", err: Tuple[Optional[Union[Type[Exception], Type[BaseException]]], Optional[Union[Exception, BaseException]], Optional[types.TracebackType]]) -> None:  # type: ignore
         """Called at the end of a subtest.
         'err' is None if the subtest ended successfully, otherwise it's a
         tuple of values as returned by sys.exc_info().
         """
         super(_TestSlideTestResult, self).addSubTest(test, subtest, err)
         if err:
-            self._add_exception(err) #type: ignore
+            self._add_exception(err)  # type: ignore
 
 
 class Context(object):
@@ -565,7 +625,12 @@ class Context(object):
     # Constructor
 
     def __init__(
-        self, name: str, parent_context: Optional["Context"]=None, shared: bool=False, skip: bool=False, focus: bool=False
+        self,
+        name: str,
+        parent_context: Optional["Context"] = None,
+        shared: bool = False,
+        skip: bool = False,
+        focus: bool = False,
     ) -> None:
         """
         Creates a new context.
@@ -584,8 +649,8 @@ class Context(object):
         self.__dict__["skip"] = skip
         self.__dict__["focus"] = focus
         self.children_contexts: List["Context"] = []
-        self.examples: List["Example"]= []
-        self.before_functions: List[Callable]= []
+        self.examples: List["Example"] = []
+        self.before_functions: List[Callable] = []
         self.after_functions: List[Callable] = []
         self.around_functions: List[Callable] = []
         self.context_data_methods: Dict[str, Callable] = {}
@@ -616,7 +681,7 @@ class Context(object):
         """
         return len(self.parent_contexts)
 
-    def _all_parents_as_dict(original: type) -> Callable[["Context"], Dict[str, Any]]:  #type: ignore # noqa: B902 
+    def _all_parents_as_dict(original: type) -> Callable[["Context"], Dict[str, Any]]:  # type: ignore # noqa: B902
         """
         Use as a decorator for empty functions named all_attribute_name, to make
         them return a dict with self.parent_context.all_attribute_name and
@@ -632,7 +697,7 @@ class Context(object):
 
         return get_all
 
-    def _all_parents_as_list(original: type) -> Callable[["Context"], List[Any]]: #type: ignore  # noqa: B902
+    def _all_parents_as_list(original: type) -> Callable[["Context"], List[Any]]:  # type: ignore  # noqa: B902
         """
         Use as a decorator for empty functions named all_attribute_name, to make
         them return a list with self.parent_context.all_attribute_name and
@@ -741,7 +806,9 @@ class Context(object):
     def __str__(self) -> str:
         return self.name
 
-    def add_child_context(self, name: str, skip: bool=False, focus: bool=False) -> "Context":
+    def add_child_context(
+        self, name: str, skip: bool = False, focus: bool = False
+    ) -> "Context":
         """
         Creates a nested context below self.
         """
@@ -752,7 +819,9 @@ class Context(object):
         self.children_contexts.append(child_context)
         return child_context
 
-    def add_example(self, name: str, example_code: Callable, skip: bool=False, focus: bool=False) -> Example:
+    def add_example(
+        self, name: str, example_code: Callable, skip: bool = False, focus: bool = False
+    ) -> Example:
         """
         Add an example to this context.
         """
@@ -783,7 +852,9 @@ class Context(object):
             )
         self.context_data_methods[name] = function_code
 
-    def add_memoized_attribute(self, name: str, memoizable_code: Callable, before: bool=False) -> None:
+    def add_memoized_attribute(
+        self, name: str, memoizable_code: Callable, before: bool = False
+    ) -> None:
         """
         Add given attribute name to execution scope, by lazily memoizing the return
         value of memoizable_code().
@@ -798,13 +869,15 @@ class Context(object):
 
             if inspect.iscoroutinefunction(memoizable_code):
 
-                async def async_materialize_attribute(context_data : _ContextData) -> None:
+                async def async_materialize_attribute(
+                    context_data: _ContextData,
+                ) -> None:
                     code = context_data._context.all_context_data_memoizable_attributes[
                         name
                     ]
                     context_data.__dict__[name] = await code(context_data)
 
-                async_materialize_attribute._memoize_before_code = memoizable_code #type: ignore
+                async_materialize_attribute._memoize_before_code = memoizable_code  # type: ignore
                 self.before_functions.append(async_materialize_attribute)
             else:
 
@@ -814,7 +887,7 @@ class Context(object):
                     ]
                     context_data.__dict__[name] = code(context_data)
 
-                materialize_attribute._memoize_before_code = memoizable_code #type: ignore
+                materialize_attribute._memoize_before_code = memoizable_code  # type: ignore
                 self.before_functions.append(materialize_attribute)
 
     def add_shared_context(self, name: str, shared_context_code: "Context") -> None:
@@ -846,12 +919,12 @@ class Context(object):
             )
 
             # This suite will only contain TestSlide's example test.
-            test_suite = unittest.TestLoader().loadTestsFromName( #type: ignore
-                "test_test_slide", test_slide_test_case 
+            test_suite = unittest.TestLoader().loadTestsFromName(  # type: ignore
+                "test_test_slide", test_slide_test_case
             )
             setattr(self, attr_name, list(test_suite)[0])
             result = _TestSlideTestResult()
-            test_suite(result=result) #type: ignore
+            test_suite(result=result)  # type: ignore
             if not result.wasSuccessful():
                 result.aggregated_exceptions.raise_correct_exception()
 
@@ -880,15 +953,21 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).setUp()
 
     @staticmethod
-    def mock_callable(*args: Any, **kwargs: Any) -> testslide.mock_callable._MockCallableDSL:
+    def mock_callable(
+        *args: Any, **kwargs: Any
+    ) -> testslide.mock_callable._MockCallableDSL:
         return testslide.mock_callable.mock_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_async_callable(*args: Any, **kwargs: Any) -> testslide.mock_callable._MockCallableDSL:
+    def mock_async_callable(
+        *args: Any, **kwargs: Any
+    ) -> testslide.mock_callable._MockCallableDSL:
         return testslide.mock_callable.mock_async_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_constructor(*args: Any, **kwargs: Any) -> testslide.mock_constructor._MockConstructorDSL:
+    def mock_constructor(
+        *args: Any, **kwargs: Any
+    ) -> testslide.mock_constructor._MockConstructorDSL:
         return testslide.mock_constructor.mock_constructor(*args, **kwargs)
 
     @staticmethod

@@ -32,11 +32,11 @@ class BaseFormatter:
     def __init__(
         self,
         import_module_names: List[str],
-        force_color: bool=False,
-        import_secs: Optional[float]=None,
-        trim_path_prefix: Optional[str]=None,
-        show_testslide_stack_trace: bool=False,
-        dsl_debug: bool=False,
+        force_color: bool = False,
+        import_secs: Optional[float] = None,
+        trim_path_prefix: Optional[str] = None,
+        show_testslide_stack_trace: bool = False,
+        dsl_debug: bool = False,
     ) -> None:
         self.import_module_names = import_module_names
         self.force_color = force_color
@@ -239,14 +239,19 @@ class FailurePrinterMixin(ColorFormatterMixin):
         if exception.__cause__:
             self._print_stack_trace(exception.__cause__, cause_depth=cause_depth + 1)
 
-    def print_failed_example(self, number: int, example: Example, exception: Union[Exception, AggregatedExceptions]) -> None:
+    def print_failed_example(
+        self,
+        number: int,
+        example: Example,
+        exception: Union[Exception, AggregatedExceptions],
+    ) -> None:
         self.print_white(
             "  {number}) {context}: {example}".format(
                 number=number, context=example.context.full_name, example=example
             )
         )
         if type(exception) is AggregatedExceptions:
-            exception_list = exception.exceptions #type: ignore
+            exception_list = exception.exceptions  # type: ignore
         else:
             exception_list = [exception]
         for number, exception in enumerate(exception_list):
@@ -278,7 +283,7 @@ class DSLDebugMixin:
 
     def _dsl_print(self, example: Example, description: str, code: Callable) -> None:
         lineno: Union[str, int]
-        if not self.dsl_debug: #type: ignore
+        if not self.dsl_debug:  # type: ignore
             return
         name = code.__name__
         try:
@@ -290,15 +295,15 @@ class DSLDebugMixin:
                 file = "?"
         if file.startswith(os.path.dirname(__file__)):
             return
-        if self.trim_path_prefix: #type: ignore
-            split = file.split(self.trim_path_prefix) #type: ignore
+        if self.trim_path_prefix:  # type: ignore
+            split = file.split(self.trim_path_prefix)  # type: ignore
             if len(split) == 2 and not split[0]:
                 file = split[1]
         try:
             _lines, lineno = inspect.getsourcelines(code)
         except OSError:
             lineno = "?"
-        self.print_cyan( #type: ignore
+        self.print_cyan(  # type: ignore
             "{indent}{description}: {name} @ {file_lineno}".format(
                 indent=self.get_dsl_debug_indent(example),
                 description=description,
@@ -316,7 +321,7 @@ class DSLDebugMixin:
     def dsl_after(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "after", code)
 
-    def dsl_around(self, example : Example, code: Callable) -> None:
+    def dsl_around(self, example: Example, code: Callable) -> None:
         self._dsl_print(example, "around", code)
 
     def dsl_memoize(self, example: Example, code: Callable) -> None:
@@ -367,7 +372,7 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example( #type: ignore
+                self.print_failed_example(  # type: ignore
                     number + 1, result["example"], result["exception"]
                 )
         print("")
@@ -436,7 +441,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example( #type: ignore
+                self.print_failed_example(  # type: ignore
                     number + 1, result["example"], result["exception"]
                 )
         print("")
@@ -534,7 +539,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example( #type: ignore
+                self.print_failed_example(  # type: ignore
                     number + 1, result["example"], result["exception"]
                 )
         print("")
@@ -571,15 +576,15 @@ class Runner(object):
         self,
         contexts: List[Context],
         formatter: Union[SlowImportWarningMixin, DocumentFormatter],
-        shuffle: bool=False,
-        seed: None=None,
-        focus: bool=False,
-        fail_fast: bool=False,
-        fail_if_focused: bool=False,
-        names_text_filter: Optional[str]=None,
-        names_regex_filter: Optional[Pattern]=None,
-        names_regex_exclude: Optional[Pattern]=None,
-        quiet: bool=False,
+        shuffle: bool = False,
+        seed: None = None,
+        focus: bool = False,
+        fail_fast: bool = False,
+        fail_if_focused: bool = False,
+        names_text_filter: Optional[str] = None,
+        names_regex_filter: Optional[Pattern] = None,
+        names_regex_exclude: Optional[Pattern] = None,
+        quiet: bool = False,
     ) -> None:
         self.contexts = contexts
         self.formatter = formatter

@@ -8,30 +8,36 @@ from typing import Optional, Type, Union, Any, Callable, Dict
 
 
 class _DescriptorProxy(object):
-    def __init__(self, original_class_attr: Optional[Union[Callable, "_DescriptorProxy"]], attr_name: str) -> None:
+    def __init__(
+        self,
+        original_class_attr: Optional[Union[Callable, "_DescriptorProxy"]],
+        attr_name: str,
+    ) -> None:
         self.original_class_attr = original_class_attr
         self.attr_name = attr_name
-        self.instance_attr_map : Dict[int, Callable]= {}
+        self.instance_attr_map: Dict[int, Callable] = {}
 
     def __set__(self, instance: object, value: Callable) -> None:
         self.instance_attr_map[id(instance)] = value
 
-    def __get__(self, instance: object, owner: object) -> Union[Callable, "_DescriptorProxy"]:
+    def __get__(
+        self, instance: object, owner: object
+    ) -> Union[Callable, "_DescriptorProxy"]:
         if instance is None:
             return self
         if id(instance) in self.instance_attr_map:
             return self.instance_attr_map[id(instance)]
         else:
             if self.original_class_attr:
-                return self.original_class_attr.__get__(instance, owner) #type: ignore
+                return self.original_class_attr.__get__(instance, owner)  # type: ignore
             else:
-                for parent in owner.mro()[1:]: #type: ignore
+                for parent in owner.mro()[1:]:  # type: ignore
                     method = parent.__dict__.get(self.attr_name, None)
                     if type(method) is type(self):
                         continue
                     if method:
                         return method.__get__(instance, owner)
-                return instance.__get__(instance, owner) #type: ignore
+                return instance.__get__(instance, owner)  # type: ignore
 
     def __delete__(self, instance: object) -> None:
         if instance in self.instance_attr_map:

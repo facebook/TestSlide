@@ -8,22 +8,29 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 from types import TracebackType
 
+
 class ImportedModule(object):
     """
     A module that was imported with __import__.
     """
 
-    def __init__(self, name: str, globals: Optional[Dict[str, Any]], level: int, parent:Optional["ImportedModule"]=None):
+    def __init__(
+        self,
+        name: str,
+        globals: Optional[Dict[str, Any]],
+        level: int,
+        parent: Optional["ImportedModule"] = None,
+    ):
         self.name = name
         self.globals = globals
         self.level = level
         self.parent = parent
-        self.children: List["ImportedModule"]= []
+        self.children: List["ImportedModule"] = []
         self.time: float = 0
         if parent:
             parent.children.append(self)
 
-    def __eq__(self, value:"ImportedModule") -> bool: #type: ignore
+    def __eq__(self, value: "ImportedModule") -> bool:  # type: ignore
         return str(self) == str(value)
 
     @property
@@ -57,7 +64,12 @@ class ImportedModule(object):
     def __enter__(self) -> None:
         self._start_time = time.time()
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb:TracebackType) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[Exception],
+        exc_tb: TracebackType,
+    ) -> None:
         self.time = time.time() - self._start_time
 
 
@@ -81,22 +93,34 @@ class ImportProfiler(object):
     """
 
     def __init__(self) -> None:
-        self._original_import = __builtins__["__import__"] #type: ignore
+        self._original_import = __builtins__["__import__"]  # type: ignore
 
     def __enter__(self) -> "ImportProfiler":
-        __builtins__["__import__"] = self._profiled_import #type:ignore
+        __builtins__["__import__"] = self._profiled_import  # type:ignore
         self._top_imp_modules: List[ImportedModule] = []
-        self._import_stack: List[ImportedModule]= []
+        self._import_stack: List[ImportedModule] = []
         self.total_time: float = 0
         self._start_time = time.time()
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val:Optional[Exception], exc_tb: Optional[TracebackType]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[Exception],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         self.total_time = time.time() - self._start_time
-        __builtins__["__import__"] = self._original_import #type:ignore
+        __builtins__["__import__"] = self._original_import  # type:ignore
 
     # def _profiled_import(self, name, globals=None, locals=None, fromlist=(), level=0):
-    def _profiled_import(self, name: str, globals: Dict[str, Any]=None,  locals: Dict[str, Any]=None, fromlist: Tuple=(), level: int=0) -> None:
+    def _profiled_import(
+        self,
+        name: str,
+        globals: Dict[str, Any] = None,
+        locals: Dict[str, Any] = None,
+        fromlist: Tuple = (),
+        level: int = 0,
+    ) -> None:
         # print('Importing {}'.format(repr(name)))
         imp_mod = ImportedModule(
             name=name,
@@ -113,8 +137,8 @@ class ImportProfiler(object):
             finally:
                 self._import_stack.pop()
 
-    def print_stats(self, threshold_ms: int=0) -> None:
-        def print_imp_mod(imp_mod: ImportedModule, indent: int=0) -> None:
+    def print_stats(self, threshold_ms: int = 0) -> None:
+        def print_imp_mod(imp_mod: ImportedModule, indent: int = 0) -> None:
             own_ms = int(imp_mod.own_time * 1000)
             if own_ms >= threshold_ms or any(
                 child

@@ -16,14 +16,16 @@ from .lib import CoroutineValueError, _bail_if_private
 from .patch import _is_instance_method, _patch
 from inspect import Traceback
 from unittest.mock import Mock
+
 if False:
     from testslide.matchers import RegexMatches
     from testslide.mock_constructor import _MockConstructorDSL
 
 
-
-def mock_callable(target: Any, method: str, allow_private: bool=False, type_validation: bool=True) -> "_MockCallableDSL":
-    caller_frame = inspect.currentframe().f_back #type: ignore
+def mock_callable(
+    target: Any, method: str, allow_private: bool = False, type_validation: bool = True
+) -> "_MockCallableDSL":
+    caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
     caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
@@ -37,13 +39,13 @@ def mock_callable(target: Any, method: str, allow_private: bool=False, type_vali
 
 
 def mock_async_callable(
-    target: Union[type,str],
+    target: Union[type, str],
     method: str,
-    callable_returns_coroutine: bool=False,
-    allow_private: bool=False,
-    type_validation: bool=True,
+    callable_returns_coroutine: bool = False,
+    allow_private: bool = False,
+    type_validation: bool = True,
 ) -> "_MockAsyncCallableDSL":
-    caller_frame = inspect.currentframe().f_back #type: ignore
+    caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
     caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
@@ -57,7 +59,7 @@ def mock_async_callable(
     )
 
 
-_unpatchers: List[Callable] = [] # noqa T484
+_unpatchers: List[Callable] = []  # noqa T484
 
 
 def _default_register_assertion(assertion: Callable) -> None:
@@ -133,7 +135,7 @@ def _format_args(indent: int, *args: Any, **kwargs: Any) -> str:
 
 def _is_coroutine(obj: Any) -> bool:
 
-    return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper) # type: ignore
+    return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper)  # type: ignore
 
 
 ##
@@ -181,13 +183,15 @@ class NotACoroutine(BaseException):
 class _BaseRunner:
     TYPE_VALIDATION = True
 
-    def __init__(self, target: Any, method: str, original_callable: Union[Callable, Mock]) -> None:
+    def __init__(
+        self, target: Any, method: str, original_callable: Union[Callable, Mock]
+    ) -> None:
         self.target = target
         self.method = method
         self.original_callable = original_callable
         self.accepted_args: Optional[Tuple[Any, Any]] = None
 
-        self._call_count : int = 0
+        self._call_count: int = 0
         self._max_calls: Optional[int] = None
         self._has_order_assertion = False
 
@@ -372,7 +376,14 @@ class _AsyncRunner(_BaseRunner):
 
 
 class _ReturnValueRunner(_Runner):
-    def __init__(self, target: Any, method: str, original_callable: Union[Callable, Mock], value: Optional[Any], allow_coro: bool=False) -> None:
+    def __init__(
+        self,
+        target: Any,
+        method: str,
+        original_callable: Union[Callable, Mock],
+        value: Optional[Any],
+        allow_coro: bool = False,
+    ) -> None:
         super().__init__(target, method, original_callable)
         if not allow_coro and _is_coroutine(value):
             raise CoroutineValueError()
@@ -385,7 +396,12 @@ class _ReturnValueRunner(_Runner):
 
 class _ReturnValuesRunner(_Runner):
     def __init__(
-        self, target: Union[type, str], method: str, original_callable: Optional[Callable], values_list: List[Any], allow_coro: bool=False
+        self,
+        target: Union[type, str],
+        method: str,
+        original_callable: Optional[Callable],
+        values_list: List[Any],
+        allow_coro: bool = False,
     ) -> None:
         super(_ReturnValuesRunner, self).__init__(target, method, original_callable)
         # Reverse original list for popping efficiency
@@ -405,7 +421,12 @@ class _YieldValuesRunner(_Runner):
     TYPE_VALIDATION = False
 
     def __init__(
-        self, target: Union[type, str], method: str, original_callable: Optional[Callable], values_list: List[Any], allow_coro: bool=False
+        self,
+        target: Union[type, str],
+        method: str,
+        original_callable: Optional[Callable],
+        values_list: List[Any],
+        allow_coro: bool = False,
     ) -> None:
         super(_YieldValuesRunner, self).__init__(target, method, original_callable)
         self.values_list = values_list
@@ -424,13 +445,19 @@ class _YieldValuesRunner(_Runner):
         self.index += 1
         return item
 
-    def run(self, *args: Any, **kwargs: Any) -> "_YieldValuesRunner": #type: ignore
+    def run(self, *args: Any, **kwargs: Any) -> "_YieldValuesRunner":  # type: ignore
         super(_YieldValuesRunner, self).run(*args, **kwargs)
         return self
 
 
 class _RaiseRunner(_Runner):
-    def __init__(self, target: Union[type, str], method: str, original_callable: Optional[Callable], exception: Union[Exception, BaseException]) -> None:
+    def __init__(
+        self,
+        target: Union[type, str],
+        method: str,
+        original_callable: Optional[Callable],
+        exception: Union[Exception, BaseException],
+    ) -> None:
         super(_RaiseRunner, self).__init__(target, method, original_callable)
         self.exception = exception
 
@@ -441,7 +468,12 @@ class _RaiseRunner(_Runner):
 
 class _ImplementationRunner(_Runner):
     def __init__(
-        self, target: Union[type, str], method: str, original_callable: Optional[Callable], new_implementation: Callable, allow_coro: bool=False
+        self,
+        target: Union[type, str],
+        method: str,
+        original_callable: Optional[Callable],
+        new_implementation: Callable,
+        allow_coro: bool = False,
     ) -> None:
         super(_ImplementationRunner, self).__init__(target, method, original_callable)
         self.new_implementation = new_implementation
@@ -456,11 +488,17 @@ class _ImplementationRunner(_Runner):
 
 
 class _AsyncImplementationRunner(_AsyncRunner):
-    def __init__(self, target: Union[type, str], method: str, original_callable: Optional[Callable], new_implementation: Callable) -> None:
+    def __init__(
+        self,
+        target: Union[type, str],
+        method: str,
+        original_callable: Optional[Callable],
+        new_implementation: Callable,
+    ) -> None:
         super().__init__(target, method, original_callable)
         self.new_implementation = new_implementation
 
-    async def run(self, *args:Any, **kwargs: Any) -> Optional[Any]:
+    async def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
         await super().run(*args, **kwargs)
         coro = self.new_implementation(*args, **kwargs)
         if not _is_coroutine(coro):
@@ -494,8 +532,8 @@ class _CallableMock(object):
         target: Any,
         method: str,
         caller_frame_info: Traceback,
-        is_async: bool=False,
-        type_validation: bool=True,
+        is_async: bool = False,
+        type_validation: bool = True,
     ) -> None:
         self.target = target
         self.method = method
@@ -582,10 +620,10 @@ class _MockCallableDSL(object):
 
     def _validate_patch(
         self,
-        name: str="mock_callable",
-        other_name: str="mock_async_callable",
-        coroutine_function: bool=False,
-        callable_returns_coroutine: bool=False,
+        name: str = "mock_callable",
+        other_name: str = "mock_async_callable",
+        coroutine_function: bool = False,
+        callable_returns_coroutine: bool = False,
     ) -> None:
         if self._method == "__new__":
             raise ValueError(
@@ -669,7 +707,9 @@ class _MockCallableDSL(object):
                     f"use {other_name}() instead."
                 )
 
-    def _patch(self, new_value: Union[Callable, _CallableMock]) -> Union[Tuple[Callable, Callable], Tuple[Mock, Callable], Tuple[None, Callable]]:
+    def _patch(
+        self, new_value: Union[Callable, _CallableMock]
+    ) -> Union[Tuple[Callable, Callable], Tuple[Mock, Callable], Tuple[None, Callable]]:
         self._validate_patch()
 
         if isinstance(self._target, StrictMock):
@@ -686,7 +726,7 @@ class _MockCallableDSL(object):
         restore_value = self._target.__dict__.get(self._method, None)
 
         if inspect.isclass(self._target):
-            new_value = staticmethod(new_value) #type: ignore
+            new_value = staticmethod(new_value)  # type: ignore
 
         unpatcher = _patch(
             self._target, self._method, new_value, restore, restore_value
@@ -707,10 +747,10 @@ class _MockCallableDSL(object):
         target: Any,
         method: str,
         caller_frame_info: Traceback,
-        callable_mock: Optional[_CallableMock]=None,
-        original_callable: Optional[Callable]=None,
-        allow_private: bool=False,
-        type_validation: bool=True,
+        callable_mock: Optional[_CallableMock] = None,
+        original_callable: Optional[Callable] = None,
+        allow_private: bool = False,
+        type_validation: bool = True,
     ) -> None:
         if not _is_setup():
             raise RuntimeError(
@@ -720,8 +760,8 @@ class _MockCallableDSL(object):
             )
         self._original_target = target
         self._method = method
-        self._runner: Optional[_BaseRunner]= None
-        self._next_runner_accepted_args : Any = None
+        self._runner: Optional[_BaseRunner] = None
+        self._next_runner_accepted_args: Any = None
         self.allow_private = allow_private
         self.type_validation = type_validation
         self.caller_frame_info = caller_frame_info
@@ -751,10 +791,10 @@ class _MockCallableDSL(object):
                 original_callable, unpatcher = self._patch(callable_mock)
                 _unpatchers.append(unpatcher)
             self._original_callable = original_callable
-            callable_mock.original_callable = original_callable #type: ignore
+            callable_mock.original_callable = original_callable  # type: ignore
         else:
             self._callable_mock = self.CALLABLE_MOCKS[target_method_id]
-            self._original_callable = self._callable_mock.original_callable #type: ignore
+            self._original_callable = self._callable_mock.original_callable  # type: ignore
 
     def _add_runner(self, runner: _BaseRunner) -> None:
         if self._runner:
@@ -792,7 +832,9 @@ class _MockCallableDSL(object):
     ## Arguments
     ##
 
-    def for_call(self, *args: Any, **kwargs: Any) ->Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def for_call(
+        self, *args: Any, **kwargs: Any
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Filter for only calls like this.
         """
@@ -806,7 +848,9 @@ class _MockCallableDSL(object):
     ## Behavior
     ##
 
-    def to_return_value(self, value: Optional[Union[bool, str, int]]) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def to_return_value(
+        self, value: Optional[Union[bool, str, int]]
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Always return given value.
         """
@@ -821,7 +865,9 @@ class _MockCallableDSL(object):
         )
         return self
 
-    def to_return_values(self, values_list: Union[List[str], List[Union[int, str]]]) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def to_return_values(
+        self, values_list: Union[List[str], List[Union[int, str]]]
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         For each call, return each value from given list in order.
         When list is exhausted, goes to the next behavior set.
@@ -839,7 +885,9 @@ class _MockCallableDSL(object):
         )
         return self
 
-    def to_yield_values(self, values_list: List[str]) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def to_yield_values(
+        self, values_list: List[str]
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Callable will return an iterator what will yield each value from the
         given list.
@@ -857,7 +905,9 @@ class _MockCallableDSL(object):
         )
         return self
 
-    def to_raise(self, ex: Union[UnexpectedCallReceived, Type[RuntimeError], RuntimeError]) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def to_raise(
+        self, ex: Union[UnexpectedCallReceived, Type[RuntimeError], RuntimeError]
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Raises given exception class or exception instance.
         """
@@ -879,7 +929,9 @@ class _MockCallableDSL(object):
             )
         return self
 
-    def with_implementation(self, func: Callable) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def with_implementation(
+        self, func: Callable
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Replace callable by given function.
         """
@@ -896,7 +948,9 @@ class _MockCallableDSL(object):
         )
         return self
 
-    def with_wrapper(self, func: Callable) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def with_wrapper(
+        self, func: Callable
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Replace callable with given wrapper function, that will be called as:
 
@@ -926,7 +980,9 @@ class _MockCallableDSL(object):
         )
         return self
 
-    def to_call_original(self) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def to_call_original(
+        self,
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Calls the original callable implementation, instead of mocking it. This is
         useful for example, if you want to by default call the original implementation,
@@ -945,7 +1001,9 @@ class _MockCallableDSL(object):
     ## Call Assertions
     ##
 
-    def and_assert_called_exactly(self, count: int) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called_exactly(
+        self, count: int
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Assert that there were exactly the given number of calls.
 
@@ -963,60 +1021,74 @@ class _MockCallableDSL(object):
                         )
                     )
                 )
-        self._runner.add_exact_calls_assertion(count) #type: ignore
+        self._runner.add_exact_calls_assertion(count)  # type: ignore
         return self
 
-    def and_assert_not_called(self) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_not_called(
+        self,
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Short for and_assert_called_exactly(0)
         """
         return self.and_assert_called_exactly(0)
 
-    def and_assert_called_once(self) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called_once(
+        self,
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Short for and_assert_called_exactly(1)
         """
         return self.and_assert_called_exactly(1)
 
-    def and_assert_called_twice(self) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called_twice(
+        self,
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Short for and_assert_called_exactly(2)
         """
         return self.and_assert_called_exactly(2)
 
-    def and_assert_called_at_least(self, count: int) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called_at_least(
+        self, count: int
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Assert that there at least the given number of calls.
         """
         if count < 1:
             raise ValueError("times must be >= 1")
         self._assert_runner()
-        self._runner.add_at_least_calls_assertion(count) #type: ignore
+        self._runner.add_at_least_calls_assertion(count)  # type: ignore
         return self
 
-    def and_assert_called_at_most(self, count: int) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called_at_most(
+        self, count: int
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Assert that there at most the given number of calls.
         """
         if count < 1:
             raise ValueError("times must be >= 1")
         self._assert_runner()
-        self._runner.add_at_most_calls_assertion(count) #type: ignore
+        self._runner.add_at_most_calls_assertion(count)  # type: ignore
         return self
 
-    def and_assert_called(self) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called(
+        self,
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Short for self.and_assert_called_at_least(1).
         """
         return self.and_assert_called_at_least(1)
 
-    def and_assert_called_ordered(self) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+    def and_assert_called_ordered(
+        self,
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Assert that multiple calls, potentially to different mock_callable()
         targets, happened in the order defined.
         """
         self._assert_runner()
-        self._runner.add_call_order_assertion() #type: ignore
+        self._runner.add_call_order_assertion()  # type: ignore
         return self
 
 
@@ -1030,8 +1102,8 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         method: str,
         caller_frame_info: Traceback,
         callable_returns_coroutine: bool,
-        allow_private: bool=False,
-        type_validation: bool=True,
+        allow_private: bool = False,
+        type_validation: bool = True,
     ) -> None:
         self._callable_returns_coroutine = callable_returns_coroutine
         super().__init__(
@@ -1043,7 +1115,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         )
         self._allow_coro = True
 
-    def _validate_patch(self) -> None: #type: ignore
+    def _validate_patch(self) -> None:  # type: ignore
         return super()._validate_patch(
             name=self._NAME,
             other_name="mock_callable",

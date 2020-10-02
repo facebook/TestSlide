@@ -10,8 +10,9 @@ from typing import Callable, Dict, Type, Union, Any, Optional, List
 from types import FrameType
 import testslide.lib
 import testslide.mock_callable
+
 if False:
-    #Hack to enable typing information for mypy
+    # Hack to enable typing information for mypy
     from testslide.mock_callable import _CallableMock, _YieldValuesRunner
 
 
@@ -21,7 +22,9 @@ class UndefinedAttribute(BaseException):
     Inherits from BaseException to avoid being caught by tested code.
     """
 
-    def __init__(self, strict_mock: "StrictMock", name: str, extra_msg: Optional[str]=None) -> None:
+    def __init__(
+        self, strict_mock: "StrictMock", name: str, extra_msg: Optional[str] = None
+    ) -> None:
         super().__init__(strict_mock, name)
         self.strict_mock = strict_mock
         self.name = name
@@ -133,7 +136,7 @@ class _DefaultMagic:
     def __copy__(self) -> "_DefaultMagic":
         return type(self)(strict_mock=self.strict_mock, name=self.name)
 
-    def __deepcopy__(self, memo: Optional[Dict[Any, Any]]=None) -> "_DefaultMagic":
+    def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "_DefaultMagic":
         if memo is None:
             memo = {}
         self_copy = type(self)(strict_mock=self.strict_mock, name=self.name)
@@ -150,11 +153,13 @@ class _MethodProxy(object):
     access is forwarded to the new value.
     """
 
-    def __init__(self, value: Any, callable_value: Optional[Callable]=None) -> None:
+    def __init__(self, value: Any, callable_value: Optional[Callable] = None) -> None:
         self.__dict__["_value"] = value
         self.__dict__["_callable_value"] = callable_value if callable_value else value
 
-    def __get__(self, instance: "StrictMock", owner: Optional[Type["StrictMock"]]=None) -> Union[object, Callable]:
+    def __get__(
+        self, instance: "StrictMock", owner: Optional[Type["StrictMock"]] = None
+    ) -> Union[object, Callable]:
         if self.__dict__["_value"] is self.__dict__["_callable_value"]:
             return self.__dict__["_callable_value"]
         else:
@@ -178,7 +183,7 @@ class _MethodProxy(object):
             value=self.__dict__["_value"],
         )
 
-    def __deepcopy__(self, memo: Optional[Dict[Any, Any]]=None) -> "_MethodProxy":
+    def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "_MethodProxy":
         if memo is None:
             memo = {}
         self_copy = type(self)(
@@ -350,12 +355,12 @@ class StrictMock(object):
 
     def __new__(
         cls,
-        template: Optional[type]=None,
-        runtime_attrs: Optional[List[Any]]=None,
-        name: Optional[str]=None,
-        default_context_manager: bool=False,
-        type_validation: bool=True,
-        attributes_to_skip_type_validation: List[str]=[],
+        template: Optional[type] = None,
+        runtime_attrs: Optional[List[Any]] = None,
+        name: Optional[str] = None,
+        default_context_manager: bool = False,
+        type_validation: bool = True,
+        attributes_to_skip_type_validation: List[str] = [],
     ) -> None:
         """
         For every new instance of StrictMock we dynamically create a subclass of
@@ -435,7 +440,7 @@ class StrictMock(object):
 
             current_frame = current_frame.f_back
 
-        return current_frame # type: ignore
+        return current_frame  # type: ignore
 
     def _get_caller(self, depth: int) -> Optional[str]:
         # Doing inspect.stack will retrieve the whole stack, including context
@@ -458,12 +463,12 @@ class StrictMock(object):
 
     def __init__(
         self,
-        template: Optional[type]=None,
-        runtime_attrs: Optional[List[Any]]=None,
-        name: Optional[str]=None,
-        default_context_manager: bool=False,
-        type_validation: bool=True,
-        attributes_to_skip_type_validation: List[str]=[],
+        template: Optional[type] = None,
+        runtime_attrs: Optional[List[Any]] = None,
+        name: Optional[str] = None,
+        default_context_manager: bool = False,
+        type_validation: bool = True,
+        attributes_to_skip_type_validation: List[str] = [],
     ) -> None:
         """
         template: Template class to be used as a template for the mock.
@@ -493,7 +498,7 @@ class StrictMock(object):
             "_attributes_to_skip_type_validation"
         ] = attributes_to_skip_type_validation
 
-        caller_frame = inspect.currentframe().f_back # type: ignore
+        caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
         caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
@@ -534,7 +539,7 @@ class StrictMock(object):
                     original_class, instance=None, owner=mocked_class
                 )
             else:
-                return klass.__init__ #type: ignore
+                return klass.__init__  # type: ignore
 
         def is_runtime_attr() -> bool:
             if self._template:
@@ -552,7 +557,7 @@ class StrictMock(object):
 
         return (
             hasattr(self._template, name)
-            or name in self._runtime_attrs #type: ignore
+            or name in self._runtime_attrs  # type: ignore
             or name in getattr(self._template, "__slots__", [])
             or is_runtime_attr()
         )
@@ -679,7 +684,7 @@ class StrictMock(object):
 
     def __repr__(self) -> str:
         template_str = (
-            " template={}.{}".format(self._template.__module__, self._template.__name__) #type: ignore
+            " template={}.{}".format(self._template.__module__, self._template.__name__)  # type: ignore
             if self._template
             else ""
         )
@@ -733,7 +738,7 @@ class StrictMock(object):
 
         return self_copy
 
-    def __deepcopy__(self, memo: Optional[Dict[Any, Any]]=None) -> "StrictMock":
+    def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "StrictMock":
         if memo is None:
             memo = {}
         self_copy = self._get_copy()
@@ -752,4 +757,4 @@ def _extract_StrictMock_template(mock_obj: StrictMock) -> Optional[Any]:
     return None
 
 
-testslide.lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template #type: ignore
+testslide.lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template  # type: ignore

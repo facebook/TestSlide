@@ -4,7 +4,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import re
-from typing import Any as AnyType, Optional, Type, Union, Callable, Dict, List, TypeVar, NoReturn
+from typing import (
+    Any as AnyType,
+    Optional,
+    Type,
+    Union,
+    Callable,
+    Dict,
+    List,
+    TypeVar,
+    NoReturn,
+)
 
 
 class AlreadyChainedException(Exception):
