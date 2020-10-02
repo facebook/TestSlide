@@ -6,7 +6,9 @@
 import asyncio
 import functools
 import inspect
-from typing import Optional, Type, Union, Any, Callable, Dict, List, Tuple
+from inspect import Traceback
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from unittest.mock import Mock
 
 import testslide
 from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
@@ -14,12 +16,10 @@ from testslide.strict_mock import StrictMock
 
 from .lib import CoroutineValueError, _bail_if_private
 from .patch import _is_instance_method, _patch
-from inspect import Traceback
-from unittest.mock import Mock
 
 if False:
-    from testslide.matchers import RegexMatches # noqa: F401
-    from testslide.mock_constructor import _MockConstructorDSL # noqa: F401
+    from testslide.matchers import RegexMatches  # noqa: F401
+    from testslide.mock_constructor import _MockConstructorDSL  # noqa: F401
 
 
 def mock_callable(

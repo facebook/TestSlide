@@ -6,14 +6,15 @@ import copy
 import dis
 import inspect
 import os.path
-from typing import Callable, Dict, Type, Union, Any, Optional, List
 from types import FrameType
+from typing import Any, Callable, Dict, List, Optional, Type, Union
+
 import testslide.lib
 import testslide.mock_callable
 
 if False:
     # Hack to enable typing information for mypy
-    from testslide.mock_callable import _CallableMock, _YieldValuesRunner # noqa: F401
+    from testslide.mock_callable import _CallableMock, _YieldValuesRunner  # noqa: F401
 
 
 class UndefinedAttribute(BaseException):

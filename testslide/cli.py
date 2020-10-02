@@ -10,10 +10,11 @@ import sys
 import unittest
 from contextlib import contextmanager
 from time import time
-from typing import Callable, List, Iterator, Type, Any, Pattern, Optional
+from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
+
 import testslide.dsl
 
-from . import Context, _TestSlideTestResult, TestCase
+from . import Context, TestCase, _TestSlideTestResult
 from .runner import DocumentFormatter, LongFormatter, ProgressFormatter, Runner
 from .strict_mock import StrictMock
 

@@ -12,7 +12,7 @@ import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from importlib import import_module
-from typing import Any, Callable, Dict, List, Optional, Union, cast, Pattern
+from typing import Any, Callable, Dict, List, Optional, Pattern, Union, cast
 
 import psutil
 

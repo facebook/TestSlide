@@ -5,13 +5,14 @@
 
 import functools
 import inspect
+from functools import partial
 from re import sub as _sub
+from typing import Any, Callable, Optional, Union
+
+from testslide import Context, TestCase
 
 from . import Context as _Context
 from . import Skip  # noqa: F401
-from functools import partial
-from testslide import Context, TestCase
-from typing import Callable, Optional, Union, Any
 
 
 def _validate_parameter(code: Callable, name: str, index: int) -> None:

@@ -25,12 +25,12 @@ from typing import (
     Callable,
     Dict,
     Iterator,
-    Optional,
-    Type,
-    Union,
     List,
+    Optional,
     TextIO,
     Tuple,
+    Type,
+    Union,
 )
 
 import testslide.matchers

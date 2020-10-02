@@ -8,17 +8,17 @@ import inspect
 import os
 import sys
 import unittest.mock
-from typing import Union, Any, Callable, Dict, Optional, Tuple, Type
+from inspect import Traceback
 from types import FrameType
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+from unittest.mock import Mock
 
 import typeguard
-from inspect import Traceback
-from unittest.mock import Mock
 
 if False:
     # hack to remove mypy warnings about types not being defined
     from testslide.mock_callable import _CallableMock
-    from testslide.strict_mock import _DefaultMagic, StrictMock
+    from testslide.strict_mock import StrictMock, _DefaultMagic
 
 ##
 ## Type validation

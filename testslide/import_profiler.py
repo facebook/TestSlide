@@ -5,8 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import time
-from typing import Any, Dict, List, Optional, Tuple
 from types import TracebackType
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class ImportedModule(object):
