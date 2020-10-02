@@ -1621,7 +1621,7 @@ class TestExample(TestDSLBase):
 
     def test_inherits_skip_from_xcontext(self):
         """
-        Exmaples inherit skip setting from parent context.
+        Examples inherit skip setting from parent context.
         """
 
         @xcontext
@@ -1647,7 +1647,7 @@ class TestExample(TestDSLBase):
 
     def test_inherits_focus_from_fcontext(self):
         """
-        Exmaples inherit focus setting from parent context.
+        Examples inherit focus setting from parent context.
         """
 
         @fcontext
