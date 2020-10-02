@@ -205,7 +205,7 @@ This is enabled by default for async tests, but to get that behaviour also when 
             asyncio.run(my_async_function())
 
 
-Has to use the `async_run` function from the context, so instead, you should use:
+Has to use the `async_run_with_health_checks` function from the context, so instead, you should use:
 
 .. code-block:: python
 
@@ -216,4 +216,4 @@ Has to use the `async_run` function from the context, so instead, you should use
   def my_test_suite(context):
         @context.example
         def test_something_async(self):
-            self.async_run(my_async_function())
+            self.async_run_with_health_checks(my_async_function())

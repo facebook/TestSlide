@@ -230,7 +230,7 @@ class _ContextData(object):
         with self._sub_examples_agg_ex.catch():
             yield
 
-    def async_run(self, coro):
+    def async_run_with_health_checks(self, coro):
         """
         Runs the given coroutine in a new event loop, and ensuring there's no
         task leakage.

@@ -2127,7 +2127,7 @@ class TestAsyncRun(TestDSLBase):
         def fail_top(context):
             @context.example
             def raise_on_leaked_task(self):
-                self.async_run(spawn_task_but_dont_await())
+                self.async_run_with_health_checks(spawn_task_but_dont_await())
 
         examples = _get_name_to_examples()
 
