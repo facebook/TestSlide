@@ -570,7 +570,7 @@ class Runner(object):
     def __init__(
         self,
         contexts: List[Context],
-        formatter: DocumentFormatter,
+        formatter: Union[SlowImportWarningMixin, DocumentFormatter],
         shuffle: bool=False,
         seed: None=None,
         focus: bool=False,

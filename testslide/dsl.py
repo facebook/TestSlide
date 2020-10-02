@@ -119,10 +119,10 @@ class _DSLContext(object):
             name = arg #type: ignore
             return functools.partial(self._create_example, name, skip=skip, focus=focus)
 
-    def xexample(self, arg: Callable) -> Callable:
+    def xexample(self, arg: Union[str, Callable]) -> Callable:
         return self.example(arg, skip=True)
 
-    def fexample(self, arg: Callable) -> Callable:
+    def fexample(self, arg: Union[str, Callable]) -> Callable:
         return self.example(arg, focus=True)
 
     # Shared contexts
