@@ -7,12 +7,12 @@ import dis
 import inspect
 import os.path
 from types import FrameType
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
 
 import testslide.lib
 import testslide.mock_callable
 
-if False:
+if TYPE_CHECKING:
     # Hack to enable typing information for mypy
     from testslide.mock_callable import _CallableMock, _YieldValuesRunner  # noqa: F401
 

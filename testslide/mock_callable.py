@@ -7,7 +7,17 @@ import asyncio
 import functools
 import inspect
 from inspect import Traceback
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 from unittest.mock import Mock
 
 import testslide
@@ -17,7 +27,7 @@ from testslide.strict_mock import StrictMock
 from .lib import CoroutineValueError, _bail_if_private
 from .patch import _is_instance_method, _patch
 
-if False:
+if TYPE_CHECKING:
     from testslide.matchers import RegexMatches  # noqa: F401
     from testslide.mock_constructor import _MockConstructorDSL  # noqa: F401
 

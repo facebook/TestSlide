@@ -21,6 +21,7 @@ import unittest
 import warnings
 from contextlib import contextmanager
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -39,7 +40,7 @@ import testslide.mock_constructor
 import testslide.patch_attribute
 from testslide.strict_mock import StrictMock  # noqa
 
-if False:
+if TYPE_CHECKING:
     # hack for Mypy
     from testslide.runner import BaseFormatter
 
@@ -100,7 +101,7 @@ class _ContextData(object):
         def register_assertion(assertion: Callable) -> None:
             if self._example.is_async:
 
-                async def f(_: Any) -> None:
+                async def f(_: _ContextData) -> None:
                     assertion()
 
             else:
@@ -119,7 +120,7 @@ class _ContextData(object):
         self._init_mocks()
 
     @staticmethod
-    def _not_callable(self: Any) -> None:
+    def _not_callable(self: "_ContextData") -> None:
         raise BaseException("This function should not be called outside test code.")
 
     @property
