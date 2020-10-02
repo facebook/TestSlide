@@ -293,7 +293,7 @@ class DSLDebugMixin:
                 file = inspect.getfile(code)
             except TypeError:
                 file = "?"
-        if file.startswith(os.path.dirname(__file__)):
+        if file and file.startswith(os.path.dirname(__file__)):
             return
         if self.trim_path_prefix:  # type: ignore
             split = file.split(self.trim_path_prefix)  # type: ignore
@@ -372,8 +372,8 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
             for number, result in enumerate(self.results["fail"]):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
-                self.print_failed_example(  # type: ignore
-                    number + 1, result["example"], result["exception"]
+                self.print_failed_example(
+                    number + 1, result["example"], result["exception"]  # type: ignore
                 )
         print("")
 
@@ -442,7 +442,7 @@ class DocumentFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(  # type: ignore
-                    number + 1, result["example"], result["exception"]
+                    number + 1, result["example"], result["exception"]  # type: ignore
                 )
         print("")
         self.print_white(
@@ -540,7 +540,7 @@ class LongFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMixin):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(  # type: ignore
-                    number + 1, result["example"], result["exception"]
+                    number + 1, result["example"], result["exception"]  # type: ignore
                 )
         print("")
         self.print_white(

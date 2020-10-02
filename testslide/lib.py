@@ -54,9 +54,9 @@ def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
     return None
 
 
-MOCK_TEMPLATE_EXTRACTORS: Dict[
-    Type, Callable[[Union["StrictMock", Type]], Optional[Any]]
-] = {unittest.mock.NonCallableMock: _extract_NonCallableMock_template}
+MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Mock], Optional[Any]]] = {
+    unittest.mock.NonCallableMock: _extract_NonCallableMock_template
+}
 
 
 def _extract_mock_template(

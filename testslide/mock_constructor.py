@@ -79,7 +79,7 @@ class _MockConstructorDSL(_MockCallableDSL):
         caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
-        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
         super(_MockConstructorDSL, self).__init__(  # type: ignore
             target,
             method,
@@ -370,7 +370,7 @@ def mock_constructor(
         caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
-        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
         callable_mock = _CallableMock(original_class, "__new__", caller_frame_info)
         mocked_class = _patch_and_return_mocked_class(
             target,

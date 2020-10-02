@@ -606,7 +606,7 @@ class _TestSlideTestResult(unittest.TestResult):
         'err' is None if the subtest ended successfully, otherwise it's a
         tuple of values as returned by sys.exc_info().
         """
-        super(_TestSlideTestResult, self).addSubTest(test, subtest, err)
+        super(_TestSlideTestResult, self).addSubTest(test, subtest, err)  # type: ignore
         if err:
             self._add_exception(err)  # type: ignore
 
@@ -918,8 +918,8 @@ class Context(object):
             )
 
             # This suite will only contain TestSlide's example test.
-            test_suite = unittest.TestLoader().loadTestsFromName(  # type: ignore
-                "test_test_slide", test_slide_test_case
+            test_suite = unittest.TestLoader().loadTestsFromName(
+                "test_test_slide", test_slide_test_case  # type: ignore
             )
             setattr(self, attr_name, list(test_suite)[0])
             result = _TestSlideTestResult()

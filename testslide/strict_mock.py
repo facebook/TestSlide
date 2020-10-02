@@ -362,7 +362,7 @@ class StrictMock(object):
         default_context_manager: bool = False,
         type_validation: bool = True,
         attributes_to_skip_type_validation: List[str] = [],
-    ) -> None:
+    ) -> "StrictMock":
         """
         For every new instance of StrictMock we dynamically create a subclass of
         StrictMock and return an instance of it. This allows us to use this new
@@ -502,7 +502,7 @@ class StrictMock(object):
         caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
-        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
+        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
         self.__dict__["_caller_frame_info"] = caller_frame_info
 
         self._setup_magic_methods()

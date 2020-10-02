@@ -39,8 +39,8 @@ def _filename_to_module_name(name: str) -> str:
 
 def _get_all_test_case_subclasses() -> List[TestCase]:
     def get_all_subclasses(base: Type[unittest.TestCase]) -> List[TestCase]:
-        return list(  # type: ignore
-            {
+        return list(
+            {  # type: ignore
                 "{}.{}".format(c.__module__, c.__name__): c
                 for c in (
                     base.__subclasses__()  # type: ignore

@@ -28,7 +28,7 @@ def mock_callable(
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
-    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
+    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
     return _MockCallableDSL(
         target,
         method,
@@ -48,7 +48,7 @@ def mock_async_callable(
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
-    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)
+    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
     return _MockAsyncCallableDSL(
         target,
         method,
@@ -399,7 +399,7 @@ class _ReturnValuesRunner(_Runner):
         self,
         target: Union[type, str],
         method: str,
-        original_callable: Optional[Callable],
+        original_callable: Union[Callable[..., Any], Mock],
         values_list: List[Any],
         allow_coro: bool = False,
     ) -> None:
@@ -424,7 +424,7 @@ class _YieldValuesRunner(_Runner):
         self,
         target: Union[type, str],
         method: str,
-        original_callable: Optional[Callable],
+        original_callable: Union[Callable[..., Any], Mock],
         values_list: List[Any],
         allow_coro: bool = False,
     ) -> None:
@@ -455,7 +455,7 @@ class _RaiseRunner(_Runner):
         self,
         target: Union[type, str],
         method: str,
-        original_callable: Optional[Callable],
+        original_callable: Union[Callable[..., Any], Mock],
         exception: Union[Exception, BaseException],
     ) -> None:
         super(_RaiseRunner, self).__init__(target, method, original_callable)
@@ -471,7 +471,7 @@ class _ImplementationRunner(_Runner):
         self,
         target: Union[type, str],
         method: str,
-        original_callable: Optional[Callable],
+        original_callable: Union[Callable[..., Any], Mock],
         new_implementation: Callable,
         allow_coro: bool = False,
     ) -> None:
@@ -492,7 +492,7 @@ class _AsyncImplementationRunner(_AsyncRunner):
         self,
         target: Union[type, str],
         method: str,
-        original_callable: Optional[Callable],
+        original_callable: Union[Callable[..., Any], Mock],
         new_implementation: Callable,
     ) -> None:
         super().__init__(target, method, original_callable)
@@ -615,7 +615,9 @@ class _CallableMock(object):
 
 class _MockCallableDSL(object):
 
-    CALLABLE_MOCKS: Dict[Union[int, Tuple[int, str]], _CallableMock] = {}
+    CALLABLE_MOCKS: Dict[
+        Union[int, Tuple[int, str]], Union[Callable[[Type[object]], Any]]
+    ] = {}
     _NAME: str = "mock_callable"
 
     def _validate_patch(
@@ -747,7 +749,7 @@ class _MockCallableDSL(object):
         target: Any,
         method: str,
         caller_frame_info: Traceback,
-        callable_mock: Optional[_CallableMock] = None,
+        callable_mock: Union[Callable[[Type[object]], Any], _CallableMock, None] = None,
         original_callable: Optional[Callable] = None,
         allow_private: bool = False,
         type_validation: bool = True,
@@ -808,7 +810,7 @@ class _MockCallableDSL(object):
             self._next_runner_accepted_args = None
             runner.add_accepted_args(*args, **kwargs)
         self._runner = runner
-        self._callable_mock.runners.insert(0, runner)
+        self._callable_mock.runners.insert(0, runner)  # type: ignore
 
     def _assert_runner(self) -> None:
         if not self._runner:
@@ -858,7 +860,7 @@ class _MockCallableDSL(object):
             _ReturnValueRunner(
                 self._original_target,
                 self._method,
-                self._original_callable,
+                self._original_callable,  # type: ignore
                 value,
                 self._allow_coro,
             )
@@ -878,7 +880,7 @@ class _MockCallableDSL(object):
             _ReturnValuesRunner(
                 self._original_target,
                 self._method,
-                self._original_callable,
+                self._original_callable,  # type: ignore
                 values_list,
                 self._allow_coro,
             )
@@ -898,7 +900,7 @@ class _MockCallableDSL(object):
             _YieldValuesRunner(
                 self._original_target,
                 self._method,
-                self._original_callable,
+                self._original_callable,  # type: ignore
                 values_list,
                 self._allow_coro,
             )
@@ -914,13 +916,13 @@ class _MockCallableDSL(object):
         if isinstance(ex, BaseException):
             self._add_runner(
                 _RaiseRunner(
-                    self._original_target, self._method, self._original_callable, ex
+                    self._original_target, self._method, self._original_callable, ex  # type: ignore
                 )
             )
         elif isinstance(ex(), BaseException):
             self._add_runner(
                 _RaiseRunner(
-                    self._original_target, self._method, self._original_callable, ex()
+                    self._original_target, self._method, self._original_callable, ex()  # type: ignore
                 )
             )
         else:
@@ -941,7 +943,7 @@ class _MockCallableDSL(object):
             _ImplementationRunner(
                 self._original_target,
                 self._method,
-                self._original_callable,
+                self._original_callable,  # type: ignore
                 func,
                 self._allow_coro,
             )
@@ -1140,7 +1142,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             raise ValueError("{} must be callable.".format(func))
         self._add_runner(
             _AsyncImplementationRunner(
-                self._original_target, self._method, self._original_callable, func
+                self._original_target, self._method, self._original_callable, func  # type: ignore
             )
         )
         return self
