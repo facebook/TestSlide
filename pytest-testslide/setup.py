@@ -20,8 +20,17 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     setup_requires=["setuptools>=38.6.0"],
-    install_requires=["testslide>=2.2.1", "pytest>=5.3.0",],
-    extras_require={"build": ["black", "flake8",]},
+    install_requires=[
+        "testslide>=2.2.1",
+        "pytest>=5.3.0",
+    ],
+    extras_require={
+        "build": [
+            "black",
+            "flake8",
+            "mypy"
+        ]
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
