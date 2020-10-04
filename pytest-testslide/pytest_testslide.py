@@ -5,46 +5,58 @@
 
 import pytest
 import testslide as testslide_module
+from typing import Any, Callable, Iterator, List, Optional, TYPE_CHECKING
+from types import TracebackType
 
-
+    
 class _TestSlideFixture:
-    def _register_assertion(self, assertion):
+    def _register_assertion(self, assertion: Callable) -> None:
         self._assertions.append(assertion)
 
-    def __enter__(self):
-        self._assertions = []
+    def __enter__(self) -> "_TestSlideFixture":
+        self._assertions: List[Callable] = []
         testslide_module.mock_callable.register_assertion = self._register_assertion
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[Exception],
+        exc_tb: TracebackType,
+    ):
+        aggregated_exceptions = testslide_module.AggregatedExceptions()
         try:
-            # FIXME aggregated failures
             for assertion in self._assertions:
-                assertion()
-
+                try:
+                    assertion()
+                except BaseException as be:
+                    aggregated_exceptions.append_exception(be)
+        
         finally:
             testslide_module.mock_callable.unpatch_all_callable_mocks
             testslide_module.mock_constructor.unpatch_all_constructor_mocks
             testslide_module.patch_attribute.unpatch_all_mocked_attributes
+        if aggregated_exceptions.exceptions:
+            pytest.fail(str(aggregated_exceptions), False)
 
     @staticmethod
-    def mock_callable(*args, **kwargs):
+    def mock_callable(*args : Any, **kwargs: Any) -> testslide_module.mock_callable._MockCallableDSL:
         return testslide_module.mock_callable.mock_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_async_callable(*args, **kwargs):
+    def mock_async_callable(*args: Any, **kwargs: Any) -> testslide_module.mock_callable._MockAsyncCallableDSL:
         return testslide_module.mock_callable.mock_async_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_constructor(*args, **kwargs):
+    def mock_constructor(*args: Any, **kwargs: Any) ->  testslide_module.mock_constructor._MockConstructorDSL:
         return testslide_module.mock_constructor.mock_constructor(*args, **kwargs)
 
     @staticmethod
-    def patch_attribute(*args, **kwargs):
+    def patch_attribute(*args: Any, **kwargs: Any) -> None:
         return testslide_module.patch_attribute.patch_attribute(*args, **kwargs)
 
 
 @pytest.fixture
-def testslide():
+def testslide() -> Iterator[_TestSlideFixture]:
     with _TestSlideFixture() as testslide_fixture:
         yield testslide_fixture

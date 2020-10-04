@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+import re
 
 def test_pass(testdir):
     testdir.makepyfile(
@@ -52,9 +52,22 @@ def test_pass(testdir):
 			testslide.mock_callable(mocked_cls, 'f1')\
 				.for_call("b").to_return_value("mocked2")\
 				.and_assert_called_once()
-			assert sample_module.CallOrderTarget("a").f1("a") == "mocked"
+			sample_module.CallOrderTarget("c").f1("a")
 		"""
     )
     result = testdir.runpytest("-v")
-    assert "11 passed" in result.stdout.str()
-    assert result.ret == 0
+    assert "12 passed, 1 error" in result.stdout.str()
+    expected_failure = re.compile(""".*_______________ ERROR at teardown of test_aggregated_exceptions ________________
+2 failures.
+<class \'AssertionError\'>: calls did not match assertion.
+<StrictMock 0x[a-fA-F0-9]+ template=tests.sample_module.CallOrderTarget .*/test_pass0/test_pass.py:39>, \'f1\':
+  expected: called exactly 1 time\(s\) with arguments:
+    \(\'a\',\)
+  received: 0 call\(s\)
+<class \'AssertionError\'>: calls did not match assertion.
+<StrictMock 0x[a-fA-F0-9]+ template=tests.sample_module.CallOrderTarget .*/test_pass0/test_pass.py:39>, \'f1\':
+  expected: called exactly 1 time\(s\) with arguments:
+    \(\'b\',\)
+  received: 0 call\(s\).*""", re.MULTILINE|re.DOTALL)
+    assert expected_failure.match(result.stdout.str())
+    assert result.ret != 0
