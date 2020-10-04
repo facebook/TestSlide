@@ -3,12 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import pytest
-import testslide as testslide_module
-from typing import Any, Callable, Iterator, List, Optional, TYPE_CHECKING
 from types import TracebackType
+from typing import Any, Callable, Iterator, List, Optional
 
-    
+import pytest  # type: ignore
+
+import testslide as testslide_module
+
+
 class _TestSlideFixture:
     def _register_assertion(self, assertion: Callable) -> None:
         self._assertions.append(assertion)
@@ -31,7 +33,7 @@ class _TestSlideFixture:
                     assertion()
                 except BaseException as be:
                     aggregated_exceptions.append_exception(be)
-        
+
         finally:
             testslide_module.mock_callable.unpatch_all_callable_mocks
             testslide_module.mock_constructor.unpatch_all_constructor_mocks
@@ -40,15 +42,21 @@ class _TestSlideFixture:
             pytest.fail(str(aggregated_exceptions), False)
 
     @staticmethod
-    def mock_callable(*args : Any, **kwargs: Any) -> testslide_module.mock_callable._MockCallableDSL:
+    def mock_callable(
+        *args: Any, **kwargs: Any
+    ) -> testslide_module.mock_callable._MockCallableDSL:
         return testslide_module.mock_callable.mock_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_async_callable(*args: Any, **kwargs: Any) -> testslide_module.mock_callable._MockAsyncCallableDSL:
+    def mock_async_callable(
+        *args: Any, **kwargs: Any
+    ) -> testslide_module.mock_callable._MockAsyncCallableDSL:
         return testslide_module.mock_callable.mock_async_callable(*args, **kwargs)
 
     @staticmethod
-    def mock_constructor(*args: Any, **kwargs: Any) ->  testslide_module.mock_constructor._MockConstructorDSL:
+    def mock_constructor(
+        *args: Any, **kwargs: Any
+    ) -> testslide_module.mock_constructor._MockConstructorDSL:
         return testslide_module.mock_constructor.mock_constructor(*args, **kwargs)
 
     @staticmethod

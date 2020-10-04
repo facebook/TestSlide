@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import re
 
+
 def test_pass(testdir):
     testdir.makepyfile(
         """
@@ -57,7 +58,8 @@ def test_pass(testdir):
     )
     result = testdir.runpytest("-v")
     assert "12 passed, 1 error" in result.stdout.str()
-    expected_failure = re.compile(""".*_______________ ERROR at teardown of test_aggregated_exceptions ________________
+    expected_failure = re.compile(
+        """.*_______________ ERROR at teardown of test_aggregated_exceptions ________________
 2 failures.
 <class \'AssertionError\'>: calls did not match assertion.
 <StrictMock 0x[a-fA-F0-9]+ template=tests.sample_module.CallOrderTarget .*/test_pass0/test_pass.py:39>, \'f1\':
@@ -68,6 +70,8 @@ def test_pass(testdir):
 <StrictMock 0x[a-fA-F0-9]+ template=tests.sample_module.CallOrderTarget .*/test_pass0/test_pass.py:39>, \'f1\':
   expected: called exactly 1 time\(s\) with arguments:
     \(\'b\',\)
-  received: 0 call\(s\).*""", re.MULTILINE|re.DOTALL)
+  received: 0 call\(s\).*""",
+        re.MULTILINE | re.DOTALL,
+    )
     assert expected_failure.match(result.stdout.str())
     assert result.ret != 0

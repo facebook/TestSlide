@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from setuptools import setup
+from setuptools import setup  # type: ignore
 
 with open("README.md", encoding="utf8") as f:
     readme = f.read()
@@ -24,13 +24,7 @@ setup(
         "testslide>=2.2.1",
         "pytest>=5.3.0",
     ],
-    extras_require={
-        "build": [
-            "black",
-            "flake8",
-            "mypy"
-        ]
-    },
+    extras_require={"build": ["black", "flake8", "mypy"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
