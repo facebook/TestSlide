@@ -68,7 +68,7 @@ docs_clean:
 .PHONY: unittest_tests
 unittest_tests: $(TESTS_SRCS)/*_unittest.py
 
-.PHONY: pytest_tets
+.PHONY: pytest_tests
 pytest_tests: FORCE coverage_erase
 	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}"
 	PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR} \
@@ -128,7 +128,7 @@ format_black:
 tests: \
 	unittest_tests \
 	testslide_tests \
-	pytest_tets \
+	pytest_tests \
 	mypy \
 	flake8 \
 	isort \
