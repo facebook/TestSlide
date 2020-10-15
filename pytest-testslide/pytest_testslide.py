@@ -35,9 +35,9 @@ class _TestSlideFixture:
                     aggregated_exceptions.append_exception(be)
 
         finally:
-            testslide_module.mock_callable.unpatch_all_callable_mocks
-            testslide_module.mock_constructor.unpatch_all_constructor_mocks
-            testslide_module.patch_attribute.unpatch_all_mocked_attributes
+            testslide_module.mock_callable.unpatch_all_callable_mocks()
+            testslide_module.mock_constructor.unpatch_all_constructor_mocks()
+            testslide_module.patch_attribute.unpatch_all_mocked_attributes()
         if aggregated_exceptions.exceptions:
             pytest.fail(str(aggregated_exceptions), False)
 
