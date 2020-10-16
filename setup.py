@@ -32,7 +32,7 @@ setup(
             "coveralls",
             "flake8",
             "isort~=5.1",
-            "mypy",
+            "mypy==0.782",
             "ipython",
             "sphinx",
             "sphinx-autobuild",
