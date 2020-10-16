@@ -9,6 +9,7 @@ import re
 import sys
 import unittest
 from contextlib import contextmanager
+from dataclasses import dataclass
 from time import time
 from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
 
@@ -148,8 +149,25 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
         )
 
 
+@dataclass(frozen=True)
 class _Config(object):
-    pass
+    import_module_names: List[str]
+    shuffle: bool
+    list: bool
+    quiet: bool
+    fail_if_focused: bool
+    fail_fast: bool
+    focus: bool
+    trim_path_prefix: str
+    format: str
+    seed: Optional[int] = None
+    force_color: Optional[bool] = False
+    show_testslide_stack_trace: Optional[bool] = False
+    names_text_filter: Optional[str] = None
+    names_regex_filter: Optional[Pattern[Any]] = None
+    names_regex_exclude: Optional[Pattern[Any]] = None
+    dsl_debug: Optional[bool] = False
+    profile_threshold_ms: Optional[int] = None
 
 
 class Cli(object):
@@ -330,40 +348,38 @@ class Cli(object):
         return import_secs
 
     def _get_config_from_parsed_args(self, parsed_args: Any) -> _Config:
-        config = _Config()
-
-        config.profile_threshold_ms = (  # type: ignore
-            parsed_args.import_profiler[0] if parsed_args.import_profiler else None
-        )
-
-        config.format = parsed_args.format  # type: ignore
-        config.force_color = parsed_args.force_color  # type: ignore
-        config.trim_path_prefix = parsed_args.trim_path_prefix[0]  # type: ignore
-        config.show_testslide_stack_trace = parsed_args.show_testslide_stack_trace  # type: ignore
-        config.shuffle = parsed_args.shuffle  # type: ignore
-        config.list = parsed_args.list  # type: ignore
-        config.seed = parsed_args.seed[0] if parsed_args.seed else None  # type: ignore
-        config.focus = parsed_args.focus  # type: ignore
-        config.fail_if_focused = parsed_args.fail_if_focused  # type: ignore
-        config.fail_fast = parsed_args.fail_fast  # type: ignore
-        config.names_text_filter = (  # type: ignore
-            parsed_args.filter_text[0] if parsed_args.filter_text else None
-        )
-        config.names_regex_filter = (  # type: ignore
-            parsed_args.filter_regex[0] if parsed_args.filter_regex else None
-        )
-        config.names_regex_exclude = (  # type: ignore
-            parsed_args.exclude_regex[0] if parsed_args.exclude_regex else None
-        )
-        config.quiet = parsed_args.quiet  # type: ignore
-        config.dsl_debug = parsed_args.dsl_debug  # type: ignore
-        if self._modules:
-            config.import_module_names = self._modules  # type: ignore
-        else:
-            config.import_module_names = [  # type: ignore
+        config = _Config(
+            format=parsed_args.format,
+            force_color=parsed_args.force_color,
+            trim_path_prefix=parsed_args.trim_path_prefix[0],
+            show_testslide_stack_trace=parsed_args.show_testslide_stack_trace,
+            profile_threshold_ms=parsed_args.import_profiler[0]
+            if parsed_args.import_profiler
+            else None,
+            shuffle=parsed_args.shuffle,
+            list=parsed_args.list,
+            seed=parsed_args.seed[0] if parsed_args.seed else None,
+            focus=parsed_args.focus,
+            fail_if_focused=parsed_args.fail_if_focused,
+            fail_fast=parsed_args.fail_fast,
+            names_text_filter=parsed_args.filter_text[0]
+            if parsed_args.filter_text
+            else None,
+            names_regex_filter=parsed_args.filter_regex[0]
+            if parsed_args.filter_regex
+            else None,
+            names_regex_exclude=parsed_args.exclude_regex[0]
+            if parsed_args.exclude_regex
+            else None,
+            quiet=parsed_args.quiet,
+            dsl_debug=parsed_args.dsl_debug,
+            import_module_names=self._modules
+            if self._modules
+            else [
                 _filename_to_module_name(test_file)
                 for test_file in parsed_args.test_files
-            ]
+            ],
+        )
         return config
 
     def run(self) -> int:
@@ -371,25 +387,25 @@ class Cli(object):
             parsed_args = self.parser.parse_args(self.args)
         except SystemExit as e:
             return e.code
-        config = self._get_config_from_parsed_args(parsed_args)  # type: ignore
+        config = self._get_config_from_parsed_args(parsed_args)
 
-        if config.profile_threshold_ms is not None:  # type: ignore
+        if config.profile_threshold_ms is not None:
             import_secs = self._do_imports(
-                config.import_module_names, config.profile_threshold_ms  # type: ignore
+                config.import_module_names, config.profile_threshold_ms
             )
             return 0
         else:
-            import_secs = self._load_all_examples(config.import_module_names)  # type: ignore
-            formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](  # type: ignore
-                import_module_names=config.import_module_names,  # type: ignore
-                force_color=config.force_color,  # type: ignore
+            import_secs = self._load_all_examples(config.import_module_names)
+            formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
+                import_module_names=config.import_module_names,
+                force_color=config.force_color,
                 import_secs=import_secs,
-                trim_path_prefix=config.trim_path_prefix,  # type: ignore
-                show_testslide_stack_trace=config.show_testslide_stack_trace,  # type: ignore
-                dsl_debug=config.dsl_debug,  # type: ignore
+                trim_path_prefix=config.trim_path_prefix,
+                show_testslide_stack_trace=config.show_testslide_stack_trace,
+                dsl_debug=config.dsl_debug,
             )
-            StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix  # type: ignore
-            if config.list:  # type: ignore
+            StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
+            if config.list:
                 formatter.discovery_start()
                 for context in Context.all_top_level_contexts:
                     for example in context.all_examples:
@@ -400,15 +416,15 @@ class Cli(object):
                 return Runner(
                     contexts=Context.all_top_level_contexts,
                     formatter=formatter,
-                    shuffle=config.shuffle,  # type: ignore
-                    seed=config.seed,  # type: ignore
-                    focus=config.focus,  # type: ignore
-                    fail_fast=config.fail_fast,  # type: ignore
-                    fail_if_focused=config.fail_if_focused,  # type: ignore
-                    names_text_filter=config.names_text_filter,  # type: ignore
-                    names_regex_filter=config.names_regex_filter,  # type: ignore
-                    names_regex_exclude=config.names_regex_exclude,  # type: ignore
-                    quiet=config.quiet,  # type: ignore
+                    shuffle=config.shuffle,
+                    seed=config.seed,
+                    focus=config.focus,
+                    fail_fast=config.fail_fast,
+                    fail_if_focused=config.fail_if_focused,
+                    names_text_filter=config.names_text_filter,
+                    names_regex_filter=config.names_regex_filter,
+                    names_regex_exclude=config.names_regex_exclude,
+                    quiet=config.quiet,
                 ).run()
 
 

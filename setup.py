@@ -23,6 +23,7 @@ setup(
     install_requires=[
         "psutil>=5.6.7",
         "typeguard>=2.9.1",
+        "dataclasses>=0.7",
     ],
     extras_require={
         "build": [
