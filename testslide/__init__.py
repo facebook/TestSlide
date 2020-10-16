@@ -421,7 +421,7 @@ class _ExampleRunner:
             else:
                 original_showwarning(message, category, filename, lineno, file, line)
 
-        warnings.showwarning = showwarning
+        warnings.showwarning = showwarning  # type: ignore
 
         original_logger_warning = asyncio.log.logger.warning
 
@@ -438,7 +438,7 @@ class _ExampleRunner:
             else:
                 original_logger_warning(msg, *args, **kwargs)
 
-        asyncio.log.logger.warning = logger_warning
+        asyncio.log.logger.warning = logger_warning  # type: ignore
 
         aggregated_exceptions = AggregatedExceptions()
 
@@ -447,7 +447,7 @@ class _ExampleRunner:
                 yield
         finally:
             warnings.showwarning = original_showwarning
-            asyncio.log.logger.warning = original_logger_warning
+            asyncio.log.logger.warning = original_logger_warning  # type: ignore
             for failure in caught_failures:
                 with aggregated_exceptions.catch():
                     raise failure  # type: ignore
