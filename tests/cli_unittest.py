@@ -271,21 +271,18 @@ class ExceptionCauseTest:
             tty_stdout=False,
             expected_return_code=1,
             expected_regex_in_stdout=(
-                (
-                    ".*1\) AssertionError: Third\n"
-                    ".*\n *"
-                    + '  File "tests/sample_tests.py", line [0-9]+, in test_failing\n *'
-                    + '    raise AssertionError\("Third"\) from cause\n *'
-                    + "\n *"
-                    + "  Caused by AssertionError: Second\n *"
-                    + '    File "tests/sample_tests.py", line [0-9]+, in test_failing\n *'
-                    + '      raise AssertionError\("Second"\) from cause\n *'
-                    + "\n *"
-                    + "    Caused by AssertionError: First\n *"
-                    + '      File "tests/sample_tests.py", line [0-9]+, in test_failing\n *'
-                    + '        raise AssertionError\("First"\)\n *'
-                    + ".*"
-                )
+                ".*\n"
+                "    1\) AssertionError: Third\n"
+                ".*\n"
+                '      File "tests/sample_tests.py", line [0-9]+, in test_failing\n'
+                '        raise AssertionError\("Third"\) from cause\n'
+                "      Caused by AssertionError: Second\n"
+                '        File "tests/sample_tests.py", line [0-9]+, in test_failing\n'
+                '          raise AssertionError\("Second"\) from cause\n'
+                "        Caused by AssertionError: First\n"
+                '          File "tests/sample_tests.py", line [0-9]+, in test_failing\n'
+                '            raise AssertionError\("First"\)\n *'
+                ".*"
             ),
         )
 
