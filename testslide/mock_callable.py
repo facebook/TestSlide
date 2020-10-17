@@ -766,9 +766,14 @@ class _MockCallableDSL(object):
     ) -> None:
         if not _is_setup():
             raise RuntimeError(
-                "mock_callable() was not setup correctly before usage. "
-                "Please refer to the documentation at http://testslide.readthedocs.io/ "
-                "to learn how to properly do that."
+                "TestSlide was not correctly setup before usage!\n"
+                "This error happens when mock_callable, mock_async_callable or "
+                "mock_constructor are attempted to be used without correct "
+                "test framework integration, meaning unpatching and "
+                "assertions will not work as expected.\n"
+                "A common scenario for this is when testslide.TestCase is "
+                "subclassed with setUp() overridden but super().setUp() was not "
+                "called."
             )
         self._original_target = target
         self._method = method
