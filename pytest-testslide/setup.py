@@ -23,6 +23,7 @@ setup(
     install_requires=[
         "testslide>=2.2.1",
         "pytest>=5.3.0",
+        "pytest-asyncio>=0.14.0",
     ],
     extras_require={"build": ["black", "flake8", "mypy"]},
     classifiers=[

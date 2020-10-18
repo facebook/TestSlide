@@ -8,76 +8,118 @@ import re
 def test_pass(testdir):
     testdir.makepyfile(
         """
-		import time
-		import pytest
-		from pytest_testslide import testslide
-		from tests import sample_module
-		from testslide import StrictMock
+        import time
+        import pytest
+        from pytest_testslide import testslide
+        from tests import sample_module
+        from testslide import StrictMock
 
-		def test_has_mock_callable(testslide):
-			testslide.mock_callable
+        def test_has_mock_callable(testslide):
+            testslide.mock_callable
 
-		def test_mock_callable_assertion_works(testslide):
-			testslide.mock_callable
+        def test_mock_callable_assertion_works(testslide):
+            testslide.mock_callable
 
-		def test_mock_callable_unpaches(testslide):
-			testslide.mock_callable
+        def test_mock_callable_unpaches(testslide):
+            testslide.mock_callable
 
-		def test_has_mock_async_callable(testslide):
-			testslide.mock_async_callable
+        def test_has_mock_async_callable(testslide):
+            testslide.mock_async_callable
 
-		def test_mock_async_callable_assertion_works(testslide):
-			testslide.mock_async_callable
+        def test_mock_async_callable_assertion_works(testslide):
+            testslide.mock_async_callable
 
-		def test_mock_async_callable_unpaches(testslide):
-			testslide.mock_async_callable
+        def test_mock_async_callable_unpaches(testslide):
+            testslide.mock_async_callable
 
-		def test_has_mock_constructor(testslide):
-			testslide.mock_constructor
+        def test_has_mock_constructor(testslide):
+            testslide.mock_constructor
 
-		def test_mock_constructor_assertion_works(testslide):
-			testslide.mock_constructor
+        def test_mock_constructor_assertion_works(testslide):
+            testslide.mock_constructor
 
-		def test_mock_constructor_unpaches(testslide):
-			testslide.mock_constructor
+        def test_mock_constructor_unpaches(testslide):
+            testslide.mock_constructor
 
-		def test_has_patch_attribute(testslide):
-			testslide.patch_attribute
+        def test_has_patch_attribute(testslide):
+            testslide.patch_attribute
 
-		def test_patch_attribute_unpaches(testslide):
-			testslide.patch_attribute
+        def test_patch_attribute_unpaches(testslide):
+            testslide.patch_attribute
 
-		def test_mock_callable_patching_works(testslide):
-			testslide.mock_callable("time", "sleep").to_raise(RuntimeError("Mocked!"))
-			with pytest.raises(RuntimeError):
-				time.sleep()
+        # mock_callable integration tests
+        def test_mock_callable_patching_works(testslide):
+            testslide.mock_callable(time, "sleep").to_raise(RuntimeError("Mocked!"))
+            with pytest.raises(RuntimeError):
+                time.sleep()
 
-		def test_mock_callable_unpatching_works(testslide):
-			# This will fail if unpatching from test_mock_callable_patching_works does
-			# not happen
-			time.sleep(0)
+        def test_mock_callable_unpatching_works(testslide):
+            # This will fail if unpatching from test_mock_callable_patching_works does
+            # not happen
+            time.sleep(0)
 
-		def test_mock_callable_assertion_works(testslide):
-			testslide.mock_callable("time", "sleep").for_call(0).to_call_original().and_assert_called_once()
-			time.sleep(0)
+        def test_mock_callable_assertion_works(testslide):
+            testslide.mock_callable("time", "sleep").for_call(0).to_call_original().and_assert_called_once()
+            time.sleep(0)
 
-		def test_mock_callable_failed_assertion_works(testslide):
-			testslide.mock_callable("time", "sleep").for_call(0).to_call_original().and_assert_called_once()
-			time.sleep(0)
+        # mock_async_callable integration test
+        @pytest.mark.asyncio
+        async def test_mock_async_callable_patching_works(testslide):
+            testslide.mock_async_callable(sample_module.ParentTarget, "async_static_method").to_raise(RuntimeError("Mocked!"))
+            with pytest.raises(RuntimeError):
+                await sample_module.ParentTarget.async_static_method("a", "b")
 
-		def test_aggregated_exceptions(testslide):
-			mocked_cls = StrictMock(sample_module.CallOrderTarget)
-			testslide.mock_callable(mocked_cls, 'f1')\
-				.for_call("a").to_return_value("mocked")\
-				.and_assert_called_once()
-			testslide.mock_callable(mocked_cls, 'f1')\
-				.for_call("b").to_return_value("mocked2")\
-				.and_assert_called_once()
-			sample_module.CallOrderTarget("c").f1("a")
-		"""
+        @pytest.mark.asyncio
+        async def test_mock_async_callable_unpatching_works(testslide):
+            # This will fail if unpatching from test_mock_async_callable_patching_works does
+            # not happen
+            assert await sample_module.ParentTarget.async_static_method("a", "b") == "async original response"
+
+        @pytest.mark.asyncio
+        async def test_mock_async_callable_assertion_works(testslide):
+            testslide.mock_async_callable(sample_module.ParentTarget, "async_static_method").for_call("a", "b").to_call_original().and_assert_called_once()
+            await sample_module.ParentTarget.async_static_method("a", "b")
+
+        # mock_constructor integration test
+        def test_mock_constructor_patching_works(testslide):
+            testslide.mock_constructor(sample_module, "ParentTarget").to_raise(RuntimeError("Mocked!"))
+            with pytest.raises(RuntimeError):
+                sample_module.ParentTarget()
+
+        def test_mock_constructor_unpatching_works(testslide):
+            # This will fail if unpatching from test_mock_constructor_patching_works does
+            # not happen
+            assert sample_module.ParentTarget()
+
+        def test_mock_constructor_assertion_works(testslide):
+            testslide.mock_constructor(sample_module, "ParentTarget").to_call_original().and_assert_called_once()
+            sample_module.ParentTarget()
+
+        # patch_attribute integration test
+        def test_patch_attribute_patching_works(testslide):
+            testslide.patch_attribute(sample_module.SomeClass, "attribute", "patched")
+            assert sample_module.SomeClass.attribute == "patched"
+
+        def test_patch_attribute_unpatching_works(testslide):
+            # This will fail if unpatching from test_mock_callable_patching_works does
+            # not happen
+            assert sample_module.SomeClass.attribute == "value"
+
+
+        def test_aggregated_exceptions(testslide):
+            mocked_cls = StrictMock(sample_module.CallOrderTarget)
+            testslide.mock_callable(mocked_cls, 'f1')\
+                .for_call("a").to_return_value("mocked")\
+                .and_assert_called_once()
+            testslide.mock_callable(mocked_cls, 'f1')\
+                .for_call("b").to_return_value("mocked2")\
+                .and_assert_called_once()
+            sample_module.CallOrderTarget("c").f1("a")
+        """
     )
     result = testdir.runpytest("-v")
     assert "passed, 1 error" in result.stdout.str()
+    assert "failed" not in result.stdout.str()
     expected_failure = re.compile(
         """.*_______________ ERROR at teardown of test_aggregated_exceptions ________________
 2 failures.
