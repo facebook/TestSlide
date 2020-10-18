@@ -42,6 +42,8 @@ setup(
             "sphinx-autobuild",
             "sphinx-kr-theme",
             "twine",
+            "pytest>=5.3.0",
+            "pytest-asyncio>=0.14.0",
         ]
     },
     classifiers=[
