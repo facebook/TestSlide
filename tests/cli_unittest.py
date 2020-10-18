@@ -131,7 +131,7 @@ class TestCliBase(unittest.TestCase):
             self.assertTrue(
                 expected_in_stdout in stdout_output,
                 f"Command {args} expected to have have in its stdout:\n\n"
-                f"{expected_stdout_startswith}\n\n"
+                f"{expected_in_stdout}\n\n"
                 f"But output was different:\n"
                 f"{stdout_output}",
             )
@@ -140,7 +140,7 @@ class TestCliBase(unittest.TestCase):
                 re.fullmatch(expected_regex_in_stdout, stdout_output, flags=re.DOTALL),
                 f"Command {args} expected to have have its stdout matching the regexp:\n\n"
                 f"{expected_regex_in_stdout}\n\n"
-                f"But output was different:\n\n"
+                f"But output was different:\n"
                 f"{stdout_output}",
             )
 
@@ -268,21 +268,17 @@ class TestCliQuiet(TestCliBase):
 class ExceptionCauseTest:
     def test_prints_exceptions_with_cause(self):
         self.run_testslide(
-            tty_stdout=False,
+            tty_stdout=True,
             expected_return_code=1,
-            expected_regex_in_stdout=(
-                ".*\n"
-                "    1\) AssertionError: Third\n"
-                ".*\n"
-                '      File "tests/sample_tests.py", line [0-9]+, in test_failing\n'
-                '        raise AssertionError\("Third"\) from cause\n'
-                "      Caused by AssertionError: Second\n"
-                '        File "tests/sample_tests.py", line [0-9]+, in test_failing\n'
-                '          raise AssertionError\("Second"\) from cause\n'
-                "        Caused by AssertionError: First\n"
-                '          File "tests/sample_tests.py", line [0-9]+, in test_failing\n'
-                '            raise AssertionError\("First"\)\n *'
-                ".*"
+            expected_in_stdout=(
+                '      File \033[36m"tests/sample_tests.py"\033[39;49;00m, line \033[34m76\033[39;49;00m, in test_failing\r\n'
+                '        \033[34mraise\033[39;49;00m \033[36mAssertionError\033[39;49;00m(\033[33m"\033[39;49;00m\033[33mThird\033[39;49;00m\033[33m"\033[39;49;00m) \033[34mfrom\033[39;49;00m \033[04m\033[36mcause\033[39;49;00m\r\n'
+                "\033[0m\033[31m      Caused by \033[0m\033[0m\033[31mAssertionError: Second\033[0m\r\n"
+                '        File \033[36m"tests/sample_tests.py"\033[39;49;00m, line \033[34m74\033[39;49;00m, in test_failing\r\n'
+                '          \033[34mraise\033[39;49;00m \033[36mAssertionError\033[39;49;00m(\033[33m"\033[39;49;00m\033[33mSecond\033[39;49;00m\033[33m"\033[39;49;00m) \033[34mfrom\033[39;49;00m \033[04m\033[36mcause\033[39;49;00m\r\n'
+                "\033[0m\033[31m        Caused by \033[0m\033[0m\033[31mAssertionError: First\033[0m\r\n"
+                '          File \033[36m"tests/sample_tests.py"\033[39;49;00m, line \033[34m72\033[39;49;00m, in test_failing\r\n'
+                '            \033[34mraise\033[39;49;00m \033[36mAssertionError\033[39;49;00m(\033[33m"\033[39;49;00m\033[33mFirst\033[39;49;00m\033[33m"\033[39;49;00m)\r\n'
             ),
         )
 
