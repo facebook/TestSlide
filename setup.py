@@ -25,21 +25,6 @@ setup(
         "typeguard>=2.9.1",
         'dataclasses==0.6; python_version < "3.7"',
     ],
-    extras_require={
-        "build": [
-            "black",
-            "coverage",
-            "coveralls",
-            "flake8",
-            "isort~=5.1",
-            "mypy==0.782",
-            "ipython",
-            "sphinx",
-            "sphinx-autobuild",
-            "sphinx-kr-theme",
-            "twine",
-        ]
-    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

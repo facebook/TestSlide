@@ -1906,7 +1906,7 @@ class SmokeTestAsync(TestDSLBase):
                     asyncio.sleep(0.1)
 
             with self.assertRaisesRegex(
-                RuntimeWarning, "coroutine '.+' was never awaited"
+                RuntimeError, "coroutine '.+' was never awaited"
             ):
                 self.run_first_context_first_example()
 

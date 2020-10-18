@@ -22,9 +22,24 @@ We actively welcome your pull requests.
 
 Generally speaking:
 
-- Install a supported Python version (see `.travis.yml`) (suggestion: use [pyenv](https://github.com/pyenv/pyenv)).
-- Install the dependencies: `make install_build_deps`.
-- Run the tests: `make` (or `make V=1` for verbose output).
+- Install supported Python versions (see `.python-version`).
+  - Using [pyenv](https://github.com/pyenv/pyenv) is highly advised!
+- Enable the Python version defined at `tox.ini` `basepython`.
+- Do `pip install tox` (and `tox-pyenv` if using pyenv).
+- Run all tests: `tox`.
+
+If you want more fine grained control over running tests you can:
+
+- Create a venv: `python -m venv venv/`.
+- Install deps: `pip install -e .`.
+- Run individual tests:
+  - `make tests/strict_mock_testslide.py`
+
+`make` has other goodies:
+
+- `V=1`: verbose output.
+- `TESTSLIDE_FORMAT`: set the formatter (progress, documentation etc).
+- `UNITTEST_VERBOSE=0`: disable verbose.
 
 Here's a quick cookbook on how to have a Python installation working using Docker:
 
@@ -41,8 +56,8 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 ```
 - Do `exec bash -i`.
-- Install Python: `pyenv install 3.7.3`.
-- Enable the installed version `pyenv shell 3.7.3`.
+- Install Python: `pyenv install $SUPPORTED_PYTHON_VERSION`.
+- Enable the installed version `pyenv shell $SUPPORTED_PYTHON_VERSION`.
 
 ## Contributor License Agreement ("CLA")
 
