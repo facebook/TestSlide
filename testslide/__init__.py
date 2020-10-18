@@ -66,7 +66,7 @@ else:
     asyncio_run = partial(asyncio.run, debug=True)
 
 
-if sys.version_info < (3, 8):
+if sys.version_info < (3, 7):
     get_all_tasks = asyncio.Task.all_tasks
 else:
     get_all_tasks = asyncio.all_tasks
@@ -401,10 +401,10 @@ class _ExampleRunner:
             yield
             return
         original_showwarning = warnings.showwarning
-        caught_failures: List[Union[Exception, str]] = []
+        caught_failures: List[Exception] = []
 
         def showwarning(
-            message: str,
+            message: Union[Warning, str],
             category: Type[Warning],
             filename: str,
             lineno: int,
@@ -417,11 +417,11 @@ class _ExampleRunner:
             warning_class = type(message)
             pattern = failure_warning_messages.get(warning_class, None)
             if pattern and re.compile(pattern).match(str(message)):
-                caught_failures.append(message)
+                caught_failures.append(RuntimeError(message))
             else:
                 original_showwarning(message, category, filename, lineno, file, line)
 
-        warnings.showwarning = showwarning  # type: ignore
+        warnings.showwarning = showwarning
 
         original_logger_warning = asyncio.log.logger.warning
 
@@ -450,7 +450,7 @@ class _ExampleRunner:
             asyncio.log.logger.warning = original_logger_warning  # type: ignore
             for failure in caught_failures:
                 with aggregated_exceptions.catch():
-                    raise failure  # type: ignore
+                    raise failure
             aggregated_exceptions.raise_correct_exception()
 
     def _async_run_all_hooks_and_example(self, context_data: _ContextData) -> None:

@@ -119,11 +119,7 @@ format_black:
 .PHONY: tests
 tests: \
 	unittest_tests \
-	testslide_tests \
-	mypy \
-	flake8 \
-	isort \
-	black
+	testslide_tests
 
 .PHONY: format
 format: \
@@ -148,6 +144,7 @@ coverage_combine: unittest_tests testslide_tests
 coverage_report: coverage_combine
 	@printf "${TERM_BRIGHT}COVERAGE REPORT\n${TERM_NONE}"
 	${Q} coverage report
+	${Q} bash -c '[ -n "$$COVERALLS_REPO_TOKEN" ] && { echo -e "${TERM_BRIGHT}COVERALLS\\n${TERM_NONE}" && coveralls ; } || true'
 
 .PHONY: coverage_html
 coverage_html: coverage_combine
@@ -159,19 +156,9 @@ coverage_html_clean:
 	@printf "${TERM_BRIGHT}COVERAGE HTML CLEAN\n${TERM_NONE}"
 	${Q} rm -rf htmlcov/
 
-.PHONY: coveralls
-coveralls: coverage_combine
-	@printf "${TERM_BRIGHT}COVERALLS\n${TERM_NONE}"
-	${Q} coveralls
-
 ##
 ## Build
 ##
-
-.PHONY: install_build_deps
-install_build_deps:
-	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
-	${Q} pip install -e .[test,build]
 
 .PHONY: sdist
 sdist:
@@ -186,22 +173,6 @@ sdist_clean:
 .PHONY: twine
 twine: sdist
 	twine upload $(DIST_TAR_GZ)
-
-.PHONY: install_local
-install_local: sdist
-	@printf "${TERM_BRIGHT}INSTALL LOCAL\n${TERM_NONE}"
-	${Q} pip install $(DIST_TAR_GZ)
-	${Q} testslide --help
-
-.PHONY: travis
-travis: \
-	install_build_deps \
-	tests \
-	coverage_report \
-	coveralls \
-	docs \
-	sdist \
-	install_local
 
 ##
 ## Clean

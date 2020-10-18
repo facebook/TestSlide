@@ -1,7 +1,10 @@
 language: python
+# FIXME use pyenv pinned versions from .python-version
 python:
   - 3.6
   - 3.7
   - 3.8
-script:
-  TESTSLIDE_FORMAT=progress UNITTEST_VERBOSE=0 make travis V=1
+install: pip install tox-travis
+script: tox
+env:
+  - TESTSLIDE_FORMAT=progress UNITTEST_VERBOSE=0 V=1
