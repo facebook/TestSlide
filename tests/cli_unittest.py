@@ -13,6 +13,8 @@ import sys
 import threading
 import unittest
 
+import testslide
+
 
 class TestCliBase(unittest.TestCase):
     SAMPLE_TESTS_PATH = os.path.dirname(__file__) + "/sample_tests.py"
@@ -31,14 +33,18 @@ class TestCliBase(unittest.TestCase):
         expected_stdout=None,
         expected_stdout_startswith=None,
         expected_in_stdout=None,
+        expected_not_in_stdout=None,
         expected_regex_in_stdout=None,
+        show_testslide_stack_trace=True,
     ):
         args = [
             sys.executable,
             "-m",
             "testslide.cli",
-            "--show-testslide-stack-trace",
-        ] + self.argv
+        ]
+        if show_testslide_stack_trace:
+            args.append("--show-testslide-stack-trace")
+        args.extend(self.argv)
 
         env = dict(copy.copy(os.environ))
         env.update(self.env)
@@ -132,6 +138,14 @@ class TestCliBase(unittest.TestCase):
                 expected_in_stdout in stdout_output,
                 f"Command {args} expected to have have in its stdout:\n\n"
                 f"{expected_in_stdout}\n\n"
+                f"But output was different:\n"
+                f"{stdout_output}",
+            )
+        if expected_not_in_stdout:
+            self.assertTrue(
+                expected_not_in_stdout not in stdout_output,
+                f"Command {args} expected to not have have in its stdout:\n\n"
+                f"{expected_not_in_stdout}\n\n"
                 f"But output was different:\n"
                 f"{stdout_output}",
             )
@@ -265,7 +279,7 @@ class TestCliQuiet(TestCliBase):
         )
 
 
-class ExceptionCauseTest:
+class FormatterMixin:
     def test_prints_exceptions_with_cause(self):
         self.run_testslide(
             tty_stdout=True,
@@ -282,8 +296,49 @@ class ExceptionCauseTest:
             ),
         )
 
+    def test_default_trim_path_prefix(self):
+        """
+        Default value for --trim-path-prefix trims path shared with
+        testslide itself.
+        """
+        self.run_testslide(
+            expected_return_code=1,
+            expected_in_stdout=('File "tests/sample_tests.py", line'),
+        )
 
-class TestCliDocumentFormatter(ExceptionCauseTest, TestCliBase):
+    def test_nonempty_trim_path_prefix(self):
+        """
+        Trims prefix passed to --trim-path-prefix.
+        """
+        self.argv.append("--trim-path-prefix")
+        self.argv.append(os.path.dirname(self.SAMPLE_TESTS_PATH) + "/")
+        self.run_testslide(
+            expected_return_code=1,
+            expected_in_stdout=(
+                'File "' + os.path.basename(self.SAMPLE_TESTS_PATH) + '", line'
+            ),
+        )
+
+    def test_empty_trim_path_prefix(self):
+        """
+        Trims nothing if '' passed to --trim-path-prefix.
+        """
+        self.argv.append("--trim-path-prefix")
+        self.argv.append("")
+        self.run_testslide(
+            expected_return_code=1,
+            expected_in_stdout=('File "' + self.SAMPLE_TESTS_PATH + '", line'),
+        )
+
+    def test_not_show_testslide_stack_trace(self):
+        self.run_testslide(
+            expected_return_code=1,
+            show_testslide_stack_trace=False,
+            expected_not_in_stdout=os.path.abspath(os.path.dirname(testslide.__file__)),
+        )
+
+
+class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "documentation"] + self.argv
@@ -514,40 +569,6 @@ class TestCliDocumentFormatter(ExceptionCauseTest, TestCliBase):
             ),
         )
 
-    def test_default_trim_path_prefix(self):
-        """
-        Default value for --trim-path-prefix trims path shared with
-        testslide itself.
-        """
-        self.run_testslide(
-            expected_return_code=1,
-            expected_in_stdout=('File "tests/sample_tests.py", line'),
-        )
-
-    def test_nonempty_trim_path_prefix(self):
-        """
-        Trims prefix passed to --trim-path-prefix.
-        """
-        self.argv.append("--trim-path-prefix")
-        self.argv.append(os.path.dirname(self.SAMPLE_TESTS_PATH) + "/")
-        self.run_testslide(
-            expected_return_code=1,
-            expected_in_stdout=(
-                'File "' + os.path.basename(self.SAMPLE_TESTS_PATH) + '", line'
-            ),
-        )
-
-    def test_empty_trim_path_prefix(self):
-        """
-        Trims nothing if '' passed to --trim-path-prefix.
-        """
-        self.argv.append("--trim-path-prefix")
-        self.argv.append("")
-        self.run_testslide(
-            expected_return_code=1,
-            expected_in_stdout=('File "' + self.SAMPLE_TESTS_PATH + '", line'),
-        )
-
     def test_dsl_debug(self):
         self.argv.append("--dsl-debug")
         self.run_testslide(
@@ -575,7 +596,7 @@ class TestCliDocumentFormatter(ExceptionCauseTest, TestCliBase):
         )
 
 
-class TestCliProgressFormatter(ExceptionCauseTest, TestCliBase):
+class TestCliProgressFormatter(FormatterMixin, TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv.append("--format")
@@ -630,7 +651,7 @@ class TestCliProgressFormatter(ExceptionCauseTest, TestCliBase):
         )
 
 
-class TestCliLongFormatter(ExceptionCauseTest, TestCliBase):
+class TestCliLongFormatter(FormatterMixin, TestCliBase):
     def setUp(self):
         super().setUp()
         self.argv = ["--format", "long"] + self.argv
