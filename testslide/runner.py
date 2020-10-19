@@ -6,6 +6,7 @@
 import inspect
 import io
 import os
+import os.path
 import random
 import sys
 import time
@@ -18,6 +19,8 @@ import psutil
 import pygments
 import pygments.formatters
 import pygments.lexers
+
+import testslide
 
 from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
 
@@ -199,6 +202,8 @@ class ColorFormatterMixin(BaseFormatter):
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
+    TESTSLIDE_PATH = os.path.abspath(os.path.dirname(testslide.__file__))
+
     def _get_test_module_index(self, tb: traceback.StackSummary) -> int:
         test_module_index = len(tb) - 1
 
@@ -232,8 +237,11 @@ class FailurePrinterMixin(ColorFormatterMixin):
         test_module_index = self._get_test_module_index(tb)
 
         for index, (path, line, function_name, text) in enumerate(tb):
-            if not self.show_testslide_stack_trace and index < test_module_index:
-                continue
+            if not self.show_testslide_stack_trace:
+                if index < test_module_index:
+                    continue
+                if os.path.abspath(path).startswith(self.TESTSLIDE_PATH):
+                    continue
             if self.trim_path_prefix:
                 split = path.split(self.trim_path_prefix)
                 if len(split) == 2 and not split[0]:
