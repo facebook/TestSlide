@@ -15,6 +15,9 @@ from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional, Pattern, Union, cast
 
 import psutil
+import pygments
+import pygments.formatters
+import pygments.lexers
 
 from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
 
@@ -161,9 +164,15 @@ class BaseFormatter:
 
 
 class ColorFormatterMixin(BaseFormatter):
+    @property
+    def colored(self):
+        return sys.stdout.isatty() or self.force_color
+
     def _print_attrs(self, attrs: str, *values: Any, **kwargs: Any) -> None:
-        stream = kwargs.get("file", sys.stdout)
-        if stream.isatty() or self.force_color:
+        file = kwargs.get("file", None)
+        if file is not None:
+            raise ValueError()
+        if self.colored:
             print(
                 "\033[0m\033[{attrs}m{value}\033[0m".format(
                     attrs=attrs, value="".join([str(value) for value in values])
@@ -190,20 +199,7 @@ class ColorFormatterMixin(BaseFormatter):
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
-    def _print_stack_trace(self, exception: BaseException, cause_depth: int) -> None:
-        indent = "  " * cause_depth
-        if cause_depth:
-            self.print_red(f"\n    {indent}Caused by ", end="")
-
-        self.print_red(
-            "{exception_class}: {message}".format(
-                exception_class=exception.__class__.__name__,
-                message=f"\n{indent}    ".join(str(exception).split("\n")),
-            )
-        )
-
-        tb = traceback.extract_tb(exception.__traceback__)
-
+    def _get_test_module_index(self, tb: traceback.StackSummary) -> int:
         test_module_index = len(tb) - 1
 
         test_module_paths = [
@@ -217,24 +213,51 @@ class FailurePrinterMixin(ColorFormatterMixin):
                 if index < test_module_index:
                     test_module_index = index
 
-        for index, value in enumerate(tb):
-            path, line, function_name, text = value
+        return test_module_index
+
+    def _print_stack_trace(self, exception: BaseException, cause_depth: int) -> None:
+        indent = "  " * cause_depth
+        if cause_depth:
+            self.print_red(f"{indent}    Caused by ", end="")
+
+        self.print_red(
+            "{exception_class}: {message}".format(
+                exception_class=exception.__class__.__name__,
+                message=f"\n{indent}    ".join(str(exception).split("\n")),
+            )
+        )
+
+        tb = traceback.extract_tb(exception.__traceback__)
+
+        test_module_index = self._get_test_module_index(tb)
+
+        for index, (path, line, function_name, text) in enumerate(tb):
             if not self.show_testslide_stack_trace and index < test_module_index:
                 continue
             if self.trim_path_prefix:
                 split = path.split(self.trim_path_prefix)
                 if len(split) == 2 and not split[0]:
                     path = split[1]
-            self.print_cyan(
-                '{indent}      File "{path}", line {line}, in {function_name}\n'
-                "{indent}        {text}".format(
-                    indent=indent,
+            row_text = (
+                '  File "{path}", line {line}, in {function_name}\n'
+                "    {text}\n".format(
                     path=path,
                     line=line,
                     function_name=function_name,
                     text=text,
                 )
             )
+            if self.colored:
+                row_text = pygments.highlight(
+                    row_text,
+                    pygments.lexers.PythonTracebackLexer(),
+                    pygments.formatters.TerminalFormatter(),
+                )
+            row_text = "\n".join(
+                "{indent}    {line}".format(indent=indent, line=line)
+                for line in row_text.split("\n")[:-1]
+            )
+            print(row_text)
 
         if exception.__cause__:
             self._print_stack_trace(exception.__cause__, cause_depth=cause_depth + 1)
