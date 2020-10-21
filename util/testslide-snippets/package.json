@@ -8,7 +8,7 @@
         "type": "github",
         "url": "https://github.com/facebookincubator/TestSlide"
     },
-    "version": "2.6.0",
+    "version": "2.6.1",
     "engines": {
         "vscode": "^1.40.0"
     },
