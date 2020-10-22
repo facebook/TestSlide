@@ -668,8 +668,7 @@ class TestCliLongFormatter(FormatterMixin, TestCliBase):
                 + self.green("passing example")
                 + "\r\n"
                 + self.white("top context: ")
-                + self.red("failing example: ")
-                + "SimulatedFailure: test failure (extra)"
+                + self.red("failing example: SimulatedFailure: test failure (extra)")
                 + "\r\n"
                 + self.white("top context: ")
                 + self.green("*focused example")
@@ -684,8 +683,7 @@ class TestCliLongFormatter(FormatterMixin, TestCliBase):
                 + self.green("passing nested example")
                 + "\r\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
-                + self.red("test_failing: ")
-                + "AssertionError: Third"
+                + self.red("test_failing: AssertionError: Third")
                 + "\r\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
                 + self.green("test_passing")
@@ -710,8 +708,7 @@ class TestCliLongFormatter(FormatterMixin, TestCliBase):
                 + self.green("passing example")
                 + "\n"
                 + self.white("top context: ")
-                + self.red("failing example: ")
-                + "SimulatedFailure: test failure (extra)"
+                + self.red("failing example: SimulatedFailure: test failure (extra)")
                 + "\n"
                 + self.white("top context: ")
                 + self.green("*focused example")
@@ -726,8 +723,7 @@ class TestCliLongFormatter(FormatterMixin, TestCliBase):
                 + self.green("passing nested example")
                 + "\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
-                + self.red("test_failing: ")
-                + "AssertionError: Third"
+                + self.red("test_failing: AssertionError: Third")
                 + "\n"
                 + self.white("tests.sample_tests.SampleTestCase: ")
                 + self.green("test_passing")
