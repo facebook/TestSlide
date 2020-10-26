@@ -26,6 +26,9 @@ setup(
         "typeguard>=2.10.0",
         'dataclasses==0.6; python_version < "3.7"',
     ],
+    package_data={
+        'testslide': ['py.typed'],
+    },
     extras_require={
         "build": [
             "black",
