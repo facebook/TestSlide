@@ -22,7 +22,7 @@ setup(
     setup_requires=["setuptools>=38.6.0"],
     install_requires=[
         "psutil>=5.6.7",
-        "Pygments>=2.7.1",
+        "Pygments>=2.6.1",
         "typeguard>=2.10.0",
         'dataclasses==0.6; python_version < "3.7"',
     ],
