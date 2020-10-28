@@ -24,7 +24,7 @@ DIST_TAR_GZ = dist/TestSlide-$(shell cat testslide/version).tar.gz
 # Verbose output: make V=1
 V?=0
 ifeq ($(V),0)
-Q := @python util/run_silent_if_successful.py
+Q := @python3 util/run_silent_if_successful.py
 else
 Q :=
 endif
