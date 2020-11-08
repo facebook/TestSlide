@@ -61,6 +61,9 @@ def test_pass(testdir):
         def test_mock_callable_assertion_works(testslide):
             testslide.mock_callable("time", "sleep").for_call(0).to_call_original().and_assert_called_once()
             time.sleep(0)
+        
+        def test_mock_callable_failing_assertion_works(testslide):
+            testslide.mock_callable("time", "sleep").for_call(0).to_call_original().and_assert_called_once()
 
         # mock_async_callable integration test
         @pytest.mark.asyncio
@@ -80,6 +83,10 @@ def test_pass(testdir):
             testslide.mock_async_callable(sample_module.ParentTarget, "async_static_method").for_call("a", "b").to_call_original().and_assert_called_once()
             await sample_module.ParentTarget.async_static_method("a", "b")
 
+        def test_mock_async_callable_failing_assertion_works(testslide):
+            testslide.mock_async_callable(sample_module.ParentTarget, "async_static_method").for_call("a", "b").to_call_original().and_assert_called_once()
+        
+        
         # mock_constructor integration test
         def test_mock_constructor_patching_works(testslide):
             testslide.mock_constructor(sample_module, "ParentTarget").to_raise(RuntimeError("Mocked!"))
@@ -94,6 +101,9 @@ def test_pass(testdir):
         def test_mock_constructor_assertion_works(testslide):
             testslide.mock_constructor(sample_module, "ParentTarget").to_call_original().and_assert_called_once()
             sample_module.ParentTarget()
+
+        def test_mock_constructor_failing_assertion_works(testslide):
+            testslide.mock_constructor(sample_module, "ParentTarget").to_call_original().and_assert_called_once()
 
         # patch_attribute integration test
         def test_patch_attribute_patching_works(testslide):
@@ -118,10 +128,29 @@ def test_pass(testdir):
         """
     )
     result = testdir.runpytest("-v")
-    assert "passed, 1 error" in result.stdout.str()
+    assert "passed, 4 errors" in result.stdout.str()
     assert "failed" not in result.stdout.str()
     expected_failure = re.compile(
-        """.*_______________ ERROR at teardown of test_aggregated_exceptions ________________
+        """.*_______ ERROR at teardown of test_mock_callable_failing_assertion_works ________
+1 failures.
+<class \'AssertionError\'>: calls did not match assertion.
+\'time\', \'sleep\':
+  expected: called exactly 1 time\(s\) with arguments:
+    \(0,\)
+  received: 0 call\(s\)
+____ ERROR at teardown of test_mock_async_callable_failing_assertion_works _____
+1 failures.
+<class \'AssertionError\'>: calls did not match assertion.
+<class \'tests.sample_module.ParentTarget\'>, \'async_static_method\':
+  expected: called exactly 1 time\(s\) with arguments:
+    \(\'a\', \'b\'\)
+  received: 0 call\(s\)
+______ ERROR at teardown of test_mock_constructor_failing_assertion_works ______
+1 failures.
+<class \'AssertionError\'>: calls did not match assertion.
+<class \'testslide.mock_constructor.ParentTarget\'>, \'__new__\':
+  expected: called exactly 1 time\(s\) with any arguments   received: 0 call\(s\)
+_______________ ERROR at teardown of test_aggregated_exceptions ________________
 2 failures.
 <class \'AssertionError\'>: calls did not match assertion.
 <StrictMock 0x[a-fA-F0-9]+ template=tests.sample_module.CallOrderTarget .*/test_pass0/test_pass.py:[0-9]+>, \'f1\':
