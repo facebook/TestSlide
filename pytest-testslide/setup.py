@@ -4,11 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+
 from setuptools import setup  # type: ignore
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-ts_version = open(os.path.join(dir_path, os.pardir, "testslide/version")).read().rstrip()
+ts_version = (
+    open(os.path.join(dir_path, os.pardir, "testslide/version")).read().rstrip()
+)
 
 with open("README.md", encoding="utf8") as f:
     readme = f.read()
@@ -17,9 +20,9 @@ setup(
     name="pytest-testslide",
     version="1.0.0",
     py_modules=["pytest_testslide"],
-    maintainer="Fabio Pugliese Ornellas",
-    maintainer_email="fabio.ornellas@gmail.com",
-    url="https://github.com/facebookincubator/TestSlide",
+    maintainer="Balint Csergo",
+    maintainer_email="deathowlzz@gmail.com",
+    url="https://github.com/facebookincubator/TestSlide/tree/master/pytest-testslide",
     license="MIT",
     description="TestSlide fixture for pytest",
     long_description=readme,
