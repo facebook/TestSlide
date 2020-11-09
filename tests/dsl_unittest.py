@@ -19,6 +19,7 @@ from testslide import (
     LeftOverActiveTasks,
     SlowCallback,
     _ExampleRunner,
+    get_running_tasks,
     reset,
 )
 from testslide.dsl import context, fcontext, xcontext
@@ -2083,6 +2084,42 @@ class TestMockConstructorIntegration(TestDSLBase):
             self.run_example(examples["expect fail"])
 
 
+class TestRunningTasks(unittest.TestCase):
+    @patch("testslide.get_all_tasks")
+    def test_get_running_tasks_no_done_tasks(self, mocked_get_all_tasks):
+        mock1 = Mock(done=lambda: False)
+        mock2 = Mock(done=lambda: False)
+        mock3 = Mock(done=lambda: False)
+        mocked_get_all_tasks.return_value = [mock1, mock2, mock3]
+
+        result = get_running_tasks()
+        expected = [mock1, mock2, mock3]
+        self.assertEqual(expected, result)
+
+    @patch("testslide.get_all_tasks")
+    def test_get_running_tasks_skips_done_tasks(self, mocked_get_all_tasks):
+        mock1 = Mock(done=lambda: False)
+        mock2 = Mock(done=lambda: True)
+        mock3 = Mock(done=lambda: False)
+        mock4 = Mock(done=lambda: True)
+        mocked_get_all_tasks.return_value = [mock1, mock2, mock3, mock4]
+
+        result = get_running_tasks()
+        expected = [mock1, mock3]
+        self.assertEqual(expected, result)
+
+    @patch("testslide.get_all_tasks")
+    def test_running_tasks_all_done_tasks(self, mocked_get_all_tasks):
+        mock1 = Mock(done=lambda: True)
+        mock2 = Mock(done=lambda: True)
+        mock3 = Mock(done=lambda: True)
+        mocked_get_all_tasks.return_value = [mock1, mock2, mock3]
+
+        result = get_running_tasks()
+        expected = []
+        self.assertEqual(expected, result)
+
+
 class TestAsyncRun(TestDSLBase):
     def test_catches_leaked_tasks(self):
         async def dummy_async_func():
@@ -2101,7 +2138,20 @@ class TestAsyncRun(TestDSLBase):
             def raise_on_leaked_task(self):
                 self.async_run_with_health_checks(spawn_task_but_dont_await())
 
+        async def asyncio_gather_test():
+            await asyncio.gather(dummy_async_func(), dummy_async_func())
+
+        @context
+        def pass_top(context):
+            @context.example
+            def asyncio_gather_completed_tasks_are_not_marked_as_leaked(self):
+                self.async_run_with_health_checks(asyncio_gather_test())
+
         examples = _get_name_to_examples()
 
         with self.assertRaisesRegex(LeftOverActiveTasks, "Some tasks were started"):
             self.run_example(examples["raise on leaked task"])
+
+        self.run_example(
+            examples["asyncio gather completed tasks are not marked as leaked"]
+        )
