@@ -41,6 +41,6 @@ Enjoy!
 
 ## Release Notes
 
-### Version 2.6.1
+### Version 2.6.2
 
 Initial release of the snippets.
