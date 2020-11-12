@@ -884,7 +884,7 @@ class _MockCallableDSL(object):
     ##
 
     def to_return_value(
-        self, value: Optional[Union[bool, str, int]]
+        self, value: Any
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Always return given value.
@@ -901,7 +901,7 @@ class _MockCallableDSL(object):
         return self
 
     def to_return_values(
-        self, values_list: Union[List[str], List[Union[int, str]]]
+        self, values_list: List[Any]
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         For each call, return each value from given list in order.
@@ -921,7 +921,7 @@ class _MockCallableDSL(object):
         return self
 
     def to_yield_values(
-        self, values_list: List[str]
+        self, values_list: List[Any]
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Callable will return an iterator what will yield each value from the
@@ -941,7 +941,7 @@ class _MockCallableDSL(object):
         return self
 
     def to_raise(
-        self, ex: Union[UnexpectedCallReceived, Type[RuntimeError], RuntimeError]
+        self, ex: Union[Type[BaseException], BaseException]
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Raises given exception class or exception instance.
