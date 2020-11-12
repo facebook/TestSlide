@@ -982,6 +982,17 @@ def mock_callable_tests(context):
     ##
 
     @context.sub_context
+    def stacked_same_for_call(context):
+        @context.example
+        def it_works_at_declared_order(self):
+            self.mock_callable(os, "getpgid").for_call(1).to_return_value(1)
+            self.mock_callable(os, "getpgid").for_call(1).to_return_value(2)
+
+            self.assertEqual(os.getpgid(1), 1)
+            self.assertEqual(os.getpgid(1), 2)
+            self.assertEqual(os.getpgid(1), 2)
+
+    @context.sub_context
     def call_order_assertion(context):
         @context.memoize
         def target1(self):
@@ -1077,6 +1088,22 @@ def mock_callable_tests(context):
             self.assertEqual(self.target1.f2("step 2"), "step 2 return")
             self.assertEqual(self.target2.f1("step 3"), "step 3 return")
             self.assert_all()
+
+        @context.example
+        def stacked_same_for_call_works(self):
+            self.mock_callable(os, "getpgid").for_call(1).to_return_value(
+                1
+            ).and_assert_called_ordered()
+            self.mock_callable(os, "getpgid").for_call(2).to_return_value(
+                2
+            ).and_assert_called_ordered()
+            self.mock_callable(os, "getpgid").for_call(1).to_return_value(
+                3
+            ).and_assert_called_ordered()
+
+            self.assertEqual(os.getpgid(1), 1)
+            self.assertEqual(os.getpgid(2), 2)
+            self.assertEqual(os.getpgid(1), 3)
 
     @context.sub_context
     def when_target_is_a_module(context):
