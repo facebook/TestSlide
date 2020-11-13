@@ -1,6 +1,6 @@
 ![TestSlide](./docs/testslide_logo.png)
 
-[![Build Status](https://travis-ci.com/facebookincubator/TestSlide.svg?branch=master)](https://travis-ci.com/facebookincubator/TestSlide)
+[![Build Status](https://github.com/facebookincubator/TestSlide/workflows/CI/badge.svg)]
 [![Coverage Status](https://coveralls.io/repos/github/facebookincubator/TestSlide/badge.svg?branch=master)](https://coveralls.io/github/facebookincubator/TestSlide?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/testslide/badge/?version=master)](https://testslide.readthedocs.io/en/master/?badge=master)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

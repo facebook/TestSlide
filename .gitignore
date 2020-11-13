@@ -13,3 +13,4 @@ TestSlide.egg-info/
 **/node_modules
 *.vsix
 **/package-lock.json
+.coverage.lcov

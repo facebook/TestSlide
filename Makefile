@@ -193,12 +193,11 @@ install_local: sdist
 	${Q} pip install $(DIST_TAR_GZ)
 	${Q} testslide --help
 
-.PHONY: travis
-travis: \
+.PHONY: ci
+ci: \
 	install_build_deps \
 	tests \
 	coverage_report \
-	coveralls \
 	docs \
 	sdist \
 	install_local
