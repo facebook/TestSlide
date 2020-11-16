@@ -22,7 +22,7 @@ We actively welcome your pull requests.
 
 Generally speaking:
 
-- Install a supported Python version (see `.travis.yml`) (suggestion: use [pyenv](https://github.com/pyenv/pyenv)).
+- Install a supported Python version (see `.github/actions/build.yml`) (suggestion: use [pyenv](https://github.com/pyenv/pyenv)).
 - Install the dependencies: `make install_build_deps`.
 - Run the tests: `make` (or `make V=1` for verbose output).
 
