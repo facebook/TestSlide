@@ -1,5 +1,6 @@
 [run]
 parallel = True
+relative_files = True
 
 [report]
 precision = 2
