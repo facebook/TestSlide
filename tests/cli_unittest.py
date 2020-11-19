@@ -464,7 +464,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "top context\n"
                 "  *focused example: PASS\n"
                 "\n"
-                "Finished 1 example(s) in "
                 # TODO add remaining bits of the output (using regexes)
             )
         )
@@ -524,7 +523,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "  nested context\n"
                 "    passing nested example: PASS\n"
                 "\n"
-                "Finished 1 example(s) in "
             ),
         )
 
@@ -541,7 +539,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "  nested context\n"
                 "    passing nested example: PASS\n"
                 "\n"
-                "Finished 1 example(s) in "
             ),
         )
 
@@ -565,7 +562,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
                 "\n"
-                "Finished 7 example(s) in"
             ),
         )
 

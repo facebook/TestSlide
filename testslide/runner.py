@@ -185,8 +185,11 @@ class ColorFormatterMixin(BaseFormatter):
         else:
             print(*values, **kwargs)
 
-    def print_white(self, *values: Any, **kwargs: Any) -> None:
+    def print_bright(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("1", *values, **kwargs)
+
+    def print_dim(self, *values: Any, **kwargs: Any) -> None:
+        self._print_attrs("2", *values, **kwargs)
 
     def print_green(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("32", *values, **kwargs)
@@ -199,6 +202,9 @@ class ColorFormatterMixin(BaseFormatter):
 
     def print_cyan(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("36", *values, **kwargs)
+
+    def print_cyan_dim_underline(self, *values: Any, **kwargs: Any) -> None:
+        self._print_attrs("36;2;4", *values, **kwargs)
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
@@ -276,7 +282,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
         example: Example,
         exception: Union[Exception, AggregatedExceptions],
     ) -> None:
-        self.print_white(
+        self.print_bright(
             "  {number}) {context}: {example}".format(
                 number=number, context=example.context.full_name, example=example
             )
@@ -366,6 +372,37 @@ class DSLDebugMixin:
 
 
 class VerboseFinishMixin(ColorFormatterMixin):
+    def _ansi_attrs(self, attrs: str, text: str) -> str:
+        if self.colored:
+            return "\033[0m\033[{attrs}m{text}\033[0m".format(attrs=attrs, text=text)
+        else:
+            return text
+
+    def _bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("1", text)
+
+    def _green_bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("32;1", text)
+
+    def _red_bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("31;1", text)
+
+    def _yellow_bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("33;1", text)
+
+    def get_ascii_logo(self) -> str:
+        quote = '"'
+        backslash = "\\"
+        return f"""
+    {self._yellow_bright_attr("--_")} {self._green_bright_attr(f"|{quote}{quote}---__")}
+ {self._red_bright_attr("|'.")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(".")}    {self._green_bright_attr(f"{quote}{quote}{quote}|")}
+ {self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")} {self._bright_attr(f"/|{backslash}{quote}{quote}-.")}  {self._green_bright_attr("|")}
+ {self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr("|    |")}  {self._green_bright_attr("|")}
+ {self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(f"|   {backslash}|/")} {self._green_bright_attr("|")}
+ {self._red_bright_attr(f"|.{quote}")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(f"--{quote}{quote}")} {self._bright_attr("'")}{self._green_bright_attr("__|")}
+    {self._yellow_bright_attr(f"--{quote}")} {self._green_bright_attr(f"|__---{quote}{quote}{quote}")}
+"""
+
     def finish(self, not_executed_examples: List[Example]) -> None:
         super().finish(not_executed_examples)
         success = len(self.results["success"])
@@ -380,24 +417,59 @@ class VerboseFinishMixin(ColorFormatterMixin):
                 self.print_failed_example(  # type: ignore
                     number + 1, result["example"], result["exception"]  # type: ignore
                 )
+
         print("")
-        self.print_white(
-            "Finished %s example(s) in %.1fs "
-            % (total, cast(float, self.duration_secs)),
-            end="",
-        )
-        if self.import_secs and self.import_secs > 2:
-            self.print_white("(Imports took: %.1fs)" % (self.import_secs))
+
+        logo_lines = self.get_ascii_logo().split("\n")
+
+        print(logo_lines[1], end="")
+        if total != 1:
+            example = "examples"
         else:
-            print("")
+            example = "example"
+        self.print_bright(
+            "      Executed %s %s in %.1fs:"
+            % (total, example, cast(float, self.duration_secs)),
+        )
+
+        print(logo_lines[2], end="")
         if success:
-            self.print_green("  Successful: ", success)
+            self.print_green("    Successful: ", success)
+        else:
+            self.print_dim("    Successful: ", success)
+
+        print(logo_lines[3], end="")
         if fail:
-            self.print_red("  Failed: ", fail)
+            self.print_red("    Failed: ", fail)
+        else:
+            self.print_dim("    Failed: ", fail)
+
+        print(logo_lines[4], end="")
         if skip:
-            self.print_yellow("  Skipped: ", skip)
+            self.print_yellow("    Skipped: ", skip)
+        else:
+            self.print_dim("    Skipped: ", skip)
+
+        print(logo_lines[5], end="")
         if not_executed_examples:
-            self.print_cyan("  Not executed: ", len(not_executed_examples))
+            self.print_cyan("    Not executed: ", len(not_executed_examples))
+        else:
+            self.print_dim("    Not executed: ", len(not_executed_examples))
+
+        print(logo_lines[6], end="")
+        if self.import_secs and self.import_secs > 2:
+            self.print_yellow("  Imports took: %.1fs!" % (self.import_secs), end="")
+            print(" Try ", end="")
+            self.print_bright("--import-profiler", end="")
+            print(" to debug it!")
+        else:
+            print()
+
+        print(logo_lines[7], "    ", end="")
+        self.print_cyan_dim_underline("https://testslide.readthedocs.io/")
+
+        # if not_executed_examples:
+        #     self.print_cyan("  Not executed: ", len(not_executed_examples))
 
 
 ##
@@ -451,7 +523,7 @@ class DocumentFormatter(
         return "  " * (example.context.depth + 1)
 
     def new_context(self, context: Context) -> None:
-        self.print_white(
+        self.print_bright(
             "{}{}{}".format("  " * context.depth, "*" if context.focus else "", context)
         )
 
@@ -506,7 +578,7 @@ class LongFormatter(
         return "  "
 
     def new_example(self, example: Example) -> None:
-        self.print_white(
+        self.print_bright(
             "{}{}: ".format(
                 "*" if example.context.focus else "", example.context.full_name
             ),
