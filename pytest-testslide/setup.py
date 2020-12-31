@@ -5,7 +5,7 @@
 
 import os
 
-from setuptools import setup  # type: ignore
+from setuptools import setup
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
