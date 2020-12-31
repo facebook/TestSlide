@@ -69,9 +69,9 @@ docs_clean:
 unittest_tests: $(TESTS_SRCS)/*_unittest.py
 
 .PHONY: pytest_tests
+pytest_tests: export PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR}
 pytest_tests: FORCE coverage_erase
 	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}"
-	PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR} \
 	${Q} coverage run \
 	-m pytest \
 	pytest-testslide/tests
