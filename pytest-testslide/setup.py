@@ -10,7 +10,7 @@ from setuptools import setup
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 ts_version = (
-    open(os.path.join(dir_path, os.pardir, "testslide/version")).read().rstrip()
+    open(os.path.join(dir_path, os.pardir, "testslide_version")).read().rstrip()
 )
 
 with open("README.md", encoding="utf8") as f:
