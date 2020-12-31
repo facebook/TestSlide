@@ -6,7 +6,7 @@
 from types import TracebackType
 from typing import Any, Callable, Iterator, List, Optional
 
-import pytest  # type: ignore
+import pytest
 
 import testslide as testslide_module
 
