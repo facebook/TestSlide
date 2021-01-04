@@ -171,7 +171,12 @@ coveralls: coverage_combine
 .PHONY: install_build_deps
 install_build_deps:
 	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
-	${Q} pip install -e .[test,build]
+	${Q} pip install -r requirements-dev.txt
+
+.PHONY: install_deps
+install_deps:
+	@printf "${TERM_BRIGHT}INSTALL DEPS\n${TERM_NONE}"
+	${Q} pip install -r requirements.txt
 
 .PHONY: sdist
 sdist:
@@ -193,8 +198,43 @@ install_local: sdist
 	${Q} pip install $(DIST_TAR_GZ)
 	${Q} testslide --help
 
+.PHONY: build_dev_container
+dev_container: 
+	@printf "${TERM_BRIGHT}BUILDING DEV CONTAINER\n${TERM_NONE}"
+	${Q} docker build -t testslide-dev .
+
+.PHONY: run_tests_in_container
+run_tests_in_container: 
+	@printf "${TERM_BRIGHT}RUNNING CI IN DEV CONTAINER\n${TERM_NONE}"
+	${Q} docker run testslide-dev
+
+.PHONY: run_dev_container
+run_dev_container: build_dev_container
+	@printf "${TERM_BRIGHT}STARTING DEV CONTAINER WITH BIND-MOUNTED SOURCES\n${TERM_NONE}"
+	@docker run --rm -d --name testslide -v ${CURDIR}/testslide:/code/testslide -v ${CURDIR}/tests:/code/tests testslide-dev bash -c "while true; do sleep 30; done"
+	@printf "${TERM_BRIGHT}Container testslide is running.\n${TERM_NONE}"
+	@printf "${TERM_BRIGHT}Use make enter_dev_container to exec into it.\n${TERM_NONE}"
+	@printf "${TERM_BRIGHT}Use make kill_dev_container to terminate it.\n${TERM_NONE}"
+
+.PHONY: enter_dev_container
+enter_dev_container:
+	@printf "${TERM_BRIGHT}ENTERING DEV CONTAINER\n${TERM_NONE}"
+	@docker exec -it testslide bash
+
+
+.PHONY: kill_dev_container
+kill_dev_container:
+	@printf "${TERM_BRIGHT}KILLING DEV CONTAINER\n${TERM_NONE}"
+	@docker kill testslide
+
+.PHONY: clean_dev_container
+clean_dev_container:
+	@printf "${TERM_BRIGHT}KILLING DEV CONTAINER\n${TERM_NONE}"
+	@docker kill testslide
+
 .PHONY: ci
 ci: \
+	install_deps \
 	install_build_deps \
 	tests \
 	coverage_report \

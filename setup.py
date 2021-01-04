@@ -7,6 +7,8 @@ from setuptools import setup
 
 version = open("testslide/version").read().rstrip()
 readme = open("README.md", encoding="utf8").read()
+requirements = open("requirements.txt", encoding="utf8").readlines()
+requirements_build = open("requirements-dev.txt", encoding="utf8").readlines()
 
 setup(
     name="TestSlide",
@@ -20,29 +22,12 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     setup_requires=["setuptools>=38.6.0"],
-    install_requires=[
-        "psutil>=5.6.7",
-        "Pygments>=2.6.1",
-        "typeguard>=2.10.0",
-        'dataclasses==0.6; python_version < "3.7"',
-    ],
+    install_requires=requirements,
     package_data={
         'testslide': ['py.typed'],
     },
     extras_require={
-        "build": [
-            "black",
-            "coverage",
-            "coveralls",
-            "flake8",
-            "isort~=5.1",
-            "mypy==0.782",
-            "ipython",
-            "sphinx",
-            "sphinx-autobuild",
-            "sphinx-kr-theme",
-            "twine",
-        ]
+        "build": requirements_build
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
