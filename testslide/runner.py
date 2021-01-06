@@ -527,7 +527,7 @@ class VerboseFinishMixin(ColorFormatterMixin):
         if columns > 80:
             columns = 80
 
-        if max_summary_len + max_summary_len + 1 <= columns:
+        if max_summary_len + max_logo_len + 1 <= columns:
             logo_start_column = (
                 columns - max_summary_len - max_logo_len - 2 + max_summary_len
             )
