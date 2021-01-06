@@ -463,7 +463,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
             expected_stdout_startswith=(
                 "top context\n"
                 "  *focused example: PASS\n"
-                "\n"
                 # TODO add remaining bits of the output (using regexes)
             )
         )
@@ -522,7 +521,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "top context\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
-                "\n"
             ),
         )
 
@@ -538,7 +536,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "top context\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
-                "\n"
             ),
         )
 
@@ -561,7 +558,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "tests.sample_tests.SampleTestCase\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
-                "\n"
             ),
         )
 

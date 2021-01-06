@@ -523,7 +523,8 @@ class VerboseFinishMixin(ColorFormatterMixin):
         try:
             columns, _lines = os.get_terminal_size()
         except OSError:
-            columns = max_summary_len + max_logo_len + 1
+            columns = 80
+
         if columns > 80:
             columns = 80
 
