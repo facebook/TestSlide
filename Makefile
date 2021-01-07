@@ -15,7 +15,7 @@ else
 UNITTEST_ARGS := --verbose
 endif
 TESTS_SRCS = tests
-SRCS = testslide util
+SRCS = testslide util pytest-testslide
 ALL_SRCS = $(TESTS_SRCS) $(SRCS)
 TERM_BRIGHT := $(shell tput bold)
 TERM_NONE := $(shell tput sgr0)
@@ -67,6 +67,16 @@ docs_clean:
 
 .PHONY: unittest_tests
 unittest_tests: $(TESTS_SRCS)/*_unittest.py
+
+.PHONY: pytest_tests
+pytest_tests: export PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR}
+pytest_tests: FORCE coverage_erase
+	@printf "${TERM_BRIGHT}INSTALL pytest_testslide DEPS ${TERM_NONE}\n"
+	${Q} pip install -r pytest-testslide/requirements.txt
+	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}"
+	${Q} coverage run \
+	-m pytest \
+	pytest-testslide/tests
 
 %_testslide.py: FORCE coverage_erase
 	@printf "${TERM_BRIGHT}TESTSLIDE $@\n${TERM_NONE}"
@@ -120,6 +130,7 @@ format_black:
 tests: \
 	unittest_tests \
 	testslide_tests \
+	pytest_tests \
 	mypy \
 	flake8 \
 	isort \

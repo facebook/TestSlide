@@ -17,6 +17,7 @@ sed -i -e "s/Version .*/Version $release_version/" \
     util/testslide-snippets/README.md \
     util/testslide-snippets/CHANGELOG.md
 sed -i -e "s/\"version\":.*/\"version\": \"$release_version\",/" util/testslide-snippets/package.json
+echo $release_version > pytest-testslide/testslide-version
 git add testslide/version util/testslide-snippets
 git commit -m "v$release_version"
 git push
