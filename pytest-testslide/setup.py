@@ -46,5 +46,4 @@ setup(
         "Topic :: Software Development :: Testing :: Mocking",
         "Topic :: Software Development :: Testing :: Unit  ",
     ],
-    entry_points={"pytest11": ["pytest-testslide = pytest_testslide"]},
 )
