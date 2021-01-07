@@ -73,7 +73,7 @@ pytest_tests: export PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR}
 pytest_tests: FORCE coverage_erase
 	@printf "${TERM_BRIGHT}INSTALL pytest_testslide DEPS ${TERM_NONE}\n"
 	${Q} pip install -r pytest-testslide/requirements.txt
-	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}"
+	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}\n"
 	${Q} coverage run \
 	-m pytest \
 	pytest-testslide/tests
