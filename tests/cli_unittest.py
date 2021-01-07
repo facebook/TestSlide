@@ -159,7 +159,7 @@ class TestCliBase(unittest.TestCase):
             )
 
     @staticmethod
-    def white(text):
+    def bright(text):
         return "\x1b[0m\x1b[1m{}\x1b[0m".format(text)
 
     @staticmethod
@@ -351,7 +351,7 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
             tty_stdout=True,
             expected_return_code=1,
             expected_stdout_startswith=(
-                self.white("top context")
+                self.bright("top context")
                 + "\r\n"
                 + self.green("  passing example")
                 + "\r\n"
@@ -363,7 +363,7 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 + "\r\n"
                 + self.yellow("  unittest SkipTest")
                 + "\r\n"
-                + self.white("  nested context")
+                + self.bright("  nested context")
                 + "\r\n"
                 + self.green("    passing nested example")
                 + "\r\n"
@@ -380,7 +380,7 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
         self.run_testslide(
             expected_return_code=1,
             expected_stdout_startswith=(
-                self.white("top context")
+                self.bright("top context")
                 + "\n"
                 + self.green("  passing example")
                 + "\n"
@@ -392,7 +392,7 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 + "\n"
                 + self.yellow("  unittest SkipTest")
                 + "\n"
-                + self.white("  nested context")
+                + self.bright("  nested context")
                 + "\n"
                 + self.green("    passing nested example")
                 + "\n"
@@ -463,8 +463,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
             expected_stdout_startswith=(
                 "top context\n"
                 "  *focused example: PASS\n"
-                "\n"
-                "Finished 1 example(s) in "
                 # TODO add remaining bits of the output (using regexes)
             )
         )
@@ -523,8 +521,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "top context\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
-                "\n"
-                "Finished 1 example(s) in "
             ),
         )
 
@@ -540,8 +536,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "top context\n"
                 "  nested context\n"
                 "    passing nested example: PASS\n"
-                "\n"
-                "Finished 1 example(s) in "
             ),
         )
 
@@ -564,8 +558,6 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
                 "tests.sample_tests.SampleTestCase\n"
                 "  test_passing: PASS\n"
                 "  test_skipped: SKIP\n"
-                "\n"
-                "Finished 7 example(s) in"
             ),
         )
 
@@ -664,31 +656,31 @@ class TestCliLongFormatter(FormatterMixin, TestCliBase):
             tty_stdout=True,
             expected_return_code=1,
             expected_stdout_startswith=(
-                self.white("top context: ")
+                self.bright("top context: ")
                 + self.green("passing example")
                 + "\r\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.red("failing example: SimulatedFailure: test failure (extra)")
                 + "\r\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.green("*focused example")
                 + "\r\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.yellow("skipped example")
                 + "\r\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.yellow("unittest SkipTest")
                 + "\r\n"
-                + self.white("top context, nested context: ")
+                + self.bright("top context, nested context: ")
                 + self.green("passing nested example")
                 + "\r\n"
-                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.bright("tests.sample_tests.SampleTestCase: ")
                 + self.red("test_failing: AssertionError: Third")
                 + "\r\n"
-                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.bright("tests.sample_tests.SampleTestCase: ")
                 + self.green("test_passing")
                 + "\r\n"
-                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.bright("tests.sample_tests.SampleTestCase: ")
                 + self.yellow("test_skipped")
                 + "\r\n"
                 # TODO Rest of the output
@@ -704,31 +696,31 @@ class TestCliLongFormatter(FormatterMixin, TestCliBase):
         self.run_testslide(
             expected_return_code=1,
             expected_stdout_startswith=(
-                self.white("top context: ")
+                self.bright("top context: ")
                 + self.green("passing example")
                 + "\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.red("failing example: SimulatedFailure: test failure (extra)")
                 + "\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.green("*focused example")
                 + "\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.yellow("skipped example")
                 + "\n"
-                + self.white("top context: ")
+                + self.bright("top context: ")
                 + self.yellow("unittest SkipTest")
                 + "\n"
-                + self.white("top context, nested context: ")
+                + self.bright("top context, nested context: ")
                 + self.green("passing nested example")
                 + "\n"
-                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.bright("tests.sample_tests.SampleTestCase: ")
                 + self.red("test_failing: AssertionError: Third")
                 + "\n"
-                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.bright("tests.sample_tests.SampleTestCase: ")
                 + self.green("test_passing")
                 + "\n"
-                + self.white("tests.sample_tests.SampleTestCase: ")
+                + self.bright("tests.sample_tests.SampleTestCase: ")
                 + self.yellow("test_skipped")
                 + "\n"
                 # TODO Rest of the output

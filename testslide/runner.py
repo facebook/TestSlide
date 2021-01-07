@@ -8,6 +8,7 @@ import io
 import os
 import os.path
 import random
+import re
 import sys
 import time
 import traceback
@@ -171,34 +172,72 @@ class ColorFormatterMixin(BaseFormatter):
     def colored(self):
         return sys.stdout.isatty() or self.force_color
 
+    def remove_terminal_escape(self, text: str) -> str:
+        return re.sub("\033\[[0-9;]+m", "", text)
+
+    def _format_attrs(self, attrs: str, *values: Any) -> str:
+        text = "".join([str(value) for value in values])
+        if self.colored:
+            return "\033[0m\033[{attrs}m{text}\033[0m".format(attrs=attrs, text=text)
+        else:
+            return text
+
     def _print_attrs(self, attrs: str, *values: Any, **kwargs: Any) -> None:
         file = kwargs.get("file", None)
         if file is not None:
             raise ValueError()
         if self.colored:
             print(
-                "\033[0m\033[{attrs}m{value}\033[0m".format(
-                    attrs=attrs, value="".join([str(value) for value in values])
-                ),
+                self._format_attrs(attrs, *values),
                 **kwargs,
             )
         else:
             print(*values, **kwargs)
 
-    def print_white(self, *values: Any, **kwargs: Any) -> None:
+    def format_bright(self, *values: Any) -> str:
+        return self._format_attrs("1", *values)
+
+    def print_bright(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("1", *values, **kwargs)
+
+    def format_dim(self, *values: Any) -> str:
+        return self._format_attrs("2", *values)
+
+    def print_dim(self, *values: Any, **kwargs: Any) -> None:
+        self._print_attrs("2", *values, **kwargs)
+
+    def format_green(self, *values: Any) -> str:
+        return self._format_attrs("32", *values)
 
     def print_green(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("32", *values, **kwargs)
 
+    def format_red(self, *values: Any) -> str:
+        return self._format_attrs("31", *values)
+
     def print_red(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("31", *values, **kwargs)
+
+    def format_yellow(self, *values: Any) -> str:
+        return self._format_attrs("33", *values)
+
+    def format_yellow_bright(self, *values: Any) -> str:
+        return self._format_attrs("1;33", *values)
 
     def print_yellow(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("33", *values, **kwargs)
 
+    def format_cyan(self, *values: Any) -> str:
+        return self._format_attrs("36", *values)
+
     def print_cyan(self, *values: Any, **kwargs: Any) -> None:
         self._print_attrs("36", *values, **kwargs)
+
+    def format_cyan_dim_underline(self, *values: Any) -> str:
+        return self._format_attrs("36;2;4", *values)
+
+    def print_cyan_dim_underline(self, *values: Any, **kwargs: Any) -> None:
+        self._print_attrs("36;2;4", *values, **kwargs)
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
@@ -276,7 +315,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
         example: Example,
         exception: Union[Exception, AggregatedExceptions],
     ) -> None:
-        self.print_white(
+        self.print_bright(
             "  {number}) {context}: {example}".format(
                 number=number, context=example.context.full_name, example=example
             )
@@ -366,6 +405,94 @@ class DSLDebugMixin:
 
 
 class VerboseFinishMixin(ColorFormatterMixin):
+    def _ansi_attrs(self, attrs: str, text: str) -> str:
+        if self.colored:
+            return "\033[0m\033[{attrs}m{text}\033[0m".format(attrs=attrs, text=text)
+        else:
+            return text
+
+    def _bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("1", text)
+
+    def _green_bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("32;1", text)
+
+    def _red_bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("31;1", text)
+
+    def _yellow_bright_attr(self, text: str) -> str:
+        return self._ansi_attrs("33;1", text)
+
+    def _get_ascii_logo_lines(self) -> List[str]:
+        quote = '"'
+        backslash = "\\"
+        return f"""
+   {self._yellow_bright_attr("--_")} {self._green_bright_attr(f"|{quote}{quote}---__")}
+{self._red_bright_attr("|'.")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(".")}    {self._green_bright_attr(f"{quote}{quote}{quote}|")}
+{self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")} {self._bright_attr(f"/|{backslash}{quote}{quote}-.")}  {self._green_bright_attr("|")}
+{self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr("|    |")}  {self._green_bright_attr("|")}
+{self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(f"|   {backslash}|/")} {self._green_bright_attr("|")}
+{self._red_bright_attr(f"|.{quote}")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(f"--{quote}{quote}")} {self._bright_attr("'")}{self._green_bright_attr("__|")}
+   {self._yellow_bright_attr(f"--{quote}")} {self._green_bright_attr(f"|__---{quote}{quote}{quote}")}
+""".split(
+            "\n"
+        )[
+            1:8
+        ]
+
+    def _get_summary_lines(
+        self, total: int, success: int, fail: int, skip: int, not_executed_examples: int
+    ) -> List[str]:
+        summary_lines: List[str] = []
+
+        if self.import_secs and self.import_secs > 2:
+            summary_lines.append(
+                self.format_yellow_bright("Imports took: %.1fs!" % (self.import_secs))
+                + " Profile with "
+                + self.format_bright("--import-profiler")
+                + "."
+            )
+        else:
+            summary_lines.append("")
+
+        example = "examples" if total > 1 else "example"
+        summary_lines.append(
+            self.format_bright(
+                "Executed %s %s in %.1fs:"
+                % (total, example, cast(float, self.duration_secs)),
+            )
+        )
+
+        if success:
+            summary_lines.append(self.format_green("  Successful: ", success))
+        else:
+            summary_lines.append(self.format_dim("  Successful: ", success))
+
+        if fail:
+            summary_lines.append(self.format_red("  Failed: ", fail))
+        else:
+            summary_lines.append(self.format_dim("  Failed: ", fail))
+
+        if skip:
+            summary_lines.append(self.format_yellow("  Skipped: ", skip))
+        else:
+            summary_lines.append(self.format_dim("  Skipped: ", skip))
+
+        if not_executed_examples:
+            summary_lines.append(
+                self.format_cyan("  Not executed: ", not_executed_examples)
+            )
+        else:
+            summary_lines.append(
+                self.format_dim("  Not executed: ", not_executed_examples)
+            )
+
+        summary_lines.append(
+            self.format_cyan_dim_underline("https://testslide.readthedocs.io/")
+        )
+
+        return summary_lines
+
     def finish(self, not_executed_examples: List[Example]) -> None:
         super().finish(not_executed_examples)
         success = len(self.results["success"])
@@ -380,24 +507,48 @@ class VerboseFinishMixin(ColorFormatterMixin):
                 self.print_failed_example(  # type: ignore
                     number + 1, result["example"], result["exception"]  # type: ignore
                 )
-        print("")
-        self.print_white(
-            "Finished %s example(s) in %.1fs "
-            % (total, cast(float, self.duration_secs)),
-            end="",
+
+        summary_lines = self._get_summary_lines(
+            total, success, fail, skip, len(not_executed_examples)
         )
-        if self.import_secs and self.import_secs > 2:
-            self.print_white("(Imports took: %.1fs)" % (self.import_secs))
+        max_summary_len = max(
+            [len(self.remove_terminal_escape(line)) for line in summary_lines]
+        )
+
+        logo_lines = self._get_ascii_logo_lines()
+        max_logo_len = max(
+            [len(self.remove_terminal_escape(line)) for line in logo_lines]
+        )
+
+        try:
+            columns, _lines = os.get_terminal_size()
+        except OSError:
+            columns = 80
+
+        if columns > 80:
+            columns = 80
+
+        if max_summary_len + max_logo_len + 1 <= columns:
+            logo_start_column = (
+                columns - max_summary_len - max_logo_len - 2 + max_summary_len
+            )
+            for idx in range(len(summary_lines)):
+                print(
+                    summary_lines[idx],
+                    " "
+                    * (
+                        max_summary_len
+                        - len(self.remove_terminal_escape(summary_lines[idx]))
+                        + (logo_start_column - max_summary_len)
+                    ),
+                    end="",
+                )
+                print(logo_lines[idx])
         else:
-            print("")
-        if success:
-            self.print_green("  Successful: ", success)
-        if fail:
-            self.print_red("  Failed: ", fail)
-        if skip:
-            self.print_yellow("  Skipped: ", skip)
-        if not_executed_examples:
-            self.print_cyan("  Not executed: ", len(not_executed_examples))
+            for idx in range(len(summary_lines)):
+                print(
+                    summary_lines[idx],
+                )
 
 
 ##
@@ -451,7 +602,7 @@ class DocumentFormatter(
         return "  " * (example.context.depth + 1)
 
     def new_context(self, context: Context) -> None:
-        self.print_white(
+        self.print_bright(
             "{}{}{}".format("  " * context.depth, "*" if context.focus else "", context)
         )
 
@@ -506,7 +657,7 @@ class LongFormatter(
         return "  "
 
     def new_example(self, example: Example) -> None:
-        self.print_white(
+        self.print_bright(
             "{}{}: ".format(
                 "*" if example.context.focus else "", example.context.full_name
             ),
