@@ -1,1 +1,2 @@
 include testslide-version
+include requirements.txt

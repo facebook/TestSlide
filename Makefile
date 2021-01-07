@@ -71,6 +71,8 @@ unittest_tests: $(TESTS_SRCS)/*_unittest.py
 .PHONY: pytest_tests
 pytest_tests: export PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR}
 pytest_tests: FORCE coverage_erase
+	@printf "${TERM_BRIGHT}INSTALL pytest_testslide DEPS ${TERM_NONE}\n"
+	${Q} pip install -r pytest-testslide/requirements.txt
 	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}"
 	${Q} coverage run \
 	-m pytest \

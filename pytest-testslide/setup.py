@@ -12,13 +12,14 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 ts_version = (
     open(os.path.join(dir_path, os.pardir, "testslide_version")).read().rstrip()
 )
+requirements = open("requirements.txt", encoding="utf8").readlines()
 
 with open("README.md", encoding="utf8") as f:
     readme = f.read()
 
 setup(
     name="pytest-testslide",
-    version="1.0.0",
+    version=ts_version,
     py_modules=["pytest_testslide"],
     maintainer="Balint Csergo",
     maintainer_email="deathowlzz@gmail.com",
@@ -30,9 +31,8 @@ setup(
     setup_requires=["setuptools>=38.6.0"],
     install_requires=[
         f"testslide>={ts_version}",
-        "pytest>=5.3.0",
-        "pytest-asyncio>=0.14.0",
-    ],
+    ]
+    + requirements,
     extras_require={"build": ["black", "flake8", "mypy"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
