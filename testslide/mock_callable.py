@@ -551,25 +551,10 @@ class _CallableMock(object):
         self.is_async = is_async
         self.type_validation = type_validation
         self.caller_frame_info = caller_frame_info
-        self.called_runner_indexes: List[int] = []
 
     def _get_runner(self, *args: Any, **kwargs: Any) -> Any:
-        for index, runner in enumerate(self.runners):
+        for runner in self.runners:
             if runner.can_accept_args(*args, **kwargs):
-                if runner.accepted_args:
-                    same_call_runners = [
-                        other_runner
-                        for other_runner in self.runners[index + 1 :]
-                        if other_runner.accepted_args == runner.accepted_args
-                    ]
-                    if same_call_runners:
-                        for final_runner in reversed([runner] + same_call_runners):
-                            if (
-                                self.runners.index(final_runner)
-                                not in self.called_runner_indexes
-                            ):
-                                return final_runner
-                        return runner
                 return runner
         return None
 
@@ -586,9 +571,6 @@ class _CallableMock(object):
     def __call__(self, *args: Any, **kwargs: Any) -> Optional[Any]:
         runner = self._get_runner(*args, **kwargs)
         if runner:
-            index = self.runners.index(runner)
-            if index not in self.called_runner_indexes:
-                self.called_runner_indexes.append(index)
             if self.is_async:
                 if isinstance(runner, _AsyncRunner):
 
