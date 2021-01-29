@@ -246,6 +246,18 @@ class TestDSLContext(TestDSLBase):
         ):
             not_callable(None)
 
+    def test_contex_cant_be_async(self):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "TestSlide DSL context function `async_context` can not be async!",
+        ):
+
+            @context
+            async def async_context(context):
+                @context.example
+                async def async_example(self):
+                    pass
+
     # Duplicate names
 
     def test_cant_create_top_contexts_with_same_name(self):
