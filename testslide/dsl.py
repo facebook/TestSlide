@@ -15,12 +15,18 @@ from . import Context as _Context
 from . import Skip  # noqa: F401
 
 
-def _validate_parameter(code: Callable, name: str, index: int) -> None:
+def _validate_parameter(
+    code: Callable, name: str, index: int, allow_async=True
+) -> None:
     parameters = list(inspect.signature(code).parameters.keys())
     if not parameters or parameters[index] != name:
         raise ValueError(
             f"Function must receive parameter #{index+1} named "
             f"'{name}', but given function has parameters: {parameters}."
+        )
+    if not allow_async and inspect.iscoroutinefunction(code):
+        raise RuntimeError(
+            f"TestSlide DSL context function `{code.__name__}` can not be async!"
         )
 
 
@@ -72,7 +78,7 @@ class _DSLContext(object):
             new_context = self.current_context.add_child_context(
                 name, skip=self.skip, focus=self.focus
             )
-        _validate_parameter(context_code, "context", 0)
+        _validate_parameter(context_code, "context", 0, allow_async=False)
         context_code(
             type(self)(current_context=new_context, skip=self.skip, focus=self.focus),
             *args,
