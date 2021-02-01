@@ -19,7 +19,7 @@ from testslide import (
     LeftOverActiveTasks,
     SlowCallback,
     _ExampleRunner,
-    get_not_done_tasks,
+    get_active_tasks,
     reset,
 )
 from testslide.dsl import context, fcontext, xcontext
@@ -2096,40 +2096,31 @@ class TestMockConstructorIntegration(TestDSLBase):
             self.run_example(examples["expect fail"])
 
 
-class TestGetNotDoneTasks(unittest.TestCase):
-    @patch("testslide.get_all_tasks")
-    def test_get_not_done_tasks_no_tasks_done(self, mocked_get_all_tasks):
-        mock1 = Mock(done=lambda: False)
-        mock2 = Mock(done=lambda: False)
-        mock3 = Mock(done=lambda: False)
-        mocked_get_all_tasks.return_value = [mock1, mock2, mock3]
+class TestGetActiveTasks(unittest.TestCase):
+    def test_get_active_tasks(self):
+        task_active = Mock(spec=asyncio.Task)
+        task_active.done = lambda: False
+        task_active.cancelled = lambda: False
 
-        result = get_not_done_tasks()
-        expected = [mock1, mock2, mock3]
-        self.assertEqual(expected, result)
+        task_done = Mock(spec=asyncio.Task)
+        task_done.done = lambda: True
+        task_done.cancelled = lambda: False
 
-    @patch("testslide.get_all_tasks")
-    def test_get_not_done_tasks_skips_done_tasks(self, mocked_get_all_tasks):
-        mock1 = Mock(done=lambda: False)
-        mock2 = Mock(done=lambda: True)
-        mock3 = Mock(done=lambda: False)
-        mock4 = Mock(done=lambda: True)
-        mocked_get_all_tasks.return_value = [mock1, mock2, mock3, mock4]
+        task_cancelled = Mock(spec=asyncio.Task)
+        task_cancelled.done = lambda: False
+        task_cancelled.cancelled = lambda: True
 
-        result = get_not_done_tasks()
-        expected = [mock1, mock3]
-        self.assertEqual(expected, result)
+        def get_all_tasks():
+            return [
+                task_active,
+                task_done,
+                task_cancelled,
+            ]
 
-    @patch("testslide.get_all_tasks")
-    def test_get_not_done_tasks_all_tasks_done(self, mocked_get_all_tasks):
-        mock1 = Mock(done=lambda: True)
-        mock2 = Mock(done=lambda: True)
-        mock3 = Mock(done=lambda: True)
-        mocked_get_all_tasks.return_value = [mock1, mock2, mock3]
+        with patch("testslide.get_all_tasks", new=get_all_tasks):
+            result = get_active_tasks()
 
-        result = get_not_done_tasks()
-        expected = []
-        self.assertEqual(expected, result)
+        self.assertEqual(result, [task_active])
 
 
 class TestAsyncRun(TestDSLBase):

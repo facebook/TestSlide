@@ -72,8 +72,10 @@ else:
     get_all_tasks = asyncio.all_tasks
 
 
-def get_not_done_tasks():
-    return [task for task in get_all_tasks() if not task.done()]
+def get_active_tasks():
+    return [
+        task for task in get_all_tasks() if not task.done() and not task.cancelled()
+    ]
 
 
 class LeftOverActiveTasks(BaseException):
@@ -101,9 +103,9 @@ def _importer(target: str) -> Any:
 
 
 async def _async_ensure_no_leaked_tasks(coro):
-    before_example_tasks = get_not_done_tasks()
+    before_example_tasks = get_active_tasks()
     result = await coro
-    after_example_tasks = get_not_done_tasks()
+    after_example_tasks = get_active_tasks()
     new_still_running_tasks = set(after_example_tasks) - set(before_example_tasks)
     if new_still_running_tasks:
         tasks_str = "\n".join(str(task) for task in new_still_running_tasks)
