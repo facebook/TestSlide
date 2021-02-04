@@ -173,7 +173,7 @@ class ColorFormatterMixin(BaseFormatter):
         return sys.stdout.isatty() or self.force_color
 
     def remove_terminal_escape(self, text: str) -> str:
-        return re.sub("\033\[[0-9;]+m", "", text)
+        return re.sub("\033\\[[0-9;]+m", "", text)
 
     def _format_attrs(self, attrs: str, *values: Any) -> str:
         text = "".join([str(value) for value in values])
