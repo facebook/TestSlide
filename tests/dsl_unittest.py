@@ -1952,7 +1952,7 @@ class SmokeTestAsync(TestDSLBase):
                     self.assertEqual(self.derived, "derived: new base")
 
         with self.assertRaisesRegex(
-            AttributeError, "^Attribute 'base' is already set.*"
+            AttributeError, "^Attribute 'base' can not be reset.*"
         ):
             self.run_all_examples()
 

@@ -22,62 +22,99 @@ and refer it later on:
   def is_a_calculaor(self):
     assert type(self.calculator) == Calculator
 
-Memoized Attributes
--------------------
+Attributes and sub-contexts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Memoized attributes allow for lazy construction of attributes needed during a test. The attribute value will be constructed and remembered only at the first attribute access:
+While it is very intuitive to do ``self.attr = "value"``, when used with sub-contexts there's potential for confusion:
 
 .. code-block:: python
 
+  from testslide.dsl import context
+  
   @context
-  def Memoized_attributes(context):
+  def top_context(context):
   
-    # This function will be used to lazily set a memoized attribute with the same name
+    @context.before
+    def set_attr(self):
+      self.attr = "top context value"
+      self.top_context_dict = {}
+      self.top_context_dict["attr"] = self.attr
+  
+    @context.example
+    def attr_is_the_same(self):
+      self.assertEqual(self.attr, self.top_context_dict["attr"])
+  
+    @context.sub_context
+    def sub_context(context):
+      @context.before
+      def reset_attr(self):
+        self.attr = "sub context value"
+        self.sub_context_dict = {}
+        self.sub_context_dict["attr"] = self.attr
+  
+      @context.example
+      def attr_is_the_same(self):
+        self.assertEqual(self.attr, self.sub_context_dict["attr"])  # OK
+        self.assertEqual(self.attr, self.top_context_dict["attr"])  # Boom!
+
+In this example ``self.attr`` will have different values at ``top_context`` and ``sub_context`` resulting in some confusion in the assertions. These can be hard to spot in more complex scenarios, so TestSlide prevents attributes from being reset and the example above actually fails with ``AttributeError: Attribute 'attr' is already set.``.
+
+The solution to this problem are **memoized attributes**.
+
+Memoized Attributes
+^^^^^^^^^^^^^^^^^^^
+
+Memoized attributes are similar to a ``@property`` but with 2 key differences:
+
+* Its value is materialized and cached on the first access.
+* When multiple contexts define the same memoized attribute the inner-most overrides the outer-most definitions.
+
+Let's see it in action:
+
+.. code-block:: python
+
+  from testslide.dsl import context
+  
+  @context
+  def memoized_attributes(context):
+  
     @context.memoize
-    def memoized_value(self):
+    def memoized_list(self):
       return []
-  
-    # Lambdas are also OK
-    context.memoize('another_memoized_value', lambda self: [])
-  
-    # Or in bulk
-    context.memoize(
-      yet_another=lambda self: 'one',
-      and_one_more=lambda self: 'attr',
-    )
   
     @context.example
     def can_access_memoized_attributes(self):
-      # memoized_value
-      assert len(self.memoized_value) == 0
-      self.memoized_value.append(True)
-      assert len(self.memoized_value) == 1
+      assert len(self.memoized_list) == 0  # list is materialized
+      self.memoized_list.append(True)
+      assert len(self.memoized_list) == 1  # same list is refereed
 
-      # another_memoized_value
-      assert len(self.another_memoized_value) == 0
-      self.another_memoized_value.append(True)
-      assert len(self.another_memoized_value) == 1
+For the sake of convenience, memoized attributes can also be defined using lambdas:
 
-      # these were declared in bulk
-      assert self.yet_anoter == 'one'
-      assert self.and_one_more == 'attr'
+.. code-block:: python
 
-Note in the example that the list built by ``memoized_value()``, is memoized, and is the same object for every access.
+  context.memoize('memoized_list', lambda self: [])
 
-Another option is to force memoization to happen at a before hook, instead of at the moment the attribute is accessed:
+or in bulk:
+
+.. code-block:: python
+
+  context.memoize(
+    memoized_list=lambda self: [],
+    yet_another_memoized_list=lambda self: [],
+  )
+
+In some cases, delaying the materialization of the attribute is not desired and it can be forced to happen unconditionally from within a before hook:
 
 .. code-block:: python
 
   @context.memoize_before
-  def attribute_name(self):
+  def memoized_list(self):
     return []
 
-In this case, the attribute will be set, regardless if it is used or not.
+Overriding Memoized Attributes
+""""""""""""""""""""""""""""""
 
-Composition
-^^^^^^^^^^^
-
-The big value of using memoized attributes as opposed to a regular attribute, is that you can easily do composition:
+As memoized attributes from parent contexts can be overridden by defining a new value from an inner context, it not only gives consistency on the attribute value, but also allows for some powerful composition:
 
 .. code-block:: python
 
@@ -107,6 +144,8 @@ The big value of using memoized attributes as opposed to a regular attribute, is
       @context.example
       def sees_different_value(self):
         self.assertEqual(self.mock.attr, 'different value')
+
+This means, sub-contexts can be used to "tweak" values from a parent context.
 
 Functions
 ---------
