@@ -509,6 +509,19 @@ class StrictMock(object):
 
         self._setup_default_context_manager(default_context_manager)
 
+        # When StrictMock is inherited
+        if type(self).mro()[1] != StrictMock:
+            for klass in type(self).mro()[1:]:
+                if klass == StrictMock:
+                    break
+                for attr in klass.__dict__.keys():
+                    if attr not in StrictMock.__dict__:
+                        # We use use __setattr__ to set the attribute at the
+                        # dynamically created subclass (see __new__), so that
+                        # all validation machinery wraps any defined methods
+                        # by a subclass
+                        StrictMock.__setattr__(self, attr, getattr(self, attr))
+
     @property  # type: ignore
     def __class__(self) -> type:
         return self._template if self._template is not None else type(self)
