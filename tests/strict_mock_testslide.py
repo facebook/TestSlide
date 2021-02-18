@@ -119,6 +119,12 @@ class TemplateBaseStrictMock(StrictMock):
     def __len__(self):
         return 100
 
+    def __eq__(self, other):
+        return id(self) == id(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class TemplateStrictMock(TemplateBaseStrictMock):
     def __instance_method_helper(self):
@@ -288,6 +294,12 @@ def strict_mock(context):
             def type_validation_works(self):
                 with self.assertRaises(TypeCheckError):
                     self.strict_mock.static_method("whatever")
+
+            @context.example
+            def hash_works(self):
+                d = {}
+                d[self.strict_mock] = "value"
+                self.assertEqual(d[self.strict_mock], "value")
 
         @context.sub_context
         def given_as_an_argument(context):

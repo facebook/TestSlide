@@ -263,7 +263,6 @@ class StrictMock(object):
         "__getnewargs_ex__",
         "__getstate__",
         "__gt__",
-        "__hash__",
         "__iadd__",
         "__iand__",
         "__ifloordiv__",
@@ -349,6 +348,7 @@ class StrictMock(object):
         "__dir__",
         "__getattr__",
         "__getattribute__",
+        "__hash__",
         "__init__",
         "__init_subclass__",
         "__mro__",
@@ -403,6 +403,14 @@ class StrictMock(object):
             if klass is object:
                 continue
             for name in klass.__dict__:
+                if name in type(self).__dict__:
+                    continue
+                if name == "__hash__":
+                    if klass.__dict__["__hash__"] is None:
+                        setattr(self, name, None)
+                    else:
+                        setattr(self, name, lambda: id(self))
+                    continue
                 if (
                     callable(klass.__dict__[name])
                     and name in self.__SETTABLE_MAGICS
@@ -694,12 +702,13 @@ class StrictMock(object):
     def __setattr__(self, name: str, value: Any) -> None:
         if self.__is_magic_method(name):
             # ...check whether we're allowed to mock...
-            if name in self.__UNSETTABLE_MAGICS or (
-                name in StrictMock.__dict__ and name not in self.__SETTABLE_MAGICS
-            ):
+            if (
+                name in self.__UNSETTABLE_MAGICS
+                or (name in StrictMock.__dict__ and name not in self.__SETTABLE_MAGICS)
+            ) and name != "__hash__":
                 raise UnsupportedMagic(self, name)
             # ...or if it is something unsupported.
-            if name not in self.__SETTABLE_MAGICS:
+            if name not in self.__SETTABLE_MAGICS and name != "__hash__":
                 raise NotImplementedError(
                     f"StrictMock does not implement support for {name}"
                 )
