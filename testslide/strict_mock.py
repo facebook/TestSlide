@@ -475,6 +475,9 @@ class StrictMock(object):
                     "__init__",
                 ]:
                     continue
+                # https://docs.python.org/3/tutorial/classes.html#tut-private
+                if name.startswith(f"_{type(self).__name__}__") and not name.endswith("__"):
+                    continue
                 StrictMock.__setattr__(self, name, getattr(self, name))
 
     def __init__(
