@@ -126,12 +126,6 @@ class TemplateBaseStrictMock(StrictMock):
     def __len__(self):
         return 100
 
-    def __eq__(self, other):
-        return id(self) == id(other)
-
-    def __hash__(self):
-        return id(self)
-
 
 class TemplateStrictMock(TemplateBaseStrictMock):
     def __instance_method_helper(self):
