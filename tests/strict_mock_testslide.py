@@ -108,15 +108,24 @@ class Template(TemplateParent):
         return "class_method: {}".format(message)
 
 
-class TemplateStrictMock(StrictMock):
+class TemplateBaseStrictMock(StrictMock):
     def __init__(self):
         super().__init__(template=Template)
 
-    def instance_method(self, message):
-        return "mock"
+    @staticmethod
+    def static_method(message):
+        return 101  # Wrong type
 
     def __len__(self):
         return 100
+
+
+class TemplateStrictMock(TemplateBaseStrictMock):
+    def __instance_method_helper(self):
+        return "mock"
+
+    def instance_method(self, message):
+        return self.__instance_method_helper()
 
 
 class ContextManagerTemplate(Template):
@@ -274,6 +283,11 @@ def strict_mock(context):
             @context.example
             def overriding_magic_methods_work(self):
                 self.assertEqual(len(self.strict_mock), 100)
+
+            @context.example
+            def type_validation_works(self):
+                with self.assertRaises(TypeCheckError):
+                    self.strict_mock.static_method("whatever")
 
         @context.sub_context
         def given_as_an_argument(context):
