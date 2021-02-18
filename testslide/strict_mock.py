@@ -263,6 +263,7 @@ class StrictMock(object):
         "__getnewargs_ex__",
         "__getstate__",
         "__gt__",
+        "__hash__",
         "__iadd__",
         "__iand__",
         "__ifloordiv__",
@@ -348,7 +349,6 @@ class StrictMock(object):
         "__dir__",
         "__getattr__",
         "__getattribute__",
-        "__hash__",
         "__init__",
         "__init_subclass__",
         "__mro__",
@@ -759,7 +759,7 @@ class StrictMock(object):
                 if (
                     name.startswith("__")
                     and name.endswith("__")
-                    and not name in self.__SETTABLE_MAGICS
+                    and name not in self.__SETTABLE_MAGICS
                 ):
                     continue
                 attrs.append(name)
