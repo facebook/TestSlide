@@ -223,7 +223,7 @@ class StrictMock(object):
     # expected to work as they should. If implemented by the template class,
     # they will have default values assigned to them, that raise
     # UndefinedAttribute until configured.
-    _SETTABLE_MAGICS = [
+    __SETTABLE_MAGICS = [
         "__abs__",
         "__add__",
         "__aenter__",
@@ -332,7 +332,7 @@ class StrictMock(object):
 
     # These magics either won't work or makes no sense to be set for mock after
     # an instance of a class. Trying to set them will raise UnsupportedMagic.
-    _UNSETTABLE_MAGICS = [
+    __UNSETTABLE_MAGICS = [
         "__bases__",
         "__class__",
         "__class_getitem__",
@@ -377,7 +377,7 @@ class StrictMock(object):
         strict_mock_instance = object.__new__(strict_mock_subclass)
         return strict_mock_instance
 
-    def _setup_magic_methods(self) -> None:
+    def __setup_magic_methods(self) -> None:
         """
         Populate all template's magic methods with expected default behavior.
         This is important as things such as bool() depend on they existing
@@ -401,13 +401,13 @@ class StrictMock(object):
             for name in klass.__dict__:
                 if (
                     callable(klass.__dict__[name])
-                    and name in self._SETTABLE_MAGICS
-                    and name not in self._UNSETTABLE_MAGICS
+                    and name in self.__SETTABLE_MAGICS
+                    and name not in self.__UNSETTABLE_MAGICS
                     and name not in implemented_magic_methods
                 ):
                     setattr(self, name, _DefaultMagic(self, name))
 
-    def _setup_default_context_manager(self, default_context_manager: bool) -> None:
+    def __setup_default_context_manager(self, default_context_manager: bool) -> None:
         if self._template and default_context_manager:
             if hasattr(self._template, "__enter__") and hasattr(
                 self._template, "__exit__"
@@ -427,10 +427,10 @@ class StrictMock(object):
                 self.__aenter__ = aenter
                 self.__aexit__ = aexit
 
-    def _get_caller_frame(self, depth: int) -> FrameType:
+    def __get_caller_frame(self, depth: int) -> FrameType:
         # Adding extra 3 to account for the stack:
-        #   _get_caller_frame
-        #   _get_caller
+        #   __get_caller_frame
+        #   __get_caller
         #   __init__
         depth = depth + 3
         current_frame = inspect.currentframe()
@@ -443,11 +443,11 @@ class StrictMock(object):
 
         return current_frame  # type: ignore
 
-    def _get_caller(self, depth: int) -> Optional[str]:
+    def __get_caller(self, depth: int) -> Optional[str]:
         # Doing inspect.stack will retrieve the whole stack, including context
         # and that is really slow, this only retrieves the minimum, and does
         # not read the file contents.
-        caller_frame = self._get_caller_frame(depth)
+        caller_frame = self.__get_caller_frame(depth)
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
         frameinfo = inspect.getframeinfo(caller_frame, context=0)
@@ -462,7 +462,7 @@ class StrictMock(object):
         else:
             return None
 
-    def _setup_subclass(self):
+    def __setup_subclass(self):
         if type(self).mro()[1] == StrictMock:
             return
         for klass in type(self).mro()[1:]:
@@ -476,7 +476,9 @@ class StrictMock(object):
                 ]:
                     continue
                 # https://docs.python.org/3/tutorial/classes.html#tut-private
-                if name.startswith(f"_{type(self).__name__}__") and not name.endswith("__"):
+                if name.startswith(f"_{type(self).__name__}__") and not name.endswith(
+                    "__"
+                ):
                     continue
                 StrictMock.__setattr__(self, name, getattr(self, name))
 
@@ -512,7 +514,7 @@ class StrictMock(object):
         self.__dict__["_runtime_attrs"] = runtime_attrs or []
         self.__dict__["_name"] = name
         self.__dict__["_type_validation"] = type_validation
-        self.__dict__["__caller"] = self._get_caller(1)
+        self.__dict__["__caller"] = self.__get_caller(1)
         self.__dict__[
             "_attributes_to_skip_type_validation"
         ] = attributes_to_skip_type_validation
@@ -523,11 +525,11 @@ class StrictMock(object):
         caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
         self.__dict__["_caller_frame_info"] = caller_frame_info
 
-        self._setup_magic_methods()
+        self.__setup_magic_methods()
 
-        self._setup_default_context_manager(default_context_manager)
+        self.__setup_default_context_manager(default_context_manager)
 
-        self._setup_subclass()
+        self.__setup_subclass()
 
     @property  # type: ignore
     def __class__(self) -> type:
@@ -542,11 +544,12 @@ class StrictMock(object):
         # introspection.
         return testslide.mock_constructor._get_class_or_mock(self.__dict__["_template"])
 
+    # FIXME change to __runtime_attrs
     @property
     def _runtime_attrs(self) -> Optional[List[Any]]:
         return self.__dict__["_runtime_attrs"]
 
-    def _template_has_attr(self, name: str) -> bool:
+    def __template_has_attr(self, name: str) -> bool:
         def get_class_init(klass: type) -> Callable:
             import testslide.mock_constructor  # Avoid cyclic dependencies
 
@@ -584,10 +587,10 @@ class StrictMock(object):
         )
 
     @staticmethod
-    def _is_magic_method(name: str) -> bool:
+    def __is_magic_method(name: str) -> bool:
         return name.startswith("__") and name.endswith("__")
 
-    def _validate_attribute_type(self, name: str, value: Any) -> None:
+    def __validate_attribute_type(self, name: str, value: Any) -> None:
         if (
             not self.__dict__["_type_validation"]
             or name in self.__dict__["_attributes_to_skip_type_validation"]
@@ -599,12 +602,12 @@ class StrictMock(object):
             if name in annotations:
                 testslide.lib._validate_argument_type(annotations[name], name, value)
 
-    def _validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
+    def __validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
         if self._template:
-            if not self._template_has_attr(name):
+            if not self.__template_has_attr(name):
                 raise NonExistentAttribute(self, name)
 
-            self._validate_attribute_type(name, value)
+            self.__validate_attribute_type(name, value)
 
             if hasattr(self._template, name):
                 template_value = getattr(self._template, name)
@@ -678,23 +681,23 @@ class StrictMock(object):
         return value
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if self._is_magic_method(name):
+        if self.__is_magic_method(name):
             # ...check whether we're allowed to mock...
-            if name in self._UNSETTABLE_MAGICS or (
-                name in StrictMock.__dict__ and name not in self._SETTABLE_MAGICS
+            if name in self.__UNSETTABLE_MAGICS or (
+                name in StrictMock.__dict__ and name not in self.__SETTABLE_MAGICS
             ):
                 raise UnsupportedMagic(self, name)
             # ...or if it is something unsupported.
-            if name not in self._SETTABLE_MAGICS:
+            if name not in self.__SETTABLE_MAGICS:
                 raise NotImplementedError(
                     f"StrictMock does not implement support for {name}"
                 )
 
-        mock_value = self._validate_and_wrap_mock_value(name, value)
+        mock_value = self.__validate_and_wrap_mock_value(name, value)
         setattr(type(self), name, mock_value)
 
     def __getattr__(self, name: str) -> Any:
-        if self._template and self._template_has_attr(name):
+        if self._template and self.__template_has_attr(name):
             raise UndefinedAttribute(self, name)
         else:
             raise AttributeError(f"'{name}' was not set for {self}.")
@@ -727,7 +730,7 @@ class StrictMock(object):
     def __str__(self) -> str:
         return self.__repr__()
 
-    def _get_copy(self) -> "StrictMock":
+    def __get_copy(self) -> "StrictMock":
         self_copy = type(self)(
             template=self._template,
             runtime_attrs=self._runtime_attrs,
@@ -735,26 +738,26 @@ class StrictMock(object):
             type_validation=self._type_validation,
             attributes_to_skip_type_validation=self._attributes_to_skip_type_validation,
         )
-        self_copy.__dict__["__caller"] = self._get_caller(2)
+        self_copy.__dict__["__caller"] = self.__get_caller(2)
         return self_copy
 
-    def _get_copyable_attrs(self, self_copy: "StrictMock") -> List[str]:
+    def __get_copyable_attrs(self, self_copy: "StrictMock") -> List[str]:
         attrs = []
         for name in type(self).__dict__:
             if name not in self_copy.__dict__:
                 if (
                     name.startswith("__")
                     and name.endswith("__")
-                    and not name in self._SETTABLE_MAGICS
+                    and not name in self.__SETTABLE_MAGICS
                 ):
                     continue
                 attrs.append(name)
         return attrs
 
     def __copy__(self) -> "StrictMock":
-        self_copy = self._get_copy()
+        self_copy = self.__get_copy()
 
-        for name in self._get_copyable_attrs(self_copy):
+        for name in self.__get_copyable_attrs(self_copy):
             setattr(type(self_copy), name, type(self).__dict__[name])
 
         return self_copy
@@ -762,10 +765,10 @@ class StrictMock(object):
     def __deepcopy__(self, memo: Optional[Dict[Any, Any]] = None) -> "StrictMock":
         if memo is None:
             memo = {}
-        self_copy = self._get_copy()
+        self_copy = self.__get_copy()
         memo[id(self)] = self_copy
 
-        for name in self._get_copyable_attrs(self_copy):
+        for name in self.__get_copyable_attrs(self_copy):
             value = copy.deepcopy(type(self).__dict__[name], memo)
             setattr(type(self_copy), name, value)
         return self_copy
