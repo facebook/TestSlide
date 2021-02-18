@@ -712,6 +712,8 @@ class StrictMock(object):
                 raise NotImplementedError(
                     f"StrictMock does not implement support for {name}"
                 )
+            if name == "__hash__" and name in type(self).__dict__:
+                raise UnsupportedMagic(self, name)
 
         mock_value = self.__validate_and_wrap_mock_value(name, value)
         setattr(type(self), name, mock_value)
