@@ -382,10 +382,7 @@ def strict_mock(context):
                         attr_name = "non_existing_attr"
                         with self.assertRaisesWithRegexMessage(
                             NonExistentAttribute,
-                            f"'{attr_name}' can not be set.\n"
-                            f"{self.strict_mock_rgx} template class does not have "
-                            "this attribute so the mock can not have it as well.\n"
-                            "See also: 'runtime_attrs' at StrictMock.__init__.",
+                            f"'{attr_name}' is not part of the API.*",
                         ):
                             setattr(self.strict_mock, attr_name, "whatever")
 
