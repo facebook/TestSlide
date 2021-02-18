@@ -56,9 +56,13 @@ class NonExistentAttribute(BaseException):
 
     def __str__(self) -> str:
         return (
-            f"'{self.name}' can not be set.\n"
-            f"{self.strict_mock} template class does not have this attribute "
-            "so the mock can not have it as well.\n"
+            f"'{self.name}' is not part of the API.\n"
+            f"{self.strict_mock} template class API does not have this "
+            "attribute so the mock can not have it as well.\n"
+            "If you are inheriting StrictMock, you can define private "
+            "attributes, that will not interfere with the API, by prefixing "
+            "them with '__' (and at most one '_' suffix) "
+            " (https://docs.python.org/3/tutorial/classes.html#tut-private).\n"
             "See also: 'runtime_attrs' at StrictMock.__init__."
         )
 
@@ -463,6 +467,13 @@ class StrictMock(object):
             return None
 
     def __setup_subclass(self):
+        """
+        When StrictMock is subclassed, any attributes defined at the subclass
+        will override any of StrictMock's validations. In order to overcome
+        this, for attributes that makes sense, we set them at StrictMock's
+        dynamically created subclass from __new__ using __setattr__, so that
+        all validations work.
+        """
         if type(self).mro()[1] == StrictMock:
             return
         for klass in type(self).mro()[1:]:
