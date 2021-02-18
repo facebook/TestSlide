@@ -753,7 +753,7 @@ class StrictMock(object):
         return self.__repr__()
 
     def __get_copy(self) -> "StrictMock":
-        self_copy = type(self)(
+        self_copy = StrictMock(
             template=self._template,
             runtime_attrs=self._runtime_attrs,
             name=self._name,

@@ -108,6 +108,12 @@ class Template(TemplateParent):
     def class_method_wrapped(cls, extra, message):
         return "class_method: {}".format(message)
 
+    def __eq__(self, other):
+        return id(self) == id(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class TemplateBaseStrictMock(StrictMock):
     def __init__(self):
