@@ -20,6 +20,7 @@ from testslide.strict_mock import (
     NonExistentAttribute,
     StrictMock,
     UndefinedAttribute,
+    UnsupportedMagic,
 )
 
 
@@ -300,6 +301,11 @@ def strict_mock(context):
                 d = {}
                 d[self.strict_mock] = "value"
                 self.assertEqual(d[self.strict_mock], "value")
+
+            @context.example
+            def cant_set_hash(self):
+                with self.assertRaises(UnsupportedMagic):
+                    self.strict_mock.__hash__ = lambda: 0
 
         @context.sub_context
         def given_as_an_argument(context):
