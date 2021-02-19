@@ -489,15 +489,17 @@ class StrictMock(object):
                 break
             for name in klass.__dict__.keys():
                 if name in [
-                    "__module__",
                     "__doc__",
                     "__init__",
+                    "__module__",
                 ]:
                     continue
                 # https://docs.python.org/3/tutorial/classes.html#tut-private
                 if name.startswith(f"_{type(self).__name__}__") and not name.endswith(
                     "__"
                 ):
+                    continue
+                if name == "__hash__" and klass.__dict__["__hash__"] is None:
                     continue
                 StrictMock.__setattr__(self, name, getattr(self, name))
 
