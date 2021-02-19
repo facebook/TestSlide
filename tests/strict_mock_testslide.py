@@ -20,6 +20,7 @@ from testslide.strict_mock import (
     NonExistentAttribute,
     StrictMock,
     UndefinedAttribute,
+    UnsupportedMagic,
 )
 
 
@@ -107,16 +108,31 @@ class Template(TemplateParent):
     def class_method_wrapped(cls, extra, message):
         return "class_method: {}".format(message)
 
+    def __eq__(self, other):
+        return id(self) == id(other)
 
-class TemplateStrictMock(StrictMock):
+    def __hash__(self):
+        return id(self)
+
+
+class TemplateBaseStrictMock(StrictMock):
     def __init__(self):
         super().__init__(template=Template)
 
-    def instance_method(self, message):
-        return "mock"
+    @staticmethod
+    def static_method(message):
+        return 101  # Wrong type
 
     def __len__(self):
         return 100
+
+
+class TemplateStrictMock(TemplateBaseStrictMock):
+    def __instance_method_helper(self):
+        return "mock"
+
+    def instance_method(self, message):
+        return self.__instance_method_helper()
 
 
 class ContextManagerTemplate(Template):
@@ -275,6 +291,22 @@ def strict_mock(context):
             def overriding_magic_methods_work(self):
                 self.assertEqual(len(self.strict_mock), 100)
 
+            @context.example
+            def type_validation_works(self):
+                with self.assertRaises(TypeCheckError):
+                    self.strict_mock.static_method("whatever")
+
+            @context.example
+            def hash_works(self):
+                d = {}
+                d[self.strict_mock] = "value"
+                self.assertEqual(d[self.strict_mock], "value")
+
+            @context.example
+            def cant_set_hash(self):
+                with self.assertRaises(UnsupportedMagic):
+                    self.strict_mock.__hash__ = lambda: 0
+
         @context.sub_context
         def given_as_an_argument(context):
             @context.sub_context
@@ -368,10 +400,7 @@ def strict_mock(context):
                         attr_name = "non_existing_attr"
                         with self.assertRaisesWithRegexMessage(
                             NonExistentAttribute,
-                            f"'{attr_name}' can not be set.\n"
-                            f"{self.strict_mock_rgx} template class does not have "
-                            "this attribute so the mock can not have it as well.\n"
-                            "See also: 'runtime_attrs' at StrictMock.__init__.",
+                            f"'{attr_name}' is not part of the API.*",
                         ):
                             setattr(self.strict_mock, attr_name, "whatever")
 
