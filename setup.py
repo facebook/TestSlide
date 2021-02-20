@@ -16,7 +16,7 @@ setup(
     packages=["testslide"],
     maintainer="Fabio Pugliese Ornellas",
     maintainer_email="fabio.ornellas@gmail.com",
-    url="https://github.com/facebookincubator/TestSlide",
+    url="https://github.com/facebook/TestSlide",
     license="MIT",
     description="A test framework for Python that makes mocking and iterating over code with tests a breeze",
     long_description=readme,

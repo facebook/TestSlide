@@ -175,7 +175,7 @@ def _validate_callable_arg_types(context):
         def ingores_TypeVar(self):
             """
             We currently can't enforce TypeVar:
-            https://github.com/facebookincubator/TestSlide/issues/165
+            https://github.com/facebook/TestSlide/issues/165
             """
 
             def with_typevar(lolo: T) -> None:
@@ -189,7 +189,7 @@ def _validate_callable_arg_types(context):
         def ignores_nested_TypeVar(self):
             """
             We currently can't enforce TypeVar:
-            https://github.com/facebookincubator/TestSlide/issues/165
+            https://github.com/facebook/TestSlide/issues/165
             """
 
             def with_typevar(arg1: Type[T]) -> None:
@@ -354,7 +354,7 @@ def _validate_return_type(context):
     def passes_if_TypeVar_in_signature(self):
         """
         We currently can't enforce TypeVar:
-        https://github.com/facebookincubator/TestSlide/issues/165
+        https://github.com/facebook/TestSlide/issues/165
         """
 
         def with_typevar_return() -> Type[TypeVar("T")]:

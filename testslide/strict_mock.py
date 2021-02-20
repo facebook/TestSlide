@@ -391,7 +391,7 @@ class StrictMock(object):
         Populate all template's magic methods with expected default behavior.
         This is important as things such as bool() depend on they existing
         on the object's class __dict__.
-        https://github.com/facebookincubator/TestSlide/issues/23
+        https://github.com/facebook/TestSlide/issues/23
         """
         if not self._template:
             return
