@@ -667,7 +667,10 @@ class StrictMock(object):
 
                                 return_value = await result_awaitable
                                 if not isinstance(
-                                    value, testslide.mock_callable._CallableMock
+                                    # If the return value is a _BaseRunner then type
+                                    # validation, if needed, has already been performed
+                                    return_value,
+                                    testslide.mock_callable._BaseRunner,
                                 ):
                                     testslide.lib._validate_return_type(
                                         template_value,
@@ -683,8 +686,11 @@ class StrictMock(object):
                                 return_value = signature_validation_wrapper(
                                     *args, **kwargs
                                 )
-                                if self.__dict__["_type_validation"] and not isinstance(
-                                    value, testslide.mock_callable._CallableMock
+                                if not isinstance(
+                                    # If the return value is a _BaseRunner then type
+                                    # validation, if needed, has already been performed
+                                    return_value,
+                                    testslide.mock_callable._BaseRunner,
                                 ):
                                     testslide.lib._validate_return_type(
                                         template_value,

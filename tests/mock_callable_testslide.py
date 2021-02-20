@@ -1621,3 +1621,129 @@ def mock_callable_tests(context):
                 can_yield=False,
             )
             context.merge_context("other instances are not mocked")
+
+    @context.sub_context
+    def mock_sync_async_callable_type_check_errors(context):
+        @context.shared_context
+        def run_context(context, target):
+            @context.example
+            def mock_callable_to_return_value(self):
+                self.mock_callable(target, "instance_method").to_return_value(
+                    1
+                ).and_assert_called()
+
+                # instance_method is annotated to return a string and here we would retrieve 1
+                with self.assertRaises(TypeCheckError):
+                    target.instance_method(
+                        arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                    )
+
+            @context.example
+            def mock_callable_to_return_values(self):
+                self.mock_callable(target, "instance_method").to_return_values(
+                    [1, 2, ["ok"]]
+                ).and_assert_called()
+
+                # instance_method should return `List[str]` while 1 is `int`
+                with self.assertRaises(TypeCheckError):
+                    target.instance_method(
+                        arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                    )
+
+                # instance_method should return `List[str]` while 2 is `int`
+                with self.assertRaises(TypeCheckError):
+                    target.instance_method(
+                        arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                    )
+
+                # instance_method should return `List[str]` and ["ok"] is correct
+                target.instance_method(
+                    arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                )
+
+            @context.example
+            def mock_callable_with_implementation(self):
+                self.mock_callable(target, "instance_method").with_implementation(
+                    lambda arg1, **kwargs: 1 if arg1 == "give_me_an_int" else [arg1]
+                ).and_assert_called()
+
+                # instance_method should return `List[str]` while 1 is `int`
+                with self.assertRaises(TypeCheckError):
+                    target.instance_method(
+                        arg1="give_me_an_int",
+                        arg2="arg2",
+                        kwarg1="kwarg1",
+                        kwarg2="kwarg2",
+                    )
+
+                # instance_method should return `List[str]` and ["ok"] is correct
+                target.instance_method(
+                    arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                )
+
+            @context.example
+            def mock_async_callable_to_return_value(self):
+                self.mock_async_callable(
+                    target, "async_instance_method"
+                ).to_return_value(1).and_assert_called()
+
+                # instance_method is annotated to return a string and here we would retrieve 1
+                with self.assertRaises(TypeCheckError):
+                    self.async_run_with_health_checks(
+                        target.async_instance_method(
+                            arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                        )
+                    )
+
+            @context.example
+            def mock_async_callable_to_return_values(self):
+                self.mock_async_callable(
+                    target, "async_instance_method"
+                ).to_return_values([1, 2, ["ok"]]).and_assert_called()
+
+                # instance_method is annotated to return a string and here we would retrieve 1
+                with self.assertRaises(TypeCheckError):
+                    self.async_run_with_health_checks(
+                        target.async_instance_method(
+                            arg1="arg1", arg2="arg2", kwarg1="kwarg1", kwarg2="kwarg2"
+                        )
+                    )
+
+                # instance_method should return `List[str]` while 2 is `int`
+                with self.assertRaises(TypeCheckError):
+                    self.async_run_with_health_checks(
+                        target.async_instance_method("arg1", "arg2")
+                    )
+
+                self.async_run_with_health_checks(
+                    target.async_instance_method("arg1", "arg2")
+                )
+
+            @context.example
+            def mock_async_callable_with_implementation(self):
+                async def impl(arg1: str, arg2: str, **kwargs):
+                    return 1 if arg1 == "give_me_an_int" else [arg1]
+
+                self.mock_async_callable(
+                    target, "async_instance_method"
+                ).with_implementation(impl).and_assert_called()
+
+                # instance_method is annotated to return a string and here we would retrieve an integer
+                with self.assertRaises(TypeCheckError):
+                    self.async_run_with_health_checks(
+                        target.async_instance_method("give_me_an_int", "arg2")
+                    )
+
+                self.async_run_with_health_checks(
+                    target.async_instance_method("arg1", "arg2")
+                )
+
+        @context.sub_context
+        def using_concrete_instance(context):
+            context.merge_context("run context", target=sample_module.Target())
+
+        @context.sub_context
+        def using_strict_mock(context):
+            context.merge_context(
+                "run context", target=StrictMock(sample_module.ParentTarget)
+            )

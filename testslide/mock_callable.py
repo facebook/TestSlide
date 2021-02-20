@@ -729,10 +729,9 @@ class _MockCallableDSL(object):
         else:
             original_callable = getattr(self._target, self._method)
 
-        if not isinstance(self._target, StrictMock):
-            new_value = _wrap_signature_and_type_validation(
-                new_value, self._target, self._method, self.type_validation
-            )
+        new_value = _wrap_signature_and_type_validation(
+            new_value, self._target, self._method, self.type_validation
+        )
 
         restore = self._method in self._target.__dict__
         restore_value = self._target.__dict__.get(self._method, None)
