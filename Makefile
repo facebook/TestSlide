@@ -36,9 +36,6 @@ endif
 .PHONY: all
 all: tests coverage_report docs sdist
 
-# .PHONY does not work for implicit rules, so we FORCE them
-FORCE:
-
 ##
 ## Docs
 ##
@@ -57,7 +54,7 @@ docs_clean:
 ## Tests
 ##
 
-%_unittest.py: FORCE coverage_erase
+%_unittest.py: coverage_erase
 	@printf "${TERM_BRIGHT}UNITTEST $@\n${TERM_NONE}"
 	${Q} coverage run \
 		-m unittest \
@@ -70,15 +67,15 @@ unittest_tests: $(TESTS_SRCS)/*_unittest.py
 
 .PHONY: pytest_tests
 pytest_tests: export PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR}
-pytest_tests: FORCE coverage_erase
+pytest_tests: coverage_erase
 	@printf "${TERM_BRIGHT}INSTALL pytest_testslide DEPS ${TERM_NONE}\n"
 	${Q} pip install -r pytest-testslide/requirements.txt
 	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}\n"
 	${Q} coverage run \
-	-m pytest \
-	pytest-testslide/tests
+		-m pytest \
+		pytest-testslide/tests
 
-%_testslide.py: FORCE coverage_erase
+%_testslide.py: coverage_erase
 	@printf "${TERM_BRIGHT}TESTSLIDE $@\n${TERM_NONE}"
 	${Q} coverage run \
 		-m testslide.cli \
