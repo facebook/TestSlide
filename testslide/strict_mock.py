@@ -198,6 +198,11 @@ class _MethodProxy(object):
         memo[id(self)] = self_copy
         return self_copy
 
+    def __repr__(self) -> str:
+        # Override repr to have a representation that provides information
+        # about the wrapped method
+        return repr(self.__dict__["_value"])
+
 
 class StrictMock(object):
     """

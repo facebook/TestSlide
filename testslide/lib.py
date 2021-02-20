@@ -7,6 +7,7 @@ import inspect
 import os
 import sys
 import unittest.mock
+from functools import wraps
 from inspect import Traceback
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
@@ -274,6 +275,8 @@ def _wrap_signature_and_type_validation(
 
     skip_first_arg = _skip_first_arg(template, attr_name)
 
+    # Add this so docstrings and method name are not altered by the mock
+    @wraps(callable_template)
     def with_sig_and_type_validation(*args: Any, **kwargs: Any) -> Any:
         if _validate_callable_signature(
             skip_first_arg, callable_template, template, attr_name, args, kwargs
@@ -284,6 +287,11 @@ def _wrap_signature_and_type_validation(
                 )
         return value(*args, **kwargs)
 
+    # Update __qualname__ such that `repr(mocked_function)` would look like
+    # `<function TestSldeValidation(<original_name>) at 0x105c17560>`
+    with_sig_and_type_validation.__qualname__ = "TestSldeValidation({})".format(
+        with_sig_and_type_validation.__qualname__
+    )
     return with_sig_and_type_validation
 
 
