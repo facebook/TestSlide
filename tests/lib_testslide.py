@@ -340,7 +340,7 @@ def _validate_return_type(context):
 
     @context.example
     def passes_for_correct_type(self):
-        self.assert_passes("arg1")
+        self.assert_passes(["arg1"])
 
     @context.example
     def passes_for_mock_without_template(self):
@@ -348,7 +348,7 @@ def _validate_return_type(context):
 
     @context.example
     def passes_for_mock_with_correct_template(self):
-        self.assert_passes(StrictMock(template=str))
+        self.assert_passes([StrictMock(template=str)])
 
     @context.example
     def passes_if_TypeVar_in_signature(self):

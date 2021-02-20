@@ -197,6 +197,7 @@ def mock_callable_tests(context):
                                 @context.sub_context
                                 def with_invalid_return_type(context):
                                     context.memoize("value", lambda self: 1)
+                                    context.memoize("values_list", lambda self: [1])
 
                                     @context.example
                                     def raises_TypeCheckError(self):
@@ -487,8 +488,15 @@ def mock_callable_tests(context):
 
         @context.sub_context(".to_return(value)")
         def to_return_value(context):
+            @context.memoize_before
+            def value(self):
+                # __str__ method is the only method returing `str`, while
+                # all the other tested methods returns `List[str]`
+                if self.callable_arg == "__str__":
+                    return "mocked return"
+                else:
+                    return ["mocked return"]
 
-            context.memoize("value", lambda self: "mocked value")
             context.memoize("times", lambda self: 3)
 
             @context.before
@@ -520,8 +528,16 @@ def mock_callable_tests(context):
 
         @context.sub_context(".to_return_values(values_list)")
         def to_return_values_values_list(context):
-            context.memoize("value", lambda self: "first")
-            context.memoize("values_list", lambda self: [self.value, "second", "third"])
+            @context.memoize_before
+            def values_list(self):
+                # __str__ method is the only method returing `str`, while
+                # all the other tested methods returns `List[str]`
+                if self.callable_arg == "__str__":
+                    return ["first", "second", "thrift"]
+                else:
+                    return [["first"], ["second"], ["thrift"]]
+
+            context.memoize("value", lambda self: self.values_list[0])
             context.memoize("times", lambda self: len(self.values_list) - 1)
 
             @context.before
@@ -566,7 +582,7 @@ def mock_callable_tests(context):
             def to_yield_values_values_list(context):
 
                 context.memoize(
-                    "values_list", lambda self: ["first", "second", "third"]
+                    "values_list", lambda self: [["first"], ["second"], ["third"]]
                 )
                 context.memoize("times", lambda self: len(self.values_list) - 1)
 
@@ -670,9 +686,16 @@ def mock_callable_tests(context):
 
         @context.sub_context(".with_implementation(func)")
         def with_implementation_func(context):
+            @context.memoize_before
+            def value(self):
+                # __str__ method is the only method returing `str`, while
+                # all the other tested methods returns `List[str]`
+                if self.callable_arg == "__str__":
+                    return "mocked return"
+                else:
+                    return ["mocked return"]
 
             context.memoize("times", lambda self: 3)
-            context.memoize("value", lambda self: "mocked return")
             context.memoize("func_return", lambda self: self.value)
 
             @context.memoize
@@ -699,16 +722,23 @@ def mock_callable_tests(context):
 
             @context.example
             def with_implementation_raises_with_coroutine(self):
+                self.mock_callable(
+                    sample_module, "test_function", type_validation=False
+                ).with_implementation(coro_fun)
                 with self.assertRaises(CoroutineValueError):
-                    self.mock_callable(
-                        sample_module, "test_function", type_validation=False
-                    ).with_implementation(coro_fun)
-                    sample_module.test_function("a", "b")
+                    sample_module.test_function("a", "")
 
         @context.sub_context(".with_wrapper(wrapper_func)")
         def with_wrapper_wrappr_func(context):
+            @context.memoize_before
+            def value(self):
+                # __str__ method is the only method returing `str`, while
+                # all the other tested methods returns `List[str]`
+                if self.callable_arg == "__str__":
+                    return "mocked return"
+                else:
+                    return ["mocked return"]
 
-            context.memoize("value", lambda self: "mocked return")
             context.memoize("func_return", lambda self: self.value)
 
             @context.memoize
@@ -743,11 +773,12 @@ def mock_callable_tests(context):
                         self.assertEqual(original_function, self.original_callable)
                         return self.func_return
 
+                    self.mock_callable(
+                        sample_module, "test_function", type_validation=False
+                    ).with_wrapper(_wrapper_coro_func)
+
                     with self.assertRaises(CoroutineValueError):
-                        self.mock_callable(
-                            sample_module, "test_function", type_validation=False
-                        ).with_wrapper(_wrapper_coro_func)
-                        sample_module.test_function("a", "b")
+                        sample_module.test_function("a", "")
 
             else:
 
@@ -836,38 +867,38 @@ def mock_callable_tests(context):
                     """
                     # First, mock all calls
                     mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                        "any args"
+                        ["any args"]
                     )
                     # Then we add some specific call behavior
                     mock_callable(self.target_arg, self.callable_arg).for_call(
                         *self.specific_call_args, **self.specific_call_kwargs
-                    ).to_return_value("specific")
+                    ).to_return_value(["specific"])
                     # The first behavior should still be there
                     self.assertEqual(
                         self.callable_target(*self.call_args, **self.call_kwargs),
-                        "any args",
+                        ["any args"],
                     )
                     # as well as the specific case
                     self.assertEqual(
                         self.callable_target(
                             *self.specific_call_args, **self.specific_call_kwargs
                         ),
-                        "specific",
+                        ["specific"],
                     )
                     # but if we add another "catch all" case
                     mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                        "new any args"
+                        ["new any args"]
                     )
                     # it should take over any previous mock
                     self.assertEqual(
                         self.callable_target(*self.call_args, **self.call_kwargs),
-                        "new any args",
+                        ["new any args"],
                     )
                     self.assertEqual(
                         self.callable_target(
                             *self.specific_call_args, **self.specific_call_kwargs
                         ),
-                        "new any args",
+                        ["new any args"],
                     )
 
                 @context.sub_context
@@ -876,10 +907,10 @@ def mock_callable_tests(context):
                     def setup_mocks(self):
                         mock_callable(
                             self.target_arg, self.callable_arg
-                        ).to_return_value("any args").and_assert_called_once()
+                        ).to_return_value(["any args"]).and_assert_called_once()
                         mock_callable(self.target_arg, self.callable_arg).for_call(
                             *self.specific_call_args, **self.specific_call_kwargs
-                        ).to_return_value("specific").and_assert_called_twice()
+                        ).to_return_value(["specific"]).and_assert_called_twice()
 
                     @context.example
                     def that_passes(self):
@@ -912,17 +943,17 @@ def mock_callable_tests(context):
         @context.example
         def class_is_not_mocked(self):
             mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                "mocked value"
+                ["mocked value"]
             )
             self.assertEqual(
                 self.callable_target(*self.call_args, **self.call_kwargs),
-                "mocked value",
+                ["mocked value"],
             )
             self.assertEqual(
                 getattr(sample_module.Target, self.callable_arg)(
                     *self.call_args, **self.call_kwargs
                 ),
-                "original response",
+                ["original response"],
             )
 
     @context.shared_context
@@ -1235,22 +1266,21 @@ def mock_callable_tests(context):
             @context.example
             def other_instances_are_not_mocked(self):
                 mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                    "mocked value"
+                    ["mocked value"]
                 )
                 self.assertEqual(
                     self.callable_target(*self.call_args, **self.call_kwargs),
-                    "mocked value",
+                    ["mocked value"],
                 )
                 self.assertEqual(
                     getattr(sample_module.Target(), self.callable_arg)(
                         *self.call_args, **self.call_kwargs
                     ),
-                    "original response",
+                    ["original response"],
                 )
 
         @context.sub_context
         def and_callable_is_an_instance_method(context):
-
             context.memoize("callable_arg", lambda self: "instance_method")
 
             @context.memoize_before
@@ -1375,10 +1405,19 @@ def mock_callable_tests(context):
 
                 @context.example
                 def other_instances_are_not_mocked(self):
+                    @context.memoize_before
+                    def value(self):
+                        # __str__ method is the only method returing `str`, while
+                        # all the other tested methods returns `List[str]`
+                        if self.callable_arg == "__str__":
+                            return "mocked value"
+                        else:
+                            return ["mocked value"]
+
                     mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                        "mocked value"
+                        self.value,
                     )
-                    self.assertEqual(self.callable_target(), "mocked value")
+                    self.assertEqual(self.callable_target(), self.value)
                     self.assertEqual(str(sample_module.Target()), "original response")
 
             @context.sub_context
@@ -1413,26 +1452,35 @@ def mock_callable_tests(context):
 
         @context.shared_context
         def other_instances_are_not_mocked(context, runtime_attrs=[]):
+            @context.memoize_before
+            def build_value(self):
+                # __str__ method is the only method returing `str`, while
+                # all the other tested methods returns `List[str]`
+                if self.callable_arg == "__str__":
+                    return lambda value: value
+                else:
+                    return lambda value: [value]
+
             @context.example
             def other_instances_are_not_mocked(self):
                 mock_callable(self.target_arg, self.callable_arg).to_return_value(
-                    "mocked value"
+                    self.build_value("mocked value"),
                 )
                 self.assertEqual(
                     self.callable_target(*self.call_args, **self.call_kwargs),
-                    "mocked value",
+                    self.build_value("mocked value"),
                 )
                 other_strict_mock = StrictMock(
                     template=sample_module.Target, runtime_attrs=runtime_attrs
                 )
                 mock_callable(other_strict_mock, self.callable_arg).to_return_value(
-                    "other mocked value"
+                    self.build_value("other mocked value"),
                 )
                 self.assertEqual(
                     getattr(other_strict_mock, self.callable_arg)(
                         *self.call_args, **self.call_kwargs
                     ),
-                    "other mocked value",
+                    self.build_value("other mocked value"),
                 )
 
         @context.sub_context

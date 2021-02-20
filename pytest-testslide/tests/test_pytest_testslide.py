@@ -76,7 +76,7 @@ def test_pass(testdir):
         async def test_mock_async_callable_unpatching_works(testslide):
             # This will fail if unpatching from test_mock_async_callable_patching_works does
             # not happen
-            assert await sample_module.ParentTarget.async_static_method("a", "b") == "async original response"
+            assert await sample_module.ParentTarget.async_static_method("a", "b") == ["async original response"]
 
         @pytest.mark.asyncio
         async def test_mock_async_callable_assertion_works(testslide):
