@@ -118,7 +118,6 @@ class Template(TemplateParent):
 class TemplateBaseStrictMock(StrictMock):
     def __init__(self):
         super().__init__(template=Template)
-        self.__instance_method_return = "mock"
 
     @staticmethod
     def static_method(message):
@@ -130,6 +129,7 @@ class TemplateBaseStrictMock(StrictMock):
 
 class TemplateStrictMock(TemplateBaseStrictMock):
     def instance_method(self, message):
+        self.__instance_method_return = "mock"
         return self.__instance_method_return
 
 
