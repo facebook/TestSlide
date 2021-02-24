@@ -308,10 +308,10 @@ For example, let's say we want to ensure that some asset is first deleted from a
 .. code-block:: python
 
   self.mock_callable(storage_index, "delete")\
-    .for_call_(asset_id)\
+    .for_call(asset_id)\
     .and_assert_called_ordered()
   self.mock_callable(storage_backend, "delete")\
-    .for_call_(asset_id)\
+    .for_call(asset_id)\
     .and_assert_called_ordered()
 
 
