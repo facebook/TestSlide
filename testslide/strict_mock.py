@@ -626,9 +626,10 @@ class StrictMock(object):
     def __validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
         if self._template:
             if not self.__template_has_attr(name):
-                if not (name.startswith(f"_{type(self).__name__}__") and not name.endswith(
-                    "__"
-                )):
+                if not (
+                    name.startswith(f"_{type(self).__name__}__")
+                    and not name.endswith("__")
+                ):
                     raise NonExistentAttribute(self, name)
 
             self.__validate_attribute_type(name, value)
