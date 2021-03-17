@@ -54,7 +54,9 @@ class _AndMatcher(_AlreadyChainedMatcher):
 
     def __init__(self, a: Matcher, b: Matcher) -> None:
         if not isinstance(a, Matcher) or not isinstance(b, Matcher):
-            raise ValueError("Not of type Matcher")
+            raise ValueError(
+                f"Unexpected arguments(s) of type '{type(a).__name__}' and '{type(b).__name__}'. Expected 'Matcher' and 'Matcher'."
+            )
         self.a = a
         self.b = b
 
@@ -68,7 +70,9 @@ class _AndMatcher(_AlreadyChainedMatcher):
 class _XorMatcher(_AlreadyChainedMatcher):
     def __init__(self, a: Matcher, b: Matcher) -> None:
         if not isinstance(a, Matcher) or not isinstance(b, Matcher):
-            raise ValueError("Not of type Matcher")
+            raise ValueError(
+                f"Unexpected arguments(s) of type '{type(a).__name__}' and '{type(b).__name__}'. Expected 'Matcher' and 'Matcher'."
+            )
         self.a = a
         self.b = b
 
@@ -95,7 +99,9 @@ class _InvMatcher(_AlreadyChainedMatcher):
 class _OrMatcher(_AlreadyChainedMatcher):
     def __init__(self, a: Matcher, b: Matcher) -> None:
         if not isinstance(a, Matcher) or not isinstance(b, Matcher):
-            raise ValueError("Not of type Matcher")
+            raise ValueError(
+                f"Unexpected arguments(s) of type '{type(a).__name__}' and '{type(b).__name__}'. Expected 'Matcher' and 'Matcher'."
+            )
         self.a = a
         self.b = b
 

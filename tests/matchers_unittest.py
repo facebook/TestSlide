@@ -279,6 +279,34 @@ class TestChaining(testslide.TestCase):
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
             testslide.matchers.Any() ^ testslide.matchers.AnyStr() ^ testslide.matchers.AnyInt()
 
+    def testValueError(self):
+        # tests for _AndMatcher constructor call
+        self.assertRaises(ValueError, testslide.matchers._AndMatcher, 10, 30)
+        self.assertRaises(
+            ValueError, testslide.matchers._AndMatcher, 10, testslide.matchers.Matcher()
+        )
+        self.assertRaises(
+            ValueError, testslide.matchers._AndMatcher, testslide.matchers.Matcher(), 10
+        )
+
+        # tests for _XorMatcher constructor call
+        self.assertRaises(ValueError, testslide.matchers._XorMatcher, 10, 30)
+        self.assertRaises(
+            ValueError, testslide.matchers._XorMatcher, 10, testslide.matchers.Matcher()
+        )
+        self.assertRaises(
+            ValueError, testslide.matchers._XorMatcher, testslide.matchers.Matcher(), 10
+        )
+
+        # tests for _OrMatcher constructor call
+        self.assertRaises(ValueError, testslide.matchers._OrMatcher, 10, 30)
+        self.assertRaises(
+            ValueError, testslide.matchers._OrMatcher, 10, testslide.matchers.Matcher()
+        )
+        self.assertRaises(
+            ValueError, testslide.matchers._OrMatcher, testslide.matchers.Matcher(), 10
+        )
+
 
 class TestUsageWithPatchCallable(testslide.TestCase):
     def test_patch_callable(self):
