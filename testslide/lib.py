@@ -292,7 +292,14 @@ def _wrap_signature_and_type_validation(
     with_sig_and_type_validation.__qualname__ = "TestSldeValidation({})".format(
         with_sig_and_type_validation.__qualname__
     )
+    setattr(  # noqa: B010
+        with_sig_and_type_validation, "__is_testslide_type_validation_wrapping", True
+    )
     return with_sig_and_type_validation
+
+
+def _is_wrapped_for_signature_and_type_validation(value: Callable) -> bool:
+    return getattr(value, "__is_testslide_type_validation_wrapping", False)
 
 
 def _validate_return_type(

@@ -23,6 +23,8 @@ from testslide.strict_mock import (
     UnsupportedMagic,
 )
 
+from . import sample_module
+
 
 def extra_arg_with_wraps(f):
     @functools.wraps(f)
@@ -1195,4 +1197,51 @@ def strict_mock(context):
                     ),
                     str(self.strict_mock),
                 )
+            )
+
+    @context.sub_context
+    def check_return_type_validation(context):
+        @context.shared_context
+        def run_context(context, target):
+            @context.example
+            def default_validation_at_mock_callable_level(self):
+                self.mock_callable(target, "instance_method").to_return_value(1)
+
+                if isinstance(target, StrictMock) and not target._type_validation:
+                    target.instance_method(arg1="", arg2="")
+                else:
+                    with self.assertRaises(TypeCheckError):
+                        target.instance_method(arg1="", arg2="")
+
+            @context.example
+            def enforce_validation_at_mock_callable_level(self):
+                self.mock_callable(
+                    target, "instance_method", type_validation=True
+                ).to_return_value(1)
+
+                with self.assertRaises(TypeCheckError):
+                    target.instance_method(arg1="", arg2="")
+
+            @context.example
+            def ignore_validation_at_mock_callable_level(self):
+                self.mock_callable(
+                    target, "instance_method", type_validation=False
+                ).to_return_value(1)
+                target.instance_method(arg1="", arg2="")
+
+        @context.sub_context
+        def using_concrete_instance(context):
+            context.merge_context("run context", target=sample_module.Target())
+
+        @context.sub_context
+        def using_strict_mock(context):
+            context.merge_context(
+                "run context", target=StrictMock(sample_module.ParentTarget)
+            )
+
+        @context.sub_context
+        def using_strict_mock_with_disabled_type_validation(context):
+            context.merge_context(
+                "run context",
+                target=StrictMock(sample_module.ParentTarget, type_validation=False),
             )

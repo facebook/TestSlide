@@ -33,7 +33,15 @@ if TYPE_CHECKING:
 
 
 def mock_callable(
-    target: Any, method: str, allow_private: bool = False, type_validation: bool = True
+    target: Any,
+    method: str,
+    allow_private: bool = False,
+    # type_validation accepted values:
+    #  * None:  type validation will be enabled except if target is a StrictMock
+    #           with disabled type validation
+    #  * True:  type validation will be enabled (regardless of target type)
+    #  * False:  type validation will be disabled
+    type_validation: Optional[bool] = None,
 ) -> "_MockCallableDSL":
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
@@ -543,14 +551,25 @@ class _CallableMock(object):
         method: str,
         caller_frame_info: Traceback,
         is_async: bool = False,
-        type_validation: bool = True,
+        # type_validation accepted values:
+        #  * None:  type validation will be enabled except if target is a StrictMock
+        #           with disabled type validation
+        #  * True:  type validation will be enabled (regardless of target type)
+        #  * False:  type validation will be disabled
+        type_validation: Optional[bool] = None,
     ) -> None:
         self.target = target
         self.method = method
         self.runners: List[_BaseRunner] = []
         self.is_async = is_async
-        self.type_validation = type_validation
+        self.type_validation = type_validation or type_validation is None
         self.caller_frame_info = caller_frame_info
+
+        if type_validation is None and isinstance(target, StrictMock):
+            # If type validation is enabled on the specific call
+            # but the StrictMock has type validation disabled then
+            # type validation should be disabled
+            self.type_validation = target._type_validation
 
     def _get_runner(self, *args: Any, **kwargs: Any) -> Any:
         for runner in self.runners:
@@ -559,14 +578,15 @@ class _CallableMock(object):
         return None
 
     def _validate_return_type(self, runner: _BaseRunner, value: Any) -> None:
-        if (
-            self.type_validation
-            and runner.TYPE_VALIDATION
-            and runner.original_callable is not None
-        ):
-            _validate_return_type(
-                runner.original_callable, value, self.caller_frame_info
-            )
+        if self.type_validation and runner.TYPE_VALIDATION:
+            if runner.original_callable is not None:
+                _validate_return_type(
+                    runner.original_callable, value, self.caller_frame_info
+                )
+            elif isinstance(runner.target, StrictMock):
+                _validate_return_type(
+                    getattr(runner.target, runner.method), value, self.caller_frame_info
+                )
 
     def __call__(self, *args: Any, **kwargs: Any) -> Optional[Any]:
         runner = self._get_runner(*args, **kwargs)
@@ -730,7 +750,10 @@ class _MockCallableDSL(object):
             original_callable = getattr(self._target, self._method)
 
         new_value = _wrap_signature_and_type_validation(
-            new_value, self._target, self._method, self.type_validation
+            new_value,
+            self._target,
+            self._method,
+            self.type_validation or self.type_validation is None,
         )
 
         restore = self._method in self._target.__dict__
@@ -761,7 +784,7 @@ class _MockCallableDSL(object):
         callable_mock: Union[Callable[[Type[object]], Any], _CallableMock, None] = None,
         original_callable: Optional[Callable] = None,
         allow_private: bool = False,
-        type_validation: bool = True,
+        type_validation: Optional[bool] = None,
     ) -> None:
         if not _is_setup():
             raise RuntimeError(
