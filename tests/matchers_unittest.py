@@ -133,6 +133,14 @@ class GenericTestCase(testslide.TestCase):
         self.assertEqual(testslide.matchers.AnyInstanceOf(str), "durrdurr")
         self.assertNotEqual(testslide.matchers.AnyInstanceOf(str), 7)
 
+    def testTriggeringAnyInstanceOfException(self):
+        c = sample_module.SomeClass()
+        with self.assertRaises(ValueError):
+            self.mock_callable(c, "method").for_call(
+                testslide.matchers.AnyInstanceOf(2)
+            ).to_return_value("mocked_response")
+            c.method()
+
     def testAnyWithCall(self):
         self.assertEqual(testslide.matchers.AnyWithCall(lambda x: "b" in x), "abc")
         self.assertNotEqual(testslide.matchers.AnyWithCall(lambda x: "d" in x), "abc")

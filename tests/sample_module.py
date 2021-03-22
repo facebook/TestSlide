@@ -19,7 +19,7 @@ class SomeClass:
     other_class_attribute = OtherClass
     typedattr: str = "bruh"
 
-    def method(self):
+    def method(self, *args, **kwargs):
         pass
 
     @property

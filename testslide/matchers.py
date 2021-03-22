@@ -422,6 +422,12 @@ class AnyFalsey(Matcher):
 
 class AnyInstanceOf(_RichComparison):
     def __init__(self, klass: type) -> None:
+        if not isinstance(klass, type):
+            raise ValueError(
+                "AnyInstanceOf(...) expects a type while a '{}' ('{}') was provided".format(
+                    type(klass).__name__, klass
+                )
+            )
         super().__init__(klass=klass)
 
 
