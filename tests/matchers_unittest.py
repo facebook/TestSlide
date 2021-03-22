@@ -131,9 +131,9 @@ class GenericTestCase(testslide.TestCase):
 
     def testAnyInstanceOf(self):
         self.assertEqual(testslide.matchers.AnyInstanceOf(str), "durrdurr")
-        self.assertNotEqual(testslide.matchers.AnyInstanceOf(str), 7)
 
     def testTriggeringAnyInstanceOfException(self):
+        self.assertNotEqual(testslide.matchers.AnyInstanceOf(str), 7)
         with self.assertRaises(ValueError):
             testslide.matchers.AnyInstanceOf(2)
 
