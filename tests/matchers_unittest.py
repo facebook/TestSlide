@@ -132,6 +132,8 @@ class GenericTestCase(testslide.TestCase):
     def testAnyInstanceOf(self):
         self.assertEqual(testslide.matchers.AnyInstanceOf(str), "durrdurr")
         self.assertNotEqual(testslide.matchers.AnyInstanceOf(str), 7)
+        with self.assertRaises(ValueError):
+            testslide.matchers.AnyInstanceOf(2)
 
     def testAnyWithCall(self):
         self.assertEqual(testslide.matchers.AnyWithCall(lambda x: "b" in x), "abc")
