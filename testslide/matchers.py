@@ -191,31 +191,55 @@ class AnyInt(_IntComparison):
 
 class NotThisInt(_IntComparison):
     def __init__(self, ne: int) -> None:
+        if not isinstance(ne, int):
+            raise ValueError(
+                f"NotThisInt(...) expects an 'int' as argument while '{type(ne).__name__}' was provided"
+            )
         super().__init__(ne=ne)
 
 
 class IntBetween(_IntComparison):
     def __init__(self, lower: int, upper: int) -> None:
+        if not isinstance(lower, int) or not isinstance(upper, int):
+            raise ValueError(
+                f"IntBetween(...) expects 'int' and 'int' as arguments while '{type(lower).__name__}' and '{type(upper).__name__}' were provided"
+            )
         super().__init__(ge=lower, le=upper)
 
 
 class IntGreaterThan(_IntComparison):
     def __init__(self, gt: int) -> None:
+        if not isinstance(gt, int):
+            raise ValueError(
+                f"IntGreaterThan(...) expects an 'int' as argument while '{type(gt).__name__}' was provided"
+            )
         super().__init__(gt=gt)
 
 
 class IntGreaterOrEquals(_IntComparison):
     def __init__(self, ge: int) -> None:
+        if not isinstance(ge, int):
+            raise ValueError(
+                f"IntGreaterOrEquals(...) expects an 'int' as argument while '{type(ge).__name__}' was provided"
+            )
         super().__init__(ge=ge)
 
 
 class IntLessThan(_IntComparison):
     def __init__(self, lt: int) -> None:
+        if not isinstance(lt, int):
+            raise ValueError(
+                f"IntLessThan(...) expects an 'int' as argument while '{type(lt).__name__}' was provided"
+            )
         super().__init__(lt=lt)
 
 
 class IntLessOrEquals(_IntComparison):
     def __init__(self, le: int) -> None:
+        if not isinstance(le, int):
+            raise ValueError(
+                f"IntLessOrEquals(...) expects an 'int' as argument while '{type(le).__name__}' was provided"
+            )
         super().__init__(le=le)
 
 
@@ -227,31 +251,55 @@ class AnyFloat(_FloatComparison):
 
 class NotThisFloat(_FloatComparison):
     def __init__(self, ne: float) -> None:
+        if not isinstance(ne, float):
+            raise ValueError(
+                f"NotThisFloat(...) expects a 'float' as argument while '{type(ne).__name__}' was provided"
+            )
         super().__init__(ne=ne)
 
 
 class FloatBetween(_FloatComparison):
     def __init__(self, lower: float, upper: float) -> None:
+        if not isinstance(lower, float) or not isinstance(upper, float):
+            raise ValueError(
+                f"FloatBetween(...) expects 'float' and 'float' as arguments while '{type(lower).__name__}' and '{type(upper).__name__}' were provided"
+            )
         super().__init__(ge=lower, le=upper)
 
 
 class FloatGreaterThan(_FloatComparison):
     def __init__(self, gt: float) -> None:
+        if not isinstance(gt, float):
+            raise ValueError(
+                f"FloatGreaterThan(...) expects a 'float' as argument while '{type(gt).__name__}' was provided"
+            )
         super().__init__(gt=gt)
 
 
 class FloatGreaterOrEquals(_FloatComparison):
     def __init__(self, ge: float) -> None:
+        if not isinstance(ge, float):
+            raise ValueError(
+                f"FloatGreaterOrEquals(...) expects a 'float' as argument while '{type(ge).__name__}' was provided"
+            )
         super().__init__(ge=ge)
 
 
 class FloatLessThan(_FloatComparison):
     def __init__(self, lt: float) -> None:
+        if not isinstance(lt, float):
+            raise ValueError(
+                f"FloatLessThan(...) expects a 'float' as argument while '{type(lt).__name__}' was provided"
+            )
         super().__init__(lt=lt)
 
 
 class FloatLessOrEquals(_FloatComparison):
     def __init__(self, le: float) -> None:
+        if not isinstance(le, float):
+            raise ValueError(
+                f"FloatLessOrEquals(...) expects a 'float' as argument while '{type(le).__name__}' was provided"
+            )
         super().__init__(le=le)
 
 
@@ -269,6 +317,10 @@ class RegexMatches(Matcher):
     """
 
     def __init__(self, pattern: str, flags: int = 0) -> None:
+        if not isinstance(pattern, str) or not isinstance(flags, int):
+            raise ValueError(
+                f"RegexMatches(...) expects 'str' and 'int' as arguments while '{type(pattern).__name__}' and '{type(flags).__name__}' were provided"
+            )
         self.pattern = pattern
         self.flags = flags
         self.prog = re.compile(pattern, flags)
@@ -288,6 +340,10 @@ class RegexMatches(Matcher):
 
 class StrContaining(Matcher):
     def __init__(self, needle: str) -> None:
+        if not isinstance(needle, str):
+            raise ValueError(
+                f"StrContaining(...) expects a 'str' as argument while '{type(needle).__name__}' was provided"
+            )
         self.needle = needle
 
     def __eq__(self, other: AnyType) -> bool:
@@ -296,6 +352,10 @@ class StrContaining(Matcher):
 
 class StrStartingWith(Matcher):
     def __init__(self, needle: str) -> None:
+        if not isinstance(needle, str):
+            raise ValueError(
+                f"StrStartingWith(...) expects a 'str' as argument while '{type(needle).__name__}' was provided"
+            )
         self.needle = needle
 
     def __eq__(self, other: AnyType) -> bool:
@@ -304,6 +364,10 @@ class StrStartingWith(Matcher):
 
 class StrEndingWith(Matcher):
     def __init__(self, needle: str) -> None:
+        if not isinstance(needle, str):
+            raise ValueError(
+                f"StrEndingWith(...) expects a 'str' as argument while '{type(needle).__name__}' was provided"
+            )
         self.needle = needle
 
     def __eq__(self, other: AnyType) -> bool:  # type: ignore
@@ -334,6 +398,10 @@ class ListContaining(_RichComparison):
 
 class ListContainingAll(_RichComparison):
     def __init__(self, subset: List[AnyType]) -> None:
+        if not isinstance(subset, list):
+            raise ValueError(
+                f"ListContainingAll(...) expects a 'list' as argument while '{type(subset).__name__}' was provided"
+            )
         self.subset = subset
         super().__init__(klass=List)
 
@@ -376,6 +444,10 @@ class EmptyDict(AnyDict):
 
 class DictContainingKeys(_RichComparison):
     def __init__(self, expected_keys: List[AnyType]) -> None:
+        if not isinstance(expected_keys, list):
+            raise ValueError(
+                f"DictContainingKeys(...) expects a 'list' as argument while '{type(expected_keys).__name__}' was provided"
+            )
         self.expected_keys = expected_keys
         super().__init__(klass=Dict)
 
@@ -390,6 +462,10 @@ class DictContainingKeys(_RichComparison):
 
 class DictSupersetOf(_RichComparison):
     def __init__(self, subset: Dict[AnyType, AnyType]) -> None:
+        if not isinstance(subset, dict):
+            raise ValueError(
+                f"DictSupersetOf(...) expects a 'dict' as argument while '{type(subset).__name__}' was provided"
+            )
         self.subset = subset
         super().__init__(klass=Dict)
 
