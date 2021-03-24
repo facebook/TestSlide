@@ -392,7 +392,7 @@ class TestUsageWithPatchCallable(testslide.TestCase):
         self.mock_callable(sample_module, "test_function").for_call(
             testslide.matchers.RegexMatches("foo"),
             testslide.matchers.RegexMatches("bar"),
-        ).to_return_value("mocked_response")
+        ).to_return_value(["mocked_response"])
         with self.assertRaises(testslide.mock_callable.UnexpectedCallArguments):
             sample_module.test_function("meh", "moh")
         sample_module.test_function("foo", "bar")

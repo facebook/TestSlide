@@ -1,6 +1,6 @@
 - Create a new release tag by running:
     - `./release.sh $new_version`
-- https://github.com/facebookincubator/TestSlide/actions
+- https://github.com/facebook/TestSlide/actions
     - Check if master build is OK.
 - https://readthedocs.org/projects/testslide/
     - Trigger bulid for

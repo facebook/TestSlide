@@ -198,6 +198,11 @@ class _MethodProxy(object):
         memo[id(self)] = self_copy
         return self_copy
 
+    def __repr__(self) -> str:
+        # Override repr to have a representation that provides information
+        # about the wrapped method
+        return repr(self.__dict__["_value"])
+
 
 class StrictMock(object):
     """
@@ -386,7 +391,7 @@ class StrictMock(object):
         Populate all template's magic methods with expected default behavior.
         This is important as things such as bool() depend on they existing
         on the object's class __dict__.
-        https://github.com/facebookincubator/TestSlide/issues/23
+        https://github.com/facebook/TestSlide/issues/23
         """
         if not self._template:
             return
@@ -661,8 +666,18 @@ class StrictMock(object):
                                     raise NonAwaitableReturn(self, name)
 
                                 return_value = await result_awaitable
-                                if not isinstance(
-                                    value, testslide.mock_callable._CallableMock
+                                if not testslide.lib._is_wrapped_for_signature_and_type_validation(
+                                    # The original value was already wrapped for type
+                                    # validation. Skipping additional validation to
+                                    # allow, for example, mock_callable to disable
+                                    # validation for a very specific mock call rather
+                                    # for the whole StrictMock instance
+                                    value
+                                ) and not isinstance(
+                                    # If the return value is a _BaseRunner then type
+                                    # validation, if needed, has already been performed
+                                    return_value,
+                                    testslide.mock_callable._BaseRunner,
                                 ):
                                     testslide.lib._validate_return_type(
                                         template_value,
@@ -678,8 +693,18 @@ class StrictMock(object):
                                 return_value = signature_validation_wrapper(
                                     *args, **kwargs
                                 )
-                                if self.__dict__["_type_validation"] and not isinstance(
-                                    value, testslide.mock_callable._CallableMock
+                                if not testslide.lib._is_wrapped_for_signature_and_type_validation(
+                                    # The original value was already wrapped for type
+                                    # validation. Skipping additional validation to
+                                    # allow, for example, mock_callable to disable
+                                    # validation for a very specific mock call rather
+                                    # for the whole StrictMock instance
+                                    value
+                                ) and not isinstance(
+                                    # If the return value is a _BaseRunner then type
+                                    # validation, if needed, has already been performed
+                                    return_value,
+                                    testslide.mock_callable._BaseRunner,
                                 ):
                                     testslide.lib._validate_return_type(
                                         template_value,
