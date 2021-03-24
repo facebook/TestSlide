@@ -304,7 +304,7 @@ class Cli(object):
         args: Any,
         default_trim_path_prefix: Optional[str] = None,
         modules: Optional[List[str]] = None,
-    ):
+    ) -> None:
         self.args = args
         self._default_trim_path_prefix = (
             default_trim_path_prefix

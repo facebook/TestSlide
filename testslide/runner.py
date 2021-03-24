@@ -169,7 +169,7 @@ class BaseFormatter:
 
 class ColorFormatterMixin(BaseFormatter):
     @property
-    def colored(self):
+    def colored(self) -> bool:
         return sys.stdout.isatty() or self.force_color
 
     def remove_terminal_escape(self, text: str) -> str:
@@ -241,7 +241,7 @@ class ColorFormatterMixin(BaseFormatter):
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
-    TESTSLIDE_PATH = os.path.abspath(os.path.dirname(testslide.__file__))
+    TESTSLIDE_PATH: str = os.path.abspath(os.path.dirname(testslide.__file__))
 
     def _get_test_module_index(self, tb: traceback.StackSummary) -> int:
         test_module_index = len(tb) - 1
