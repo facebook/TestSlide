@@ -21,7 +21,7 @@ setup(
     py_modules=["pytest_testslide"],
     maintainer="Balint Csergo",
     maintainer_email="deathowlzz@gmail.com",
-    url="https://github.com/facebookincubator/TestSlide/tree/master/pytest-testslide",
+    url="https://github.com/facebook/TestSlide/tree/master/pytest-testslide",
     license="MIT",
     description="TestSlide fixture for pytest",
     long_description=readme,

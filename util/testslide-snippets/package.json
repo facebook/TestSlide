@@ -6,7 +6,7 @@
     "icon": "icon.png",
     "repository": {
         "type": "github",
-        "url": "https://github.com/facebookincubator/TestSlide"
+        "url": "https://github.com/facebook/TestSlide"
     },
     "version": "2.6.4",
     "engines": {

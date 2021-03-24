@@ -39,7 +39,7 @@ def mock_async_callable_tests(context):
 
     @context.memoize_before
     async def value(self):
-        return "mocked value"
+        return ["mocked value"]
 
     ##
     ## Functions
@@ -149,9 +149,9 @@ def mock_async_callable_tests(context):
             mock_kwargs = {k: f"mock {str(v)}" for k, v in self.call_kwargs.items()}
             mock_async_callable(self.target_arg, self.callable_arg).for_call(
                 *mock_args, **mock_kwargs
-            ).to_return_value("mock")
+            ).to_return_value(["mock"])
             self.assertEqual(
-                await self.callable_target(*mock_args, **mock_kwargs), "mock"
+                await self.callable_target(*mock_args, **mock_kwargs), ["mock"]
             )
             if mock_args or mock_kwargs:
                 with self.assertRaises(UnexpectedCallArguments):
@@ -181,7 +181,7 @@ def mock_async_callable_tests(context):
             async def before(self):
                 mock_async_callable(
                     self.target_arg, self.callable_arg
-                ).to_return_values([self.value, "mock2"])
+                ).to_return_values([self.value, ["mock2"]])
                 self.callable_target = getattr(self.real_target, self.callable_arg)
 
             @context.example
@@ -192,7 +192,7 @@ def mock_async_callable_tests(context):
                 )
                 self.assertEqual(
                     await self.callable_target(*self.call_args, **self.call_kwargs),
-                    "mock2",
+                    ["mock2"],
                 )
                 with self.assertRaisesRegex(
                     UndefinedBehaviorForCall, "No more values to return!"
@@ -348,7 +348,7 @@ def mock_async_callable_tests(context):
         async def mock_async_callable_can_not_assert_if_already_received_call(self):
             mock = self.mock_async_callable(
                 self.target_arg, self.callable_arg
-            ).to_return_value("mocked")
+            ).to_return_value(["mocked"])
             await self.callable_target(*self.call_args, **self.call_kwargs)
             with self.assertRaisesRegex(
                 ValueError,

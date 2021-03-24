@@ -29,7 +29,7 @@ Generally speaking:
 Here's a quick cookbook on how to have a Python installation working using Docker:
 
 - Install [Docker CE](https://docs.docker.com/install/).
-- Clone the repo: `git clone https://github.com/facebookincubator/TestSlide.git`.
+- Clone the repo: `git clone https://github.com/facebook/TestSlide.git`.
 - Create the Docker image: `docker create --name testslide --interactive --tty --mount type=bind,source="$PWD"/TestSlide,target=/root/src/TestSlide --workdir=/root/src/TestSlide debian /bin/bash`.
 - Start a container with this image: `docker start --interactive testslide`.
 - Install the dependencies: `apt update && apt -y install build-essential curl git libbz2-dev libncurses5-dev libreadline-dev libsqlite3-dev libssl-dev llvm vim wget zlib1g-dev`.
