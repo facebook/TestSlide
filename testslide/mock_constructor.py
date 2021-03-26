@@ -74,7 +74,7 @@ class _MockConstructorDSL(_MockCallableDSL):
             Optional[Callable[[Type[object]], Any]], Optional[_CallableMock]
         ] = None,
         original_callable: Optional[Callable] = None,
-    ):
+    ) -> None:
         self.cls = cls
         caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block

@@ -19,7 +19,7 @@ class ImportedModule(object):
         globals: Optional[Dict[str, Any]],
         level: int,
         parent: Optional["ImportedModule"] = None,
-    ):
+    ) -> None:
         self.name = name
         self.globals = globals
         self.level = level

@@ -16,7 +16,7 @@ from . import Skip  # noqa: F401
 
 
 def _validate_parameter(
-    code: Callable, name: str, index: int, allow_async=True
+    code: Callable, name: str, index: int, allow_async: bool = True
 ) -> None:
     parameters = list(inspect.signature(code).parameters.keys())
     if not parameters or parameters[index] != name:
