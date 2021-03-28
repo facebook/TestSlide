@@ -208,10 +208,6 @@ class StringTest(testslide.TestCase):
         self.assertEqual(testslide.matchers.RegexMatches("b[aeiou]t"), "bott")
         self.assertNotEqual(testslide.matchers.RegexMatches("b[aeiou]t"), "boot")
         self.assertNotEqual(testslide.matchers.RegexMatches("b[aeiou]t"), 13)
-        with self.assertRaises(ValueError):
-            testslide.matchers.RegexMatches("b[aeiou]t", 12.0)
-        with self.assertRaises(ValueError):
-            testslide.matchers.RegexMatches(1234, 12.0)
 
     def testStrContaining(self):
         self.assertEqual(testslide.matchers.StrContaining("bot"), "bott")
