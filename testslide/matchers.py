@@ -313,14 +313,10 @@ class AnyStr(_RichComparison):
 
 class RegexMatches(Matcher):
     """
-    Compares true if other mathes given regex.
+    Compares true if other matches given regex.
     """
 
     def __init__(self, pattern: str, flags: int = 0) -> None:
-        if not isinstance(pattern, str) or not isinstance(flags, int):
-            raise ValueError(
-                f"RegexMatches(...) expects 'str' and 'int' as arguments while '{type(pattern).__name__}' and '{type(flags).__name__}' were provided"
-            )
         self.pattern = pattern
         self.flags = flags
         self.prog = re.compile(pattern, flags)
