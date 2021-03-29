@@ -27,6 +27,7 @@ class IntMatcherTest(testslide.TestCase):
         self.assertEqual(testslide.matchers.IntBetween(21, 666), 42)
         self.assertEqual(testslide.matchers.IntBetween(21, 666), 21)
         self.assertEqual(testslide.matchers.IntBetween(21, 666), 666)
+        self.assertEqual(testslide.matchers.IntBetween(21.0, 666.0), 666)
         self.assertNotEqual(testslide.matchers.IntBetween(42, 69), 666)
         self.assertNotEqual(testslide.matchers.IntBetween(42, 69), "derp")
         with self.assertRaises(ValueError):
@@ -38,43 +39,39 @@ class IntMatcherTest(testslide.TestCase):
 
     def test_IntGreaterThan(self):
         self.assertEqual(testslide.matchers.IntGreaterThan(21), 42)
+        self.assertEqual(testslide.matchers.IntGreaterThan(21.0), 42)
         self.assertNotEqual(testslide.matchers.IntGreaterThan(21), 21)
         self.assertNotEqual(testslide.matchers.IntGreaterThan(21), 20)
         self.assertNotEqual(testslide.matchers.IntGreaterThan(42), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.IntGreaterThan("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.IntGreaterThan(42.42)
 
     def test_IntGreaterOrEquals(self):
         self.assertEqual(testslide.matchers.IntGreaterOrEquals(21), 42)
         self.assertEqual(testslide.matchers.IntGreaterOrEquals(21), 21)
+        self.assertEqual(testslide.matchers.IntGreaterOrEquals(21.0), 21)
         self.assertNotEqual(testslide.matchers.IntGreaterOrEquals(21), 20)
         self.assertNotEqual(testslide.matchers.IntGreaterOrEquals(42), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.IntGreaterOrEquals("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.IntGreaterOrEquals(42.42)
 
     def test_IntLessThan(self):
         self.assertEqual(testslide.matchers.IntLessThan(21), 20)
+        self.assertEqual(testslide.matchers.IntLessThan(21.0), 20)
         self.assertNotEqual(testslide.matchers.IntLessThan(21), 21)
         self.assertNotEqual(testslide.matchers.IntLessThan(21), 22)
         self.assertNotEqual(testslide.matchers.IntLessThan(42), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.IntLessThan("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.IntLessThan(42.42)
 
     def test_IntLessOrEquals(self):
         self.assertEqual(testslide.matchers.IntLessOrEquals(21), 20)
         self.assertEqual(testslide.matchers.IntLessOrEquals(21), 21)
+        self.assertEqual(testslide.matchers.IntLessOrEquals(21.0), 21)
         self.assertNotEqual(testslide.matchers.IntLessOrEquals(21), 22)
         self.assertNotEqual(testslide.matchers.IntLessOrEquals(42), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.IntLessOrEquals("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.IntLessOrEquals(42.42)
 
 
 class FloatMatcherTest(testslide.TestCase):
@@ -93,9 +90,9 @@ class FloatMatcherTest(testslide.TestCase):
             testslide.matchers.NotThisFloat(10)
 
     def test_FloatBetween(self):
-        self.assertEqual(testslide.matchers.FloatBetween(2.1, 666.0), 4.2)
-        self.assertEqual(testslide.matchers.FloatBetween(2.1, 666.0), 2.1)
-        self.assertEqual(testslide.matchers.FloatBetween(21.0, 66.6), 66.6)
+        self.assertEqual(testslide.matchers.FloatBetween(2.1, 666), 4.2)
+        self.assertEqual(testslide.matchers.FloatBetween(2.1, 666), 2.1)
+        self.assertEqual(testslide.matchers.FloatBetween(21, 66.6), 66.6)
         self.assertNotEqual(testslide.matchers.FloatBetween(4.2, 6.9), 66.6)
         self.assertNotEqual(testslide.matchers.FloatBetween(4.2, 6.9), "derp")
         with self.assertRaises(ValueError):
@@ -107,43 +104,39 @@ class FloatMatcherTest(testslide.TestCase):
 
     def test_FloatGreaterThan(self):
         self.assertEqual(testslide.matchers.FloatGreaterThan(2.1), 4.2)
+        self.assertEqual(testslide.matchers.FloatGreaterThan(2), 4.2)
         self.assertNotEqual(testslide.matchers.FloatGreaterThan(2.1), 2.1)
         self.assertNotEqual(testslide.matchers.FloatGreaterThan(2.1), 2.0)
         self.assertNotEqual(testslide.matchers.FloatGreaterThan(4.2), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.FloatGreaterThan("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.FloatGreaterThan(42)
 
     def test_FloatGreaterOrEquals(self):
         self.assertEqual(testslide.matchers.FloatGreaterOrEquals(2.1), 4.2)
         self.assertEqual(testslide.matchers.FloatGreaterOrEquals(2.1), 2.1)
+        self.assertEqual(testslide.matchers.FloatGreaterOrEquals(2), 2.0)
         self.assertNotEqual(testslide.matchers.FloatGreaterOrEquals(2.1), 2.0)
         self.assertNotEqual(testslide.matchers.FloatGreaterOrEquals(4.2), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.FloatGreaterOrEquals("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.FloatGreaterOrEquals(42)
 
     def test_FloatLessThan(self):
         self.assertEqual(testslide.matchers.FloatLessThan(2.1), 2.0)
+        self.assertEqual(testslide.matchers.FloatLessThan(2), 1.9)
         self.assertNotEqual(testslide.matchers.FloatLessThan(2.1), 2.1)
         self.assertNotEqual(testslide.matchers.FloatLessThan(2.1), 2.2)
         self.assertNotEqual(testslide.matchers.FloatLessThan(4.2), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.FloatLessThan("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.FloatLessThan(42)
 
     def test_FloatLessOrEquals(self):
         self.assertEqual(testslide.matchers.FloatLessOrEquals(2.1), 2.0)
         self.assertEqual(testslide.matchers.FloatLessOrEquals(2.1), 2.1)
+        self.assertEqual(testslide.matchers.FloatLessOrEquals(2), 2.0)
         self.assertNotEqual(testslide.matchers.FloatLessOrEquals(2.1), 2.2)
         self.assertNotEqual(testslide.matchers.FloatLessOrEquals(4.2), "derp")
         with self.assertRaises(ValueError):
             testslide.matchers.FloatLessOrEquals("derp")
-        with self.assertRaises(ValueError):
-            testslide.matchers.FloatLessOrEquals(42)
 
 
 class GenericTestCase(testslide.TestCase):

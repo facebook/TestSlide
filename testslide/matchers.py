@@ -200,45 +200,45 @@ class NotThisInt(_IntComparison):
 
 class IntBetween(_IntComparison):
     def __init__(self, lower: int, upper: int) -> None:
-        if not isinstance(lower, int) or not isinstance(upper, int):
+        if not isinstance(lower, (int, float)) or not isinstance(upper, (int, float)):
             raise ValueError(
-                f"IntBetween(...) expects 'int' and 'int' as arguments while '{type(lower).__name__}' and '{type(upper).__name__}' were provided"
+                f"IntBetween(...) expects two numerical values as arguments while '{type(lower).__name__}' and '{type(upper).__name__}' were provided"
             )
         super().__init__(ge=lower, le=upper)
 
 
 class IntGreaterThan(_IntComparison):
     def __init__(self, gt: int) -> None:
-        if not isinstance(gt, int):
+        if not isinstance(gt, (int, float)):
             raise ValueError(
-                f"IntGreaterThan(...) expects an 'int' as argument while '{type(gt).__name__}' was provided"
+                f"IntGreaterThan(...) expects a numerical value as argument while '{type(gt).__name__}' was provided"
             )
         super().__init__(gt=gt)
 
 
 class IntGreaterOrEquals(_IntComparison):
     def __init__(self, ge: int) -> None:
-        if not isinstance(ge, int):
+        if not isinstance(ge, (int, float)):
             raise ValueError(
-                f"IntGreaterOrEquals(...) expects an 'int' as argument while '{type(ge).__name__}' was provided"
+                f"IntGreaterOrEquals(...) expects a numerical value as argument while '{type(ge).__name__}' was provided"
             )
         super().__init__(ge=ge)
 
 
 class IntLessThan(_IntComparison):
     def __init__(self, lt: int) -> None:
-        if not isinstance(lt, int):
+        if not isinstance(lt, (int, float)):
             raise ValueError(
-                f"IntLessThan(...) expects an 'int' as argument while '{type(lt).__name__}' was provided"
+                f"IntLessThan(...) expects a numerical value as argument while '{type(lt).__name__}' was provided"
             )
         super().__init__(lt=lt)
 
 
 class IntLessOrEquals(_IntComparison):
     def __init__(self, le: int) -> None:
-        if not isinstance(le, int):
+        if not isinstance(le, (int, float)):
             raise ValueError(
-                f"IntLessOrEquals(...) expects an 'int' as argument while '{type(le).__name__}' was provided"
+                f"IntLessOrEquals(...) expects a numerical value as argument while '{type(le).__name__}' was provided"
             )
         super().__init__(le=le)
 
@@ -260,45 +260,45 @@ class NotThisFloat(_FloatComparison):
 
 class FloatBetween(_FloatComparison):
     def __init__(self, lower: float, upper: float) -> None:
-        if not isinstance(lower, float) or not isinstance(upper, float):
+        if not isinstance(lower, (int, float)) or not isinstance(upper, (int, float)):
             raise ValueError(
-                f"FloatBetween(...) expects 'float' and 'float' as arguments while '{type(lower).__name__}' and '{type(upper).__name__}' were provided"
+                f"FloatBetween(...) expects numerical values as arguments while '{type(lower).__name__}' and '{type(upper).__name__}' were provided"
             )
         super().__init__(ge=lower, le=upper)
 
 
 class FloatGreaterThan(_FloatComparison):
     def __init__(self, gt: float) -> None:
-        if not isinstance(gt, float):
+        if not isinstance(gt, (int, float)):
             raise ValueError(
-                f"FloatGreaterThan(...) expects a 'float' as argument while '{type(gt).__name__}' was provided"
+                f"FloatGreaterThan(...) expects a numerical value as argument while '{type(gt).__name__}' was provided"
             )
         super().__init__(gt=gt)
 
 
 class FloatGreaterOrEquals(_FloatComparison):
     def __init__(self, ge: float) -> None:
-        if not isinstance(ge, float):
+        if not isinstance(ge, (int, float)):
             raise ValueError(
-                f"FloatGreaterOrEquals(...) expects a 'float' as argument while '{type(ge).__name__}' was provided"
+                f"FloatGreaterOrEquals(...) expects a numerical value as argument while '{type(ge).__name__}' was provided"
             )
         super().__init__(ge=ge)
 
 
 class FloatLessThan(_FloatComparison):
     def __init__(self, lt: float) -> None:
-        if not isinstance(lt, float):
+        if not isinstance(lt, (int, float)):
             raise ValueError(
-                f"FloatLessThan(...) expects a 'float' as argument while '{type(lt).__name__}' was provided"
+                f"FloatLessThan(...) expects a numerical value as argument while '{type(lt).__name__}' was provided"
             )
         super().__init__(lt=lt)
 
 
 class FloatLessOrEquals(_FloatComparison):
     def __init__(self, le: float) -> None:
-        if not isinstance(le, float):
+        if not isinstance(le, (int, float)):
             raise ValueError(
-                f"FloatLessOrEquals(...) expects a 'float' as argument while '{type(le).__name__}' was provided"
+                f"FloatLessOrEquals(...) expects a numerical value as argument while '{type(le).__name__}' was provided"
             )
         super().__init__(le=le)
 
