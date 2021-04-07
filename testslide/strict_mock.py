@@ -7,7 +7,7 @@ import dis
 import inspect
 import os.path
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union, get_type_hints
 
 import testslide.lib
 import testslide.mock_callable
@@ -623,10 +623,9 @@ class StrictMock(object):
         ):
             return
 
-        if hasattr(self._template, "__annotations__"):
-            annotations = self._template.__annotations__
-            if name in annotations:
-                testslide.lib._validate_argument_type(annotations[name], name, value)
+        annotations = get_type_hints(self._template)
+        if name in annotations:
+            testslide.lib._validate_argument_type(annotations[name], name, value)
 
     def __validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
         if self._template:
