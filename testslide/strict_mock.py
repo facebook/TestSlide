@@ -7,7 +7,17 @@ import dis
 import inspect
 import os.path
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union, get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Type,
+    Union,
+    get_type_hints,
+)
 
 import testslide.lib
 import testslide.mock_callable
