@@ -623,9 +623,10 @@ class StrictMock(object):
         ):
             return
 
-        annotations = get_type_hints(self._template)
-        if name in annotations:
-            testslide.lib._validate_argument_type(annotations[name], name, value)
+        if self._template is not None:
+            annotations = get_type_hints(self._template)
+            if name in annotations:
+                testslide.lib._validate_argument_type(annotations[name], name, value)
 
     def __validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
         if self._template:
