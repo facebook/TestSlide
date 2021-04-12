@@ -634,7 +634,11 @@ class StrictMock(object):
             return
 
         if self._template is not None:
-            annotations = get_type_hints(self._template)
+            try:
+                annotations = get_type_hints(self._template)
+            except KeyError:
+                # Some modules can throw KeyError : https://bugs.python.org/issue41515
+                annotations = {}
             if name in annotations:
                 testslide.lib._validate_argument_type(annotations[name], name, value)
 
