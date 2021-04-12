@@ -79,6 +79,18 @@ def _is_a_mock(maybe_mock: Any) -> bool:
     )
 
 
+def _is_a_builtin(obj: Any) -> bool:
+    # Builtins have historically had terrible inspectability.
+    # In Cython 0.29 signature methods just raised ValueError
+    # In Cython 3.0 signature methods return a signature that is missing default value
+    # information, thinking all arguments are required
+    return (
+        type(obj) is type(list.append)
+        # Cython 3.0 changed to not be a "method_descriptor"
+        or type(obj).__name__ == "cython_function_or_method"
+    )
+
+
 def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
     Retrieves the globals and locals of the first frame that is not from TestSlide code.
@@ -111,6 +123,11 @@ def _validate_callable_signature(
     args: Any,
     kwargs: Dict[str, Any],
 ) -> bool:
+    # python stdlib tests have to exempt some builtins for signature validation tests
+    # they use a giant alloy/deny list, which is impractical here so just ignore
+    # all builtins.
+    if _is_a_builtin(callable_template):
+        return False
     if skip_first_arg and not inspect.ismethod(callable_template):
         callable_template = functools.partial(callable_template, None)
     try:
