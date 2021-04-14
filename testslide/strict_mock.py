@@ -636,7 +636,7 @@ class StrictMock(object):
         if self._template is not None:
             try:
                 annotations = get_type_hints(self._template)
-            except KeyError:
+            except Exception:
                 # Some modules can throw KeyError : https://bugs.python.org/issue41515
                 annotations = {}
             if name in annotations:
