@@ -7,7 +7,17 @@ import dis
 import inspect
 import os.path
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Type,
+    Union,
+    get_type_hints,
+)
 
 import testslide.lib
 import testslide.mock_callable
@@ -623,8 +633,12 @@ class StrictMock(object):
         ):
             return
 
-        if hasattr(self._template, "__annotations__"):
-            annotations = self._template.__annotations__
+        if self._template is not None:
+            try:
+                annotations = get_type_hints(self._template)
+            except Exception:
+                # Some modules can throw KeyError : https://bugs.python.org/issue41515
+                annotations = {}
             if name in annotations:
                 testslide.lib._validate_argument_type(annotations[name], name, value)
 
