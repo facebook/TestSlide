@@ -24,7 +24,7 @@ import testslide
 from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
 from testslide.strict_mock import StrictMock
 
-from .lib import CoroutineValueError, _bail_if_private
+from .lib import CoroutineValueError, _bail_if_private, _is_a_builtin
 from .patch import _is_instance_method, _patch
 
 if TYPE_CHECKING:
@@ -154,6 +154,14 @@ def _format_args(indent: int, *args: Any, **kwargs: Any) -> str:
 def _is_coroutine(obj: Any) -> bool:
 
     return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper)  # type: ignore
+
+
+def _is_coroutinefunction(func: Any) -> bool:
+    # We use asyncio.iscoroutinefunction over inspect because the next Cython version
+    # will return True from the asyncio variant over inspect which will return False
+    # FIXME We can not reliably introspect coroutine functions
+    # for builtins: https://bugs.python.org/issue38225
+    return asyncio.iscoroutinefunction(func) or _is_a_builtin(func)
 
 
 ##
@@ -666,7 +674,7 @@ class _MockCallableDSL(object):
         if isinstance(self._target, StrictMock):
             template_value = getattr(self._target._template, self._method, None)
             if template_value and callable(template_value):
-                if not coroutine_function and inspect.iscoroutinefunction(
+                if not coroutine_function and asyncio.iscoroutinefunction(
                     template_value
                 ):
                     raise ValueError(
@@ -675,15 +683,8 @@ class _MockCallableDSL(object):
                         f"of {self._target} is a coroutine function. You can "
                         f"use {other_name}() instead."
                     )
-                if (
-                    coroutine_function
-                    and (
-                        # FIXME We can not reliably introspect coroutine functions
-                        # for builtins: https://bugs.python.org/issue38225
-                        type(template_value) is not type(list.append)
-                        and not inspect.iscoroutinefunction(template_value)
-                    )
-                    and not callable_returns_coroutine
+                if coroutine_function and not (
+                    _is_coroutinefunction(template_value) or callable_returns_coroutine
                 ):
                     raise ValueError(
                         f"{name}() can not be used with non coroutine "
@@ -715,7 +716,7 @@ class _MockCallableDSL(object):
                     f"{repr(original_callable)}. Perhaps you want to use "
                     "mock_constructor() instead."
                 )
-            if not coroutine_function and inspect.iscoroutinefunction(
+            if not coroutine_function and asyncio.iscoroutinefunction(
                 original_callable
             ):
                 raise ValueError(
@@ -723,15 +724,8 @@ class _MockCallableDSL(object):
                     f"{original_callable} is a coroutine function. You can use "
                     f"{other_name}() instead."
                 )
-            if (
-                coroutine_function
-                and (
-                    # FIXME We can not reliably introspect coroutine functions
-                    # for builtins: https://bugs.python.org/issue38225
-                    type(original_callable) is not type(list.append)
-                    and not inspect.iscoroutinefunction(original_callable)
-                )
-                and not callable_returns_coroutine
+            if coroutine_function and not (
+                _is_coroutinefunction(original_callable) or callable_returns_coroutine
             ):
                 raise ValueError(
                     f"{name}() can not be used with non coroutine functions.\n"
