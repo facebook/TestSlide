@@ -20,7 +20,7 @@ Scaffold the code you want to test ``backup.py``:
 
 .. code-block:: python
 
-  class Backup(object):
+  class Backup:
     def delete(self, path):
       pass
 
@@ -61,7 +61,7 @@ TestSlide's mocks failure messages guide you towards the solution, that you can 
 
   import storage
 
-  class Backup(object):
+  class Backup:
     def __init__(self):
       self.storage = storage.Client(timeout=60)
 

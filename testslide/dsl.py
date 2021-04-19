@@ -45,7 +45,7 @@ def _require_context(action: str) -> Callable:
     return wrapper
 
 
-class _DSLContext(object):
+class _DSLContext:
     """
     This class implement TestSlide DSL. This is not intended to be used
     directly.

@@ -13,11 +13,11 @@ from testslide.mock_callable import _MockCallableDSL
 from testslide.strict_mock import StrictMock
 
 
-class _PrivateClass(object):
+class _PrivateClass:
     pass
 
 
-class TargetParent(object):
+class TargetParent:
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs

@@ -117,7 +117,7 @@ async def _async_ensure_no_leaked_tasks(coro):
     return result
 
 
-class _ContextData(object):
+class _ContextData:
     """
     To be used as a repository of context specific data, used during each
     example execution.
@@ -548,7 +548,7 @@ class _ExampleRunner:
             testslide.patch_attribute.unpatch_all_mocked_attributes()
 
 
-class Example(object):
+class Example:
     """
     Individual example.
     """
@@ -664,7 +664,7 @@ class _TestSlideTestResult(unittest.TestResult):
             self._add_exception(err)  # type: ignore
 
 
-class Context(object):
+class Context:
     """
     Container for example contexts.
     """

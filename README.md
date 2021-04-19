@@ -24,7 +24,7 @@ pip install TestSlide
 Scaffold the code you want to test `backup.py`:
 
 ```python
-class Backup(object):
+class Backup:
   def delete(self, path):
     pass
 ```
@@ -63,7 +63,7 @@ TestSlide's mocks failure messages guide you towards the solution, that you can 
 ```python
 import storage
 
-class Backup(object):
+class Backup:
   def __init__(self):
     self.storage = storage.Client(timeout=60)
 

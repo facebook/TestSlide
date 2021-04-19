@@ -125,7 +125,7 @@ def _get_original_init(original_class: type, instance: object, owner: type) -> A
         return original_class.__init__.__get__(instance, owner)  # type: ignore
 
 
-class AttrAccessValidation(object):
+class AttrAccessValidation:
     EXCEPTION_MESSAGE = (
         "Attribute {} after the class has been used with mock_constructor() "
         "is not supported! After using mock_constructor() you must get a "

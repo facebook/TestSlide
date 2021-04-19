@@ -32,7 +32,7 @@ class SomeClass:
         return 3
 
 
-class TargetStr(object):
+class TargetStr:
     def __str__(self) -> str:
         return "original response"
 
@@ -94,7 +94,7 @@ class Target(ParentTarget):
         raise RuntimeError("Should not be accessed")
 
 
-class CallOrderTarget(object):
+class CallOrderTarget:
     def __init__(self, name: str) -> None:
         self.name = name
 

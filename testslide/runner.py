@@ -717,7 +717,7 @@ class LongFormatter(
 ##
 
 
-class Runner(object):
+class Runner:
     """
     Execute examples contained in given contexts.
     """
