@@ -7,12 +7,14 @@ import functools
 import inspect
 from functools import partial
 from re import sub as _sub
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, cast
 
 from testslide import Context, TestCase
 
 from . import Context as _Context
 from . import Skip  # noqa: F401
+
+NotCallableType = Callable[..., None]
 
 
 def _validate_parameter(
@@ -71,7 +73,7 @@ class _DSLContext(object):
 
     def _create_context(
         self, name: str, context_code: Callable, *args: Any, **kwargs: Any
-    ) -> Callable:
+    ) -> NotCallableType:
         if not self.current_context:
             new_context = _Context(name, skip=self.skip, focus=self.focus)
         else:
@@ -86,14 +88,14 @@ class _DSLContext(object):
         )
         return self._not_callable
 
-    def __call__(self, arg: Union[str, Callable]) -> Union[partial, Callable]:
+    def __call__(self, arg: Union[str, Callable]) -> NotCallableType:
         if callable(arg):
             context_code = arg
             name = self._name_from_function(context_code)
             return self._create_context(name, context_code)
         else:
             name = arg
-            return functools.partial(self._create_context, name)
+            return cast(NotCallableType, functools.partial(self._create_context, name))
 
     def _reset(self) -> None:
         self.skip = False
@@ -120,7 +122,7 @@ class _DSLContext(object):
     @_require_context("create example")
     def _create_example(
         self, name: Optional[str], example_code: Callable, skip: bool, focus: bool
-    ) -> Callable:
+    ) -> NotCallableType:
         if name is None:
             name = self._name_from_function(example_code)
         _validate_parameter(example_code, "self", 0)
@@ -133,7 +135,7 @@ class _DSLContext(object):
         skip: bool = False,
         focus: bool = False,
         skip_unless: bool = True,
-    ) -> Union[partial, Callable]:
+    ) -> NotCallableType:
         skip = skip or not skip_unless
         if callable(arg):
             example_code = arg
@@ -141,7 +143,10 @@ class _DSLContext(object):
             return self._create_example(name, example_code, skip=skip, focus=focus)
         else:
             name = arg  # type: ignore
-            return functools.partial(self._create_example, name, skip=skip, focus=focus)
+            return cast(
+                NotCallableType,
+                functools.partial(self._create_example, name, skip=skip, focus=focus),
+            )
 
     def xexample(self, arg: Union[str, Callable]) -> Callable:
         return self.example(arg, skip=True)
@@ -154,19 +159,21 @@ class _DSLContext(object):
     @_require_context("create a shared context")
     def _create_shared_context(
         self, name: str, shared_context_code: Callable
-    ) -> Callable:
+    ) -> NotCallableType:
         _validate_parameter(shared_context_code, "context", 0)
         self.current_context.add_shared_context(name, shared_context_code)  # type: ignore
         return self._not_callable
 
-    def shared_context(self, arg: Union[str, Callable]) -> Union[partial, Callable]:
+    def shared_context(self, arg: Union[str, Callable]) -> NotCallableType:
         if callable(arg):
             shared_context_code = arg
             name = self._name_from_function(shared_context_code)
             return self._create_shared_context(name, shared_context_code)
         else:
             name = arg
-            return functools.partial(self._create_shared_context, name)
+            return cast(
+                NotCallableType, functools.partial(self._create_shared_context, name)
+            )
 
     @_require_context("merge a shared context")
     def merge_context(self, name: str, *args: Any, **kwargs: Any) -> None:
@@ -175,7 +182,7 @@ class _DSLContext(object):
         self.current_context.all_shared_contexts[name](self, *args, **kwargs)  # type: ignore
 
     @_require_context("merge a TestCase")
-    def merge_test_case(self, test_case: "TestCase", attr_name: str) -> Callable:
+    def merge_test_case(self, test_case: "TestCase", attr_name: str) -> NotCallableType:
         self.current_context.add_test_case(test_case, attr_name)  # type:ignore
         return self._not_callable
 
@@ -190,7 +197,7 @@ class _DSLContext(object):
     # Helper function
 
     @_require_context("create functions")
-    def function(self, function_code: Callable) -> Callable:
+    def function(self, function_code: Callable) -> NotCallableType:
         _validate_parameter(function_code, "self", 0)
         self.current_context.add_function(function_code.__name__, function_code)  # type: ignore
         return self._not_callable
@@ -203,7 +210,7 @@ class _DSLContext(object):
         name_or_code: Optional[Union[str, Callable]] = None,
         memoizable_code: Optional[Callable] = None,
         **kwargs: Any,
-    ) -> Callable:
+    ) -> NotCallableType:
         _memoizable_code: Callable
         if name_or_code:
             if kwargs:
@@ -228,7 +235,7 @@ class _DSLContext(object):
         self,
         name_or_code: Union[str, Callable],
         memoizable_code: Optional[Callable] = None,
-    ) -> Callable:
+    ) -> NotCallableType:
         _memoizable_code: Callable
         if memoizable_code:  # Got a lambda
             name = name_or_code
@@ -246,7 +253,7 @@ class _DSLContext(object):
     # Hooks
 
     @_require_context("register before hook")
-    def before(self, before_code: Callable) -> Callable:
+    def before(self, before_code: Callable) -> NotCallableType:
         _validate_parameter(before_code, "self", 0)
         if not self.current_context:
             raise TypeError("Can not register before hook at top level context")
@@ -254,13 +261,13 @@ class _DSLContext(object):
         return self._not_callable
 
     @_require_context("register after hook")
-    def after(self, after_code: Callable) -> Callable:
+    def after(self, after_code: Callable) -> NotCallableType:
         _validate_parameter(after_code, "self", 0)
         self.current_context.after_functions.append(after_code)  # type: ignore
         return self._not_callable
 
     @_require_context("register around hook")
-    def around(self, around_code: Callable) -> Callable:
+    def around(self, around_code: Callable) -> NotCallableType:
         _validate_parameter(around_code, "self", 0)
         _validate_parameter(around_code, "wrapped", 1)
         if not self.current_context:
