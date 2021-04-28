@@ -277,9 +277,17 @@ class TestChaining(testslide.TestCase):
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
             testslide.matchers.Any() | testslide.matchers.AnyStr() | testslide.matchers.AnyInt()
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
-            testslide.matchers.Any() & testslide.matchers.AnyStr() & testslide.matchers.AnyInt()
+            (
+                testslide.matchers.Any()
+                & testslide.matchers.AnyStr()
+                & testslide.matchers.AnyInt()
+            )
         with self.assertRaises(testslide.matchers.AlreadyChainedException):
-            testslide.matchers.Any() ^ testslide.matchers.AnyStr() ^ testslide.matchers.AnyInt()
+            (
+                testslide.matchers.Any()
+                ^ testslide.matchers.AnyStr()
+                ^ testslide.matchers.AnyInt()
+            )
 
 
 class TestUsageWithPatchCallable(testslide.TestCase):

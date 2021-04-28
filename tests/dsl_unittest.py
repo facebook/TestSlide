@@ -1693,7 +1693,7 @@ class TestExample(TestDSLBase):
         name are declared within the same context.
         """
         with self.assertRaisesRegex(
-            RuntimeError, "An example with the same name is already defined"
+            RuntimeError, "An example with the same name 'same name' is already defined"
         ):
 
             @context
