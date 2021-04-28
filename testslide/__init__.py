@@ -878,7 +878,7 @@ class Context(object):
         Add an example to this context.
         """
         if name in [example.name for example in self.examples]:
-            raise RuntimeError("An example with the same name is already defined")
+            raise RuntimeError(f"An example with the same name '{name}' is already defined")
 
         self.examples.append(
             Example(name, code=example_code, context=self, skip=skip, focus=focus)
