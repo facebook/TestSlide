@@ -159,7 +159,7 @@ class _DefaultMagic:
         return self_copy
 
 
-class _MethodProxy(object):
+class _MethodProxy:
     """
     When setting callable attributes, the new value is wrapped by another
     function that does signature and async validations. We then need this proxy
@@ -214,7 +214,7 @@ class _MethodProxy(object):
         return repr(self.__dict__["_value"])
 
 
-class StrictMock(object):
+class StrictMock:
     """
     Mock object that won't allow any attribute access or method call, unless its
     behavior has been explicitly defined. This is meant to be a safer

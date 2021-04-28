@@ -142,7 +142,7 @@ This validation works even for attributes set by ``__init__``, as ``StrictMock``
   In [1]: from testslide import StrictMock
      ...:
 
-  In [2]: class DynamicAttr(object):
+  In [2]: class DynamicAttr:
      ...:     def __init__(self):
      ...:          self.dynamic = 'set from __init__'
      ...:
@@ -512,7 +512,7 @@ By default, ``StrictMock`` will validate arguments passed to callable attributes
 
   In [1]: from testslide import StrictMock
 
-  In [2]: class CallableObject(object):
+  In [2]: class CallableObject:
      ...:   def __call__(self):
      ...:     pass
      ...:
@@ -521,7 +521,7 @@ By default, ``StrictMock`` will validate arguments passed to callable attributes
 
   In [4]: s.attr = CallableObject()
 
-  In [5]: type(s.attr)  
+  In [5]: type(s.attr)
   Out[5]: testslide.strict_mock._MethodProxy
 
   In [6]: s = StrictMock(type_validation=False)

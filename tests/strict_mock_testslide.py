@@ -34,7 +34,7 @@ def extra_arg_with_wraps(f):
     return wrapper
 
 
-class TemplateParent(object):
+class TemplateParent:
     def __init__(self):
         self.parent_runtime_attr_from_init = True
         self.values = [1, 2, 3]
@@ -143,7 +143,7 @@ class ContextManagerTemplate(Template):
         pass
 
 
-class CallableObject(object):
+class CallableObject:
     def __call__(self):
         pass
 
@@ -709,7 +709,7 @@ def strict_mock(context):
 
                                 @context.example
                                 def can_mock_with_instancemethod(self):
-                                    class SomeClass(object):
+                                    class SomeClass:
                                         def mock_method(self, message):
                                             return "mock: {}".format(message)
 

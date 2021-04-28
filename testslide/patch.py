@@ -7,7 +7,7 @@ import inspect
 from typing import Any, Callable, Dict, Optional, Union
 
 
-class _DescriptorProxy(object):
+class _DescriptorProxy:
     def __init__(
         self,
         original_class_attr: Optional[Union[Callable, "_DescriptorProxy"]],

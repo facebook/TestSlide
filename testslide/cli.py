@@ -150,7 +150,7 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
 
 
 @dataclass(frozen=True)
-class _Config(object):
+class _Config:
     import_module_names: List[str]
     shuffle: bool
     list: bool
@@ -170,7 +170,7 @@ class _Config(object):
     profile_threshold_ms: Optional[int] = None
 
 
-class Cli(object):
+class Cli:
 
     FORMAT_NAME_TO_FORMATTER_CLASS = {
         "p": ProgressFormatter,

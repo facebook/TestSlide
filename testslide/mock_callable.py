@@ -552,7 +552,7 @@ class _AsyncCallOriginalRunner(_AsyncRunner):
 ##
 
 
-class _CallableMock(object):
+class _CallableMock:
     def __init__(
         self,
         target: Any,
@@ -651,7 +651,7 @@ class _CallableMock(object):
 ##
 
 
-class _MockCallableDSL(object):
+class _MockCallableDSL:
 
     CALLABLE_MOCKS: Dict[
         Union[int, Tuple[int, str]], Union[Callable[[Type[object]], Any]]

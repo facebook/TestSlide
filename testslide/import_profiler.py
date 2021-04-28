@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import Any, Dict, List, Optional, Tuple
 
 
-class ImportedModule(object):
+class ImportedModule:
     """
     A module that was imported with __import__.
     """
@@ -72,7 +72,7 @@ class ImportedModule(object):
         self.time = time.time() - self._start_time
 
 
-class ImportProfiler(object):
+class ImportProfiler:
     """
     Experimental!
 

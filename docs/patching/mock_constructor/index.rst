@@ -6,11 +6,11 @@ Let's say we want to unit test the ``Backup.delete`` method:
 .. code-block:: python
 
   import storage
-  
-  class Backup(object):
+
+  class Backup:
     def __init__(self):
       self.storage = storage.Client(timeout=60)
-  
+
     def delete(self, path):
       self.storage.delete(path)
 
@@ -32,7 +32,7 @@ The question now is: how to put ``self.storage_mock`` inside ``Backup.__init__``
   from testslide import TestCase, StrictMock, mock_callable
   import storage
   from backup import Backup
-  
+
   class TestBackupDelete(TestCase):
     def setUp(self):
       super().setUp()
@@ -40,7 +40,7 @@ The question now is: how to put ``self.storage_mock`` inside ``Backup.__init__``
       self.mock_constructor(storage, 'Client')\
         .for_call(timeout=60)\
         .to_return_value(self.storage_mock)
-  
+
     def test_delete_from_storage(self):
       self.mock_callable(self.storage_mock, 'delete')\
         .for_call('/file/to/delete')\
@@ -65,11 +65,11 @@ Type Validation
 
   import sys
   import testslide, testslide.lib
-  
+
   class Messenger:
       def __init__(self, message: str):
         self.message = message
-  
+
   class TestArgumentTypeValidation(testslide.TestCase):
       def test_argument_type_validation(self):
           messenger_mock = testslide.StrictMock(template=Messenger)
