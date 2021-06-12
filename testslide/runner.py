@@ -243,18 +243,17 @@ class ColorFormatterMixin(BaseFormatter):
 class FailurePrinterMixin(ColorFormatterMixin):
     TESTSLIDE_PATH: str = os.path.abspath(os.path.dirname(testslide.__file__))
 
-    def _get_test_module_index(self, tb: traceback.StackSummary) -> int:
-        test_module_index = len(tb) - 1
-
+    def _get_test_module_index(self, tb: traceback.StackSummary) -> Optional[int]:
         test_module_paths = [
             import_module(import_module_name).__file__
             for import_module_name in self.import_module_names
         ]
 
+        test_module_index = None
         for index, value in enumerate(tb):
             path = value[0]
             if path in test_module_paths:
-                if index < test_module_index:
+                if test_module_index is None or index < test_module_index:
                     test_module_index = index
 
         return test_module_index
@@ -277,7 +276,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
 
         for index, (path, line, function_name, text) in enumerate(tb):
             if not self.show_testslide_stack_trace:
-                if index < test_module_index:
+                if test_module_index is not None and index < test_module_index:
                     continue
                 if os.path.abspath(path).startswith(self.TESTSLIDE_PATH):
                     continue
