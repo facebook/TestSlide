@@ -819,7 +819,7 @@ class Runner:
                 return False
 
         if self.names_regex_filter:
-            if not self.names_regex_filter.match(example.full_name):
+            if not self.names_regex_filter.search(example.full_name):
                 return False
 
         return True
