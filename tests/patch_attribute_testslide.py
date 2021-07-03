@@ -194,6 +194,17 @@ def patch_attribute_tests(context):
             context.memoize("target", lambda self: StrictMock())
             context.merge_context("patching works")
 
+        @context.sub_context
+        def with_a_patched_runtime_attr(context):
+            context.memoize(
+                "target",
+                lambda self: StrictMock(
+                    template=sample_module.SomeClass, runtime_attrs=["runtime_attr"]
+                ),
+            )
+            context.memoize("attribute", lambda self: "runtime_attr")
+            context.merge_context("patching works")
+
     @context.example
     def patch_attribute_raises_valueerror_for_private(self):
         with self.assertRaises(ValueError):

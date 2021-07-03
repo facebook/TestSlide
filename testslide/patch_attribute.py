@@ -63,7 +63,7 @@ def patch_attribute(
         if not type_validation:
             target.__dict__["_attributes_to_skip_type_validation"].append(attribute)
         template_class = target._template
-        if template_class:
+        if template_class and attribute not in target._runtime_attrs:
             value = getattr(template_class, attribute)
             if not isinstance(value, type) and callable(value):
                 raise ValueError(
