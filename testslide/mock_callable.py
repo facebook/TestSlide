@@ -42,6 +42,8 @@ def mock_callable(
     #  * True:  type validation will be enabled (regardless of target type)
     #  * False:  type validation will be disabled
     type_validation: Optional[bool] = None,
+    ignore_other_args: bool = False,
+    ignore_other_kwargs: bool = False,
 ) -> "_MockCallableDSL":
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
@@ -53,6 +55,8 @@ def mock_callable(
         caller_frame_info,
         allow_private=allow_private,
         type_validation=type_validation,
+        ignore_other_args=ignore_other_args,
+        ignore_other_kwargs=ignore_other_kwargs,
     )
 
 
@@ -62,6 +66,8 @@ def mock_async_callable(
     callable_returns_coroutine: bool = False,
     allow_private: bool = False,
     type_validation: bool = True,
+    ignore_other_args: bool = False,
+    ignore_other_kwargs: bool = False,
 ) -> "_MockAsyncCallableDSL":
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
@@ -74,6 +80,8 @@ def mock_async_callable(
         callable_returns_coroutine,
         allow_private,
         type_validation,
+        ignore_other_args=ignore_other_args,
+        ignore_other_kwargs=ignore_other_kwargs,
     )
 
 
@@ -220,6 +228,8 @@ class _BaseRunner:
         self._call_count: int = 0
         self._max_calls: Optional[int] = None
         self._has_order_assertion = False
+        self._ignore_other_args = False
+        self._ignore_other_kwargs = False
 
     def register_call(self, *args: Any, **kwargs: Any) -> None:
         global _received_ordered_calls
@@ -258,15 +268,33 @@ class _BaseRunner:
                 )
             )
 
-    def add_accepted_args(self, *args: Any, **kwargs: Any) -> None:
-        # TODO validate if args match callable signature
+    def add_accepted_args(
+        self,
+        ignore_other_args: bool = False,
+        ignore_other_kwargs: bool = False,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         self.accepted_args = (args, kwargs)
+        self._ignore_other_args = ignore_other_args
+        self._ignore_other_kwargs = ignore_other_kwargs
 
     def can_accept_args(self, *args: Any, **kwargs: Any) -> bool:
         if self.accepted_args:
-            if self.accepted_args == (args, kwargs):
-                return True
-            return False
+
+            if self._ignore_other_args:
+                args_match = all(elem in args for elem in self.accepted_args[0])
+            else:
+                args_match = args == self.accepted_args[0]
+            if self._ignore_other_kwargs:
+                kwargs_match = all(
+                    elem in kwargs.keys()
+                    and kwargs[elem] == self.accepted_args[1][elem]
+                    for elem in self.accepted_args[1].keys()
+                )
+            else:
+                kwargs_match = kwargs == self.accepted_args[1]
+            return args_match and kwargs_match
         else:
             return True
 
@@ -779,6 +807,8 @@ class _MockCallableDSL:
         original_callable: Optional[Callable] = None,
         allow_private: bool = False,
         type_validation: Optional[bool] = None,
+        ignore_other_args: bool = False,
+        ignore_other_kwargs: bool = False,
     ) -> None:
         if not _is_setup():
             raise RuntimeError(
@@ -799,6 +829,8 @@ class _MockCallableDSL:
         self.type_validation = type_validation
         self.caller_frame_info = caller_frame_info
         self._allow_coro = False
+        self._ignore_other_args = ignore_other_args
+        self._ignore_other_kwargs = ignore_other_kwargs
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -839,7 +871,9 @@ class _MockCallableDSL:
         if self._next_runner_accepted_args:
             args, kwargs = self._next_runner_accepted_args
             self._next_runner_accepted_args = None
-            runner.add_accepted_args(*args, **kwargs)
+            runner.add_accepted_args(
+                self._ignore_other_args, self._ignore_other_kwargs, *args, **kwargs
+            )
         self._runner = runner
         self._callable_mock.runners.insert(0, runner)  # type: ignore
 
@@ -872,7 +906,9 @@ class _MockCallableDSL:
         Filter for only calls like this.
         """
         if self._runner:
-            self._runner.add_accepted_args(*args, **kwargs)
+            self._runner.add_accepted_args(
+                self._ignore_other_args, self._ignore_other_kwargs, *args, **kwargs
+            )
         else:
             self._next_runner_accepted_args = (args, kwargs)
         return self
@@ -1137,6 +1173,8 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         callable_returns_coroutine: bool,
         allow_private: bool = False,
         type_validation: bool = True,
+        ignore_other_args: bool = False,
+        ignore_other_kwargs: bool = False,
     ) -> None:
         self._callable_returns_coroutine = callable_returns_coroutine
         super().__init__(
@@ -1145,6 +1183,8 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             caller_frame_info,
             allow_private=allow_private,
             type_validation=type_validation,
+            ignore_other_args=ignore_other_args,
+            ignore_other_kwargs=ignore_other_kwargs,
         )
         self._allow_coro = True
 
