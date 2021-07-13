@@ -312,7 +312,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
         self,
         number: int,
         example: Example,
-        exception: Union[Exception, AggregatedExceptions],
+        exception: Union[Exception, AggregatedExceptions, BaseException],
     ) -> None:
         self.print_bright(
             "  {number}) {context}: {example}".format(
