@@ -258,3 +258,7 @@ ci: \
 clean: sdist_clean docs_clean coverage_html_clean coverage_erase mypy_clean
 	@printf "${TERM_BRIGHT}CLEAN\n${TERM_NONE}"
 	${Q} rm -rf */__pycache__/ */*.pyc
+
+
+verify-copyright: ## verify copyright for every file
+	@tests/verify-copyright.sh
