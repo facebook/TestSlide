@@ -131,13 +131,16 @@ def main():
     formula["py_files"] = re.compile(r"^(#!.*\n)\n*", re.MULTILINE)
     sample = fetch_samplefile()
     filelists = fetch_files(sample.keys())
+    failure_list = list()
     for filename in filelists:
         if not verify_file(filename, sample, formula):
+            failure_list.append(os.path.relpath(filename))
             print(
                 "Copyright structure missing or incorrect for: ",
                 os.path.relpath(filename),
             )
-
+    if len(failure_list) > 0:
+        return 1
     return
 
 
