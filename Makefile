@@ -131,7 +131,8 @@ tests: \
 	mypy \
 	flake8 \
 	isort \
-	black
+	black \
+	copyright_check
 
 .PHONY: format
 format: \
@@ -260,5 +261,6 @@ clean: sdist_clean docs_clean coverage_html_clean coverage_erase mypy_clean
 	${Q} rm -rf */__pycache__/ */*.pyc
 
 
-verify-copyright: ## verify copyright for every file
-	@tests/verify-copyright.sh
+.PHONY: check-copyright
+check-copyright: ## verify copyright for every file
+	@python tests/copyright_check/copyright_validator.py

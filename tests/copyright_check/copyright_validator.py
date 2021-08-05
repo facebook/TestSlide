@@ -9,38 +9,21 @@ from __future__ import print_function
 
 import argparse
 import difflib
-import glob
+
 import os
 import re
 import sys
 import pathlib
+import config
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "filelist",
-    help="list of files to check, all files by default",
-    nargs='*')
+print_logs = config.print_logs
 
-rootdir = os.path.dirname(__file__) + "/../../"
-rootdir = os.path.abspath(rootdir)
-parser.add_argument(
-    "--rootdir", default=rootdir, help="root directory to verify")
-
-validator_path="tests/copyright_check"
-default_sample_file="copyright_signature.py"
-debug_logs=False
-
-default_check_dir = os.path.join(rootdir, validator_path)
-
-args = parser.parse_args()
-
-print_logs = sys.stderr if debug_logs else open("/dev/null", "w")
 
 def fetch_samplefile():
     sample = dict()
-    path=os.path.join(default_check_dir, default_sample_file)
-    ext=pathlib.Path(default_sample_file).suffix.split('.')[1]
-    sample_file = open(path, 'r')
+    path = os.path.join(config.default_check_dir, config.default_sample_file)
+    ext = pathlib.Path(config.default_sample_file).suffix.split(".")[1]
+    sample_file = open(path, "r")
     ref = sample_file.read().splitlines()
     sample_file.close()
     sample[ext] = ref
@@ -50,7 +33,7 @@ def fetch_samplefile():
 
 def verify_file(filename, sample, formula):
     try:
-        f = open(filename, 'r')
+        f = open(filename, "r")
     except Exception as exc:
         print("Unable to open %s: %s" % (filename, exc), file=print_logs)
         return False
@@ -67,26 +50,31 @@ def verify_file(filename, sample, formula):
         demo = sample[basename]
 
     if ext == "py":
-        p = formula["#!"]
+        p = formula.get("py_files")
         (data, _) = p.subn("", data, 1)
 
     data = data.splitlines()
 
     # if our test file is smaller than the reference it surely fails!
     if len(demo) > len(data):
-        print('File %s smaller than sample file(%d < %d)' %
-              (filename, len(data), len(demo)),
-              file=print_logs)
+        print(
+            "File %s smaller than sample file(%d < %d)"
+            % (filename, len(data), len(demo)),
+            file=print_logs,
+        )
         return False
 
     # trim our file to the same number of lines as the reference file
-    data = data[:len(demo)]
+    data = data[: len(demo)]
 
     if demo != data:
-        print("Header in %s does not match sample file, diff:" %
-              filename, file=print_logs)
+        print(
+            "Header in %s does not match sample file, diff:" % filename, file=print_logs
+        )
         if print_logs:
-            for line in difflib.unified_diff(demo, data, 'sample', filename, lineterm=''):
+            for line in difflib.unified_diff(
+                demo, data, "sample", filename, lineterm=""
+            ):
                 print(line, file=print_logs)
         return False
 
@@ -96,15 +84,16 @@ def verify_file(filename, sample, formula):
 def get_extension(filename):
     return os.path.splitext(filename)[1].split(".")[-1].lower()
 
+
 def fetch_files(extensions):
-    # If we want to ignore, add directories in ignore_dirs 
+    # If we want to ignore, add directories in ignore_dirs
     ignore_dirs = list()
     allfiles = list()
 
-    if len(args.filelist) > 0:
-        allfiles = args.filelist
+    if len(config.filelist) > 0:
+        allfiles = config.filelist
     else:
-        for root, dirs, traverse in os.walk(args.rootdir):
+        for root, dirs, traverse in os.walk(config.rootdir):
             for d in ignore_dirs:
                 if d in dirs:
                     dirs.remove(d)
@@ -121,18 +110,21 @@ def fetch_files(extensions):
             outfiles.append(fpath)
     return outfiles
 
+
 def main():
     formula = dict()
-    formula["#!"] = re.compile(r"^(#!.*\n)\n*", re.MULTILINE)
+    formula["py_files"] = re.compile(r"^(#!.*\n)\n*", re.MULTILINE)
     sample = fetch_samplefile()
     filelists = fetch_files(sample.keys())
     for filename in filelists:
         if not verify_file(filename, sample, formula):
-            print(filename, file=sys.stdout)
+            print(
+                "Copyright structure missing or incorrect for: ",
+                os.path.relpath(filename),
+            )
 
-    return 0
+    return
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
