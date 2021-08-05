@@ -19,3 +19,6 @@ default_check_dir = os.path.join(rootdir, validator_path)
 
 # if want to run specific files, add to this list
 filelist = list()
+
+# If we want to ignore, add directories in ignore_dirs
+ignore_dirs = list()

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
@@ -7,7 +5,6 @@
 
 from __future__ import print_function
 
-import argparse
 import difflib
 
 import os
@@ -20,6 +17,10 @@ print_logs = config.print_logs
 
 
 def fetch_samplefile():
+    """
+    Method to fetch sample copyright file
+    :return sample
+    """
     sample = dict()
     path = os.path.join(config.default_check_dir, config.default_sample_file)
     ext = pathlib.Path(config.default_sample_file).suffix.split(".")[1]
@@ -32,6 +33,13 @@ def fetch_samplefile():
 
 
 def verify_file(filename, sample, formula):
+    """
+    Method to check if file meets copyright signature expectations
+    :param filename file to check
+    :param sample copyright signature file
+    :param formula regex to verify
+    :return bool
+    """
     try:
         f = open(filename, "r")
     except Exception as exc:
@@ -82,19 +90,26 @@ def verify_file(filename, sample, formula):
 
 
 def get_extension(filename):
+    """
+    Method to get extension of file
+    """
     return os.path.splitext(filename)[1].split(".")[-1].lower()
 
 
 def fetch_files(extensions):
-    # If we want to ignore, add directories in ignore_dirs
-    ignore_dirs = list()
+    """
+    Method to traverse through repo for files
+    :param extensions
+    :return outfiles
+    """
+
     allfiles = list()
 
     if len(config.filelist) > 0:
         allfiles = config.filelist
     else:
         for root, dirs, traverse in os.walk(config.rootdir):
-            for d in ignore_dirs:
+            for d in config.ignore_dirs:
                 if d in dirs:
                     dirs.remove(d)
 
