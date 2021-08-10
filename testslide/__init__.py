@@ -261,9 +261,7 @@ class AggregatedExceptions(Exception):
         super(AggregatedExceptions, self).__init__()
         self.exceptions: List[BaseException] = []
 
-    def append_exception(
-        self, exception: BaseException
-    ) -> None:
+    def append_exception(self, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions):
             self.exceptions.extend(exception.exceptions)
         else:
