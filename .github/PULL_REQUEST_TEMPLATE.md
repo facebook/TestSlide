@@ -1,9 +1,9 @@
-<!-- 
+<!--
 Thank you for your interest in this project. Bugs filed and PRs submitted are appreciated!
 
-Please make sure that you are familiar with and follow the Code of Conduct of this project which can be found at https://github.com/facebookincubator/TestSlide/blob/master/CODE_OF_CONDUCT.md 
+Please make sure that you are familiar with and follow the Code of Conduct of this project which can be found at https://github.com/facebook/TestSlide/blob/main/CODE_OF_CONDUCT.md
 
-Also, please make sure you're familiar with and follow the instructions in the contributing guidelines which can  be found at https://github.com/facebookincubator/TestSlide/blob/master/CONTRIBUTING.md
+Also, please make sure you're familiar with and follow the instructions in the contributing guidelines which can  be found at https://github.com/facebook/TestSlide/blob/main/CONTRIBUTING.md
 
 -->
 
@@ -25,7 +25,7 @@ Also, please make sure you're familiar with and follow the instructions in the c
 
 **Checklist**:
 
-<!-- 
+<!--
 Have you done all of these things?
 To check an item, place an "x" in the box like so: "- [x] Tests"
 Add "N/A" to the end of each line that's irrelevant to your changes

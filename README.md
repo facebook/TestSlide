@@ -1,8 +1,8 @@
 ![TestSlide](./docs/testslide_logo.png)
 
-[![Build Status](https://github.com/facebook/TestSlide/workflows/CI/badge.svg)](https://github.com/facebookincubator/TestSlide/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/github/facebook/TestSlide/badge.svg?branch=master)](https://coveralls.io/github/facebookincubator/TestSlide?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/testslide/badge/?version=master)](https://testslide.readthedocs.io/en/master/?badge=master)
+[![Build Status](https://github.com/facebook/TestSlide/workflows/CI/badge.svg)](https://github.com/facebook/TestSlide/actions?query=workflow%3ACI)
+[![Coverage Status](https://coveralls.io/repos/github/facebook/TestSlide/badge.svg?branch=main)](https://coveralls.io/github/facebook/TestSlide?branch=main)
+[![Documentation Status](https://readthedocs.org/projects/testslide/badge/?version=main)](https://testslide.readthedocs.io/en/main/?badge=main)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyPI version](https://badge.fury.io/py/TestSlide.svg)](https://badge.fury.io/py/TestSlide)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
@@ -56,7 +56,7 @@ TestSlide's `StrictMock`, `mock_constructor()` and `mock_callable()` are seamles
 
 Run the test and see the failure:
 
-![Failing test](https://raw.githubusercontent.com/facebook/TestSlide/master/docs/test_fail.png)
+![Failing test](https://raw.githubusercontent.com/facebook/TestSlide/main/docs/test_fail.png)
 
 TestSlide's mocks failure messages guide you towards the solution, that you can now implement:
 
@@ -73,7 +73,7 @@ class Backup:
 
 And watch the test go green:
 
-![Passing test](https://raw.githubusercontent.com/facebook/TestSlide/master/docs/test_pass.png)
+![Passing test](https://raw.githubusercontent.com/facebook/TestSlide/main/docs/test_pass.png)
 
 It is all about letting the failure messages guide you towards the solution. There's a plethora of validation inside TestSlide's mocks, so you can trust they will help you iterate quickly when writing code and also cover you when breaking changes are introduced.
 

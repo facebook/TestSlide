@@ -192,7 +192,7 @@ class _ContextData:
                 "attributes from parent contexs to be overridden consistently "
                 "by sub-contexts.\n"
                 "Details and examples at the documentation: "
-                "https://testslide.readthedocs.io/en/master/testslide_dsl/context_attributes_and_functions/index.html"
+                "https://testslide.readthedocs.io/en/main/testslide_dsl/context_attributes_and_functions/index.html"
             )
         else:
             super(_ContextData, self).__setattr__(name, value)

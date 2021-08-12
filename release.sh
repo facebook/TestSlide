@@ -9,7 +9,7 @@ set -euxo pipefail
 
 release_version=${1?"Usage: $0 <release_version>"}
 
-git checkout master
+git checkout main
 git pull
 
 echo $release_version > testslide/version

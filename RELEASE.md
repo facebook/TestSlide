@@ -1,11 +1,11 @@
 - Create a new release tag by running:
     - `./release.sh $new_version`
 - https://github.com/facebook/TestSlide/actions
-    - Check if master build is OK.
+    - Check if main build is OK.
 - https://readthedocs.org/projects/testslide/
     - Trigger bulid for
         - new version
-        - master
+        - main
     - Admin > Versions: make new version the default
 - Build & publish
     - `make twine`
