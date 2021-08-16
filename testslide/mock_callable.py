@@ -482,7 +482,7 @@ class _RaiseRunner(_Runner):
         target: Union[type, str],
         method: str,
         original_callable: Union[Callable[..., Any], Mock],
-        exception: Union[Exception, BaseException],
+        exception: BaseException,
     ) -> None:
         super(_RaiseRunner, self).__init__(target, method, original_callable)
         self.exception = exception

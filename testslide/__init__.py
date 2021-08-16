@@ -259,11 +259,9 @@ class AggregatedExceptions(Exception):
 
     def __init__(self) -> None:
         super(AggregatedExceptions, self).__init__()
-        self.exceptions: List[Union[Exception, BaseException]] = []
+        self.exceptions: List[BaseException] = []
 
-    def append_exception(
-        self, exception: Union[Exception, "AggregatedExceptions", BaseException]
-    ) -> None:
+    def append_exception(self, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions):
             self.exceptions.extend(exception.exceptions)
         else:
@@ -605,8 +603,8 @@ class _TestSlideTestResult(unittest.TestResult):
     def _add_exception(
         self,
         err: Tuple[
-            Union[Type[Exception], Type[BaseException]],
-            Union[Exception, BaseException],
+            Type[BaseException],
+            BaseException,
             Optional[types.TracebackType],
         ],
     ) -> None:
@@ -617,8 +615,8 @@ class _TestSlideTestResult(unittest.TestResult):
         self,
         test: "TestCase",
         err: Tuple[
-            Union[Type[Exception], Type[BaseException]],
-            Union[Exception, BaseException],
+            Type[BaseException],
+            BaseException,
             types.TracebackType,
         ],
     ) -> None:
@@ -632,8 +630,8 @@ class _TestSlideTestResult(unittest.TestResult):
         self,
         test: "TestCase",
         err: Tuple[
-            Union[Type[Exception], Type[BaseException]],
-            Union[Exception, BaseException],
+            Type[BaseException],
+            BaseException,
             types.TracebackType,
         ],
     ) -> None:
@@ -654,7 +652,7 @@ class _TestSlideTestResult(unittest.TestResult):
         super(_TestSlideTestResult, self).addUnexpectedSuccess(test)
         self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None))  # type: ignore
 
-    def addSubTest(self, test: "TestCase", subtest: "TestCase", err: Tuple[Optional[Union[Type[Exception], Type[BaseException]]], Optional[Union[Exception, BaseException]], Optional[types.TracebackType]]) -> None:  # type: ignore
+    def addSubTest(self, test: "TestCase", subtest: "TestCase", err: Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]]) -> None:  # type: ignore
         """Called at the end of a subtest.
         'err' is None if the subtest ended successfully, otherwise it's a
         tuple of values as returned by sys.exc_info().
