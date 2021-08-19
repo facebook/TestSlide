@@ -15,11 +15,12 @@ import sys
 import pathlib
 import config
 
+
 def print_logs(*args, **kwargs):
     if not config.debug_logs:
         return
     print(*args, **kwargs)
-    
+
 
 def fetch_samplefile():
     """
@@ -30,8 +31,8 @@ def fetch_samplefile():
     ext = pathlib.Path(config.default_sample_file).suffix.split(".")[1]
     with path.open() as f:
         ref = f.read().splitlines()
-    
-    sample={ext: ref}
+
+    sample = {ext: ref}
 
     return sample
 
@@ -67,7 +68,11 @@ def verify_file(filename, sample, formula):
 
     # if our test file is smaller than the reference it surely fails!
     if len(demo) > len(data):
-        print_logs("File {0} smaller than sample file({1} < {2})".format(filename, len(data),len(demo)))
+        print_logs(
+            "File {0} smaller than sample file({1} < {2})".format(
+                filename, len(data), len(demo)
+            )
+        )
         return False
 
     # trim our file to the same number of lines as the reference file

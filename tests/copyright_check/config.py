@@ -7,7 +7,7 @@ from pathlib import Path
 
 debug_logs = False
 
-default_sample_file = "copyright_signature.py" 
+default_sample_file = "copyright_signature.py"
 rootdir = Path(__file__).parent.parent.absolute()
 default_check_dir = rootdir / "copyright_check"
 
