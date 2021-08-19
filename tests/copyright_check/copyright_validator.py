@@ -8,11 +8,11 @@
 from __future__ import print_function
 
 import difflib
-
 import os
+import pathlib
 import re
 import sys
-import pathlib
+
 import config
 
 
