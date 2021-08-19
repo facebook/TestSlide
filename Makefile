@@ -132,7 +132,7 @@ tests: \
 	flake8 \
 	isort \
 	black \
-	copyright_check
+	check-copyright
 
 .PHONY: format
 format: \

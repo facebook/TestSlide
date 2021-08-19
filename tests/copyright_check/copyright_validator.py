@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
@@ -13,21 +15,23 @@ import sys
 import pathlib
 import config
 
-print_logs = config.print_logs
-
+def print_logs(*args, **kwargs):
+    if not config.debug_logs:
+        return
+    print(*args, **kwargs)
+    
 
 def fetch_samplefile():
     """
     Method to fetch sample copyright file
     :return sample
     """
-    sample = dict()
-    path = os.path.join(config.default_check_dir, config.default_sample_file)
+    path = config.default_check_dir / config.default_sample_file
     ext = pathlib.Path(config.default_sample_file).suffix.split(".")[1]
-    sample_file = open(path, "r")
-    ref = sample_file.read().splitlines()
-    sample_file.close()
-    sample[ext] = ref
+    with path.open() as f:
+        ref = f.read().splitlines()
+    
+    sample={ext: ref}
 
     return sample
 
@@ -41,13 +45,11 @@ def verify_file(filename, sample, formula):
     :return bool
     """
     try:
-        f = open(filename, "r")
+        with open(filename, "r") as f:
+            data = f.read()
     except Exception as exc:
-        print("Unable to open %s: %s" % (filename, exc), file=print_logs)
+        print_logs("Unable to open {0}: {1}".format(filename, exc))
         return False
-
-    data = f.read()
-    f.close()
 
     basename = os.path.basename(filename)
     ext = get_extension(filename)
@@ -65,25 +67,19 @@ def verify_file(filename, sample, formula):
 
     # if our test file is smaller than the reference it surely fails!
     if len(demo) > len(data):
-        print(
-            "File %s smaller than sample file(%d < %d)"
-            % (filename, len(data), len(demo)),
-            file=print_logs,
-        )
+        print_logs("File {0} smaller than sample file({1} < {2})".format(filename, len(data),len(demo)))
         return False
 
     # trim our file to the same number of lines as the reference file
     data = data[: len(demo)]
 
     if demo != data:
-        print(
-            "Header in %s does not match sample file, diff:" % filename, file=print_logs
-        )
-        if print_logs:
+        print_logs("Header in {} does not match sample file, diff:".format(filename))
+        if config.debug_logs:
             for line in difflib.unified_diff(
                 demo, data, "sample", filename, lineterm=""
             ):
-                print(line, file=print_logs)
+                print_logs(line)
         return False
 
     return True
@@ -103,12 +99,12 @@ def fetch_files(extensions):
     :return outfiles
     """
 
-    allfiles = list()
+    allfiles = []
 
-    if len(config.filelist) > 0:
+    if config.filelist:
         allfiles = config.filelist
     else:
-        for root, dirs, traverse in os.walk(config.rootdir):
+        for root, dirs, traverse in os.walk(config.rootdir.as_posix()):
             for d in config.ignore_dirs:
                 if d in dirs:
                     dirs.remove(d)
@@ -117,21 +113,19 @@ def fetch_files(extensions):
                 fpath = os.path.join(root, fname)
                 allfiles.append(fpath)
 
-    outfiles = list()
+    outfiles = []
     for fpath in allfiles:
         ext = get_extension(fpath)
-        basename = os.path.basename(fpath)
-        if ext in extensions or basename in extensions:
+        if ext in extensions:
             outfiles.append(fpath)
     return outfiles
 
 
 def main():
-    formula = dict()
-    formula["py_files"] = re.compile(r"^(#!.*\n)\n*", re.MULTILINE)
+    formula = {"py_files": re.compile(r"^(#!.*\n)\n*", re.MULTILINE)}
     sample = fetch_samplefile()
     filelists = fetch_files(sample.keys())
-    failure_list = list()
+    failure_list = []
     for filename in filelists:
         if not verify_file(filename, sample, formula):
             failure_list.append(os.path.relpath(filename))
@@ -139,8 +133,10 @@ def main():
                 "Copyright structure missing or incorrect for: ",
                 os.path.relpath(filename),
             )
-    if len(failure_list) > 0:
+    if failure_list:
         return 1
+
+    print("Copyright structure intact for all python files ")
     return
 
 

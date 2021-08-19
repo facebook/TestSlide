@@ -3,22 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-
-import sys
-import os
-
+from pathlib import Path
 
 debug_logs = False
-print_logs = sys.stderr if debug_logs else open("/dev/null", "w")
 
-validator_path = "tests/copyright_check"
-default_sample_file = "copyright_signature.py"
-
-rootdir = os.path.abspath(os.path.dirname(__file__) + "/../../")
-default_check_dir = os.path.join(rootdir, validator_path)
+default_sample_file = "copyright_signature.py" 
+rootdir = Path(__file__).parent.parent.absolute()
+default_check_dir = rootdir / "copyright_check"
 
 # if want to run specific files, add to this list
-filelist = list()
+filelist = []
 
 # If we want to ignore, add directories in ignore_dirs
-ignore_dirs = list()
+ignore_dirs = []
