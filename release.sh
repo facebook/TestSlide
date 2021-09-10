@@ -19,8 +19,9 @@ sed -i -e "s/Version .*/Version $release_version/" \
 sed -i -e "s/\"version\":.*/\"version\": \"$release_version\",/" util/testslide-snippets/package.json
 echo $release_version > pytest-testslide/testslide-version
 git add testslide/version util/testslide-snippets
+git add pytest-testslide/testslide-version
 git commit -m "v$release_version"
-git push
+git push origin main:release_v$release_version
 
 git tag $release_version
 git push origin $release_version
