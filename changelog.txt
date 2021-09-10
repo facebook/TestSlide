@@ -1,0 +1,32 @@
+v2.7.0
+Add linter to ensure Copyright header on files (#311)
+Removal of Union of BaseException and it's subclasses (#312)
+change refs from master to main branch
+Allow runtime_attrs to be patched using patch_attribute (#307)
+add py310-dev to the build matrix (#310)
+Fix typechecking issue with Python 3.10 (#308)
+Use Pattern.search() instead of Pattern.match() for "--filter-regex" behavior
+Fix incorrect hiding for stack frames when reporting exceptions
+constructor level type checks + tests (#303)
+Remove antequated "(object)" notation from testslide (#299)
+fix test broken by 69e91d5 (#302)
+examples with same name show the name in the error
+Cython 3.0 support (#298)
+Use get_typing_hints instead of __annotations__ to resolve types in Python 3.10 (#297)
+Enable running all tests to completion even if one python version failed (#295)
+Types for testslide (#293)
+Ensure that type validation is executed for StrictMock instances as well (#285)
+Raise Exception from AnyInstanceOf Constructor (#291)
+improve coroutinevalueerror error message, resolve #284 (#288)
+TestSlide: Fix setting private attributes for StrictMock
+Fix StrictMock validation with inheritance (#283)
+Improve reset attribute error message & docs (#281)
+Fix incorrect escape sequence
+Exclude cancelled tasks from failing test (#278)
+adopt latest code of conduct
+Add check against async context
+Revert "Fix stacked same for_call()"
+requirements: allow Pygments 2.2.0 or later
+requirements: relax dataclasses version dependency
+Use python 3.9 in dev Docker file
+move dependency management to requirements.txt and requirements-dev.txt. Add dockerfile and Docker related make targets
