@@ -44,7 +44,7 @@ class UndefinedAttribute(BaseException):
     def __str__(self) -> str:
         message = (
             f"'{self.name}' is not set.\n"
-            f"{self.strict_mock} must have a value set for this attribute "
+            f"{repr(self.strict_mock)} must have a value set for this attribute "
             "if it is going to be accessed."
         )
         if self.extra_msg is not None:
@@ -767,7 +767,7 @@ class StrictMock:
         if self._template and self.__template_has_attr(name):
             raise UndefinedAttribute(self, name)
         else:
-            raise AttributeError(f"'{name}' was not set for {self}.")
+            raise AttributeError(f"'{name}' was not set for {repr(self)}.")
 
     def __delattr__(self, name: str) -> None:
         if name in type(self).__dict__:

@@ -815,6 +815,18 @@ def strict_mock(context):
                                         self.assertTrue(target is self.strict_mock)
 
             @context.sub_context
+            def string_template(context):
+                @context.example
+                async def undefined_attribute(self) -> None:
+                    with self.assertRaises(UndefinedAttribute):
+                        StrictMock(template=str).join
+
+                @context.example
+                async def attribute_error(self) -> None:
+                    with self.assertRaises(AttributeError):
+                        StrictMock(template=str).garbage
+
+            @context.sub_context
             def async_attributes(context):
                 @context.memoize_before
                 async def default_context_manager(self):
