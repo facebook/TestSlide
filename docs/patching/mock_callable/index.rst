@@ -83,21 +83,6 @@ Note how you get two failed assertions, instead of just one:
 
 It is now pretty clear what is broken, and why it is broken.
 
-For usecases where certain arguments could take many values, and setting up all the for_calls could become tedious you can use ``ignore_other_args`` and ``ignore_other_kwargs``
-This causes Testslide to ignore all validations of args and kwargs passed to the mock, except those that are pinned in the defined for caller_str
-Example:
-.. code-block:: none
-
-def test_ignore_other_args(self):
-    self.mock_callable(sample_module, "test_function", ignore_other_args=True
-    ).for_call("a").to_return_value(["blah"])
-    sample_module.test_function("a", "b")
-
-def test_ignore_other_kwargs(self):
-    self.mock_callable(ample_module, "test_function", ignore_other_kwargs=True
-    ).for_call("firstarg", "secondarg", kwarg1="a").to_return_value(["blah"])
-    sample_module.test_function("firstarg", "secondarg", kwarg1="a", kwarg2="x")
-
 
 
 Defining a Target
@@ -152,6 +137,38 @@ Note how it is **safe by default**: once ``for_call`` is used, other calls will 
 .. note::
 
   Also check :doc:`../argument_matchers/index`: they allow more relaxed argument matching like "any string matching this regexp" or "any positive number".
+
+
+For usecases where certain arguments could take many values, and setting up all the for_calls could become tedious you can use ``for_partial_call``
+This causes Testslide to ignore all validations of args and kwargs passed to the mock, except those that are defined in the  ``for_partial_call``
+
+Tests will still fail, if none of the necessary args or kwargs are passed, so this is a sane golden pathway, between writing safe and easy to use mocks.
+Example:
+
+.. code-block:: none
+
+  def test_for_partial_call_accepts_all_other_args_and_kwargs(self):
+      self.mock_callable(sample_module, "test_function",).for_partial_call(
+          "firstarg", kwarg1="a"
+      ).to_return_value(["blah"])
+      sample_module.test_function("firstarg", "xx", kwarg1="a", kwarg2="x")
+
+  def test_for_partial_call_fails_if_no_required_args_are_present(self):
+      with self.assertRaises(mock_callable.UnexpectedCallArguments):
+          self.mock_callable(sample_module, "test_function",).for_partial_call(
+              "firstarg", kwarg1="a"
+          ).to_return_value(["blah"])
+          sample_module.test_function(
+              "differentarg", "alsodifferent", kwarg1="a", kwarg2="x"
+          )
+
+  def test_for_partial_call_fails_if_no_required_kwargs_are_present(self):
+      with self.assertRaises(mock_callable.UnexpectedCallArguments):
+          self.mock_callable(sample_module, "test_function",).for_partial_call(
+              "firstarg", kwarg1="x"
+          ).to_return_value(["blah"])
+          sample_module.test_function("firstarg", "secondarg", kwarg1="a", kwarg2="x")
+
 
 Composition
 ^^^^^^^^^^^

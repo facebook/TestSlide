@@ -42,8 +42,6 @@ def mock_callable(
     #  * True:  type validation will be enabled (regardless of target type)
     #  * False:  type validation will be disabled
     type_validation: Optional[bool] = None,
-    ignore_other_args: bool = False,
-    ignore_other_kwargs: bool = False,
 ) -> "_MockCallableDSL":
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
@@ -55,8 +53,6 @@ def mock_callable(
         caller_frame_info,
         allow_private=allow_private,
         type_validation=type_validation,
-        ignore_other_args=ignore_other_args,
-        ignore_other_kwargs=ignore_other_kwargs,
     )
 
 
@@ -66,8 +62,6 @@ def mock_async_callable(
     callable_returns_coroutine: bool = False,
     allow_private: bool = False,
     type_validation: bool = True,
-    ignore_other_args: bool = False,
-    ignore_other_kwargs: bool = False,
 ) -> "_MockAsyncCallableDSL":
     caller_frame = inspect.currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
@@ -80,8 +74,6 @@ def mock_async_callable(
         callable_returns_coroutine,
         allow_private,
         type_validation,
-        ignore_other_args=ignore_other_args,
-        ignore_other_kwargs=ignore_other_kwargs,
     )
 
 
@@ -807,8 +799,6 @@ class _MockCallableDSL:
         original_callable: Optional[Callable] = None,
         allow_private: bool = False,
         type_validation: Optional[bool] = None,
-        ignore_other_args: bool = False,
-        ignore_other_kwargs: bool = False,
     ) -> None:
         if not _is_setup():
             raise RuntimeError(
@@ -829,8 +819,8 @@ class _MockCallableDSL:
         self.type_validation = type_validation
         self.caller_frame_info = caller_frame_info
         self._allow_coro = False
-        self._ignore_other_args = ignore_other_args
-        self._ignore_other_kwargs = ignore_other_kwargs
+        self._ignore_other_args = False
+        self._ignore_other_kwargs = False
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -906,10 +896,19 @@ class _MockCallableDSL:
         Filter for only calls like this.
         """
         if self._runner:
-            self._runner.add_accepted_args(
-                self._ignore_other_args, self._ignore_other_kwargs, *args, **kwargs
-            )
+            self._runner.add_accepted_args(False, False, *args, **kwargs)
         else:
+            self._next_runner_accepted_args = (args, kwargs)
+        return self
+
+    def for_partial_call(
+        self, *args: Any, **kwargs: Any
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+        if self._runner:
+            self._runner.add_accepted_args(True, True, *args, **kwargs)
+        else:
+            self._ignore_other_args = True
+            self._ignore_other_kwargs = True
             self._next_runner_accepted_args = (args, kwargs)
         return self
 
@@ -1173,8 +1172,6 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         callable_returns_coroutine: bool,
         allow_private: bool = False,
         type_validation: bool = True,
-        ignore_other_args: bool = False,
-        ignore_other_kwargs: bool = False,
     ) -> None:
         self._callable_returns_coroutine = callable_returns_coroutine
         super().__init__(
@@ -1183,8 +1180,6 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             caller_frame_info,
             allow_private=allow_private,
             type_validation=type_validation,
-            ignore_other_args=ignore_other_args,
-            ignore_other_kwargs=ignore_other_kwargs,
         )
         self._allow_coro = True
 
