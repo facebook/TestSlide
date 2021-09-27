@@ -271,7 +271,9 @@ class _BaseRunner:
     def can_accept_args(self, *args: Any, **kwargs: Any) -> bool:
         if self.accepted_args:
             if self._accept_partial_call:
-                args_match = all(elem in args for elem in self.accepted_args[0])
+                args_match = all(
+                    any(elem == arg for arg in args) for elem in self.accepted_args[0]
+                )
                 kwargs_match = all(
                     elem in kwargs.keys()
                     and kwargs[elem] == self.accepted_args[1][elem]
