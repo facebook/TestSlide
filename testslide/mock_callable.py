@@ -220,6 +220,7 @@ class _BaseRunner:
         self._call_count: int = 0
         self._max_calls: Optional[int] = None
         self._has_order_assertion = False
+        self._accept_partial_call = False
 
     def register_call(self, *args: Any, **kwargs: Any) -> None:
         global _received_ordered_calls
@@ -258,15 +259,29 @@ class _BaseRunner:
                 )
             )
 
-    def add_accepted_args(self, *args: Any, **kwargs: Any) -> None:
-        # TODO validate if args match callable signature
+    def add_accepted_args(
+        self,
+        _accept_partial_call: bool = False,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         self.accepted_args = (args, kwargs)
+        self._accept_partial_call = _accept_partial_call
 
     def can_accept_args(self, *args: Any, **kwargs: Any) -> bool:
         if self.accepted_args:
-            if self.accepted_args == (args, kwargs):
-                return True
-            return False
+            if self._accept_partial_call:
+                args_match = all(
+                    any(elem == arg for arg in args) for elem in self.accepted_args[0]
+                )
+                kwargs_match = all(
+                    elem in kwargs.keys()
+                    and kwargs[elem] == self.accepted_args[1][elem]
+                    for elem in self.accepted_args[1].keys()
+                )
+                return args_match and kwargs_match
+            else:
+                return self.accepted_args == (args, kwargs)
         else:
             return True
 
@@ -799,6 +814,7 @@ class _MockCallableDSL:
         self.type_validation = type_validation
         self.caller_frame_info = caller_frame_info
         self._allow_coro = False
+        self._accept_partial_call = False
         if isinstance(target, str):
             self._target = testslide._importer(target)
         else:
@@ -839,7 +855,8 @@ class _MockCallableDSL:
         if self._next_runner_accepted_args:
             args, kwargs = self._next_runner_accepted_args
             self._next_runner_accepted_args = None
-            runner.add_accepted_args(*args, **kwargs)
+            runner.add_accepted_args(self._accept_partial_call, *args, **kwargs)
+            self._accept_partial_call = False
         self._runner = runner
         self._callable_mock.runners.insert(0, runner)  # type: ignore
 
@@ -872,8 +889,18 @@ class _MockCallableDSL:
         Filter for only calls like this.
         """
         if self._runner:
-            self._runner.add_accepted_args(*args, **kwargs)
+            self._runner.add_accepted_args(False, *args, **kwargs)
         else:
+            self._next_runner_accepted_args = (args, kwargs)
+        return self
+
+    def for_partial_call(
+        self, *args: Any, **kwargs: Any
+    ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
+        if self._runner:
+            self._runner.add_accepted_args(True, *args, **kwargs)
+        else:
+            self._accept_partial_call = True
             self._next_runner_accepted_args = (args, kwargs)
         return self
 
