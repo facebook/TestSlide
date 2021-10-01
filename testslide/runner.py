@@ -20,6 +20,8 @@ import psutil
 import pygments
 import pygments.formatters
 import pygments.lexers
+from pygments.token import Keyword, Name, Comment, String, Error, \
+    Number, Operator, Generic, Token, Whitespace
 
 import testslide
 
@@ -28,6 +30,37 @@ from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
 ##
 ## Base
 ##
+TS_COLORSCHEME = {
+    Token:              ('',            ''),
+
+    Whitespace:         ('gray',   'brightblack'),
+    Comment:            ('gray',   'brightblack'),
+    Comment.Preproc:    ('cyan',        'brightcyan'),
+    Keyword:            ('brightblue',    'brightblue'),
+    Keyword.Type:       ('cyan',        'brightcyan'),
+    Operator.Word:      ('magenta',      'brightmagenta'),
+    Name.Builtin:       ('cyan',        'brightcyan'),
+    Name.Function:      ('green',   'brightgreen'),
+    Name.Namespace:     ('_cyan_',      '_brightcyan_'),
+    Name.Class:         ('_green_', '_brightgreen_'),
+    Name.Exception:     ('cyan',        'brightcyan'),
+    Name.Decorator:     ('brightblack',    'gray'),
+    Name.Variable:      ('red',     'brightred'),
+    Name.Constant:      ('red',     'brightred'),
+    Name.Attribute:     ('cyan',        'brightcyan'),
+    Name.Tag:           ('brightblue',        'brightblue'),
+    String:             ('yellow',       'yellow'),
+    Number:             ('brightblue',    'brightblue'),
+
+    Generic.Deleted:    ('brightred',        'brightred'),
+    Generic.Inserted:   ('green',  'brightgreen'),
+    Generic.Heading:    ('**',         '**'),
+    Generic.Subheading: ('*magenta*',   '*brightmagenta*'),
+    Generic.Prompt:     ('**',         '**'),
+    Generic.Error:      ('brightred',        'brightred'),
+
+    Error:              ('_brightred_',      '_brightred_'),
+}
 
 
 class BaseFormatter:
@@ -297,7 +330,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
                 row_text = pygments.highlight(
                     row_text,
                     pygments.lexers.PythonTracebackLexer(),
-                    pygments.formatters.TerminalFormatter(),
+                    pygments.formatters.TerminalFormatter(colorscheme=TS_COLORSCHEME),
                 )
             row_text = "\n".join(
                 "{indent}    {line}".format(indent=indent, line=line)
