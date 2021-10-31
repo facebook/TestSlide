@@ -32,9 +32,7 @@ def fetch_samplefile():
     with path.open() as f:
         ref = f.read().splitlines()
 
-    sample = {ext: ref}
-
-    return sample
+    return {ext: ref}
 
 
 def verify_file(filename, sample, formula):
@@ -55,11 +53,7 @@ def verify_file(filename, sample, formula):
     basename = os.path.basename(filename)
     ext = get_extension(filename)
 
-    if ext != "":
-        demo = sample[ext]
-    else:
-        demo = sample[basename]
-
+    demo = sample[ext] if ext != "" else sample[basename]
     if ext == "py":
         p = formula.get("py_files")
         (data, _) = p.subn("", data, 1)

@@ -27,17 +27,15 @@ class _DescriptorProxy:
             return self
         if id(instance) in self.instance_attr_map:
             return self.instance_attr_map[id(instance)]
-        else:
-            if self.original_class_attr:
-                return self.original_class_attr.__get__(instance, owner)  # type: ignore
-            else:
-                for parent in owner.mro()[1:]:  # type: ignore
-                    method = parent.__dict__.get(self.attr_name, None)
-                    if type(method) is type(self):
-                        continue
-                    if method:
-                        return method.__get__(instance, owner)
-                return instance.__get__(instance, owner)  # type: ignore
+        if self.original_class_attr:
+            return self.original_class_attr.__get__(instance, owner)  # type: ignore
+        for parent in owner.mro()[1:]:  # type: ignore
+            method = parent.__dict__.get(self.attr_name, None)
+            if type(method) is type(self):
+                continue
+            if method:
+                return method.__get__(instance, owner)
+        return instance.__get__(instance, owner)  # type: ignore
 
     def __delete__(self, instance: object) -> None:
         if instance in self.instance_attr_map:
@@ -48,11 +46,7 @@ def _is_instance_method(target: Any, method: str) -> bool:
     if inspect.ismodule(target):
         return False
 
-    if inspect.isclass(target):
-        klass = target
-    else:
-        klass = type(target)
-
+    klass = target if inspect.isclass(target) else type(target)
     for k in klass.mro():
         if method in k.__dict__:
             value = k.__dict__[method]

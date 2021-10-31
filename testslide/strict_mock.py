@@ -170,7 +170,7 @@ class _MethodProxy:
 
     def __init__(self, value: Any, callable_value: Optional[Callable] = None) -> None:
         self.__dict__["_value"] = value
-        self.__dict__["_callable_value"] = callable_value if callable_value else value
+        self.__dict__["_callable_value"] = callable_value or value
 
     def __get__(
         self, instance: "StrictMock", owner: Optional[Type["StrictMock"]] = None
@@ -388,13 +388,9 @@ class StrictMock:
         subclass dictionary for all attributes, including magic ones, that must
         be defined at the class to work.
         """
-        if template:
-            name = f"{template.__name__}{cls.__name__}"
-        else:
-            name = cls.__name__
+        name = f"{template.__name__}{cls.__name__}" if template else cls.__name__
         strict_mock_subclass = type(name, (cls,), {})
-        strict_mock_instance = object.__new__(strict_mock_subclass)
-        return strict_mock_instance
+        return object.__new__(strict_mock_subclass)
 
     def __setup_magic_methods(self) -> None:
         """
@@ -459,7 +455,7 @@ class StrictMock:
         #   __get_caller_frame
         #   __get_caller
         #   __init__
-        depth = depth + 3
+        depth += 3
         current_frame = inspect.currentframe()
         while current_frame:
             depth -= 1
@@ -589,17 +585,17 @@ class StrictMock:
         def get_class_init(klass: type) -> Callable:
             import testslide.mock_constructor  # Avoid cyclic dependencies
 
-            if testslide.mock_constructor._is_mocked_class(klass):
-                # If klass is the mocked subclass, pull the original version of
-                # __init__ so we can introspect into its implementation (and
-                # not the __init__ wrapper at the mocked class).
-                mocked_class = klass
-                original_class = mocked_class.mro()[1]
-                return testslide.mock_constructor._get_original_init(
-                    original_class, instance=None, owner=mocked_class
-                )
-            else:
+            if not testslide.mock_constructor._is_mocked_class(klass):
                 return klass.__init__  # type: ignore
+
+            # If klass is the mocked subclass, pull the original version of
+            # __init__ so we can introspect into its implementation (and
+            # not the __init__ wrapper at the mocked class).
+            mocked_class = klass
+            original_class = mocked_class.mro()[1]
+            return testslide.mock_constructor._get_original_init(
+                original_class, instance=None, owner=mocked_class
+            )
 
         def is_runtime_attr() -> bool:
             if self._template:
@@ -809,17 +805,16 @@ class StrictMock:
         return self_copy
 
     def __get_copyable_attrs(self, self_copy: "StrictMock") -> List[str]:
-        attrs = []
-        for name in type(self).__dict__:
-            if name not in self_copy.__dict__:
-                if (
-                    name.startswith("__")
-                    and name.endswith("__")
-                    and name not in self.__SETTABLE_MAGICS
-                ):
-                    continue
-                attrs.append(name)
-        return attrs
+        return [
+            name
+            for name in type(self).__dict__
+            if name not in self_copy.__dict__
+            and (
+                not name.startswith("__")
+                or not name.endswith("__")
+                or name in self.__SETTABLE_MAGICS
+            )
+        ]
 
     def __copy__(self) -> "StrictMock":
         self_copy = self.__get_copy()
