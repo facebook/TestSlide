@@ -20,8 +20,18 @@ import psutil
 import pygments
 import pygments.formatters
 import pygments.lexers
-from pygments.token import Keyword, Name, Comment, String, Error, \
-    Number, Operator, Generic, Token, Whitespace
+from pygments.token import (
+    Comment,
+    Error,
+    Generic,
+    Keyword,
+    Name,
+    Number,
+    Operator,
+    String,
+    Token,
+    Whitespace,
+)
 
 import testslide
 
@@ -31,35 +41,32 @@ from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
 ## Base
 ##
 TS_COLORSCHEME = {
-    Token:              ('',            ''),
-
-    Whitespace:         ('gray',   'brightblack'),
-    Comment:            ('gray',   'brightblack'),
-    Comment.Preproc:    ('cyan',        'brightcyan'),
-    Keyword:            ('brightblue',    'brightblue'),
-    Keyword.Type:       ('cyan',        'brightcyan'),
-    Operator.Word:      ('magenta',      'brightmagenta'),
-    Name.Builtin:       ('cyan',        'brightcyan'),
-    Name.Function:      ('green',   'brightgreen'),
-    Name.Namespace:     ('_cyan_',      '_brightcyan_'),
-    Name.Class:         ('_green_', '_brightgreen_'),
-    Name.Exception:     ('cyan',        'brightcyan'),
-    Name.Decorator:     ('brightblack',    'gray'),
-    Name.Variable:      ('red',     'brightred'),
-    Name.Constant:      ('red',     'brightred'),
-    Name.Attribute:     ('cyan',        'brightcyan'),
-    Name.Tag:           ('brightblue',        'brightblue'),
-    String:             ('yellow',       'yellow'),
-    Number:             ('brightblue',    'brightblue'),
-
-    Generic.Deleted:    ('brightred',        'brightred'),
-    Generic.Inserted:   ('green',  'brightgreen'),
-    Generic.Heading:    ('**',         '**'),
-    Generic.Subheading: ('*magenta*',   '*brightmagenta*'),
-    Generic.Prompt:     ('**',         '**'),
-    Generic.Error:      ('brightred',        'brightred'),
-
-    Error:              ('_brightred_',      '_brightred_'),
+    Token: ("", ""),
+    Whitespace: ("gray", "brightblack"),
+    Comment: ("gray", "brightblack"),
+    Comment.Preproc: ("cyan", "brightcyan"),
+    Keyword: ("brightblue", "brightblue"),
+    Keyword.Type: ("cyan", "brightcyan"),
+    Operator.Word: ("magenta", "brightmagenta"),
+    Name.Builtin: ("cyan", "brightcyan"),
+    Name.Function: ("green", "brightgreen"),
+    Name.Namespace: ("_cyan_", "_brightcyan_"),
+    Name.Class: ("_green_", "_brightgreen_"),
+    Name.Exception: ("cyan", "brightcyan"),
+    Name.Decorator: ("brightblack", "gray"),
+    Name.Variable: ("red", "brightred"),
+    Name.Constant: ("red", "brightred"),
+    Name.Attribute: ("cyan", "brightcyan"),
+    Name.Tag: ("brightblue", "brightblue"),
+    String: ("yellow", "yellow"),
+    Number: ("brightblue", "brightblue"),
+    Generic.Deleted: ("brightred", "brightred"),
+    Generic.Inserted: ("green", "brightgreen"),
+    Generic.Heading: ("**", "**"),
+    Generic.Subheading: ("*magenta*", "*brightmagenta*"),
+    Generic.Prompt: ("**", "**"),
+    Generic.Error: ("brightred", "brightred"),
+    Error: ("_brightred_", "_brightred_"),
 }
 
 
