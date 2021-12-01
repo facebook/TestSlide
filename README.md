@@ -105,3 +105,7 @@ https://opensource.facebook.com/legal/terms
 ## Privacy Policy
 
 https://opensource.facebook.com/legal/privacy
+
+## Copyright
+
+Copyright © 2021 Meta Platforms, Inc
