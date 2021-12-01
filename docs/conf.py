@@ -27,7 +27,7 @@ import sys
 # -- Project information -----------------------------------------------------
 
 project = "TestSlide"
-copyright = "Facebook, Inc. and its affiliates."
+copyright = "Meta Platforms, Inc"
 author = "Fabio Pugliese Ornellas & Contributors"
 
 # The short X.Y version
