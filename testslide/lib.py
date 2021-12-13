@@ -7,6 +7,7 @@ import inspect
 import os
 import sys
 import unittest.mock
+from collections import abc
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
@@ -14,6 +15,38 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Un
 from unittest.mock import Mock
 
 import typeguard
+
+if sys.version_info >= (3, 8):
+    from typing import get_origin, get_args
+elif sys.version_info >= (3, 7):
+    from typing import _GenericAlias
+
+    # Versions of `get_origin` that only support GenericAlias.
+    def get_origin(tp):
+        if isinstance(tp, _GenericAlias):
+            return tp.__origin__
+        return None
+
+    def get_args(tp):
+        if isinstance(tp, _GenericAlias) and tp.__origin__ is not abc.Callable:
+            return tp.__args__
+        return ()
+
+else:  # python3.6
+    from typing import GenericMeta
+
+    def get_origin(tp):
+        if isinstance(tp, GenericMeta):
+            if hasattr(tp, "__extra__"):
+                return tp.__extra__
+            return tp.__origin__
+        return None
+
+    def get_args(tp):
+        if isinstance(tp, GenericMeta) and tp.__origin__ is not Callable:
+            return tp.__args__
+        return ()
+
 
 if TYPE_CHECKING:
     # hack to remove mypy warnings about types not being defined
@@ -320,7 +353,10 @@ def _is_wrapped_for_signature_and_type_validation(value: Callable) -> bool:
 
 
 def _validate_return_type(
-    template: Union[Mock, Callable], value: Any, caller_frame_info: Traceback
+    template: Union[Mock, Callable],
+    value: Any,
+    caller_frame_info: Traceback,
+    unwrap_template_awaitable: bool = False,
 ) -> None:
     try:
         argspec = inspect.getfullargspec(template)
@@ -328,6 +364,23 @@ def _validate_return_type(
         return
     expected_type = argspec.annotations.get("return")
     if expected_type:
+        if unwrap_template_awaitable:
+            type_origin = get_origin(expected_type)
+            type_args = get_args(expected_type)
+
+            # Pull the T out of Awaitable[T]
+            if type_origin == abc.Awaitable:
+                expected_type = type_args[0]
+
+            # Calling an `async def` method returns an object of type
+            # Coroutine[Any, Any, T], which is a subclass of Awaitable[T].
+            if (
+                type_origin == abc.Coroutine
+                and type_args[0] == Any
+                and type_args[1] == Any
+            ):
+                expected_type = type_args[2]
+
         try:
             _validate_argument_type(expected_type, "return", value)
         except TypeCheckError as runtime_type_error:
