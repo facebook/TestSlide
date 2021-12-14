@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Awaitable, Coroutine, Dict, List, Optional, Tuple, Union
 
 attribute = "value"
 typedattr: str = "bruh"
@@ -114,12 +114,25 @@ def test_function(
     "This function is used by some unit tests only"
     return ["original response"]
 
-
 async def async_test_function(
     arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
 ) -> List[str]:
     "This function is used by some unit tests only"
     return ["original response"]
+
+
+def test_function_returns_awaitable(
+    arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+) -> Awaitable[List[str]]:
+    "This function is used by some unit tests only"
+    return async_test_function(arg1, arg2, kwarg1, kwarg2)
+
+
+def test_function_returns_coroutine(
+    arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
+) -> Coroutine[Any, Any, List[str]]:
+    "This function is used by some unit tests only"
+    return async_test_function(arg1, arg2, kwarg1, kwarg2)
 
 
 UnionArgType = Dict[str, Union[str, int]]

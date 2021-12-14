@@ -574,6 +574,7 @@ class _CallableMock:
         method: str,
         caller_frame_info: Traceback,
         is_async: bool = False,
+        callable_returns_coroutine: bool = False,
         # type_validation accepted values:
         #  * None:  type validation will be enabled except if target is a StrictMock
         #           with disabled type validation
@@ -585,6 +586,7 @@ class _CallableMock:
         self.method = method
         self.runners: List[_BaseRunner] = []
         self.is_async = is_async
+        self.callable_returns_coroutine = callable_returns_coroutine
         self.type_validation = type_validation or type_validation is None
         self.caller_frame_info = caller_frame_info
 
@@ -604,7 +606,10 @@ class _CallableMock:
         if self.type_validation and runner.TYPE_VALIDATION:
             if runner.original_callable is not None:
                 _validate_return_type(
-                    runner.original_callable, value, self.caller_frame_info
+                    runner.original_callable,
+                    value,
+                    self.caller_frame_info,
+                    self.callable_returns_coroutine,
                 )
             elif isinstance(runner.target, StrictMock):
                 _validate_return_type(
@@ -1189,6 +1194,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             self._method,
             self.caller_frame_info,
             is_async=True,
+            callable_returns_coroutine=self._callable_returns_coroutine,
             type_validation=self.type_validation,
         )
 
