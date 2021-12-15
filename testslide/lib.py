@@ -17,8 +17,8 @@ from unittest.mock import Mock
 import typeguard
 
 if sys.version_info >= (3, 8):
-    from typing import get_origin, get_args
-elif sys.version_info >= (3, 7):
+    from typing import get_args, get_origin
+elif sys.version_info > (3, 7):
     from typing import _GenericAlias
 
     # Versions of `get_origin` that only support GenericAlias.
@@ -33,7 +33,7 @@ elif sys.version_info >= (3, 7):
         return ()
 
 else:  # python3.6
-    from typing import GenericMeta
+    from typing import GenericMeta  # type: ignore
 
     def get_origin(tp):
         if isinstance(tp, GenericMeta):
