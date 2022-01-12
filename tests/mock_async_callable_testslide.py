@@ -168,7 +168,8 @@ def mock_async_callable_tests(context):
                 self.callable_target = getattr(self.real_target, self.callable_arg)
 
                 with self.assertRaisesRegex(
-                    TypeCheckError, "^type of return must be a list; got (asyncio|coroutine)"
+                    TypeCheckError,
+                    "^type of return must be a list; got (asyncio|coroutine)",
                 ):
                     await self.callable_target(*self.call_args, **self.call_kwargs)
 
