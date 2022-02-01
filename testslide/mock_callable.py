@@ -43,7 +43,7 @@ def mock_callable(
     #  * False:  type validation will be disabled
     type_validation: Optional[bool] = None,
 ) -> "_MockCallableDSL":
-    caller_frame = inspect.currentframe().f_back  # type: ignore
+    caller_frame = inspect.currentframe().f_back.f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
     caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
