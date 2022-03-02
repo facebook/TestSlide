@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import copy
 import os
 import os.path
 import pty
@@ -46,7 +45,7 @@ class TestCliBase(unittest.TestCase):
             args.append("--show-testslide-stack-trace")
         args.extend(self.argv)
 
-        env = dict(copy.copy(os.environ))
+        env = dict(os.environ)
         env.update(self.env)
 
         if tty_stdout:
