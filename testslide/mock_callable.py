@@ -145,7 +145,7 @@ def _format_args(indent: int, *args: Any, **kwargs: Any) -> str:
         if kwargs:
             s += "\n"
             for k in sorted(kwargs.keys()):
-                s += "{}  {}={},\n".format(indentation, k, kwargs[k])
+                s += "{}  {}={},\n".format(indentation, k, repr(kwargs[k]))
             s += "{}".format(indentation)
         s += "}\n"
     return s

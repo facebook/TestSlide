@@ -123,7 +123,7 @@ def mock_callable_tests(context):
                 kwargs_msg = (
                     "    {\n"
                     + "".join(
-                        "      {}={},\n".format(k, self.call_kwargs[k])
+                        "      {}={},\n".format(k, repr(self.call_kwargs[k]))
                         for k in sorted(self.call_kwargs.keys())
                     )
                     + "    }\n"
@@ -251,7 +251,7 @@ def mock_callable_tests(context):
                                 + "    {\n"
                                 + "".join(
                                     "      {}={},\n".format(
-                                        k, self.specific_call_kwargs[k]
+                                        k, repr(self.specific_call_kwargs[k])
                                     )
                                     for k in sorted(self.specific_call_kwargs.keys())
                                 )
