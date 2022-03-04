@@ -125,7 +125,7 @@ def test_pass(testdir):
             sample_module.CallOrderTarget("c").f1("a")
         """
     )
-    result = testdir.runpytest("-v")
+    result = testdir.runpytest("-v", "--asyncio-mode=auto")
     assert "passed, 4 errors" in result.stdout.str()
     assert "failed" not in result.stdout.str()
     expected_failure = re.compile(
