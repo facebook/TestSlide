@@ -11,7 +11,7 @@ from collections import abc
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union, get_type_hints
 from unittest.mock import Mock
 
 import typeguard
@@ -175,7 +175,7 @@ def _validate_callable_signature(
     return True
 
 
-def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
+def _validate_argument_type(expected_type: Union[Type, str], name: str, value: Any) -> None:
     if "~" in str(expected_type):
         # this means that we have a TypeVar type, and those require
         # checking all the types of all the params as a whole, but we
@@ -245,6 +245,7 @@ def _validate_callable_arg_types(
     kwargs: Dict[str, Any],
 ) -> None:
     argspec = inspect.getfullargspec(callable_template)
+    type_hints = get_type_hints(callable_template)
     idx_offset = 1 if skip_first_arg else 0
     type_errors = []
     for idx in range(0, len(args)):
@@ -255,7 +256,7 @@ def _validate_callable_arg_types(
                 raise TypeError("Extra argument given: ", repr(args[idx]))
             argname = argspec.args[idx + idx_offset]
             try:
-                expected_type = argspec.annotations.get(argname)
+                expected_type = type_hints.get(argname)
                 if not expected_type:
                     continue
 
@@ -265,7 +266,7 @@ def _validate_callable_arg_types(
 
     for argname, value in kwargs.items():
         try:
-            expected_type = argspec.annotations.get(argname)
+            expected_type = type_hints.get(argname)
             if not expected_type:
                 continue
 
@@ -359,10 +360,10 @@ def _validate_return_type(
     unwrap_template_awaitable: bool = False,
 ) -> None:
     try:
-        argspec = inspect.getfullargspec(template)
+        hints = get_type_hints(template)
+        expected_type = hints.get("return")
     except TypeError:
         return
-    expected_type = argspec.annotations.get("return")
     if expected_type:
         if unwrap_template_awaitable:
             type_origin = get_origin(expected_type)
