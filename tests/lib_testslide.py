@@ -5,13 +5,19 @@
 
 import inspect
 import unittest.mock
+import sys
 from typing import Optional, Type, TypeVar
 
 import testslide.lib
 from testslide import StrictMock
 from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
 
-from . import sample_module
+
+if (3, 6) < sys.version_info < (3, 11):
+    from . import sample_module_future as sample_module
+else:
+    from . import sample_module
+
 
 T = TypeVar("T")
 

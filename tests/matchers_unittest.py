@@ -3,9 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
+
 import testslide
 
-from . import sample_module
+if (3, 6) < sys.version_info < (3, 11):
+    from . import sample_module_future as sample_module
+else:
+    from . import sample_module
 
 
 class IntMatcherTest(testslide.TestCase):

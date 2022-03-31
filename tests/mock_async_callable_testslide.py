@@ -5,6 +5,7 @@
 
 import contextlib
 
+import sys
 import testslide
 from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
 from testslide.lib import TypeCheckError
@@ -16,7 +17,10 @@ from testslide.mock_callable import (
 )
 from testslide.strict_mock import StrictMock
 
-from . import sample_module
+if (3, 6) < sys.version_info < (3, 11):
+    from . import sample_module_future as sample_module
+else:
+    from . import sample_module
 
 
 @context("mock_async_callable()")
@@ -725,6 +729,8 @@ def mock_async_callable_tests(context):
     def when_target_is_a_module(context):
         @context.memoize_before
         async def target_arg(self):
+            if (3, 6) < sys.version_info < (3, 11):
+                return "tests.sample_module_future"
             return "tests.sample_module"
 
         @context.memoize_before

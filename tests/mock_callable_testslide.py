@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import sys
 
 import testslide
 from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
@@ -19,7 +20,10 @@ from testslide.mock_callable import (
 )
 from testslide.strict_mock import StrictMock
 
-from . import sample_module
+if (3, 6) < sys.version_info < (3, 11):
+    from . import sample_module_future as sample_module
+else:
+    from . import sample_module
 
 
 async def coro_fun(*args):
@@ -1113,7 +1117,11 @@ def mock_callable_tests(context):
 
     @context.sub_context
     def when_target_is_a_module(context):
-        context.memoize("target_arg", lambda self: "tests.sample_module")
+        if (3, 6) < sys.version_info < (3, 11):
+            context.memoize("target_arg", lambda self: "tests.sample_module_future")
+        else:
+            context.memoize("target_arg", lambda self: "tests.sample_module")
+
         context.memoize("real_target", lambda self: sample_module)
 
         @context.example

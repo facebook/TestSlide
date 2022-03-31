@@ -3,14 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
+
 from testslide import StrictMock
 from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
 from testslide.lib import TypeCheckError
 from testslide.patch_attribute import unpatch_all_mocked_attributes
 from testslide.strict_mock import UndefinedAttribute
 
-from . import sample_module
-
+if (3, 6) < sys.version_info < (3, 11):
+    from . import sample_module_future as sample_module
+else:
+    from . import sample_module
 
 @context("patch_attribute()")
 def patch_attribute_tests(context):
@@ -150,7 +154,10 @@ def patch_attribute_tests(context):
 
         @context.sub_context
         def given_as_a_string(context):
-            context.memoize("target", lambda self: "tests.sample_module")
+            if (3, 6) < sys.version_info < (3, 11):
+                context.memoize("target", lambda self: "tests.sample_module_future")
+            else:
+                context.memoize("target", lambda self: "tests.sample_module")
             context.memoize("real_target", lambda self: sample_module)
             context.merge_context("common", fails_if_class_attribute=True)
 

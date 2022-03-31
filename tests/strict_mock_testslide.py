@@ -23,7 +23,10 @@ from testslide.strict_mock import (
     UnsupportedMagic,
 )
 
-from . import sample_module
+if (3, 6) < sys.version_info < (3, 11):
+    from . import sample_module_future as sample_module
+else:
+    from . import sample_module
 
 
 def extra_arg_with_wraps(f):
