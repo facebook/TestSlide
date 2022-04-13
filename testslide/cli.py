@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import argparse
+import inspect
 import os
 import re
 import sys
@@ -78,17 +79,13 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
     _unittest_testcase_loaded = True
 
     for test_case in _get_all_test_cases(import_module_names):
-
         test_method_names = [
             test_method_name
             for test_method_name in dir(test_case)
             if test_method_name.startswith("test")
             or test_method_name.startswith("ftest")
             or test_method_name.startswith("xtest")
-            # FIXME: debug why ismethod is not properly filtering methods. Using
-            # callabdle as a workaround.
-            # if inspect.ismethod(getattr(test_case, test_method_name))
-            if callable(getattr(test_case, test_method_name))
+            if inspect.ismethod(getattr(test_case(), test_method_name))
         ]
 
         if not test_method_names:
