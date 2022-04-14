@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import re
+import sys
 
 
 def test_pass(testdir):
@@ -125,7 +126,11 @@ def test_pass(testdir):
             sample_module.CallOrderTarget("c").f1("a")
         """
     )
-    result = testdir.runpytest("-v", "--asyncio-mode=auto")
+    # asyncio-mode is not supported on python3.6
+    if sys.version_info >= (3, 7):
+        result = testdir.runpytest("-v", "--asyncio-mode=auto")
+    else:
+        result = testdir.runpytest("-v")
     assert "passed, 4 errors" in result.stdout.str()
     assert "failed" not in result.stdout.str()
     expected_failure = re.compile(
