@@ -7,7 +7,7 @@ import inspect
 import os
 import sys
 import unittest.mock
-from collections import abc
+import collections.abc as abc
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
