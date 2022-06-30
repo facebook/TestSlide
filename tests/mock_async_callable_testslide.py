@@ -99,7 +99,7 @@ def mock_async_callable_tests(context):
                 getattr(
                     self,
                     "exception_regex_message",
-                    "mock_async_callable\(\) can not be used with non coroutine functions\.",
+                    r"mock_async_callable\(\) can not be used with non coroutine functions\.",
                 ),
             ):
                 mock_async_callable(self.target_arg, self.callable_arg)
@@ -535,7 +535,7 @@ def mock_async_callable_tests(context):
                 @context.example
                 async def raises_NotACoroutine_with_non_async_function(self):
                     with self.assertRaisesRegex(
-                        NotACoroutine, "^Function did not return a coroutine\."
+                        NotACoroutine, r"^Function did not return a coroutine\."
                     ):
                         await self.callable_target(*self.call_args, **self.call_kwargs)
 
@@ -596,7 +596,7 @@ def mock_async_callable_tests(context):
                     @context.example
                     async def it_raises_NotACoroutine(self):
                         with self.assertRaisesRegex(
-                            NotACoroutine, "^Function did not return a coroutine\."
+                            NotACoroutine, r"^Function did not return a coroutine\."
                         ):
                             await self.callable_target(
                                 *self.call_args, **self.call_kwargs
@@ -608,7 +608,7 @@ def mock_async_callable_tests(context):
                 async def it_raises_ValueError(self):
                     with self.assertRaisesRegex(
                         ValueError,
-                        "^Can not wrap original callable that does not exist\.",
+                        r"^Can not wrap original callable that does not exist\.",
                     ):
                         mock_async_callable(
                             self.target_arg, self.callable_arg
@@ -635,7 +635,7 @@ def mock_async_callable_tests(context):
             @context.example(".to_call_original()")
             async def to_call_original(self):
                 with self.assertRaisesRegex(
-                    ValueError, "^Can not call original callable that does not exist\."
+                    ValueError, r"^Can not call original callable that does not exist\."
                 ):
                     mock_async_callable(
                         self.target_arg, self.callable_arg
@@ -647,7 +647,7 @@ def mock_async_callable_tests(context):
                 None
             ).and_assert_called()
             with self.assertRaisesRegex(
-                AssertionError, "^calls did not match assertion\."
+                AssertionError, r"^calls did not match assertion\."
             ):
                 self.assert_all()
 
@@ -659,7 +659,7 @@ def mock_async_callable_tests(context):
             await self.callable_target(*self.call_args, **self.call_kwargs)
             with self.assertRaisesRegex(
                 ValueError,
-                "^No extra configuration is allowed after mock_async_callable.+self.mock_async_callable",
+                r"^No extra configuration is allowed after mock_async_callable.+self.mock_async_callable",
             ):
                 mock.and_assert_called_once()
 

@@ -215,7 +215,7 @@ def strict_mock(context):
             return (
                 "<StrictMock 0x{:02X} ".format(id(self.strict_mock))
                 + re.escape(self.caller_filename)
-                + ":\d+>"
+                + r":\d+>"
             )
 
         context.memoize("value", lambda self: 3241234123)
@@ -350,7 +350,7 @@ def strict_mock(context):
                             ),
                         )
                         + re.escape(self.caller_filename)
-                        + ":\d+>"
+                        + r":\d+>"
                     )
 
                 @context.memoize
@@ -1205,7 +1205,7 @@ def strict_mock(context):
                             ),
                         )
                         + re.escape(self.caller_filename)
-                        + ":\d+>"
+                        + r":\d+>"
                     ),
                     str(self.strict_mock),
                 )

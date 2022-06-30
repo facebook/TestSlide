@@ -965,7 +965,7 @@ def mock_callable_tests(context):
                 getattr(
                     self,
                     "exception_regex_message",
-                    "mock_callable\(\) can not be used with coroutine functions\.",
+                    r"mock_callable\(\) can not be used with coroutine functions\.",
                 ),
             ):
                 mock_callable(self.target_arg, self.callable_arg)
