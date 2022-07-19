@@ -61,6 +61,7 @@ if sys.version_info < (3, 7):
             finally:
                 loop.close()
 
+
 else:
     asyncio_run = partial(asyncio.run, debug=True)
 

@@ -2,12 +2,12 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import collections.abc as abc
 import functools
 import inspect
 import os
 import sys
 import unittest.mock
-import collections.abc as abc
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
@@ -31,6 +31,7 @@ elif sys.version_info > (3, 7):
         if isinstance(tp, _GenericAlias) and tp.__origin__ is not abc.Callable:
             return tp.__args__
         return ()
+
 
 else:  # python3.6
     from typing import GenericMeta  # type: ignore

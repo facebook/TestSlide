@@ -6,9 +6,9 @@
 import asyncio
 import functools
 import inspect
-from inspect import Traceback
 import platform
 import re
+from inspect import Traceback
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -155,7 +155,10 @@ def _format_args(indent: int, *args: Any, **kwargs: Any) -> str:
 
 def _is_coroutine(obj: Any) -> bool:
 
-    if [int(re.sub(r"[^0-9]", "", x)) for x in platform.python_version_tuple()] < [3, 11]:
+    if [int(re.sub(r"[^0-9]", "", x)) for x in platform.python_version_tuple()] < [
+        3,
+        11,
+    ]:
         return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper)  # type: ignore
     else:
         return inspect.iscoroutine(obj)
