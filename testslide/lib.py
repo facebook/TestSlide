@@ -32,7 +32,6 @@ elif sys.version_info > (3, 7):
             return tp.__args__
         return ()
 
-
 else:  # python3.6
     from typing import GenericMeta  # type: ignore
 
