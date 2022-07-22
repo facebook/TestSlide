@@ -349,7 +349,6 @@ def mock_constructor(
                 "Usage with classes that define __new__() is currently not supported."
             )
 
-        gc.collect()
         instances = [
             obj
             for obj in gc.get_referrers(original_class)
