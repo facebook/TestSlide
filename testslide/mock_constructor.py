@@ -2,8 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
-import gc
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
@@ -347,18 +345,6 @@ def mock_constructor(
         if "__new__" in original_class.__dict__:
             raise NotImplementedError(
                 "Usage with classes that define __new__() is currently not supported."
-            )
-
-        instances = [
-            obj
-            for obj in gc.get_referrers(original_class)
-            if type(obj) is original_class
-        ]
-        if instances:
-            raise RuntimeError(
-                "mock_constructor() can not be used after instances of {} were created: {}".format(
-                    class_name, instances
-                )
             )
 
         if not inspect.isclass(original_class):
