@@ -167,19 +167,6 @@ def mock_constructor(context):
     @context.sub_context
     def patching_mechanism(context):
         @context.example
-        def can_not_mock_constructor_with_existing_instances(self):
-            original_target = original_target_class()
-            with self.assertRaisesWithMessageInException(
-                RuntimeError,
-                "mock_constructor() can not be used after instances of Target were created: {}".format(
-                    [original_target]
-                ),
-            ):
-                self.mock_constructor(
-                    self.target_module, self.target_class_name
-                ).to_call_original()
-
-        @context.example
         def works_with_composition(self):
             self.mock_constructor(self.target_module, self.target_class_name).for_call(
                 "1"
@@ -233,15 +220,6 @@ def mock_constructor(context):
 
     @context.sub_context
     def arguments(context):
-        @context.example
-        def refuses_to_mock_if_instances_exist(self):
-            target_instance = self.get_target_class()()  # noqa F841
-            with self.assertRaisesWithMessageInException(
-                RuntimeError,
-                "mock_constructor() can not be used after instances of Target were created: ",
-            ):
-                self.mock_constructor(self.target_module, self.target_class_name)
-
         @context.sub_context
         def module(context):
             context.memoize("args", lambda self: ("6", "7"))
