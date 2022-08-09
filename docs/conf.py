@@ -29,6 +29,7 @@ import sys
 project = "TestSlide"
 copyright = "Meta Platforms, Inc"
 author = "Fabio Pugliese Ornellas & Contributors"
+language = "en"
 
 # The short X.Y version
 version = open("../testslide/version").read().rstrip()
