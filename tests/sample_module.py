@@ -136,6 +136,12 @@ def test_function_returns_coroutine(
     return async_test_function(arg1, arg2, kwarg1, kwarg2)
 
 
+def instance_method_with_str_types(
+    arg1: "str", arg2: "Any", arg3: "UnionArgType", kwarg1: "int"
+) -> "Optional[str]":
+    return "original response"
+
+
 UnionArgType = Dict[str, Union[str, int]]
 
 

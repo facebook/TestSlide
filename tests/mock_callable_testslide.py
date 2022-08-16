@@ -184,6 +184,36 @@ def mock_callable_tests(context):
                                     }
                                     self.callable_target(*call_args, **call_kwargs)
 
+                            @context.example
+                            def passes_with_valid_str_types(self):
+                                args = (
+                                    "str val",
+                                    1234,
+                                    {"key1": "string", "key2": 4321},
+                                )
+                                kwargs = {"kwarg1": 1234}
+                                self.mock_callable(
+                                    sample_module, "instance_method_with_str_types"
+                                ).for_call(*args, **kwargs).to_return_value("hello")
+                                sample_module.instance_method_with_str_types(
+                                    *args, **kwargs
+                                )
+
+                            @context.example
+                            def raises_TypeCheckError_for_invalid_str_types(self):
+                                args = (1234, 1234, 1234)
+                                kwargs = {"kwarg1": "str val"}
+                                self.mock_callable(
+                                    sample_module, "instance_method_with_str_types"
+                                ).for_call(*args, **kwargs).to_return_value("hello")
+                                with self.assertRaisesRegex(
+                                    TypeCheckError,
+                                    r"(?ms)type of arg1 must be str.*type of arg3 must be a dict.*",
+                                ):
+                                    sample_module.instance_method_with_str_types(
+                                        *args, **kwargs
+                                    )
+
                         if has_return_value:
 
                             @context.sub_context
@@ -205,6 +235,43 @@ def mock_callable_tests(context):
                                             self.callable_target(
                                                 *self.call_args, **self.call_kwargs
                                             )
+
+                                @context.example
+                                def passes_with_valid_str_return_types(self):
+                                    args = (
+                                        "str val",
+                                        1234,
+                                        {"key1": "string", "key2": 4321},
+                                    )
+                                    kwargs = {"kwarg1": 1234}
+                                    self.mock_callable(
+                                        sample_module, "instance_method_with_str_types"
+                                    ).to_return_value("hello")
+                                    sample_module.instance_method_with_str_types(
+                                        *args, **kwargs
+                                    )
+
+                                @context.example
+                                def raises_TypeCheckError_for_invalid_str_return_types(
+                                    self,
+                                ):
+                                    args = (
+                                        "str val",
+                                        1234,
+                                        {"key1": "string", "key2": 4321},
+                                    )
+                                    kwargs = {"kwarg1": 1234}
+                                    self.mock_callable(
+                                        sample_module, "instance_method_with_str_types"
+                                    ).to_return_value(1234)
+                                    with self.assertRaisesRegex(
+                                        TypeCheckError,
+                                        r"(?ms)type of return must be one of \(str, NoneType\); "
+                                        "got int instead: 1234.*",
+                                    ):
+                                        sample_module.instance_method_with_str_types(
+                                            *args, **kwargs
+                                        )
 
             @context.sub_context(".for_call(*args, **kwargs)")
             def for_call_args_kwargs(context):
