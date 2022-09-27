@@ -32,7 +32,7 @@ elif sys.version_info > (3, 7):
             return tp.__args__
         return ()
 
-else:  # python3.6
+else:
     from typing import GenericMeta  # type: ignore
 
     def get_origin(tp):
