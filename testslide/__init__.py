@@ -45,24 +45,11 @@ if TYPE_CHECKING:
     # hack for Mypy
     from testslide.runner import BaseFormatter
 
-if sys.version_info < (3, 6):
-    raise RuntimeError("Python >=3.6 required.")
-
 if sys.version_info < (3, 7):
+    raise RuntimeError("Python >=3.7 required.")
 
-    def asyncio_run(coro):
-        loop = asyncio.events.new_event_loop()
-        try:
-            loop.set_debug(True)
-            loop.run_until_complete(coro)
-        finally:
-            try:
-                loop.run_until_complete(loop.shutdown_asyncgens())
-            finally:
-                loop.close()
 
-else:
-    asyncio_run = partial(asyncio.run, debug=True)
+asyncio_run = partial(asyncio.run, debug=True)
 
 
 if sys.version_info < (3, 8):
@@ -400,9 +387,6 @@ class _ExampleRunner:
 
     @contextlib.contextmanager
     def _raise_if_asyncio_warnings(self, context_data: _ContextData) -> Iterator[None]:
-        if sys.version_info < (3, 7):
-            yield
-            return
         original_showwarning = warnings.showwarning
         caught_failures: List[Union[Exception, str]] = []
 

@@ -6,7 +6,6 @@
 import asyncio
 import os
 import subprocess
-import sys
 import time
 import unittest
 from typing import List
@@ -1909,29 +1908,25 @@ class SmokeTestAsync(TestDSLBase):
         ):
             self.run_first_context_first_example()
 
-    if sys.version_info >= (3, 7):
+    def test_fail_if_coroutine_not_awaited(self):
+        @context
+        def top(context):
+            @context.example
+            async def example(self):
+                asyncio.sleep(0.1)
 
-        def test_fail_if_coroutine_not_awaited(self):
-            @context
-            def top(context):
-                @context.example
-                async def example(self):
-                    asyncio.sleep(0.1)
+        with self.assertRaisesRegex(RuntimeWarning, "coroutine '.+' was never awaited"):
+            self.run_first_context_first_example()
 
-            with self.assertRaisesRegex(
-                RuntimeWarning, "coroutine '.+' was never awaited"
-            ):
-                self.run_first_context_first_example()
+    def test_fail_if_slow_task(self):
+        @context
+        def top(context):
+            @context.example
+            async def example(self):
+                time.sleep(0.1)
 
-        def test_fail_if_slow_task(self):
-            @context
-            def top(context):
-                @context.example
-                async def example(self):
-                    time.sleep(0.1)
-
-            with self.assertRaisesRegex(SlowCallback, "^Executing .+ took .+ seconds"):
-                self.run_first_context_first_example()
+        with self.assertRaisesRegex(SlowCallback, "^Executing .+ took .+ seconds"):
+            self.run_first_context_first_example()
 
     def test_resetting_attribute_raises_ValueError(self):
         @context
@@ -2053,11 +2048,7 @@ class TestMockAsyncCallableIntegration(TestDSLBase):
         def fail_top(context):
             @context.example
             async def spawn_task_but_dont_await(self):
-                if sys.version_info < (3, 7):
-                    loop = asyncio.get_event_loop()
-                    loop.create_task(dummy_async_func())
-                else:
-                    asyncio.create_task(dummy_async_func())
+                asyncio.create_task(dummy_async_func())
 
         examples = _get_name_to_examples()
 
@@ -2129,11 +2120,7 @@ class TestAsyncRun(TestDSLBase):
             pass
 
         async def spawn_task_but_dont_await():
-            if sys.version_info < (3, 7):
-                loop = asyncio.get_event_loop()
-                loop.create_task(dummy_async_func())
-            else:
-                asyncio.create_task(dummy_async_func())
+            asyncio.create_task(dummy_async_func())
 
         @context
         def fail_top(context):
