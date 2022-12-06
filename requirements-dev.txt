@@ -9,4 +9,3 @@ sphinx
 sphinx-autobuild
 sphinx-kr-theme
 twine
--r requirements.txt
