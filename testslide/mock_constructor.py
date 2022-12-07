@@ -205,6 +205,7 @@ def _get_mocked_class(
     target_class_id: Union[Tuple[int, str], int],
     callable_mock: _CallableMock,
     type_validation: bool,
+    **kwargs: Any,
 ) -> type:
     if target_class_id in _target_class_id_by_original_class_id:
         raise RuntimeError("Can not mock the same class at two different modules!")
@@ -251,7 +252,7 @@ def _get_mocked_class(
 
     # ...to create the mocked subclass...
     mocked_class = type(
-        str(original_class.__name__), (original_class,), mocked_class_dict
+        str(original_class.__name__), (original_class,), mocked_class_dict, **kwargs
     )
 
     # ...and deal with forbidden access to the original class
@@ -295,9 +296,10 @@ def _patch_and_return_mocked_class(
     original_class: type,
     callable_mock: _CallableMock,
     type_validation: bool,
+    **kwargs: Any,
 ) -> type:
     mocked_class = _get_mocked_class(
-        original_class, target_class_id, callable_mock, type_validation
+        original_class, target_class_id, callable_mock, type_validation, **kwargs
     )
 
     def unpatcher() -> None:
@@ -323,6 +325,7 @@ def mock_constructor(
     class_name: str,
     allow_private: bool = False,
     type_validation: bool = True,
+    **kwargs: Any,
 ) -> _MockConstructorDSL:
     if not isinstance(class_name, str):
         raise ValueError("Second argument must be a string with the name of the class.")
@@ -364,6 +367,7 @@ def mock_constructor(
             original_class,
             callable_mock,
             type_validation,
+            **kwargs,
         )
 
     def original_callable(cls: type, *args: Any, **kwargs: Any) -> Any:
