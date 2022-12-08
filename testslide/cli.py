@@ -41,8 +41,8 @@ def _filename_to_module_name(name: str) -> str:
 def _get_all_test_case_subclasses() -> List[TestCase]:
     def get_all_subclasses(base: Type[unittest.TestCase]) -> List[TestCase]:
         return list(
-            {  # type: ignore
-                "{}.{}".format(c.__module__, c.__name__): c
+            {
+                "{}.{}".format(c.__module__, c.__name__): c  # type: ignore
                 for c in (
                     base.__subclasses__()  # type: ignore
                     + [g for s in base.__subclasses__() for g in get_all_subclasses(s)]  # type: ignore
@@ -386,7 +386,10 @@ class Cli:
         try:
             parsed_args = self.parser.parse_args(self.args)
         except SystemExit as e:
-            return e.code
+            # Basically, argparse has a `.error()` method that calls a `.exit()` method,
+            # which in turn calls `sys.exit()`, passing an int parameter.
+            # Ignore the detection that it might be a None or str.
+            return e.code  # type: ignore
         config = self._get_config_from_parsed_args(parsed_args)
 
         if config.profile_threshold_ms is not None:

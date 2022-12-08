@@ -355,20 +355,29 @@ def mock_constructor(
         elif not issubclass(original_class, object):
             raise ValueError("Old style classes are not supported.")
 
-        caller_frame = inspect.currentframe().f_back  # type: ignore
+        caller_frame = inspect.currentframe()
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
-        caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
-        callable_mock = _CallableMock(original_class, "__new__", caller_frame_info)
-        mocked_class = _patch_and_return_mocked_class(
-            target,
-            class_name,
-            target_class_id,
-            original_class,
-            callable_mock,
-            type_validation,
-            **kwargs,
-        )
+        if caller_frame is not None:
+            prev_frame = caller_frame.f_back
+            if prev_frame:
+                caller_frame_info = inspect.getframeinfo(prev_frame, context=0)
+                callable_mock = _CallableMock(original_class, "__new__", caller_frame_info)  # type: ignore[assignment]
+                mocked_class = _patch_and_return_mocked_class(
+                    target,
+                    class_name,
+                    target_class_id,
+                    original_class,
+                    callable_mock,  # type: ignore[arg-type]
+                    type_validation,
+                    **kwargs,
+                )
+            else:
+                raise Exception("Cannot retrieve previous frame for caller frame")
+        else:
+            raise Exception(
+                "Cannot retrieve current frame, cannot create a CallableMock"
+            )
 
     def original_callable(cls: type, *args: Any, **kwargs: Any) -> Any:
         global _init_args_from_original_callable, _init_kwargs_from_original_callable
