@@ -7,6 +7,7 @@ import sys
 
 import testslide
 
+
 class QuestBase:
     def __init_subclass__(cls, swallow, **kwargs):
         cls.swallow = swallow

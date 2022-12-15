@@ -115,8 +115,8 @@ class ImportProfiler:
     def _profiled_import(
         self,
         name: str,
-        globals: Dict[str, Any] = None,
-        locals: Dict[str, Any] = None,
+        globals: Optional[Dict[str, Any]] = None,
+        locals: Optional[Dict[str, Any]] = None,
         fromlist: Tuple = (),
         level: int = 0,
     ) -> None:

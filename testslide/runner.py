@@ -766,7 +766,7 @@ class Runner:
         contexts: List[Context],
         formatter: Union[SlowImportWarningMixin, DocumentFormatter],
         shuffle: bool = False,
-        seed: int = None,
+        seed: Optional[int] = None,
         focus: bool = False,
         fail_fast: bool = False,
         fail_if_focused: bool = False,

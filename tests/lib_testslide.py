@@ -357,7 +357,7 @@ def _validate_return_type(context):
         https://github.com/facebook/TestSlide/issues/165
         """
 
-        def with_typevar_return() -> Type[TypeVar("T")]:
+        def with_typevar_return() -> Type[TypeVar("T")]:  # type: ignore[empty-body]
             pass
 
         self.callable_template = with_typevar_return
