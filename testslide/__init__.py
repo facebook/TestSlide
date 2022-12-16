@@ -302,10 +302,16 @@ class SlowCallback(Exception):
 
 
 class _ExampleRunner:
-    def __init__(self, example: "Example", formatter: "BaseFormatter") -> None:
+    def __init__(
+        self,
+        example: "Example",
+        formatter: "BaseFormatter",
+        slow_callback_is_not_fatal: bool = False,
+    ) -> None:
         self.example = example
         self.formatter = formatter
         self.trim_path_prefix = self.formatter.trim_path_prefix
+        self.slow_callback_is_not_fatal = slow_callback_is_not_fatal
 
     @staticmethod
     async def _fail_if_not_coroutine_function(
@@ -386,7 +392,9 @@ class _ExampleRunner:
             )
 
     @contextlib.contextmanager
-    def _raise_if_asyncio_warnings(self, context_data: _ContextData) -> Iterator[None]:
+    def _raise_if_asyncio_warnings(
+        self, context_data: _ContextData, slow_callback_is_not_fatal: bool = False
+    ) -> Iterator[None]:
         original_showwarning = warnings.showwarning
         caught_failures: List[Union[Exception, str]] = []
 
@@ -425,7 +433,8 @@ class _ExampleRunner:
             else:
                 original_logger_warning(msg, *args, **kwargs)
 
-        asyncio.log.logger.warning = logger_warning  # type: ignore
+        if not slow_callback_is_not_fatal:
+            asyncio.log.logger.warning = logger_warning  # type: ignore
 
         aggregated_exceptions = AggregatedExceptions()
 
@@ -442,7 +451,9 @@ class _ExampleRunner:
 
     def _async_run_all_hooks_and_example(self, context_data: _ContextData) -> None:
         coro = self._real_async_run_all_hooks_and_example(context_data)
-        with self._raise_if_asyncio_warnings(context_data):
+        with self._raise_if_asyncio_warnings(
+            context_data, self.slow_callback_is_not_fatal
+        ):
             asyncio_run(coro)
 
     @staticmethod
