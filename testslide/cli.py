@@ -168,6 +168,7 @@ class _Config:
     names_regex_exclude: Optional[Pattern[Any]] = None
     dsl_debug: Optional[bool] = False
     profile_threshold_ms: Optional[int] = None
+    slow_callback_is_not_fatal: bool = False
 
 
 class Cli:
@@ -286,6 +287,11 @@ class Cli:
                 "more than the given number of ms to import. Experimental."
             ),
         )
+        parser.add_argument(
+            "--slow-callback-is-not-fatal",
+            action="store_true",
+            help="Disable treating slow callback as a test failure",
+        )
         if not disable_test_files:
             parser.add_argument(
                 "test_files",
@@ -379,6 +385,7 @@ class Cli:
                 _filename_to_module_name(test_file)
                 for test_file in parsed_args.test_files
             ],
+            slow_callback_is_not_fatal=parsed_args.slow_callback_is_not_fatal,
         )
         return config
 
@@ -428,6 +435,7 @@ class Cli:
                     names_regex_filter=config.names_regex_filter,
                     names_regex_exclude=config.names_regex_exclude,
                     quiet=config.quiet,
+                    slow_callback_is_not_fatal=not config.slow_callback_is_not_fatal,
                 ).run()
 
 
