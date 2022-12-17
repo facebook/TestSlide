@@ -814,6 +814,14 @@ def strict_mock(context):
                                     with self.strict_mock as target:
                                         self.assertTrue(target is self.strict_mock)
 
+                                @context.example
+                                def works_with_exitstack(self):
+                                    with contextlib.ExitStack() as exit_stack:
+                                        target = exit_stack.enter_context(
+                                            self.strict_mock
+                                        )
+                                        self.assertTrue(target is self.strict_mock)
+
             @context.sub_context
             def string_template(context):
                 @context.example
@@ -1115,6 +1123,14 @@ def strict_mock(context):
                         async def it_yields_the_mock(self):
                             async with self.strict_mock as m:
                                 assert id(self.strict_mock) == id(m)
+
+                        @context.example
+                        async def works_with_exitstack(self):
+                            async with contextlib.AsyncExitStack() as exit_stack:
+                                target = await exit_stack.enter_async_context(
+                                    self.strict_mock
+                                )
+                                self.assertTrue(target is self.strict_mock)
 
     @context.sub_context
     def making_copies(context):
