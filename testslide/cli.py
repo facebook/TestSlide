@@ -78,7 +78,6 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
     _unittest_testcase_loaded = True
 
     for test_case in _get_all_test_cases(import_module_names):
-
         test_method_names = [
             test_method_name
             for test_method_name in dir(test_case)
@@ -100,7 +99,6 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
             test_case: unittest.TestCase,
         ) -> Callable[[testslide.dsl._DSLContext], None]:
             def context_code(context: testslide.dsl._DSLContext) -> None:
-
                 for test_method_name in test_method_names:
 
                     @contextmanager
@@ -172,7 +170,6 @@ class _Config:
 
 
 class Cli:
-
     FORMAT_NAME_TO_FORMATTER_CLASS = {
         "p": ProgressFormatter,
         "progress": ProgressFormatter,

@@ -94,7 +94,6 @@ def function_at_module():
 
 @context("mock_constructor()")
 def mock_constructor(context):
-
     context.memoize("target_module", lambda self: sys.modules[__name__])
     context.memoize_before("target_class_name", lambda self: target_class_name)
 

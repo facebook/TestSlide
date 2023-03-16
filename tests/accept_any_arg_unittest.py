@@ -22,14 +22,20 @@ class TestAcceptAnyArg(TestCase):
         sample_module.test_function("firstarg", "secondarg", kwarg1="a", kwarg2="x")
 
     def test_for_partial_call_accepts_all_other_args_and_kwargs(self):
-        self.mock_callable(sample_module, "test_function",).for_partial_call(
+        self.mock_callable(
+            sample_module,
+            "test_function",
+        ).for_partial_call(
             "firstarg", kwarg1="a"
         ).to_return_value(["blah"])
         sample_module.test_function("firstarg", "xx", kwarg1="a", kwarg2="x")
 
     def test_for_partial_call_fails_if_no_required_args_are_present(self):
         with self.assertRaises(mock_callable.UnexpectedCallArguments):
-            self.mock_callable(sample_module, "test_function",).for_partial_call(
+            self.mock_callable(
+                sample_module,
+                "test_function",
+            ).for_partial_call(
                 "firstarg", kwarg1="a"
             ).to_return_value(["blah"])
             sample_module.test_function(
@@ -38,13 +44,19 @@ class TestAcceptAnyArg(TestCase):
 
     def test_for_partial_call_fails_if_no_required_kwargs_are_present(self):
         with self.assertRaises(mock_callable.UnexpectedCallArguments):
-            self.mock_callable(sample_module, "test_function",).for_partial_call(
+            self.mock_callable(
+                sample_module,
+                "test_function",
+            ).for_partial_call(
                 "firstarg", kwarg1="x"
             ).to_return_value(["blah"])
             sample_module.test_function("firstarg", "secondarg", kwarg1="a", kwarg2="x")
 
     def test_matchers_work_with_for_partial_call(self):
-        self.mock_callable(sample_module, "test_function",).for_partial_call(
+        self.mock_callable(
+            sample_module,
+            "test_function",
+        ).for_partial_call(
             matchers.Any(), "secondarg"
         ).to_return_value(["blah"])
         sample_module.test_function("asdasdeas", "secondarg", kwarg1="a", kwarg2="x")

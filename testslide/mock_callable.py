@@ -154,7 +154,6 @@ def _format_args(indent: int, *args: Any, **kwargs: Any) -> str:
 
 
 def _is_coroutine(obj: Any) -> bool:
-
     if [int(re.sub(r"[^0-9]", "", x)) for x in platform.python_version_tuple()] < [
         3,
         11,
@@ -680,7 +679,6 @@ class _CallableMock:
 
 
 class _MockCallableDSL:
-
     CALLABLE_MOCKS: Dict[
         Union[int, Tuple[int, str]], Union[Callable[[Type[object]], Any]]
     ] = {}
@@ -1166,7 +1164,6 @@ class _MockCallableDSL:
 
 
 class _MockAsyncCallableDSL(_MockCallableDSL):
-
     _NAME: str = "mock_async_callable"
 
     def __init__(
