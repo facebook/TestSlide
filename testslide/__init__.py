@@ -912,7 +912,6 @@ class Context:
         self.context_data_memoizable_attributes[name] = memoizable_code
 
         if before:
-
             if inspect.iscoroutinefunction(memoizable_code):
 
                 async def async_materialize_attribute(

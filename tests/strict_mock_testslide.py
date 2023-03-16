@@ -64,7 +64,6 @@ class TemplateParent:
 
 
 class Template(TemplateParent):
-
     __slots__ = ["slot_attribute"]
 
     non_callable: str = "original value"
@@ -553,7 +552,6 @@ def strict_mock(context):
 
                                 @context.shared_context
                                 def common_examples(context, type_validation):
-
                                     if type_validation:
 
                                         @context.example
@@ -679,7 +677,6 @@ def strict_mock(context):
 
                             @context.sub_context
                             def method_mocking(context):
-
                                 context.merge_context("can access attributes")
 
                                 @context.after

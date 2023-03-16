@@ -284,14 +284,14 @@ class FormatterMixin:
             tty_stdout=True,
             expected_return_code=1,
             expected_in_stdout=(
-                '      File \x1b[36m"tests/sample_tests.py"\x1b[39;49;00m, line \x1b[94m76\x1b[39;49;00m, in test_failing\r\n'
-                '        \x1b[94mraise\x1b[39;49;00m \x1b[36mAssertionError\x1b[39;49;00m(\x1b[33m"\x1b[39;49;00m\x1b[33mThird\x1b[39;49;00m\x1b[33m"\x1b[39;49;00m) \x1b[94mfrom\x1b[39;49;00m \x1b[04m\x1b[36mcause\x1b[39;49;00m\r\n'
+                '      File \x1b[36m"tests/sample_tests.py"\x1b[39;49;00m, line \x1b[94m76\x1b[39;49;00m, in test_failing\x1b[37m\x1b[39;49;00m\r\n'
+                '    \x1b[37m    \x1b[39;49;00m\x1b[94mraise\x1b[39;49;00m \x1b[36mAssertionError\x1b[39;49;00m(\x1b[33m"\x1b[39;49;00m\x1b[33mThird\x1b[39;49;00m\x1b[33m"\x1b[39;49;00m) \x1b[94mfrom\x1b[39;49;00m \x1b[04m\x1b[36mcause\x1b[39;49;00m\x1b[37m\x1b[39;49;00m\r\n'
                 "\x1b[0m\x1b[31m      Caused by \x1b[0m\x1b[0m\x1b[31mAssertionError: Second\x1b[0m\r\n"
-                '        File \x1b[36m"tests/sample_tests.py"\x1b[39;49;00m, line \x1b[94m74\x1b[39;49;00m, in test_failing\r\n'
-                '          \x1b[94mraise\x1b[39;49;00m \x1b[36mAssertionError\x1b[39;49;00m(\x1b[33m"\x1b[39;49;00m\x1b[33mSecond\x1b[39;49;00m\x1b[33m"\x1b[39;49;00m) \x1b[94mfrom\x1b[39;49;00m \x1b[04m\x1b[36mcause\x1b[39;49;00m\r\n'
+                '        File \x1b[36m"tests/sample_tests.py"\x1b[39;49;00m, line \x1b[94m74\x1b[39;49;00m, in test_failing\x1b[37m\x1b[39;49;00m\r\n'
+                '      \x1b[37m    \x1b[39;49;00m\x1b[94mraise\x1b[39;49;00m \x1b[36mAssertionError\x1b[39;49;00m(\x1b[33m"\x1b[39;49;00m\x1b[33mSecond\x1b[39;49;00m\x1b[33m"\x1b[39;49;00m) \x1b[94mfrom\x1b[39;49;00m \x1b[04m\x1b[36mcause\x1b[39;49;00m\x1b[37m\x1b[39;49;00m\r\n'
                 "\x1b[0m\x1b[31m        Caused by \x1b[0m\x1b[0m\x1b[31mAssertionError: First\x1b[0m\r\n"
-                '          File \x1b[36m"tests/sample_tests.py"\x1b[39;49;00m, line \x1b[94m72\x1b[39;49;00m, in test_failing\r\n'
-                '            \x1b[94mraise\x1b[39;49;00m \x1b[36mAssertionError\x1b[39;49;00m(\x1b[33m"\x1b[39;49;00m\x1b[33mFirst\x1b[39;49;00m\x1b[33m"\x1b[39;49;00m)\r\n'
+                '          File \x1b[36m"tests/sample_tests.py"\x1b[39;49;00m, line \x1b[94m72\x1b[39;49;00m, in test_failing\x1b[37m\x1b[39;49;00m\r\n'
+                '        \x1b[37m    \x1b[39;49;00m\x1b[94mraise\x1b[39;49;00m \x1b[36mAssertionError\x1b[39;49;00m(\x1b[33m"\x1b[39;49;00m\x1b[33mFirst\x1b[39;49;00m\x1b[33m"\x1b[39;49;00m)\x1b[37m\x1b[39;49;00m\r\n'
             ),
         )
 

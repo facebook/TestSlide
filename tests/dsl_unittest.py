@@ -150,7 +150,6 @@ class TestDSLBase(unittest.TestCase):
 
 
 class TestDSLContext(TestDSLBase):
-
     # Context creation
 
     def test_can_be_named_from_decorator(self):
@@ -413,7 +412,6 @@ class TestDSLContext(TestDSLBase):
 
 
 class TestDSLSharedContext(TestDSLBase):
-
     # Shared contexts
 
     def test_shared_context_named_from_decorator(self):
@@ -507,7 +505,6 @@ class TestDSLSharedContext(TestDSLBase):
         def top(context):
             @context.shared_context
             def Shared_context(context, arg_passed=False):
-
                 assert arg_passed
 
                 @context.example
@@ -567,7 +564,6 @@ class TestDSLSharedContext(TestDSLBase):
         def top(context):
             @context.shared_context
             def Shared_context(context, arg_passed=False):
-
                 assert arg_passed
 
                 @context.example
@@ -843,7 +839,6 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
             memoized = []
 
@@ -871,7 +866,6 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
 
             context.memoize("attribute_name", lambda self: value + 1)
@@ -892,7 +886,6 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
 
             context.memoize(
@@ -954,7 +947,6 @@ class TestDSLMemoizedBeforeAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
             memoized = []
 
@@ -981,7 +973,6 @@ class TestDSLMemoizedBeforeAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
             memoized = []
 
@@ -1101,7 +1092,6 @@ class TestDSLBeforeHook(TestDSLBase):
 
         @context
         def top(context):
-
             context.before(lambda self: mock("first before"))
             context.before(lambda self: mock("second before"))
 
@@ -1207,7 +1197,6 @@ class TestDSLAfterHook(TestDSLBase):
 
         @context
         def top(context):
-
             context.after(lambda self: mock("first after"))
             context.after(lambda self: mock("second after"))
 

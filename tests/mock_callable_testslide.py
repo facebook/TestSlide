@@ -26,7 +26,6 @@ async def coro_fun(*args):
 
 @context("mock_callable()")
 def mock_callable_tests(context):
-
     ##
     ## Attributes
     ##
@@ -326,7 +325,6 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def fails_when(context):
-
                         context.merge_context("assert failure")
 
                         context.merge_context("not called")
@@ -335,7 +333,6 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def passes_when(context):
-
                         context.merge_context("called exactly times")
 
             @context.sub_context(".and_assert_called_at_least(times)")
@@ -357,7 +354,6 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def fails_when(context):
-
                         context.merge_context("assert failure")
 
                         context.merge_context("not called")
@@ -365,7 +361,6 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def passes_when(context):
-
                         context.merge_context("called exactly times")
                         context.merge_context("called more times")
 
@@ -388,7 +383,6 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def fails_when(context):
-
                         context.merge_context("assert failure")
 
                         context.merge_context("not called")
@@ -396,7 +390,6 @@ def mock_callable_tests(context):
 
                     @context.sub_context
                     def passes_when(context):
-
                         context.merge_context("called less times")
                         context.merge_context("called exactly times")
 
@@ -408,7 +401,6 @@ def mock_callable_tests(context):
 
                 @context.sub_context
                 def fails_when(context):
-
                     context.merge_context("assert failure")
 
                     context.merge_context("not called")
@@ -580,7 +572,6 @@ def mock_callable_tests(context):
 
             @context.sub_context(".to_yield_values(values_list)")
             def to_yield_values_values_list(context):
-
                 context.memoize(
                     "values_list", lambda self: [["first"], ["second"], ["third"]]
                 )
@@ -626,7 +617,6 @@ def mock_callable_tests(context):
 
         @context.sub_context(".to_raise(exception)")
         def to_raise_exception(context):
-
             context.memoize("exception_class", lambda self: RuntimeError)
             context.memoize("times", lambda self: 3)
 
@@ -665,7 +655,6 @@ def mock_callable_tests(context):
 
             @context.sub_context
             def when_given_an_exception_instance(context):
-
                 context.memoize("exception_message", lambda self: "test exception")
                 context.memoize(
                     "exception",
@@ -750,7 +739,6 @@ def mock_callable_tests(context):
                 return _wrapper_func
 
             if has_original_callable:
-
                 context.memoize("times", lambda self: 3)
 
                 @context.before
@@ -792,9 +780,7 @@ def mock_callable_tests(context):
 
         @context.sub_context(".to_call_original()")
         def to_call_original(context):
-
             if has_original_callable:
-
                 context.memoize("times", lambda self: 3)
 
                 @context.before
@@ -1509,7 +1495,6 @@ def mock_callable_tests(context):
 
             @context.sub_context
             def that_is_dynamically_defined_by_the_instance(context):
-
                 context.memoize("callable_arg", lambda self: "dynamic_instance_method")
 
                 @context.memoize_before
