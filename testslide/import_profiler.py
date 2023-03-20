@@ -3,9 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import time
 from types import TracebackType
 from typing import Any, Dict, List, Optional, Tuple
+
+# In Cinder tests, imports are lazy. We use time.time() while profiling the imports.
+# If the first time we call time.time() is inside the profiling, then we will import
+# it there, which means we will profile the time import itself. This causes an
+# infinite loop. Wrapping imports in Cinder eagerly imports it.
+# Place any required imports here.
+try:
+    import time
+except Exception:
+    pass
 
 
 class ImportedModule:
