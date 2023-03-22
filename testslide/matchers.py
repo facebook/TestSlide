@@ -3,8 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import re
-from typing import Any as AnyType
-from typing import Callable, Dict, List, NoReturn, Optional, TypeVar, Union
+from typing import (
+    Any as AnyType,
+    Callable,
+    Container,
+    Dict,
+    Iterable,
+    List,
+    NoReturn,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 
 class AlreadyChainedException(Exception):
@@ -472,6 +482,81 @@ class DictSupersetOf(_RichComparison):
             )
         except KeyError:
             return False
+
+
+# generic containers/iterables
+
+
+class AnyContaining(Matcher):
+    def __init__(self, needle: AnyType) -> None:
+        self.needle = needle
+
+    def __eq__(self, other: Container[AnyType]) -> bool:  # type: ignore
+        return self.needle in other
+
+    def __repr__(self) -> str:
+        return "<{} 0x{:02X}{}>".format(
+            type(self).__name__,
+            id(self),
+            f" needle={self.needle}" if self.needle is not None else "",
+        )
+
+
+class AnyContainingAll(Matcher):
+    def __init__(self, subset: Iterable[AnyType]) -> None:
+        self.subset_repr = repr(subset) if subset is not None else ""
+        self.subset = list(subset)
+
+    def __eq__(self, other: Container[AnyType]) -> bool:  # type: ignore
+        return all(x in other for x in self.subset)
+
+    def __repr__(self) -> str:
+        return "<{} 0x{:02X}{}>".format(
+            type(self).__name__,
+            id(self),
+            f" subset={self.subset_repr}",
+        )
+
+
+class AnyIterable(Matcher):
+    def __eq__(self, other: AnyType):
+        try:
+            iter(other)
+        except TypeError:
+            return False
+        return True
+
+
+class AnyIterableWithElements(Matcher):
+    def __init__(self, elements: Iterable[AnyType]) -> None:
+        self.elements_repr = repr(elements) if elements is not None else ""
+        self.elements = list(elements)
+
+    def __eq__(self, other: Iterable[AnyType]) -> bool:  # type: ignore
+        return self.elements == list(other)
+
+    def __repr__(self) -> str:
+        return "<{} 0x{:02X}{}>".format(
+            type(self).__name__,
+            id(self),
+            f" elements={self.elements_repr}",
+        )
+
+
+class NotEmptyIterable(Matcher):
+    def __eq__(self, other: Iterable[AnyType]) -> bool:  # type: ignore
+        try:
+            return bool(len(other))
+        except TypeError:
+            return bool(list(other))
+
+
+class EmptyIterable(Matcher):
+    def __eq__(self, other: Iterable[AnyType]) -> bool:  # type: ignore
+        try:
+            return not bool(len(other))
+        except TypeError:
+            return not bool(list(other))
 
 
 # generic
