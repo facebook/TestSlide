@@ -101,6 +101,18 @@ Dictionaries
 	"``DictContainingKeys(keys_list)``", "A dictionary containing all keys from ``keys_list``"
 	"``DictSupersetOf(this_dict)``", "A dictionary containing all key / value pairs from ``this_dict``"
 
+Containers and Iterables
+------------------------
+.. csv-table::
+	:header: "Matcher", "Description"
+
+	"``AnyContaining(element)``", "Any container that contains ``element``"
+	"``AnyContainingAll(element_list)``", "Any container that contains every element of ``element_list``"
+	"``AnyIterable()``", "Any iterable"
+	"``AnyIterableWithElements(element_list)``", "Any iterable containing all the elements in ``element_list`` in the same order"
+	"``NotEmptyIterable()``", "An iterable with at least one element"
+	"``EmptyIterable()``", "An empty iterable"
+
 Generic
 -------
 
