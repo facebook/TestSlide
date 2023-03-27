@@ -344,25 +344,21 @@ class TestIterable(testslide.TestCase):
         self.assertEqual(testslide.matchers.AnyIterable(), {1, 2, 3})
         self.assertNotEqual(testslide.matchers.AnyIterable(), 10)
 
-    def testAnyIterableWithElements(self):
-        self.assertEqual(
-            testslide.matchers.AnyIterableWithElements([1, 2, 3]), [1, 2, 3]
-        )
+    def testIterableWithElements(self):
+        self.assertEqual(testslide.matchers.IterableWithElements([1, 2, 3]), [1, 2, 3])
         # subset
-        self.assertNotEqual(
-            testslide.matchers.AnyIterableWithElements([1, 2]), [1, 2, 3]
-        )
+        self.assertNotEqual(testslide.matchers.IterableWithElements([1, 2]), [1, 2, 3])
         # non-list
         self.assertEqual(
-            testslide.matchers.AnyIterableWithElements([1, 2, 3]),
+            testslide.matchers.IterableWithElements([1, 2, 3]),
             deque([1, 2, 3], maxlen=100),
         )
         self.assertNotEqual(
-            testslide.matchers.AnyIterableWithElements([2, 3, 4]),
+            testslide.matchers.IterableWithElements([2, 3, 4]),
             deque([1, 2, 3], maxlen=100),
         )
         self.assertEqual(
-            testslide.matchers.AnyIterableWithElements(range(1, 4)),
+            testslide.matchers.IterableWithElements(range(1, 4)),
             [1, 2, 3],
         )
 
@@ -370,7 +366,7 @@ class TestIterable(testslide.TestCase):
         expected_list = [1, 2, 3]
         for MatcherClass in (
             testslide.matchers.AnyContainingAll,
-            testslide.matchers.AnyIterableWithElements,
+            testslide.matchers.IterableWithElements,
         ):
             it = iter(expected_list)
             matcher = MatcherClass(it)
@@ -389,28 +385,32 @@ class TestIterable(testslide.TestCase):
                 expected_list,
             )
 
-    def testEmptyIterable(self):
-        # iterable with len()
-        self.assertEqual(testslide.matchers.EmptyIterable(), [])
-        self.assertEqual(testslide.matchers.EmptyIterable(), {})
-        self.assertNotEqual(testslide.matchers.EmptyIterable(), [1, 2, 3])
-        # iterable without len()
-        self.assertEqual(testslide.matchers.EmptyIterable(), iter([]))
-        self.assertNotEqual(testslide.matchers.EmptyIterable(), iter([1, 2, 3]))
+    def testAnyEmpty(self):
+        # Sized
+        self.assertEqual(testslide.matchers.AnyEmpty(), [])
+        self.assertEqual(testslide.matchers.AnyEmpty(), {})
+        self.assertNotEqual(testslide.matchers.AnyEmpty(), [1, 2, 3])
+        # iterables without len()
         with self.assertRaises(TypeError):
-            self.assertEqual(testslide.matchers.EmptyIterable(), 10)
+            self.assertEqual(testslide.matchers.AnyEmpty(), iter([]))
+        with self.assertRaises(TypeError):
+            self.assertNotEqual(testslide.matchers.AnyEmpty(), iter([1, 2, 3]))
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyEmpty(), 10)
 
-    def testNotEmptyIterable(self):
-        # iterable with len()
-        self.assertNotEqual(testslide.matchers.NotEmptyIterable(), [])
-        self.assertEqual(testslide.matchers.NotEmptyIterable(), [1, 2, 3])
-        self.assertEqual(testslide.matchers.NotEmptyIterable(), {1, 2, 3})
-        # iterable without len()
-        self.assertNotEqual(testslide.matchers.NotEmptyIterable(), iter([]))
-        self.assertEqual(testslide.matchers.NotEmptyIterable(), iter([1, 2, 3]))
+    def testAnyNotEmpty(self):
+        # Sized
+        self.assertNotEqual(testslide.matchers.AnyNotEmpty(), [])
+        self.assertEqual(testslide.matchers.AnyNotEmpty(), [1, 2, 3])
+        self.assertEqual(testslide.matchers.AnyNotEmpty(), {1, 2, 3})
+        # iterables without len()
+        with self.assertRaises(TypeError):
+            self.assertNotEqual(testslide.matchers.AnyNotEmpty(), iter([]))
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyNotEmpty(), iter([1, 2, 3]))
         # not iterable
         with self.assertRaises(TypeError):
-            self.assertEqual(testslide.matchers.NotEmptyIterable(), 10)
+            self.assertEqual(testslide.matchers.AnyNotEmpty(), 10)
 
 
 class TestChaining(testslide.TestCase):

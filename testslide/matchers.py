@@ -12,6 +12,7 @@ from typing import (
     List,
     NoReturn,
     Optional,
+    Sized,
     TypeVar,
     Union,
 )
@@ -527,7 +528,7 @@ class AnyIterable(Matcher):
         return True
 
 
-class AnyIterableWithElements(Matcher):
+class IterableWithElements(Matcher):
     def __init__(self, elements: Iterable[AnyType]) -> None:
         self.elements_repr = repr(elements) if elements is not None else ""
         self.elements = list(elements)
@@ -543,20 +544,14 @@ class AnyIterableWithElements(Matcher):
         )
 
 
-class NotEmptyIterable(Matcher):
-    def __eq__(self, other: Iterable[AnyType]) -> bool:  # type: ignore
-        try:
-            return bool(len(other))
-        except TypeError:
-            return bool(list(other))
+class AnyNotEmpty(Matcher):
+    def __eq__(self, other: Sized) -> bool:  # type: ignore
+        return bool(len(other))
 
 
-class EmptyIterable(Matcher):
-    def __eq__(self, other: Iterable[AnyType]) -> bool:  # type: ignore
-        try:
-            return not bool(len(other))
-        except TypeError:
-            return not bool(list(other))
+class AnyEmpty(Matcher):
+    def __eq__(self, other: Sized) -> bool:  # type: ignore
+        return not bool(len(other))
 
 
 # generic
