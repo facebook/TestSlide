@@ -3,6 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from collections import deque
+
 import testslide
 
 from . import sample_module
@@ -295,6 +297,120 @@ class TestDicts(testslide.TestCase):
             testslide.matchers.DictContainingKeys("derp")
         with self.assertRaises(ValueError):
             testslide.matchers.DictContainingKeys({"a", "b", "c"})
+
+
+class TestIterable(testslide.TestCase):
+    def testAnyContaining(self):
+        # list
+        self.assertEqual(testslide.matchers.AnyContaining(1), [1, 2, 3])
+        self.assertNotEqual(testslide.matchers.AnyContaining(1), [2, 3, 4])
+        # non-list collection
+        self.assertEqual(
+            testslide.matchers.AnyContaining(1), deque([1, 2, 3], maxlen=100)
+        )
+        self.assertEqual(
+            testslide.matchers.AnyContaining(1), deque([1, 2, 3], maxlen=100)
+        )
+        # string
+        with self.assertRaises(TypeError):
+            self.assertNotEqual(testslide.matchers.AnyContaining(1), "DERP")
+        self.assertEqual(testslide.matchers.AnyContaining("E"), "DERP")
+        self.assertNotEqual(testslide.matchers.AnyContaining("A"), "DERP")
+
+    def testAnyContainingAll(self):
+        # list
+        self.assertEqual(testslide.matchers.AnyContainingAll([1, 2]), [1, 2, 3])
+        self.assertNotEqual(
+            testslide.matchers.AnyContainingAll([1, 2, 3, 5]), [2, 3, 4]
+        )
+        # non-list
+        self.assertEqual(testslide.matchers.AnyContainingAll([1, 2]), {1, 2, 3})
+        self.assertNotEqual(
+            testslide.matchers.AnyContainingAll([1, 2, 3, 5]), {2, 3, 4}
+        )
+        self.assertEqual(testslide.matchers.AnyContainingAll({1, 2}), [1, 2, 3])
+        self.assertNotEqual(
+            testslide.matchers.AnyContainingAll({1, 2, 3, 5}), [2, 3, 4]
+        )
+        # non-iterables
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyContainingAll(10), [1, 2, 3])
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyContainingAll([1, 2, 3]), 10)
+
+    def testAnyIterable(self):
+        self.assertEqual(testslide.matchers.AnyIterable(), [1, 2, 3])
+        self.assertEqual(testslide.matchers.AnyIterable(), range(3))
+        self.assertEqual(testslide.matchers.AnyIterable(), {1, 2, 3})
+        self.assertNotEqual(testslide.matchers.AnyIterable(), 10)
+
+    def testIterableWithElements(self):
+        self.assertEqual(testslide.matchers.IterableWithElements([1, 2, 3]), [1, 2, 3])
+        # subset
+        self.assertNotEqual(testslide.matchers.IterableWithElements([1, 2]), [1, 2, 3])
+        # non-list
+        self.assertEqual(
+            testslide.matchers.IterableWithElements([1, 2, 3]),
+            deque([1, 2, 3], maxlen=100),
+        )
+        self.assertNotEqual(
+            testslide.matchers.IterableWithElements([2, 3, 4]),
+            deque([1, 2, 3], maxlen=100),
+        )
+        self.assertEqual(
+            testslide.matchers.IterableWithElements(range(1, 4)),
+            [1, 2, 3],
+        )
+
+    def testExhaustedIterators(self):
+        expected_list = [1, 2, 3]
+        for MatcherClass in (
+            testslide.matchers.AnyContainingAll,
+            testslide.matchers.IterableWithElements,
+        ):
+            it = iter(expected_list)
+            matcher = MatcherClass(it)
+
+            # verify iterator is exhausted
+            with self.assertRaises(StopIteration):
+                next(it)
+
+            self.assertEqual(
+                matcher,
+                expected_list,
+            )
+            # Asserting against this matcher twice produces the same result
+            self.assertEqual(
+                matcher,
+                expected_list,
+            )
+
+    def testAnyEmpty(self):
+        # Sized
+        self.assertEqual(testslide.matchers.AnyEmpty(), [])
+        self.assertEqual(testslide.matchers.AnyEmpty(), {})
+        self.assertNotEqual(testslide.matchers.AnyEmpty(), [1, 2, 3])
+        # iterables without len()
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyEmpty(), iter([]))
+        with self.assertRaises(TypeError):
+            self.assertNotEqual(testslide.matchers.AnyEmpty(), iter([1, 2, 3]))
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyEmpty(), 10)
+
+    def testAnyNotEmpty(self):
+        # Sized
+        self.assertNotEqual(testslide.matchers.AnyNotEmpty(), [])
+        self.assertEqual(testslide.matchers.AnyNotEmpty(), [1, 2, 3])
+        self.assertEqual(testslide.matchers.AnyNotEmpty(), {1, 2, 3})
+        # iterables without len()
+        with self.assertRaises(TypeError):
+            self.assertNotEqual(testslide.matchers.AnyNotEmpty(), iter([]))
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyNotEmpty(), iter([1, 2, 3]))
+        # not iterable
+        with self.assertRaises(TypeError):
+            self.assertEqual(testslide.matchers.AnyNotEmpty(), 10)
 
 
 class TestChaining(testslide.TestCase):
