@@ -41,8 +41,8 @@ def _filename_to_module_name(name: str) -> str:
 def _get_all_test_case_subclasses() -> List[TestCase]:
     def get_all_subclasses(base: Type[unittest.TestCase]) -> List[TestCase]:
         return list(
-            {  # type: ignore
-                "{}.{}".format(c.__module__, c.__name__): c
+            {  # type: ignore[arg-type]
+                "{}.{}".format(c.__module__, c.__name__): c  # type: ignore
                 for c in (
                     base.__subclasses__()  # type: ignore
                     + [g for s in base.__subclasses__() for g in get_all_subclasses(s)]  # type: ignore
@@ -78,7 +78,6 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
     _unittest_testcase_loaded = True
 
     for test_case in _get_all_test_cases(import_module_names):
-
         test_method_names = [
             test_method_name
             for test_method_name in dir(test_case)
@@ -100,7 +99,6 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
             test_case: unittest.TestCase,
         ) -> Callable[[testslide.dsl._DSLContext], None]:
             def context_code(context: testslide.dsl._DSLContext) -> None:
-
                 for test_method_name in test_method_names:
 
                     @contextmanager
@@ -168,10 +166,10 @@ class _Config:
     names_regex_exclude: Optional[Pattern[Any]] = None
     dsl_debug: Optional[bool] = False
     profile_threshold_ms: Optional[int] = None
+    slow_callback_is_not_fatal: bool = False
 
 
 class Cli:
-
     FORMAT_NAME_TO_FORMATTER_CLASS = {
         "p": ProgressFormatter,
         "progress": ProgressFormatter,
@@ -286,6 +284,11 @@ class Cli:
                 "more than the given number of ms to import. Experimental."
             ),
         )
+        parser.add_argument(
+            "--slow-callback-is-not-fatal",
+            action="store_true",
+            help="Disable treating slow callback as a test failure",
+        )
         if not disable_test_files:
             parser.add_argument(
                 "test_files",
@@ -379,6 +382,7 @@ class Cli:
                 _filename_to_module_name(test_file)
                 for test_file in parsed_args.test_files
             ],
+            slow_callback_is_not_fatal=parsed_args.slow_callback_is_not_fatal,
         )
         return config
 
@@ -386,7 +390,10 @@ class Cli:
         try:
             parsed_args = self.parser.parse_args(self.args)
         except SystemExit as e:
-            return e.code
+            # Basically, argparse has a `.error()` method that calls a `.exit()` method,
+            # which in turn calls `sys.exit()`, passing an int parameter.
+            # Ignore the detection that it might be a None or str.
+            return e.code  # type: ignore
         config = self._get_config_from_parsed_args(parsed_args)
 
         if config.profile_threshold_ms is not None:
@@ -425,6 +432,7 @@ class Cli:
                     names_regex_filter=config.names_regex_filter,
                     names_regex_exclude=config.names_regex_exclude,
                     quiet=config.quiet,
+                    slow_callback_is_not_fatal=not config.slow_callback_is_not_fatal,
                 ).run()
 
 

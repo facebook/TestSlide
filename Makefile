@@ -180,6 +180,7 @@ coveralls: coverage_combine
 .PHONY: install_build_deps
 install_build_deps:
 	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
+	${Q} pip install -r requirements.txt
 	${Q} pip install -r requirements-dev.txt
 
 .PHONY: install_deps

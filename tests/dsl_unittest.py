@@ -6,7 +6,6 @@
 import asyncio
 import os
 import subprocess
-import sys
 import time
 import unittest
 from typing import List
@@ -115,8 +114,8 @@ class TestDSLBase(unittest.TestCase):
     def setUp(self):
         reset()
 
-    def run_example(self, exapmle: Example) -> None:
-        _ExampleRunner(exapmle, QuietFormatter(import_module_names=[__name__])).run()
+    def run_example(self, example: Example) -> None:
+        _ExampleRunner(example, QuietFormatter(import_module_names=[__name__])).run()
 
     def run_all_examples(self):
         for each_context in Context.all_top_level_contexts:
@@ -151,7 +150,6 @@ class TestDSLBase(unittest.TestCase):
 
 
 class TestDSLContext(TestDSLBase):
-
     # Context creation
 
     def test_can_be_named_from_decorator(self):
@@ -414,7 +412,6 @@ class TestDSLContext(TestDSLBase):
 
 
 class TestDSLSharedContext(TestDSLBase):
-
     # Shared contexts
 
     def test_shared_context_named_from_decorator(self):
@@ -508,7 +505,6 @@ class TestDSLSharedContext(TestDSLBase):
         def top(context):
             @context.shared_context
             def Shared_context(context, arg_passed=False):
-
                 assert arg_passed
 
                 @context.example
@@ -568,7 +564,6 @@ class TestDSLSharedContext(TestDSLBase):
         def top(context):
             @context.shared_context
             def Shared_context(context, arg_passed=False):
-
                 assert arg_passed
 
                 @context.example
@@ -844,7 +839,6 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
             memoized = []
 
@@ -872,7 +866,6 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
 
             context.memoize("attribute_name", lambda self: value + 1)
@@ -893,7 +886,6 @@ class TestDSLMemoizedAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
 
             context.memoize(
@@ -955,7 +947,6 @@ class TestDSLMemoizedBeforeAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
             memoized = []
 
@@ -982,7 +973,6 @@ class TestDSLMemoizedBeforeAttribute(TestDSLBase):
 
         @context
         def top(context):
-
             value = 1
             memoized = []
 
@@ -1102,7 +1092,6 @@ class TestDSLBeforeHook(TestDSLBase):
 
         @context
         def top(context):
-
             context.before(lambda self: mock("first before"))
             context.before(lambda self: mock("second before"))
 
@@ -1208,7 +1197,6 @@ class TestDSLAfterHook(TestDSLBase):
 
         @context
         def top(context):
-
             context.after(lambda self: mock("first after"))
             context.after(lambda self: mock("second after"))
 
@@ -1909,29 +1897,25 @@ class SmokeTestAsync(TestDSLBase):
         ):
             self.run_first_context_first_example()
 
-    if sys.version_info >= (3, 7):
+    def test_fail_if_coroutine_not_awaited(self):
+        @context
+        def top(context):
+            @context.example
+            async def example(self):
+                asyncio.sleep(0.1)
 
-        def test_fail_if_coroutine_not_awaited(self):
-            @context
-            def top(context):
-                @context.example
-                async def example(self):
-                    asyncio.sleep(0.1)
+        with self.assertRaisesRegex(RuntimeWarning, "coroutine '.+' was never awaited"):
+            self.run_first_context_first_example()
 
-            with self.assertRaisesRegex(
-                RuntimeWarning, "coroutine '.+' was never awaited"
-            ):
-                self.run_first_context_first_example()
+    def test_fail_if_slow_task(self):
+        @context
+        def top(context):
+            @context.example
+            async def example(self):
+                time.sleep(0.1)
 
-        def test_fail_if_slow_task(self):
-            @context
-            def top(context):
-                @context.example
-                async def example(self):
-                    time.sleep(0.1)
-
-            with self.assertRaisesRegex(SlowCallback, "^Executing .+ took .+ seconds"):
-                self.run_first_context_first_example()
+        with self.assertRaisesRegex(SlowCallback, "^Executing .+ took .+ seconds"):
+            self.run_first_context_first_example()
 
     def test_resetting_attribute_raises_ValueError(self):
         @context
@@ -2053,11 +2037,7 @@ class TestMockAsyncCallableIntegration(TestDSLBase):
         def fail_top(context):
             @context.example
             async def spawn_task_but_dont_await(self):
-                if sys.version_info < (3, 7):
-                    loop = asyncio.get_event_loop()
-                    loop.create_task(dummy_async_func())
-                else:
-                    asyncio.create_task(dummy_async_func())
+                asyncio.create_task(dummy_async_func())
 
         examples = _get_name_to_examples()
 
@@ -2129,11 +2109,7 @@ class TestAsyncRun(TestDSLBase):
             pass
 
         async def spawn_task_but_dont_await():
-            if sys.version_info < (3, 7):
-                loop = asyncio.get_event_loop()
-                loop.create_task(dummy_async_func())
-            else:
-                asyncio.create_task(dummy_async_func())
+            asyncio.create_task(dummy_async_func())
 
         @context
         def fail_top(context):

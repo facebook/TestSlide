@@ -64,7 +64,6 @@ class TemplateParent:
 
 
 class Template(TemplateParent):
-
     __slots__ = ["slot_attribute"]
 
     non_callable: str = "original value"
@@ -553,7 +552,6 @@ def strict_mock(context):
 
                                 @context.shared_context
                                 def common_examples(context, type_validation):
-
                                     if type_validation:
 
                                         @context.example
@@ -679,7 +677,6 @@ def strict_mock(context):
 
                             @context.sub_context
                             def method_mocking(context):
-
                                 context.merge_context("can access attributes")
 
                                 @context.after
@@ -812,6 +809,14 @@ def strict_mock(context):
                                 @context.example
                                 def it_yields_the_mock(self):
                                     with self.strict_mock as target:
+                                        self.assertTrue(target is self.strict_mock)
+
+                                @context.example
+                                def works_with_exitstack(self):
+                                    with contextlib.ExitStack() as exit_stack:
+                                        target = exit_stack.enter_context(
+                                            self.strict_mock
+                                        )
                                         self.assertTrue(target is self.strict_mock)
 
             @context.sub_context
@@ -1115,6 +1120,14 @@ def strict_mock(context):
                         async def it_yields_the_mock(self):
                             async with self.strict_mock as m:
                                 assert id(self.strict_mock) == id(m)
+
+                        @context.example
+                        async def works_with_exitstack(self):
+                            async with contextlib.AsyncExitStack() as exit_stack:
+                                target = await exit_stack.enter_async_context(
+                                    self.strict_mock
+                                )
+                                self.assertTrue(target is self.strict_mock)
 
     @context.sub_context
     def making_copies(context):

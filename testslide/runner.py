@@ -766,7 +766,7 @@ class Runner:
         contexts: List[Context],
         formatter: Union[SlowImportWarningMixin, DocumentFormatter],
         shuffle: bool = False,
-        seed: int = None,
+        seed: Optional[int] = None,
         focus: bool = False,
         fail_fast: bool = False,
         fail_if_focused: bool = False,
@@ -774,6 +774,7 @@ class Runner:
         names_regex_filter: Optional[Pattern] = None,
         names_regex_exclude: Optional[Pattern] = None,
         quiet: bool = False,
+        slow_callback_is_not_fatal: bool = False,
     ) -> None:
         self.contexts = contexts
         self.formatter = formatter
@@ -786,6 +787,7 @@ class Runner:
         self.names_regex_filter = names_regex_filter
         self.names_regex_exclude = names_regex_exclude
         self.quiet = quiet
+        self.slow_callback_is_not_fatal = slow_callback_is_not_fatal
 
     def _run_example(self, example: Example) -> None:
         if example.focus and self.fail_if_focused:
@@ -799,7 +801,9 @@ class Runner:
             example_exception = None
             with redirect_stdout(stdout), redirect_stderr(stderr):
                 try:
-                    _ExampleRunner(example, self.formatter).run()
+                    _ExampleRunner(
+                        example, self.formatter, self.slow_callback_is_not_fatal
+                    ).run()
                 except BaseException as ex:
                     example_exception = ex
             if example_exception:
@@ -810,7 +814,9 @@ class Runner:
                         print("stderr:\n{}".format(stderr.getvalue()))
                 raise example_exception
         else:
-            _ExampleRunner(example, self.formatter).run()
+            _ExampleRunner(
+                example, self.formatter, self.slow_callback_is_not_fatal
+            ).run()
 
     def run(self) -> int:
         """

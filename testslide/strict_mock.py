@@ -430,25 +430,80 @@ class StrictMock:
                 ):
                     setattr(self, name, _DefaultMagic(self, name))
 
+    # THE PROBLEM:
+    # Certain idiomatic python use-cases (*cough* (Async)ExitStack *cough*)
+    # invoke context managers with roughly the following code:
+    #
+    #     enter_fn = cm.__class__.__aenter__
+    #     await enter_fn(cm)
+    #
+    # While fine for 'normal' python objects, this is problematic for how our
+    # MethodProxy builds functions; as they don't end up properly bound
+    # (i.e. via __get__) to the object; and end up failing with cryptic errors
+    # like:
+    #
+    # 'aenter invoked with 1 arguments; expected 0'.
+    #
+    # To fix this; let's properly define these as real method on the object so
+    # they get bound. They still will not be visible to outside code due to our
+    # validating in __getattr__ that they match relevant entries in the template
+    def __enter_default_context_manager_helper__(self):
+        return self
+
+    def __exit_default_context_manager_helper__(self, exc_type, exc_value, traceback):
+        pass
+
+    async def __aenter_default_context_manager_helper__(self):
+        return self
+
+    async def __aexit_default_context_manager_helper__(
+        self, exc_type, exc_value, traceback
+    ):
+        pass
+
     def __setup_default_context_manager(self, default_context_manager: bool) -> None:
         if self._template and default_context_manager:
             if hasattr(self._template, "__enter__") and hasattr(
                 self._template, "__exit__"
             ):
-                self.__enter__ = lambda: self
-                self.__exit__ = lambda exc_type, exc_value, traceback: None
+                # Use setattr(type(self)) to explicitly avoid any MethodProxy
+                # magic which breaks the method-bind.
+                # Also needed for getattr to bypass our template class check.
+                setattr(  # noqa: B010
+                    type(self),
+                    "__enter__",
+                    getattr(  # noqa: B009
+                        type(self), "__enter_default_context_manager_helper__"
+                    ),
+                )
+                setattr(  # noqa: B010
+                    type(self),
+                    "__exit__",
+                    getattr(  # noqa: B009
+                        type(self), "__exit_default_context_manager_helper__"
+                    ),
+                )
+
             if hasattr(self._template, "__aenter__") and hasattr(
                 self._template, "__aexit__"
             ):
-
-                async def aenter():
-                    return self
-
-                async def aexit(exc_type, exc_value, traceback):
-                    pass
-
-                self.__aenter__ = aenter
-                self.__aexit__ = aexit
+                # Use setattr(type(self)) to explicitly avoid any MethodProxy
+                # magic which breaks the method-bind.
+                # Also needed for getattr to bypass our template class check.
+                setattr(  # noqa: B010
+                    type(self),
+                    "__aenter__",
+                    getattr(  # noqa: B009
+                        type(self), "__aenter_default_context_manager_helper__"
+                    ),
+                )
+                setattr(  # noqa: B010
+                    type(self),
+                    "__aexit__",
+                    getattr(  # noqa: B009
+                        type(self), "__aexit_default_context_manager_helper__"
+                    ),
+                )
 
     def __get_caller_frame(self, depth: int) -> FrameType:
         # Adding extra 3 to account for the stack:

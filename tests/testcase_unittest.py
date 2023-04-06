@@ -5,7 +5,6 @@
 
 import asyncio
 import csv
-import sys
 import unittest
 
 import testslide
@@ -41,13 +40,7 @@ class TestSlideTestCaseIntegration(testslide.TestCase):
         self.mock_async_callable(SomeClass, "async_do_something").to_return_value(
             42
         ).and_assert_called_once()
-        if sys.version_info >= (3, 7):
-            self.assertEqual(asyncio.run(SomeClass.async_do_something()), 42)
-        else:
-            loop = asyncio.get_event_loop()
-            result = loop.run_until_complete(SomeClass.async_do_something())
-            loop.close()
-            self.assertEqual(result, 42)
+        self.assertEqual(asyncio.run(SomeClass.async_do_something()), 42)
 
     def test_has_mock_constructor(self):
         dict_reader = testslide.StrictMock(csv.DictReader)

@@ -13,7 +13,7 @@ import pathlib
 import re
 import sys
 
-import config
+import config  # type: ignore[import]
 
 
 def print_logs(*args, **kwargs):

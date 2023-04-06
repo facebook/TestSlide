@@ -45,24 +45,11 @@ if TYPE_CHECKING:
     # hack for Mypy
     from testslide.runner import BaseFormatter
 
-if sys.version_info < (3, 6):
-    raise RuntimeError("Python >=3.6 required.")
-
 if sys.version_info < (3, 7):
+    raise RuntimeError("Python >=3.7 required.")
 
-    def asyncio_run(coro):
-        loop = asyncio.events.new_event_loop()
-        try:
-            loop.set_debug(True)
-            loop.run_until_complete(coro)
-        finally:
-            try:
-                loop.run_until_complete(loop.shutdown_asyncgens())
-            finally:
-                loop.close()
 
-else:
-    asyncio_run = partial(asyncio.run, debug=True)
+asyncio_run = partial(asyncio.run, debug=True)
 
 
 if sys.version_info < (3, 8):
@@ -315,10 +302,16 @@ class SlowCallback(Exception):
 
 
 class _ExampleRunner:
-    def __init__(self, example: "Example", formatter: "BaseFormatter") -> None:
+    def __init__(
+        self,
+        example: "Example",
+        formatter: "BaseFormatter",
+        slow_callback_is_not_fatal: bool = False,
+    ) -> None:
         self.example = example
         self.formatter = formatter
         self.trim_path_prefix = self.formatter.trim_path_prefix
+        self.slow_callback_is_not_fatal = slow_callback_is_not_fatal
 
     @staticmethod
     async def _fail_if_not_coroutine_function(
@@ -399,10 +392,9 @@ class _ExampleRunner:
             )
 
     @contextlib.contextmanager
-    def _raise_if_asyncio_warnings(self, context_data: _ContextData) -> Iterator[None]:
-        if sys.version_info < (3, 7):
-            yield
-            return
+    def _raise_if_asyncio_warnings(
+        self, context_data: _ContextData, slow_callback_is_not_fatal: bool = False
+    ) -> Iterator[None]:
         original_showwarning = warnings.showwarning
         caught_failures: List[Union[Exception, str]] = []
 
@@ -441,7 +433,8 @@ class _ExampleRunner:
             else:
                 original_logger_warning(msg, *args, **kwargs)
 
-        asyncio.log.logger.warning = logger_warning  # type: ignore
+        if not slow_callback_is_not_fatal:
+            asyncio.log.logger.warning = logger_warning  # type: ignore
 
         aggregated_exceptions = AggregatedExceptions()
 
@@ -458,7 +451,9 @@ class _ExampleRunner:
 
     def _async_run_all_hooks_and_example(self, context_data: _ContextData) -> None:
         coro = self._real_async_run_all_hooks_and_example(context_data)
-        with self._raise_if_asyncio_warnings(context_data):
+        with self._raise_if_asyncio_warnings(
+            context_data, self.slow_callback_is_not_fatal
+        ):
             asyncio_run(coro)
 
     @staticmethod
@@ -917,7 +912,6 @@ class Context:
         self.context_data_memoizable_attributes[name] = memoizable_code
 
         if before:
-
             if inspect.iscoroutinefunction(memoizable_code):
 
                 async def async_materialize_attribute(

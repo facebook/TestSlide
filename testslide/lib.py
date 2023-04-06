@@ -42,7 +42,7 @@ elif sys.version_info > (3, 7):
             return tp.__args__
         return ()
 
-else:  # python3.6
+else:
     from typing import GenericMeta  # type: ignore
 
     def get_origin(tp):
@@ -212,7 +212,6 @@ def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
         locals: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
-
         if _is_a_mock(inner_value):
             inner_type = _extract_mock_template(inner_value)
             if inner_type is None:
@@ -294,7 +293,6 @@ def _validate_callable_arg_types(
 
 
 def _skip_first_arg(template: Any, attr_name: str) -> bool:
-
     if inspect.ismodule(template):
         return False
 
