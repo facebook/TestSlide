@@ -42,9 +42,7 @@ def _validate_callable_arg_types(context):
     def assert_fails(self, *args, **kwargs):
         with self.assertRaisesRegex(
             testslide.lib.TypeCheckError,
-            "Call to "
-            + self.callable_template.__name__
-            + " has incompatible argument types",
+            f"Call to {self.callable_template.__name__} has incompatible argument types",
         ):
             testslide.lib._validate_callable_arg_types(
                 self.skip_first_arg, self.callable_template, args, kwargs
@@ -208,7 +206,7 @@ def _validate_callable_arg_types(context):
                 return sample_module.test_union
 
             @context.example
-            def passes_with_StritMock_without_template(self):
+            def passes_with_StrictMock_without_template(self):
                 self.assert_passes({"StrictMock": StrictMock()})
 
             @context.example("it works with unittest.mock.Mock without spec")
@@ -216,7 +214,7 @@ def _validate_callable_arg_types(context):
                 self.assert_passes({"Mock": unittest.mock.Mock()})
 
             @context.example
-            def passes_with_StritMock_with_valid_template(self):
+            def passes_with_StrictMock_with_valid_template(self):
                 self.assert_passes(
                     {"StrictMock(template=str)": StrictMock(template=str)}
                 )
@@ -226,7 +224,7 @@ def _validate_callable_arg_types(context):
                 self.assert_passes({"Mock(spec=str)": unittest.mock.Mock(spec=str)})
 
             @context.example
-            def fails_with_StritMock_with_invalid_template(self):
+            def fails_with_StrictMock_with_invalid_template(self):
                 self.assert_fails(
                     {"StrictMock(template=dict)": StrictMock(template=dict)}
                 )
@@ -242,7 +240,7 @@ def _validate_callable_arg_types(context):
                 return sample_module.test_tuple
 
             @context.example
-            def passes_with_StritMock_without_template(self):
+            def passes_with_StrictMock_without_template(self):
                 self.assert_passes(
                     {
                         "StrictMock": (
@@ -264,7 +262,7 @@ def _validate_callable_arg_types(context):
                 )
 
             @context.example
-            def passes_with_StritMock_with_valid_template(self):
+            def passes_with_StrictMock_with_valid_template(self):
                 self.assert_passes(
                     {
                         "StrictMock(template=int)": (
@@ -286,7 +284,7 @@ def _validate_callable_arg_types(context):
                 )
 
             @context.example
-            def fails_with_StritMock_with_invalid_template(self):
+            def fails_with_StrictMock_with_invalid_template(self):
                 self.assert_fails(
                     {
                         "StrictMock(template=dict)": (
@@ -366,11 +364,6 @@ def _validate_return_type(context):
     @context.example
     def fails_for_wrong_type(self):
         self.assert_fails(42)
-        # assert_regex = r"(?s)type of return must be .+; got .+ instead: .+Defined"
-        # with self.assertRaisesRegex(TypeError, assert_regex):
-        #    testslide.lib._validate_return_type(
-        #        self.callable_template, 42, self.caller_frame_info
-        #    )
 
     @context.example
     def fails_for_mock_with_wrong_template(self):
@@ -386,7 +379,7 @@ def _validate_return_type(context):
     def fails_for_valid_forward_reference_but_bad_type_passed(self):
         with self.assertRaisesRegex(
             testslide.lib.TypeCheckError,
-            "type of return must be one of .*; got int instead:",
+            "type of return must be .*; got <class 'int'> instead:",
         ):
             testslide.lib._validate_return_type(
                 Foo.get_maybe_foo, 33, self.caller_frame_info

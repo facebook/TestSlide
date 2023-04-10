@@ -80,7 +80,7 @@ class WrappedMock(unittest.mock.NonCallableMock):
     """Needed to be able to show the useful qualified name for mock specs"""
 
     def get_qualified_name(self) -> str:
-        return typeguard.qualified_name(self._spec_class)
+        return typeguard._utils.qualified_name(self._spec_class)
 
 
 def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
@@ -159,6 +159,8 @@ def _validate_callable_signature(
     # python stdlib tests have to exempt some builtins for signature validation tests
     # they use a giant alloy/deny list, which is impractical here so just ignore
     # all builtins.
+
+    # Ugly hack to make mock objects not be subclass of Mock
     if _is_a_builtin(callable_template):
         return False
     if skip_first_arg and not inspect.ismethod(callable_template):
@@ -183,8 +185,8 @@ def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
         # TODO: #165
         return
 
-    original_check_type = typeguard.check_type
-    original_qualified_name = typeguard.qualified_name
+    original_check_type_internal = typeguard._checkers.check_type_internal
+    original_qualified_name = typeguard._utils.qualified_name
 
     def wrapped_qualified_name(obj: object) -> str:
         """Needed to be able to show the useful qualified name for mock specs"""
@@ -193,48 +195,35 @@ def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
 
         return original_qualified_name(obj)
 
-    def wrapped_check_type(
-        argname: str,
-        inner_value: Any,
-        inner_expected_type: Type,
-        *args: Any,
-        globals: Optional[Dict[str, Any]] = None,
-        locals: Optional[Dict[str, Any]] = None,
-        **kwargs: Any,
+    # We wrap the internal check because this is recursively called
+    # in typeguard for nested types like Dict[str, Union[str, int]]
+    def wrapped_check_type_internal(
+        inner_value: Any, inner_expected_type: Type, memo: typeguard.TypeCheckMemo
     ) -> None:
         if _is_a_mock(inner_value):
             inner_type = _extract_mock_template(inner_value)
             if inner_type is None:
                 return
-
             # Ugly hack to make mock objects not be subclass of Mock
             inner_value = WrappedMock(spec=inner_type)
 
-        # typeguard only checks the previous caller stack, so in order to be
-        # able to do forward type references we have to extract the caller
-        # stack ourselves.
-        if kwargs.get("memo") is None and globals is None and locals is None:
-            globals, locals = _get_caller_vars()
+        return original_check_type_internal(inner_value, inner_expected_type, memo)
 
-        return original_check_type(
-            argname,
-            inner_value,
-            inner_expected_type,
-            *args,
-            globals=globals,
-            locals=locals,
-            **kwargs,
-        )
+    # typeguard only checks the previous caller stack, so in order to be
+    # able to do forward type references we have to extract the caller
+    # stack ourselves.
+    globals, locals = _get_caller_vars()
+    memo = typeguard.TypeCheckMemo(globals, locals)
 
     with unittest.mock.patch.object(
-        typeguard, "check_type", new=wrapped_check_type
+        typeguard._checkers, "check_type_internal", new=wrapped_check_type_internal
     ), unittest.mock.patch.object(
-        typeguard, "qualified_name", new=wrapped_qualified_name
+        typeguard._utils, "qualified_name", new=wrapped_qualified_name
     ):
         try:
-            typeguard.check_type(name, value, expected_type)
-        except TypeError as type_error:
-            raise TypeCheckError(str(type_error))
+            typeguard._checkers.check_type_internal(value, expected_type, memo)
+        except typeguard.TypeCheckError as type_error:
+            raise TypeCheckError(type_error)
 
 
 def _validate_callable_arg_types(
@@ -257,7 +246,6 @@ def _validate_callable_arg_types(
                 expected_type = argspec.annotations.get(argname)
                 if not expected_type:
                     continue
-
                 _validate_argument_type(expected_type, argname, args[idx])
             except TypeCheckError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
@@ -273,11 +261,11 @@ def _validate_callable_arg_types(
             type_errors.append(f"{repr(argname)}: {type_error}")
 
     if type_errors:
+        separator = "\n  "
         raise TypeCheckError(
-            "Call to "
-            + callable_template.__name__
-            + " has incompatible argument types:\n  "
-            + "\n  ".join(type_errors)
+            f"Call to {callable_template.__name__} "
+            "has incompatible argument types:\n  "
+            f"{separator.join(type_errors)}"
         )
 
 
@@ -383,10 +371,10 @@ def _validate_return_type(
             _validate_argument_type(expected_type, "return", value)
         except TypeCheckError as runtime_type_error:
             raise TypeCheckError(
-                f"{str(runtime_type_error)}: {repr(value)}\n"
+                f"type of return must be {repr(expected_type)}; got {repr(type(value))} instead: {repr(value)}\n"
                 f"Defined at {caller_frame_info.filename}:"
                 f"{caller_frame_info.lineno}"
-            )
+            ) from runtime_type_error
 
 
 ##

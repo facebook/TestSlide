@@ -1,4 +1,4 @@
 psutil>=5.6.7
 Pygments>=2.2.0
-typeguard<3.0
+typeguard~=3.0
 dataclasses>=0.6; python_version < "3.7"
