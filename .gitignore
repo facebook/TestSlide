@@ -14,3 +14,4 @@ TestSlide.egg-info/
 *.vsix
 **/package-lock.json
 .coverage.lcov
+venv/

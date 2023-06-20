@@ -18,6 +18,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install virtualenv
+      run: pip install virtualenv
     - name: Run Tests
       run: TESTSLIDE_FORMAT=progress UNITTEST_VERBOSE=0 make ci V=1
     - name: Coveralls
