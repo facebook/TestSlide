@@ -32,6 +32,19 @@ class SomeClass:
         return 3
 
 
+class SomeClassWithSlots:
+    __slots__ = ("attribute",)
+
+    def __init__(self, attribute: str) -> None:
+        self.attribute = attribute
+
+    def method(self) -> int:
+        return 0
+
+    async def async_method(self) -> int:
+        return 0
+
+
 class TargetStr:
     def __str__(self) -> str:
         return "original response"

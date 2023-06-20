@@ -104,6 +104,12 @@ def mock_callable_tests(context):
         ).and_assert_called_once()
         t._privatefun()
 
+    @context.example
+    def patching_functions_in_slotted_class(self):
+        t = sample_module.SomeClassWithSlots(attribute="value")
+        self.mock_callable(t, "method").to_return_value(42).and_assert_called_once()
+        self.assertEqual(t.method(), 42)
+
     ##
     ## Shared Contexts
     ##
