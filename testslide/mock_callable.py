@@ -776,8 +776,14 @@ class _MockCallableDSL:
             self.type_validation or self.type_validation is None,
         )
 
-        restore = self._method in self._target.__dict__
-        restore_value = self._target.__dict__.get(self._method, None)
+        if isinstance(self._target, (Mock, StrictMock)) or not hasattr(
+            self._target, "__slots__"
+        ):
+            restore = self._method in self._target.__dict__
+            restore_value = self._target.__dict__.get(self._method, None)
+        else:
+            restore = self._method in self._target.__slots__
+            restore_value = getattr(self._target, self._method)
 
         if inspect.isclass(self._target):
             new_value = staticmethod(new_value)  # type: ignore

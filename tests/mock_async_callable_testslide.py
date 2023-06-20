@@ -90,6 +90,14 @@ def mock_async_callable_tests(context):
     ## Shared Contexts
     ##
 
+    @context.example
+    async def patching_functions_in_slotted_class(self):
+        t = sample_module.SomeClassWithSlots(attribute="value")
+        self.mock_async_callable(t, "async_method").to_return_value(
+            42
+        ).and_assert_called_once()
+        self.assertEqual(await t.async_method(), 42)
+
     @context.shared_context
     def mock_async_callable_with_sync_examples(context, can_mock_with_flag=True):
         @context.example
