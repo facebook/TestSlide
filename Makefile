@@ -35,15 +35,27 @@ endif
 
 .PHONY: all
 all: tests coverage_report docs sdist
+	@true
+
+##
+## Venv
+##
+venv: requirements-dev.txt requirements.txt
+	@printf "${TERM_BRIGHT}CREATE VIRTUALENV (${CURDIR}/venv)\n${TERM_NONE}"
+	${Q} python3 -m virtualenv venv
+	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
+	${Q} ${CURDIR}/venv/bin/pip install -r requirements-dev.txt
+	@printf "${TERM_BRIGHT}INSTALL DEPS\n${TERM_NONE}"
+	${Q} ${CURDIR}/venv/bin/pip install -r requirements.txt
 
 ##
 ## Docs
 ##
 
 .PHONY: docs
-docs:
+docs: venv
 	@printf "${TERM_BRIGHT}DOCS\n${TERM_NONE}"
-	${Q} make -C docs/ html
+	${Q} ${MAKE} SPHINXBUILD=${CURDIR}/venv/bin/sphinx-build -C docs/ html
 
 .PHONY: docs_clean
 docs_clean:
@@ -54,9 +66,9 @@ docs_clean:
 ## Tests
 ##
 
-%_unittest.py: coverage_erase
+%_unittest.py: venv coverage_erase
 	@printf "${TERM_BRIGHT}UNITTEST $@\n${TERM_NONE}"
-	${Q} coverage run \
+	${Q} ${CURDIR}/venv/bin/coverage run \
 		-m unittest \
 		${UNITTEST_ARGS} \
 		--failfast \
@@ -64,20 +76,21 @@ docs_clean:
 
 .PHONY: unittest_tests
 unittest_tests: $(TESTS_SRCS)/*_unittest.py
+	@true
 
 .PHONY: pytest_tests
 pytest_tests: export PYTHONPATH=${CURDIR}/pytest-testslide:${CURDIR}
-pytest_tests: coverage_erase
+pytest_tests: venv coverage_erase
 	@printf "${TERM_BRIGHT}INSTALL pytest_testslide DEPS ${TERM_NONE}\n"
-	${Q} pip install -r pytest-testslide/requirements.txt
+	${Q} ${CURDIR}/venv/bin/pip install -r pytest-testslide/requirements.txt
 	@printf "${TERM_BRIGHT}PYTEST pytest_testslide${TERM_NONE}\n"
-	${Q} coverage run \
+	${Q} ${CURDIR}/venv/bin/coverage run \
 		-m pytest \
 		pytest-testslide/tests
 
-%_testslide.py: coverage_erase
+%_testslide.py: venv coverage_erase
 	@printf "${TERM_BRIGHT}TESTSLIDE $@\n${TERM_NONE}"
-	${Q} coverage run \
+	${Q} ${CURDIR}/venv/bin/coverage run \
 		-m testslide.cli \
 		--format $(TESTSLIDE_FORMAT) \
 		--show-testslide-stack-trace \
@@ -87,11 +100,12 @@ pytest_tests: coverage_erase
 
 .PHONY: testslide_tests coverage_erase
 testslide_tests: $(TESTS_SRCS)/*_testslide.py
+	@true
 
 .PHONY: mypy
-mypy:
+mypy: venv
 	@printf "${TERM_BRIGHT}MYPY ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} mypy ${ALL_SRCS}
+	${Q} ${CURDIR}/venv/bin/mypy ${ALL_SRCS}
 
 .PHONY: mypy_clean
 mypy_clean:
@@ -99,29 +113,29 @@ mypy_clean:
 	${Q} rm -rf .mypy_cache/
 
 .PHONY: flake8
-flake8:
+flake8: venv
 	@printf "${TERM_BRIGHT}FLAKE8 ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} flake8 --select=F,C90 $(ALL_SRCS)
+	${Q} ${CURDIR}/venv/bin/flake8 --select=F,C90 $(ALL_SRCS)
 
 .PHONY: black
-black:
+black: venv
 	@printf "${TERM_BRIGHT}BLACK ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} black --check $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
+	${Q} ${CURDIR}/venv/bin/black --check $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
 
 .PHONY: isort
-isort:
+isort: venv
 	@printf "${TERM_BRIGHT}ISORT ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} isort --check-only --profile black $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
+	${Q} ${CURDIR}/venv/bin/isort --check-only --profile black $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
 
 .PHONY: format_isort
-format_isort:
+format_isort: venv
 	@printf "${TERM_BRIGHT}FORMAT PYFMT ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} isort --profile black $(ALL_SRCS)
+	${Q} ${CURDIR}/venv/bin/isort --profile black $(ALL_SRCS)
 
 .PHONY: format_black
-format_black:
+format_black: venv
 	@printf "${TERM_BRIGHT}FORMAT BLACK ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} black $(ALL_SRCS)
+	${Q} ${CURDIR}/venv/bin/black $(ALL_SRCS)
 
 .PHONY: tests
 tests: \
@@ -138,7 +152,7 @@ tests: \
 format: \
     format_isort \
 	format_black
-
+	@true
 ##
 ## Coverage
 ##
@@ -146,22 +160,22 @@ format: \
 .PHONY: coverage_erase
 coverage_erase:
 	@printf "${TERM_BRIGHT}COVERAGE ERASE\n${TERM_NONE}"
-	${Q} coverage erase
+	${Q} rm -rf ${CURDIR}/.coverage ${CURDIR}/.coverage.*
 
 .PHONY: coverage_combine
-coverage_combine: unittest_tests testslide_tests
+coverage_combine: venv unittest_tests testslide_tests
 	@printf "${TERM_BRIGHT}COVERAGE COMBINE\n${TERM_NONE}"
-	${Q} coverage combine
+	${Q} ${CURDIR}/venv/bin/coverage combine
 
 .PHONY: coverage_report
-coverage_report: coverage_combine
+coverage_report: venv coverage_combine
 	@printf "${TERM_BRIGHT}COVERAGE REPORT\n${TERM_NONE}"
-	${Q} coverage report
+	${Q} ${CURDIR}/venv/bin/coverage report
 
 .PHONY: coverage_html
-coverage_html: coverage_combine
+coverage_html: venv coverage_combine
 	@printf "${TERM_BRIGHT}COVERAGE HTML\n${TERM_NONE}"
-	${Q} coverage html
+	${Q} ${CURDIR}/venv/bin/coverage html
 
 .PHONY: coverage_html_clean
 coverage_html_clean:
@@ -169,29 +183,18 @@ coverage_html_clean:
 	${Q} rm -rf htmlcov/
 
 .PHONY: coveralls
-coveralls: coverage_combine
+coveralls: venv coverage_combine
 	@printf "${TERM_BRIGHT}COVERALLS\n${TERM_NONE}"
-	${Q} coveralls
+	${Q} ${CURDIR}/venv/bin/coveralls
 
 ##
 ## Build
 ##
 
-.PHONY: install_build_deps
-install_build_deps:
-	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
-	${Q} pip install -r requirements.txt
-	${Q} pip install -r requirements-dev.txt
-
-.PHONY: install_deps
-install_deps:
-	@printf "${TERM_BRIGHT}INSTALL DEPS\n${TERM_NONE}"
-	${Q} pip install -r requirements.txt
-
 .PHONY: sdist
 sdist:
 	@printf "${TERM_BRIGHT}SDIST\n${TERM_NONE}"
-	${Q} python setup.py sdist
+	${Q} python3 setup.py sdist
 
 .PHONY: sdist_clean
 sdist_clean:
@@ -199,22 +202,22 @@ sdist_clean:
 	${Q} rm -rf dist/ MANIFEST TestSlide.egg-info/
 
 .PHONY: twine
-twine: sdist
-	twine upload $(DIST_TAR_GZ)
+twine: venv sdist
+	${CURDIR}/venv/bin/twine upload $(DIST_TAR_GZ)
 
 .PHONY: install_local
-install_local: sdist
+install_local: venv sdist
 	@printf "${TERM_BRIGHT}INSTALL LOCAL\n${TERM_NONE}"
-	${Q} pip install $(DIST_TAR_GZ)
-	${Q} testslide --help
+	${Q} ${CURDIR}/venv/bin/pip install $(DIST_TAR_GZ)
+	${Q} ${CURDIR}/venv/bin/testslide --help
 
 .PHONY: build_dev_container
-dev_container: 
+dev_container:
 	@printf "${TERM_BRIGHT}BUILDING DEV CONTAINER\n${TERM_NONE}"
 	${Q} docker build -t testslide-dev .
 
 .PHONY: run_tests_in_container
-run_tests_in_container: 
+run_tests_in_container:
 	@printf "${TERM_BRIGHT}RUNNING CI IN DEV CONTAINER\n${TERM_NONE}"
 	${Q} docker run testslide-dev
 
@@ -244,13 +247,13 @@ clean_dev_container:
 
 .PHONY: ci
 ci: \
-	install_deps \
-	install_build_deps \
+	venv \
 	tests \
 	coverage_report \
 	docs \
 	sdist \
 	install_local
+	@true
 
 ##
 ## Clean
@@ -259,9 +262,9 @@ ci: \
 .PHONY: clean
 clean: sdist_clean docs_clean coverage_html_clean coverage_erase mypy_clean
 	@printf "${TERM_BRIGHT}CLEAN\n${TERM_NONE}"
-	${Q} rm -rf */__pycache__/ */*.pyc
+	${Q} rm -rf */__pycache__/ */*.pyc venv/
 
 
 .PHONY: check-copyright
 check-copyright: ## verify copyright for every file
-	@python tests/copyright_check/copyright_validator.py
+	@python3 tests/copyright_check/copyright_validator.py
