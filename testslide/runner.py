@@ -378,9 +378,9 @@ class SlowImportWarningMixin(ColorFormatterMixin):
         super().__init__(*args, **kwargs)
         if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
             self.print_yellow(
-                "Warning: Importing test modules alone took %.1fs! To remove this slow "
-                "down remove object construction from module level. If not possible, "
-                "consider using/ lazy_import(). Try using --import-profiler to profile "
+                "Warning: Importing test modules alone took %.1fs! To speed this up, "
+                "remove object construction from module level. If not possible, "
+                "consider using lazy_import(). Try using --import-profiler to profile "
                 "your imports." % (self.import_secs)
             )
             self._import_secs_warn = False
