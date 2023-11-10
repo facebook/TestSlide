@@ -5,7 +5,6 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-import testslide
 from testslide.mock_callable import _CallableMock, _MockCallableDSL
 
 from .lib import (
@@ -331,7 +330,8 @@ def mock_constructor(
         raise ValueError("Second argument must be a string with the name of the class.")
     _bail_if_private(class_name, allow_private)
     if isinstance(target, str):
-        target = testslide._importer(target)
+        from testslide import _importer
+        target = _importer(target)
     target_class_id = (id(target), class_name)
 
     if target_class_id in _mocked_target_classes:

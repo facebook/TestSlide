@@ -5,8 +5,7 @@
 
 from typing import Any, Callable, Dict, Tuple
 
-import testslide
-from testslide.strict_mock import UndefinedAttribute
+from testslide.strict_mock import StrictMock, UndefinedAttribute
 
 from .lib import _bail_if_private, _validate_argument_type
 from .patch import _patch
@@ -55,11 +54,12 @@ def patch_attribute(
     _bail_if_private(attribute, allow_private)
 
     if isinstance(target, str):
-        target = testslide._importer(target)
+        from testslide import _importer
+        target = _importer(target)
 
     key = (id(target), attribute)
 
-    if isinstance(target, testslide.StrictMock):
+    if isinstance(target, StrictMock):
         if not type_validation:
             target.__dict__["_attributes_to_skip_type_validation"].append(attribute)
         template_class = target._template

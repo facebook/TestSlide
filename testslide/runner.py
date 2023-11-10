@@ -33,8 +33,6 @@ from pygments.token import (
     Whitespace,
 )
 
-import testslide
-
 from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
 
 ##
@@ -281,7 +279,10 @@ class ColorFormatterMixin(BaseFormatter):
 
 
 class FailurePrinterMixin(ColorFormatterMixin):
-    TESTSLIDE_PATH: str = os.path.abspath(os.path.dirname(testslide.__file__))
+    @property
+    def TESTSLIDE_PATH(self) -> str:
+        from testslide import __file__
+        return os.path.abspath(os.path.dirname(__file__))
 
     def _get_test_module_index(self, tb: traceback.StackSummary) -> Optional[int]:
         test_module_paths = [

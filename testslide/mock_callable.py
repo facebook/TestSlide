@@ -22,7 +22,6 @@ from typing import (
 )
 from unittest.mock import Mock
 
-import testslide
 from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
 from testslide.strict_mock import StrictMock
 
@@ -833,7 +832,8 @@ class _MockCallableDSL:
         self._allow_coro = False
         self._accept_partial_call = False
         if isinstance(target, str):
-            self._target = testslide._importer(target)
+            from testslide import _importer
+            self._target = _importer(target)
         else:
             self._target = target
 
