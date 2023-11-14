@@ -28,22 +28,66 @@ Generally speaking:
 
 Here's a quick cookbook on how to have a Python installation working using Docker:
 
-- Install [Docker CE](https://docs.docker.com/install/).
-- Clone the repo: `git clone https://github.com/facebook/TestSlide.git`.
-- Create the Docker image: `docker create --name testslide --interactive --tty --mount type=bind,source="$PWD"/TestSlide,target=/root/src/TestSlide --workdir=/root/src/TestSlide debian /bin/bash`.
-- Start a container with this image: `docker start --interactive testslide`.
-- Install the dependencies: `apt update && apt -y install build-essential curl git libbz2-dev libncurses5-dev libreadline-dev libsqlite3-dev libssl-dev llvm vim wget zlib1g-dev`.
-- Install pyenv: `curl https://pyenv.run | bash`.
-- Add this to `~/.bashrc`:
-```
-export PATH="/root/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-```
-- Do `exec bash -i`.
-- Install Python: `pyenv install 3.7.3`.
-- Enable the installed version `pyenv shell 3.7.3`.
+1. Install [Docker CE](https://docs.docker.com/install/).
+2. Clone the repo
+    ```shell
+    git clone https://github.com/facebook/TestSlide.git
+    ```
+3. Create the Docker image:
+    ```shell
+    docker create --name testslide --interactive --tty --mount type=bind,source="$PWD"/TestSlide,target=/root/src/TestSlide --workdir=/root/src/TestSlide debian /bin/bash
+    ```
+4. Start a container with this image:
+    ```shell
+    docker start --interactive testslide
+    ```
+5. Install the dependencies:
+    ```shell
+    apt update && apt -y install build-essential curl git libbz2-dev libncurses5-dev libreadline-dev libsqlite3-dev libssl-dev llvm vim wget zlib1g-dev pip
+    ```
+6. Install pyenv:
+    ```shell
+    curl https://pyenv.run | bash
+    ```
+7. Configure your shell's environment for Pyenv:
+    ```shell
+    # the sed invocation inserts the lines at the start of the file
+    # after any initial comment lines
+    sed -Ei -e '/^([^#]|$)/ {a \
+    export PYENV_ROOT="$HOME/.pyenv"
+    a \
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    a \
+    ' -e ':a' -e '$!{n;ba};}' ~/.profile
+    echo 'eval "$(pyenv init --path)"' >>~/.profile
 
+    echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+    ```
+8. Reload profile:
+    ```shell
+    source ~/.profile
+    ```
+9. Install Python:
+    ```shell
+    pyenv install 3.7.3
+    ````
+10. Enable the installed version.
+    ```shell
+    pyenv shell 3.7.3
+    ```
+11. Upgrade pip
+    ```shell
+    pip install --upgrade pip
+    ```
+12. Install the dependencies
+    ```shell
+    make install_deps
+    make install_build_deps
+    ```
+13. Run the tests:
+    ```shell
+    make
+    ```
 ## Contributor License Agreement ("CLA")
 
 In order to accept your pull request, we need you to submit a CLA. You only need
