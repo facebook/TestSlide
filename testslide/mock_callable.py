@@ -737,7 +737,7 @@ class _MockCallableDSL:
                 )
             if inspect.isclass(original_callable):
                 raise ValueError(
-                    f"{name}() can not be used with with classes: "
+                    f"{name}() can not be used with classes: "
                     f"{repr(original_callable)}. Perhaps you want to use "
                     "mock_constructor() instead."
                 )
