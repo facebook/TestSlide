@@ -7,13 +7,13 @@ import contextlib
 import os
 
 import testslide
-from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+from testslide.dsl import context, fcontext, Skip, xcontext  # noqa: F401
 from testslide.lib import CoroutineValueError, TypeCheckError
 from testslide.mock_callable import (
+    mock_callable,
     UndefinedBehaviorForCall,
     UnexpectedCallArguments,
     UnexpectedCallReceived,
-    mock_callable,
 )
 from testslide.strict_mock import StrictMock
 
@@ -109,6 +109,18 @@ def mock_callable_tests(context):
         t = sample_module.SomeClassWithSlots(attribute="value")
         self.mock_callable(t, "method").to_return_value(42).and_assert_called_once()
         self.assertEqual(t.method(), 42)
+
+    @context.example
+    def patching_functions_multiple_times_with_unhashable_class(self):
+        t1 = sample_module.SomeUnhashableClass()
+        t2 = sample_module.SomeUnhashableClass()
+        t3 = sample_module.SomeUnhashableClass()
+        self.mock_callable(t1, "method").to_return_value(0).and_assert_called_once()
+        self.assertEqual(t1.method(), 0)
+        self.mock_callable(t2, "method").to_return_value(1).and_assert_called_once()
+        self.assertEqual(t2.method(), 1)
+        self.mock_callable(t3, "method").to_return_value(2).and_assert_called_once()
+        self.assertEqual(t3.method(), 2)
 
     ##
     ## Shared Contexts

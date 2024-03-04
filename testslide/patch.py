@@ -38,7 +38,7 @@ class _DescriptorProxy:
         return instance.__get__(instance, owner)  # type: ignore
 
     def __delete__(self, instance: object) -> None:
-        if instance in self.instance_attr_map:
+        if id(instance) in self.instance_attr_map:
             del self.instance_attr_map[id(instance)]
 
 
@@ -51,7 +51,8 @@ def _is_instance_method(target: Any, method: str) -> bool:
         if method in k.__dict__:
             value = k.__dict__[method]
             if isinstance(value, _DescriptorProxy):
-                value = value.original_class_attr
+                while isinstance(value, _DescriptorProxy):
+                    value = value.original_class_attr
             if inspect.isfunction(value):
                 return True
     return False

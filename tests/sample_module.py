@@ -45,6 +45,19 @@ class SomeClassWithSlots:
         return 0
 
 
+class SomeUnhashableClass:
+    class_attr = 0
+
+    def __init__(self) -> None:
+        pass
+
+    def __eq__(self) -> None:
+        return True
+
+    def method(self) -> int:
+        return 0
+
+
 class TargetStr:
     def __str__(self) -> str:
         return "original response"

@@ -10,7 +10,6 @@ import platform
 import re
 from inspect import Traceback
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -18,6 +17,7 @@ from typing import (
     Optional,
     Tuple,
     Type,
+    TYPE_CHECKING,
     Union,
 )
 from unittest.mock import Mock
@@ -25,7 +25,7 @@ from unittest.mock import Mock
 from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
 from testslide.strict_mock import StrictMock
 
-from .lib import CoroutineValueError, _bail_if_private, _is_a_builtin
+from .lib import _bail_if_private, _is_a_builtin, CoroutineValueError
 from .patch import _is_instance_method, _patch
 
 if TYPE_CHECKING:
@@ -833,6 +833,7 @@ class _MockCallableDSL:
         self._accept_partial_call = False
         if isinstance(target, str):
             from testslide import _importer
+
             self._target = _importer(target)
         else:
             self._target = target
