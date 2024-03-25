@@ -157,8 +157,10 @@ def _validate_callable_signature(
     kwargs: Dict[str, Any],
 ) -> bool:
     # python stdlib tests have to exempt some builtins for signature validation tests
-    # they use a giant alloy/deny list, which is impractical here so just ignore
+    # they use a giant allow/deny list, which is impractical here so just ignore
     # all builtins.
+
+    # Ugly hack to make mock objects not be subclass of Mock
     if _is_a_builtin(callable_template):
         return False
     if skip_first_arg and not inspect.ismethod(callable_template):
@@ -257,7 +259,6 @@ def _validate_callable_arg_types(
                 expected_type = argspec.annotations.get(argname)
                 if not expected_type:
                     continue
-
                 _validate_argument_type(expected_type, argname, args[idx])
             except TypeCheckError as type_error:
                 type_errors.append(f"{repr(argname)}: {type_error}")
@@ -273,11 +274,11 @@ def _validate_callable_arg_types(
             type_errors.append(f"{repr(argname)}: {type_error}")
 
     if type_errors:
+        separator = "\n  "
         raise TypeCheckError(
-            "Call to "
-            + callable_template.__name__
-            + " has incompatible argument types:\n  "
-            + "\n  ".join(type_errors)
+            f"Call to {callable_template.__name__} "
+            "has incompatible argument types:\n  "
+            f"{separator.join(type_errors)}"
         )
 
 
