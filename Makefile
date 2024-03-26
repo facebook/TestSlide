@@ -42,7 +42,7 @@ all: tests coverage_report docs sdist
 ##
 venv: requirements-dev.txt requirements.txt
 	@printf "${TERM_BRIGHT}CREATE VIRTUALENV (${CURDIR}/venv)\n${TERM_NONE}"
-	${Q} python3 -m virtualenv venv
+	${Q} python3 -m venv venv
 	@printf "${TERM_BRIGHT}INSTALL BUILD DEPS\n${TERM_NONE}"
 	${Q} ${CURDIR}/venv/bin/pip install -r requirements-dev.txt
 	@printf "${TERM_BRIGHT}INSTALL DEPS\n${TERM_NONE}"
