@@ -356,32 +356,34 @@ class Cli:
             force_color=parsed_args.force_color,
             trim_path_prefix=parsed_args.trim_path_prefix[0],
             show_testslide_stack_trace=parsed_args.show_testslide_stack_trace,
-            profile_threshold_ms=parsed_args.import_profiler[0]
-            if parsed_args.import_profiler
-            else None,
+            profile_threshold_ms=(
+                parsed_args.import_profiler[0] if parsed_args.import_profiler else None
+            ),
             shuffle=parsed_args.shuffle,
             list=parsed_args.list,
             seed=parsed_args.seed[0] if parsed_args.seed else None,
             focus=parsed_args.focus,
             fail_if_focused=parsed_args.fail_if_focused,
             fail_fast=parsed_args.fail_fast,
-            names_text_filter=parsed_args.filter_text[0]
-            if parsed_args.filter_text
-            else None,
-            names_regex_filter=parsed_args.filter_regex[0]
-            if parsed_args.filter_regex
-            else None,
-            names_regex_exclude=parsed_args.exclude_regex[0]
-            if parsed_args.exclude_regex
-            else None,
+            names_text_filter=(
+                parsed_args.filter_text[0] if parsed_args.filter_text else None
+            ),
+            names_regex_filter=(
+                parsed_args.filter_regex[0] if parsed_args.filter_regex else None
+            ),
+            names_regex_exclude=(
+                parsed_args.exclude_regex[0] if parsed_args.exclude_regex else None
+            ),
             quiet=parsed_args.quiet,
             dsl_debug=parsed_args.dsl_debug,
-            import_module_names=self._modules
-            if self._modules
-            else [
-                _filename_to_module_name(test_file)
-                for test_file in parsed_args.test_files
-            ],
+            import_module_names=(
+                self._modules
+                if self._modules
+                else [
+                    _filename_to_module_name(test_file)
+                    for test_file in parsed_args.test_files
+                ]
+            ),
             slow_callback_is_not_fatal=parsed_args.slow_callback_is_not_fatal,
         )
         return config
