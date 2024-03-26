@@ -120,7 +120,7 @@ flake8: venv
 .PHONY: black
 black: venv
 	@printf "${TERM_BRIGHT}BLACK ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} ${CURDIR}/venv/bin/black --check $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
+	${Q} ${CURDIR}/venv/bin/black --check --diff $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
 
 .PHONY: isort
 isort: venv
