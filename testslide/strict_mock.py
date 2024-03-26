@@ -602,9 +602,12 @@ class StrictMock:
         self.__dict__["_name"] = name
         self.__dict__["_type_validation"] = type_validation
         self.__dict__["__caller"] = self.__get_caller(1)
-        self.__dict__[
-            "_attributes_to_skip_type_validation"
-        ] = attributes_to_skip_type_validation
+        # black on py3.7 formats this differently to black on py3.8+ -_-
+        # fmt: off
+        self.__dict__["_attributes_to_skip_type_validation"] = (
+            attributes_to_skip_type_validation
+        )
+        # fmt: on
 
         caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
