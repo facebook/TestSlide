@@ -55,6 +55,7 @@ def patch_attribute(
 
     if isinstance(target, str):
         from testslide import _importer
+
         target = _importer(target)
 
     key = (id(target), attribute)
