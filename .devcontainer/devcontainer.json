@@ -1,0 +1,19 @@
+{
+	"name": "TestSlide",
+	"build": {
+		"context": "..",
+		"dockerfile": "../Dockerfile"
+	},
+
+	"workspaceMount": "source=${localWorkspaceFolder},target=/root/src/TestSlide,type=bind",
+	"workspaceFolder": "/root/src/TestSlide",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.makefile-tools",
+				"ms-python.python"
+			]
+		}
+	}
+}
