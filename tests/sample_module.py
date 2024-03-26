@@ -51,7 +51,7 @@ class SomeUnhashableClass:
     def __init__(self) -> None:
         pass
 
-    def __eq__(self) -> None:
+    def __eq__(self, other) -> bool:
         return True
 
     def method(self) -> int:
