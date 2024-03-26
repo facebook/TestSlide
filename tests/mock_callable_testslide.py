@@ -7,13 +7,13 @@ import contextlib
 import os
 
 import testslide
-from testslide.dsl import context, fcontext, Skip, xcontext  # noqa: F401
+from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
 from testslide.lib import CoroutineValueError, TypeCheckError
 from testslide.mock_callable import (
-    mock_callable,
     UndefinedBehaviorForCall,
     UnexpectedCallArguments,
     UnexpectedCallReceived,
+    mock_callable,
 )
 from testslide.strict_mock import StrictMock
 

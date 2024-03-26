@@ -230,16 +230,18 @@ def _get_mocked_class(
         _restore_dict[target_class_id][name] = value
     # ...and reuse them...
     mocked_class_dict = {
-        "__new__": _wrap_type_validation(
-            original_class,
-            callable_mock,
-            [
-                original_class_new,
-                original_class_init,
-            ],
+        "__new__": (
+            _wrap_type_validation(
+                original_class,
+                callable_mock,
+                [
+                    original_class_new,
+                    original_class_init,
+                ],
+            )
+            if type_validation
+            else callable_mock
         )
-        if type_validation
-        else callable_mock
     }
     mocked_class_dict.update(
         {
@@ -331,6 +333,7 @@ def mock_constructor(
     _bail_if_private(class_name, allow_private)
     if isinstance(target, str):
         from testslide import _importer
+
         target = _importer(target)
     target_class_id = (id(target), class_name)
 

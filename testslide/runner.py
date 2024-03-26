@@ -282,6 +282,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
     @property
     def TESTSLIDE_PATH(self) -> str:
         from testslide import __file__
+
         return os.path.abspath(os.path.dirname(__file__))
 
     def _get_test_module_index(self, tb: traceback.StackSummary) -> Optional[int]:
