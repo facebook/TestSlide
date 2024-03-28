@@ -39,7 +39,7 @@ class TestCliBase(unittest.TestCase):
         args = [
             sys.executable,
             "-m",
-            "testslide.cli",
+            "testslide.executor.cli",
         ]
         if show_testslide_stack_trace:
             args.append("--show-testslide-stack-trace")

@@ -9,10 +9,9 @@ from functools import partial
 from re import sub as _sub
 from typing import Any, Callable, NoReturn, Optional, Union
 
-from testslide import Context, TestCase
+from testslide.core import TestCase
 
-from . import Context as _Context
-from . import Skip  # noqa: F401
+from .lib import Context, Skip  # noqa: F401
 
 ExampleFunction = Callable[..., Any]
 HaltingFunction = Callable[..., NoReturn]
@@ -76,7 +75,7 @@ class _DSLContext:
         self, name: str, context_code: ExampleFunction, *args: Any, **kwargs: Any
     ) -> HaltingFunction:
         if not self.current_context:
-            new_context = _Context(name, skip=self.skip, focus=self.focus)
+            new_context = Context(name, skip=self.skip, focus=self.focus)
         else:
             new_context = self.current_context.add_child_context(
                 name, skip=self.skip, focus=self.focus
