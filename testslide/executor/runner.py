@@ -10,13 +10,11 @@ import os.path
 import random
 import re
 import sys
-import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional, Pattern, Union, cast
 
-import psutil
 import pygments
 import pygments.formatters
 import pygments.lexers
@@ -33,7 +31,8 @@ from pygments.token import (
     Whitespace,
 )
 
-from . import AggregatedExceptions, Context, Example, Skip, _ExampleRunner
+from testslide.dsl.lib import BaseFormatter, Example, Context
+from .lib import AggregatedExceptions, Skip, _ExampleRunner
 
 ##
 ## Base
@@ -68,136 +67,6 @@ TS_COLORSCHEME = {
 }
 
 
-class BaseFormatter:
-    """
-    Formatter base class. To be paired with Runner, to process / output example
-    execution results.
-    """
-
-    def __init__(
-        self,
-        import_module_names: List[str],
-        force_color: bool = False,
-        import_secs: Optional[float] = None,
-        trim_path_prefix: Optional[str] = None,
-        show_testslide_stack_trace: bool = False,
-        dsl_debug: bool = False,
-    ) -> None:
-        self.import_module_names = import_module_names
-        self.force_color = force_color
-        self.import_secs = import_secs
-        self._import_secs_warn = True
-        self.trim_path_prefix = trim_path_prefix
-        self.show_testslide_stack_trace = show_testslide_stack_trace
-        self.dsl_debug = dsl_debug
-        self.current_hierarchy: List[Context] = []
-        self.results: Dict[
-            str, List[Union[Example, Dict[str, Union[Example, BaseException]]]]
-        ] = {
-            "success": [],
-            "fail": [],
-            "skip": [],
-        }
-        self.start_time = psutil.Process(os.getpid()).create_time()
-        self.end_time: Optional[float] = None
-        self.duration_secs: Optional[float] = None
-
-    # Example Discovery
-
-    def discovery_start(self) -> None:
-        """
-        To be called before example discovery starts.
-        """
-        pass
-
-    def example_discovered(self, example: Example) -> None:
-        """
-        To be called when a new example is discovered.
-        """
-        print(example.full_name)
-
-    def discovery_finish(self) -> None:
-        """
-        To be called before example discovery finishes.
-        """
-        pass
-
-    # Test Execution
-
-    def start(self, example: Example) -> None:
-        """
-        To be called before each example execution.
-        """
-        context_to_print = [
-            context
-            for context in example.context.hierarchy
-            if context not in self.current_hierarchy
-        ]
-        for context in context_to_print:
-            self.new_context(context)
-        self.new_example(example)
-        self.current_hierarchy = example.context.hierarchy
-
-    def new_context(self, context: Context) -> None:
-        """
-        Called before an example execution, when its context is different from
-        previous executed example.
-        """
-        pass
-
-    def new_example(self, example: Example) -> None:
-        """
-        Called before an example execution.
-        """
-        pass
-
-    def success(self, example: Example) -> None:
-        """
-        Called when an example was Successfuly executed.
-        """
-        self.results["success"].append(example)
-
-    def fail(self, example: Example, exception: BaseException) -> None:
-        """
-        Called when an example failed on execution.
-        """
-        self.results["fail"].append({"example": example, "exception": exception})
-
-    def skip(self, example: Example) -> None:
-        """
-        Called when an example had the execution skipped.
-        """
-        self.results["skip"].append(example)
-
-    def finish(self, not_executed_examples: List[Example]) -> None:
-        """
-        Called when all examples finished execution.
-        """
-        self.end_time = time.time()
-        self.duration_secs = self.end_time - self.start_time
-
-    # DSL
-
-    def dsl_example(self, example: Example, code: Callable) -> None:
-        pass
-
-    def dsl_before(self, example: Example, code: Callable) -> None:
-        pass
-
-    def dsl_after(self, example: Example, code: Callable) -> None:
-        pass
-
-    def dsl_around(self, example: Example, code: Callable) -> None:
-        pass
-
-    def dsl_memoize(self, example: Example, code: Callable) -> None:
-        pass
-
-    def dsl_memoize_before(self, example: Example, code: Callable) -> None:
-        pass
-
-    def dsl_function(self, example: Example, code: Callable) -> None:
-        pass
 
 
 ##

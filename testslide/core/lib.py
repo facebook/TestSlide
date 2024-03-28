@@ -50,8 +50,8 @@ else:
 
 if TYPE_CHECKING:
     # hack to remove mypy warnings about types not being defined
-    from testslide.mock_callable import _CallableMock
-    from testslide.strict_mock import StrictMock, _DefaultMagic
+    from testslide.core.mock_callable import _CallableMock
+    from testslide.core.strict_mock import StrictMock, _DefaultMagic
 
 ##
 ## Type validation
