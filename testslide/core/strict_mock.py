@@ -19,12 +19,10 @@ from typing import (
     get_type_hints,
 )
 
-import testslide.lib
-import testslide.mock_callable
-
+from . import lib, mock_callable
 if TYPE_CHECKING:
     # Hack to enable typing information for mypy
-    from testslide.mock_callable import _CallableMock, _YieldValuesRunner  # noqa: F401
+    from testslide.core.mock_callable import _CallableMock, _YieldValuesRunner  # noqa: F401
 
 
 class UndefinedAttribute(BaseException):
@@ -694,7 +692,7 @@ class StrictMock:
                 # Some modules can throw KeyError : https://bugs.python.org/issue41515
                 annotations = {}
             if name in annotations:
-                testslide.lib._validate_argument_type(annotations[name], name, value)
+                lib._validate_argument_type(annotations[name], name, value)
 
     def __validate_and_wrap_mock_value(self, name: str, value: Any) -> Any:
         if self._template:
@@ -714,7 +712,7 @@ class StrictMock:
                         raise NonCallableValue(self, name)
                     if self.__dict__["_type_validation"]:
                         signature_validation_wrapper = (
-                            testslide.lib._wrap_signature_and_type_validation(
+                            lib._wrap_signature_and_type_validation(
                                 value,
                                 self._template,
                                 name,
@@ -734,7 +732,7 @@ class StrictMock:
                                     raise NonAwaitableReturn(self, name)
 
                                 return_value = await result_awaitable
-                                if not testslide.lib._is_wrapped_for_signature_and_type_validation(
+                                if not lib._is_wrapped_for_signature_and_type_validation(
                                     # The original value was already wrapped for type
                                     # validation. Skipping additional validation to
                                     # allow, for example, mock_callable to disable
@@ -745,9 +743,9 @@ class StrictMock:
                                     # If the return value is a _BaseRunner then type
                                     # validation, if needed, has already been performed
                                     return_value,
-                                    testslide.mock_callable._BaseRunner,
+                                    mock_callable._BaseRunner,
                                 ):
-                                    testslide.lib._validate_return_type(
+                                    lib._validate_return_type(
                                         template_value,
                                         return_value,
                                         self.__dict__["_caller_frame_info"],
@@ -761,7 +759,7 @@ class StrictMock:
                                 return_value = signature_validation_wrapper(
                                     *args, **kwargs
                                 )
-                                if not testslide.lib._is_wrapped_for_signature_and_type_validation(
+                                if not lib._is_wrapped_for_signature_and_type_validation(
                                     # The original value was already wrapped for type
                                     # validation. Skipping additional validation to
                                     # allow, for example, mock_callable to disable
@@ -772,9 +770,9 @@ class StrictMock:
                                     # If the return value is a _BaseRunner then type
                                     # validation, if needed, has already been performed
                                     return_value,
-                                    testslide.mock_callable._BaseRunner,
+                                    mock_callable._BaseRunner,
                                 ):
-                                    testslide.lib._validate_return_type(
+                                    lib._validate_return_type(
                                         template_value,
                                         return_value,
                                         self.__dict__["_caller_frame_info"],
@@ -901,4 +899,4 @@ def _extract_StrictMock_template(mock_obj: StrictMock) -> Optional[Any]:
     return None
 
 
-testslide.lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template  # type: ignore
+lib.MOCK_TEMPLATE_EXTRACTORS[StrictMock] = _extract_StrictMock_template  # type: ignore

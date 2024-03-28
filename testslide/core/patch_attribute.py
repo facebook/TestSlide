@@ -5,7 +5,7 @@
 
 from typing import Any, Callable, Dict, Tuple
 
-from testslide.strict_mock import StrictMock, UndefinedAttribute
+from testslide.core.strict_mock import StrictMock, UndefinedAttribute
 
 from .lib import _bail_if_private, _validate_argument_type
 from .patch import _patch

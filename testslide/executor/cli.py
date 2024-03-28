@@ -15,9 +15,10 @@ from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
 
 import testslide.dsl
 
-from . import Context, TestCase, _TestSlideTestResult
+from testslide.core import  TestCase
+from testslide.dsl.lib import Context, _TestSlideTestResult
 from .runner import DocumentFormatter, LongFormatter, ProgressFormatter, Runner
-from .strict_mock import StrictMock
+from testslide.core.strict_mock import StrictMock
 
 _unittest_testcase_loaded: bool = False
 

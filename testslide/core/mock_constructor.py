@@ -5,7 +5,7 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-from testslide.mock_callable import _CallableMock, _MockCallableDSL
+from testslide.core.mock_callable import _CallableMock, _MockCallableDSL
 
 from .lib import (
     _bail_if_private,
