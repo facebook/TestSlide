@@ -22,7 +22,6 @@ import warnings
 from contextlib import contextmanager
 from functools import partial
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -32,6 +31,7 @@ from typing import (
     TextIO,
     Tuple,
     Type,
+    TYPE_CHECKING,
     Union,
 )
 
