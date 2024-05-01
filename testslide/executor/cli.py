@@ -13,11 +13,12 @@ from dataclasses import dataclass
 from time import time
 from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
 
-import testslide.dsl
+import testslide.bdd
 
-from . import Context, TestCase, _TestSlideTestResult
+from testslide.core import  TestCase
+from testslide.bdd.lib import Context, _TestSlideTestResult
 from .runner import DocumentFormatter, LongFormatter, ProgressFormatter, Runner
-from .strict_mock import StrictMock
+from testslide.core.strict_mock import StrictMock
 
 _unittest_testcase_loaded: bool = False
 
@@ -97,8 +98,8 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
         # values of test_case.
         def get_context_code(
             test_case: unittest.TestCase,
-        ) -> Callable[[testslide.dsl._DSLContext], None]:
-            def context_code(context: testslide.dsl._DSLContext) -> None:
+        ) -> Callable[[testslide.bdd.dsl._DSLContext], None]:
+            def context_code(context: testslide.bdd.dsl._DSLContext) -> None:
                 for test_method_name in test_method_names:
 
                     @contextmanager
@@ -142,7 +143,7 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
 
             return context_code
 
-        testslide.dsl.context("{}.{}".format(test_case.__module__, test_case.__name__))(  # type: ignore
+        testslide.bdd.dsl.context("{}.{}".format(test_case.__module__, test_case.__name__))(  # type: ignore
             get_context_code(test_case)
         )
 

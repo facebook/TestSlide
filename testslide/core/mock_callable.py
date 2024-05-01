@@ -22,15 +22,15 @@ from typing import (
 )
 from unittest.mock import Mock
 
-from testslide.lib import _validate_return_type, _wrap_signature_and_type_validation
-from testslide.strict_mock import StrictMock
+from testslide.core.lib import _validate_return_type, _wrap_signature_and_type_validation
+from testslide.core.strict_mock import StrictMock
 
 from .lib import CoroutineValueError, _bail_if_private, _is_a_builtin
 from .patch import _is_instance_method, _patch
 
 if TYPE_CHECKING:
-    from testslide.matchers import RegexMatches  # noqa: F401
-    from testslide.mock_constructor import _MockConstructorDSL  # noqa: F401
+    from .matchers import RegexMatches  # noqa: F401
+    from .mock_constructor import _MockConstructorDSL  # noqa: F401
 
 
 def mock_callable(

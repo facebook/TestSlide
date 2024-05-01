@@ -26,7 +26,7 @@ class _TestSlideFixture:
         exc_val: Optional[Exception],
         exc_tb: TracebackType,
     ):
-        aggregated_exceptions = testslide_module.AggregatedExceptions()
+        aggregated_exceptions = testslide_module.bdd.lib.AggregatedExceptions()
         try:
             for assertion in self._assertions:
                 try:
