@@ -5,24 +5,23 @@ import inspect
 import re
 import sys
 import warnings
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    TextIO,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Dict, Iterator, List, Optional, TextIO, Type, Union
 
 import testslide.core.matchers
 import testslide.core.mock_callable
 import testslide.core.mock_constructor
 import testslide.core.patch_attribute
+from testslide.bdd.lib import (
+    AggregatedExceptions,
+    BaseFormatter,
+    Example,
+    Skip,
+    SlowCallback,
+    _async_ensure_no_leaked_tasks,
+    _ContextData,
+    asyncio_run,
+)
 from testslide.core.strict_mock import StrictMock  # noqa
-from testslide.bdd.lib import BaseFormatter, _ContextData, Example, AggregatedExceptions, _async_ensure_no_leaked_tasks, SlowCallback, asyncio_run, Skip
 
 
 class _ExampleRunner:

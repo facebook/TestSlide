@@ -2,7 +2,6 @@ import asyncio
 import asyncio.log
 import inspect
 import os
-import psutil
 import re
 import sys
 import time
@@ -11,6 +10,8 @@ import unittest
 from contextlib import contextmanager
 from functools import partial
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union
+
+import psutil
 
 import testslide.core.matchers
 import testslide.core.mock_callable
@@ -33,6 +34,7 @@ class LeftOverActiveTasks(BaseException):
 
     pass
 
+
 class Skip(Exception):
     """
     Raised by an example when it is skipped
@@ -51,7 +53,6 @@ class SlowCallback(Exception):
     """
     Raised by TestSlide when an asyncio slow callback warning is detected
     """
-
 
 
 def get_active_tasks():
@@ -73,6 +74,7 @@ async def _async_ensure_no_leaked_tasks(coro):
         )
 
     return result
+
 
 class BaseFormatter:
     """

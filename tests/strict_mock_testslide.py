@@ -12,9 +12,10 @@ import re
 import sys
 import unittest
 
-from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
-from testslide.lib import TypeCheckError
-from testslide.strict_mock import (
+from testslide.bdd.dsl import context
+from testslide.bdd.lib import Skip  # noqa: F401
+from testslide.core.lib import TypeCheckError
+from testslide.core.strict_mock import (
     NonAwaitableReturn,
     NonCallableValue,
     NonExistentAttribute,

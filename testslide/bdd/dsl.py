@@ -11,7 +11,7 @@ from typing import Any, Callable, NoReturn, Optional, Union
 
 from testslide.core import TestCase
 
-from .lib import Context as _Context, Skip  # noqa: F401
+from .lib import Context as _Context  # noqa: F401
 
 ExampleFunction = Callable[..., Any]
 HaltingFunction = Callable[..., NoReturn]

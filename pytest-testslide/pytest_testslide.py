@@ -50,7 +50,7 @@ class _TestSlideFixture:
     @staticmethod
     def mock_async_callable(
         *args: Any, **kwargs: Any
-    ) -> testslide_module.mock_callable._MockAsyncCallableDSL:
+    ) -> testslide_module.core.mock_callable._MockAsyncCallableDSL:
         return testslide_module.mock_callable.mock_async_callable(*args, **kwargs)
 
     @staticmethod

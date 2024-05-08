@@ -7,10 +7,10 @@ import contextlib
 import sys
 from typing import Optional
 
-from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
-from testslide.lib import TypeCheckError
-from testslide.mock_callable import _MockCallableDSL
-from testslide.strict_mock import StrictMock
+from testslide.bdd.dsl import context
+from testslide.core.lib import TypeCheckError
+from testslide.core.mock_callable import _MockCallableDSL
+from testslide.core.strict_mock import StrictMock
 
 
 class _PrivateClass:

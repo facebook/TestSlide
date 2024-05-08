@@ -91,7 +91,7 @@ pytest_tests: venv coverage_erase
 %_testslide.py: venv coverage_erase
 	@printf "${TERM_BRIGHT}TESTSLIDE $@\n${TERM_NONE}"
 	${Q} ${CURDIR}/venv/bin/coverage run \
-		-m testslide.cli \
+		-m testslide.executor.cli \
 		--format $(TESTSLIDE_FORMAT) \
 		--show-testslide-stack-trace \
 		--fail-fast \
@@ -250,10 +250,7 @@ ci: \
 	venv \
 	tests \
 	coverage_report \
-	docs \
-	sdist \
-	install_local
-	@true
+	docs
 
 ##
 ## Clean

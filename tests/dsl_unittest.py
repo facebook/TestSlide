@@ -11,18 +11,18 @@ import unittest
 from typing import List
 from unittest.mock import Mock, call, patch
 
-from testslide import (
+from testslide.bdd.dsl import context, fcontext, xcontext
+from testslide.bdd.lib import (
     AggregatedExceptions,
     Context,
     Example,
     LeftOverActiveTasks,
     SlowCallback,
-    _ExampleRunner,
     get_active_tasks,
     reset,
 )
-from testslide.dsl import context, fcontext, xcontext
-from testslide.runner import QuietFormatter
+from testslide.executor.lib import _ExampleRunner
+from testslide.executor.runner import QuietFormatter
 
 
 def _get_name_to_examples():
@@ -2097,7 +2097,7 @@ class TestGetActiveTasks(unittest.TestCase):
                 task_cancelled,
             ]
 
-        with patch("testslide.get_all_tasks", new=get_all_tasks):
+        with patch("testslide.bdd.lib.get_all_tasks", new=get_all_tasks):
             result = get_active_tasks()
 
         self.assertEqual(result, [task_active])

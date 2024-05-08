@@ -7,9 +7,9 @@ import inspect
 import unittest.mock
 from typing import Optional, Type, TypeVar
 
-import testslide.lib
-from testslide import StrictMock
-from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
+import testslide.core.lib
+from testslide.bdd.dsl import context
+from testslide.core.strict_mock import StrictMock
 
 from . import sample_module
 
@@ -34,17 +34,17 @@ def _validate_callable_arg_types(context):
 
     @context.function
     def assert_passes(self, *args, **kwargs):
-        testslide.lib._validate_callable_arg_types(
+        testslide.core.lib._validate_callable_arg_types(
             self.skip_first_arg, self.callable_template, args, kwargs
         )
 
     @context.function
     def assert_fails(self, *args, **kwargs):
         with self.assertRaisesRegex(
-            testslide.lib.TypeCheckError,
+            testslide.core.lib.TypeCheckError,
             f"Call to {self.callable_template.__name__} has incompatible argument types",
         ):
-            testslide.lib._validate_callable_arg_types(
+            testslide.core.lib._validate_callable_arg_types(
                 self.skip_first_arg, self.callable_template, args, kwargs
             )
 

@@ -4,10 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 from testslide import StrictMock
-from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
-from testslide.lib import TypeCheckError
-from testslide.patch_attribute import unpatch_all_mocked_attributes
-from testslide.strict_mock import UndefinedAttribute
+from testslide.bdd.dsl import context
+from testslide.core.lib import TypeCheckError
+from testslide.core.patch_attribute import unpatch_all_mocked_attributes
+from testslide.core.strict_mock import UndefinedAttribute
 
 from . import sample_module
 

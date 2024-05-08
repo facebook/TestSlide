@@ -12,7 +12,7 @@ def test_pass(testdir):
         import pytest
         from pytest_testslide import testslide
         from tests import sample_module
-        from testslide import StrictMock
+        from testslide.core.strict_mock import StrictMock
 
         def test_has_mock_callable(testslide):
             testslide.mock_callable
@@ -146,7 +146,7 @@ ____ ERROR at teardown of test_mock_async_callable_failing_assertion_works _____
 ______ ERROR at teardown of test_mock_constructor_failing_assertion_works ______
 1 failures.
 <class \'AssertionError\'>: calls did not match assertion.
-<class \'testslide.mock_constructor.ParentTarget\'>, \'__new__\':
+<class \'testslide.core.mock_constructor.ParentTarget\'>, \'__new__\':
   expected: called exactly 1 time\(s\) with any arguments   received: 0 call\(s\)
 _______________ ERROR at teardown of test_aggregated_exceptions ________________
 2 failures.
