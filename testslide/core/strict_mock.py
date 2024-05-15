@@ -20,9 +20,13 @@ from typing import (
 )
 
 from . import lib, mock_callable
+
 if TYPE_CHECKING:
     # Hack to enable typing information for mypy
-    from testslide.core.mock_callable import _CallableMock, _YieldValuesRunner  # noqa: F401
+    from testslide.core.mock_callable import (  # noqa: F401
+        _CallableMock,
+        _YieldValuesRunner,
+    )
 
 
 class UndefinedAttribute(BaseException):
@@ -625,12 +629,14 @@ class StrictMock:
 
     @property
     def _template(self) -> None:
-        import testslide.mock_constructor  # Avoid cyclic dependencies
+        import testslide.core.mock_constructor  # Avoid cyclic dependencies
 
         # If the template class was mocked with mock_constructor(), this will
         # return the mocked subclass, which contains all attributes we need for
         # introspection.
-        return testslide.mock_constructor._get_class_or_mock(self.__dict__["_template"])
+        return testslide.core.mock_constructor._get_class_or_mock(
+            self.__dict__["_template"]
+        )
 
     # FIXME change to __runtime_attrs
     @property
@@ -639,9 +645,9 @@ class StrictMock:
 
     def __template_has_attr(self, name: str) -> bool:
         def get_class_init(klass: type) -> Callable:
-            import testslide.mock_constructor  # Avoid cyclic dependencies
+            import testslide.core.mock_constructor  # Avoid cyclic dependencies
 
-            if not testslide.mock_constructor._is_mocked_class(klass):
+            if not testslide.core.mock_constructor._is_mocked_class(klass):
                 return klass.__init__  # type: ignore
 
             # If klass is the mocked subclass, pull the original version of
@@ -649,7 +655,7 @@ class StrictMock:
             # not the __init__ wrapper at the mocked class).
             mocked_class = klass
             original_class = mocked_class.mro()[1]
-            return testslide.mock_constructor._get_original_init(
+            return testslide.core.mock_constructor._get_original_init(
                 original_class, instance=None, owner=mocked_class
             )
 

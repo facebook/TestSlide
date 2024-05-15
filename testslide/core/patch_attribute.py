@@ -54,7 +54,7 @@ def patch_attribute(
     _bail_if_private(attribute, allow_private)
 
     if isinstance(target, str):
-        from testslide import _importer
+        from testslide.core import _importer
 
         target = _importer(target)
 

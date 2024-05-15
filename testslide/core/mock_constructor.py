@@ -332,7 +332,7 @@ def mock_constructor(
         raise ValueError("Second argument must be a string with the name of the class.")
     _bail_if_private(class_name, allow_private)
     if isinstance(target, str):
-        from testslide import _importer
+        from testslide.core import _importer
 
         target = _importer(target)
     target_class_id = (id(target), class_name)

@@ -13,14 +13,16 @@ if "COVERAGE_PROCESS_START" in os.environ:
 import os
 import sys
 import unittest
-
 from typing import Any
 
-from . import mock_callable as _mock_callable, mock_constructor as _mock_constructor, patch_attribute as _patch_attribute
+from . import mock_callable as _mock_callable
+from . import mock_constructor as _mock_constructor
+from . import patch_attribute as _patch_attribute
 from .strict_mock import StrictMock  # noqa
 
 if sys.version_info < (3, 7):
     raise RuntimeError("Python >=3.7 required.")
+
 
 def _importer(target: str) -> Any:
     components = target.split(".")
@@ -39,24 +41,21 @@ def _importer(target: str) -> Any:
         thing = dot_lookup(thing, comp, import_path)
     return thing
 
+
 class TestCase(unittest.TestCase):
     """
     A subclass of unittest.TestCase that adds TestSlide's features.
     """
 
     def setUp(self) -> None:
-        _mock_callable.register_assertion = lambda assertion: self.addCleanup(
-            assertion
-        )
+        _mock_callable.register_assertion = lambda assertion: self.addCleanup(assertion)
         self.addCleanup(_mock_callable.unpatch_all_callable_mocks)
         self.addCleanup(_mock_constructor.unpatch_all_constructor_mocks)
         self.addCleanup(_patch_attribute.unpatch_all_mocked_attributes)
         super(TestCase, self).setUp()
 
     @staticmethod
-    def mock_callable(
-        *args: Any, **kwargs: Any
-    ) -> _mock_callable._MockCallableDSL:
+    def mock_callable(*args: Any, **kwargs: Any) -> _mock_callable._MockCallableDSL:
         return _mock_callable.mock_callable(*args, **kwargs)
 
     @staticmethod

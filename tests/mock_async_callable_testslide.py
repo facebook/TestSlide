@@ -6,15 +6,15 @@
 import contextlib
 
 import testslide
-from testslide.dsl import Skip, context, fcontext, xcontext  # noqa: F401
-from testslide.lib import TypeCheckError
-from testslide.mock_callable import (
+from testslide.bdd.dsl import context
+from testslide.core.lib import TypeCheckError
+from testslide.core.mock_callable import (
     NotACoroutine,
     UndefinedBehaviorForCall,
     UnexpectedCallArguments,
     mock_async_callable,
 )
-from testslide.strict_mock import StrictMock
+from testslide.core.strict_mock import StrictMock
 
 from . import sample_module
 

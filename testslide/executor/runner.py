@@ -31,7 +31,8 @@ from pygments.token import (
     Whitespace,
 )
 
-from testslide.bdd.lib import BaseFormatter, Example, Context
+from testslide.bdd.lib import BaseFormatter, Context, Example
+
 from .lib import AggregatedExceptions, Skip, _ExampleRunner
 
 ##
@@ -65,8 +66,6 @@ TS_COLORSCHEME = {
     Generic.Error: ("brightred", "brightred"),
     Error: ("_brightred_", "_brightred_"),
 }
-
-
 
 
 ##
@@ -273,7 +272,12 @@ class DSLDebugMixin:
                 file = inspect.getfile(code)
             except TypeError:
                 file = "?"
-        if file and file.startswith(os.path.dirname(__file__)):
+
+        if file and (
+            file.startswith(os.path.dirname(__file__))
+            or "testslide/core/" in file
+            or "testslide/bdd/" in file
+        ):
             return
         if self.trim_path_prefix:  # type: ignore
             split = file.split(self.trim_path_prefix)  # type: ignore

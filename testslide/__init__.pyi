@@ -1,11 +1,12 @@
-from testslide.core import _importer # noqa
-from testslide.bdd.lib import *
-from testslide.executor.lib import *
-from testslide.bdd.lib import Context #noqa
-from typing import Any
 import unittest
+from typing import Any
 
-class TestCase(unittest.TestCase):
+from testslide.bdd.lib import *
+from testslide.bdd.lib import Context  # noqa
+from testslide.core import _importer  # noqa
+from testslide.executor.lib import *
+
+class TestCase(unittest.TestCase):  # type: ignore
     def setUp(self) -> None: ...
     @staticmethod
     def mock_callable(*args, **kwargs): ...  # incomplete

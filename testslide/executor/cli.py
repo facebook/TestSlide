@@ -14,11 +14,11 @@ from time import time
 from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
 
 import testslide.bdd
-
-from testslide.core import  TestCase
 from testslide.bdd.lib import Context, _TestSlideTestResult
-from .runner import DocumentFormatter, LongFormatter, ProgressFormatter, Runner
+from testslide.core import TestCase
 from testslide.core.strict_mock import StrictMock
+
+from .runner import DocumentFormatter, LongFormatter, ProgressFormatter, Runner
 
 _unittest_testcase_loaded: bool = False
 

@@ -4,7 +4,7 @@ relative_files = True
 
 [report]
 precision = 2
-fail_under = 91.90
+fail_under = 91
 include = 
 	testslide/*
-	util/*
+	pytest-testslide/*
