@@ -17,8 +17,8 @@ import testslide.core.strict_mock as strict_mock  # noqa
 import testslide.executor.cli as cli
 import testslide.executor.import_profiler as import_profiler
 import testslide.executor.runner as runner
-from testslide.bdd.lib import Context, _ContextData  # noqa
-from testslide.core import TestCase, _importer  # noqa
+from testslide.bdd.lib import _ContextData, Context  # noqa
+from testslide.core import _importer, TestCase  # noqa
 from testslide.core.strict_mock import StrictMock  # noqa
 
 # I'm sorry. I know. This is necessary to provide backwards compatibility with TestSlide 2.0 so I don't break the world.

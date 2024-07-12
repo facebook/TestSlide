@@ -8,15 +8,15 @@ import inspect
 import os.path
 from types import FrameType
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
+    get_type_hints,
     List,
     Optional,
     Type,
+    TYPE_CHECKING,
     Union,
-    get_type_hints,
 )
 
 from . import lib, mock_callable

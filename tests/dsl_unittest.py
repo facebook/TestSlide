@@ -9,17 +9,17 @@ import subprocess
 import time
 import unittest
 from typing import List
-from unittest.mock import Mock, call, patch
+from unittest.mock import call, Mock, patch
 
 from testslide.bdd.dsl import context, fcontext, xcontext
 from testslide.bdd.lib import (
     AggregatedExceptions,
     Context,
     Example,
-    LeftOverActiveTasks,
-    SlowCallback,
     get_active_tasks,
+    LeftOverActiveTasks,
     reset,
+    SlowCallback,
 )
 from testslide.executor.lib import _ExampleRunner
 from testslide.executor.runner import QuietFormatter

@@ -14,7 +14,7 @@ from time import time
 from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
 
 import testslide.bdd
-from testslide.bdd.lib import Context, _TestSlideTestResult
+from testslide.bdd.lib import _TestSlideTestResult, Context
 from testslide.core import TestCase
 from testslide.core.strict_mock import StrictMock
 

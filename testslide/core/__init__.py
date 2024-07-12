@@ -15,9 +15,11 @@ import sys
 import unittest
 from typing import Any
 
-from . import mock_callable as _mock_callable
-from . import mock_constructor as _mock_constructor
-from . import patch_attribute as _patch_attribute
+from . import (
+    mock_callable as _mock_callable,
+    mock_constructor as _mock_constructor,
+    patch_attribute as _patch_attribute,
+)
 from .strict_mock import StrictMock  # noqa
 
 if sys.version_info < (3, 7):

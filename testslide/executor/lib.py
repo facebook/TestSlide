@@ -12,14 +12,14 @@ import testslide.core.mock_callable
 import testslide.core.mock_constructor
 import testslide.core.patch_attribute
 from testslide.bdd.lib import (
+    _async_ensure_no_leaked_tasks,
+    _ContextData,
     AggregatedExceptions,
+    asyncio_run,
     BaseFormatter,
     Example,
     Skip,
     SlowCallback,
-    _async_ensure_no_leaked_tasks,
-    _ContextData,
-    asyncio_run,
 )
 from testslide.core.strict_mock import StrictMock  # noqa
 

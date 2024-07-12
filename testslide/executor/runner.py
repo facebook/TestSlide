@@ -13,7 +13,7 @@ import sys
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from importlib import import_module
-from typing import Any, Callable, Dict, List, Optional, Pattern, Union, cast
+from typing import Any, Callable, cast, Dict, List, Optional, Pattern, Union
 
 import pygments
 import pygments.formatters
@@ -33,7 +33,7 @@ from pygments.token import (
 
 from testslide.bdd.lib import BaseFormatter, Context, Example
 
-from .lib import AggregatedExceptions, Skip, _ExampleRunner
+from .lib import _ExampleRunner, AggregatedExceptions, Skip
 
 ##
 ## Base

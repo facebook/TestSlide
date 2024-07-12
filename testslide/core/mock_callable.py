@@ -10,7 +10,6 @@ import platform
 import re
 from inspect import Traceback
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -18,6 +17,7 @@ from typing import (
     Optional,
     Tuple,
     Type,
+    TYPE_CHECKING,
     Union,
 )
 from unittest.mock import Mock
@@ -28,7 +28,7 @@ from testslide.core.lib import (
 )
 from testslide.core.strict_mock import StrictMock
 
-from .lib import CoroutineValueError, _bail_if_private, _is_a_builtin
+from .lib import _bail_if_private, _is_a_builtin, CoroutineValueError
 from .patch import _is_instance_method, _patch
 
 if TYPE_CHECKING:

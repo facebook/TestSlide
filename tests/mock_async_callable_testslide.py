@@ -9,10 +9,10 @@ import testslide
 from testslide.bdd.dsl import context
 from testslide.core.lib import TypeCheckError
 from testslide.core.mock_callable import (
+    mock_async_callable,
     NotACoroutine,
     UndefinedBehaviorForCall,
     UnexpectedCallArguments,
-    mock_async_callable,
 )
 from testslide.core.strict_mock import StrictMock
 

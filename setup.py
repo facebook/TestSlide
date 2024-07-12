@@ -24,11 +24,9 @@ setup(
     setup_requires=["setuptools>=38.6.0"],
     install_requires=requirements,
     package_data={
-        'testslide': ['py.typed'],
+        "testslide": ["py.typed"],
     },
-    extras_require={
-        "build": requirements_build
-    },
+    extras_require={"build": requirements_build},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

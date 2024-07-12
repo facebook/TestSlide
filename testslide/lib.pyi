@@ -1,8 +1,8 @@
 from testslide.core.lib import (
+    _extract_NonCallableMock_template,
     CoroutineValueError,
     TypeCheckError,
     WrappedMock,
-    _extract_NonCallableMock_template,
 )
 
 TypeCheckError = TypeCheckError
