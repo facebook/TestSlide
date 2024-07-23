@@ -35,12 +35,16 @@ Properties are tricky to patch because of the quirky mechanics that `Python's De
     @property
     def prop(self):
       return "prop"
-  
+
   class PatchingProperties(TestCase):
     def test_property(self):
       with_property = WithProperty()
       self.patch_attribute(with_property, "prop", "mock")
       self.assertEqual(with_property.prop, "mock")
+
+.. warning::
+
+    ``patch_attribute()`` will execute a ``@property`` decorated function, as this is how it ensures unpatching works. This can cause unexpected behaviour when patching the property.
 
 Type Validation
 ---------------
