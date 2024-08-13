@@ -332,7 +332,7 @@ By giving a template class, we can leverage all interface validation goodies:
 Generic Mocks
 -------------
 
-It is higly recommended to use ``StrictMock`` giving it a template class, so you can leverage its interface validation. There are situations however that any "generic mock" is good enough. You can still use StrictMock, although you'll loose most validations:
+It is higly recommended to use ``StrictMock`` giving it a template class, so you can leverage its interface validation. There are situations however that any "generic mock" is good enough. You can still use StrictMock, although you'll lose most validations:
 
 .. code-block:: ipython
 
