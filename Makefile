@@ -122,16 +122,6 @@ black: venv
 	@printf "${TERM_BRIGHT}BLACK ${ALL_SRCS}\n${TERM_NONE}"
 	${Q} ${CURDIR}/venv/bin/black --check --diff $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
 
-.PHONY: isort
-isort: venv
-	@printf "${TERM_BRIGHT}ISORT ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} ${CURDIR}/venv/bin/isort --check-only --profile black $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
-
-.PHONY: format_isort
-format_isort: venv
-	@printf "${TERM_BRIGHT}FORMAT PYFMT ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} ${CURDIR}/venv/bin/isort --profile black $(ALL_SRCS)
-
 .PHONY: format_black
 format_black: venv
 	@printf "${TERM_BRIGHT}FORMAT BLACK ${ALL_SRCS}\n${TERM_NONE}"
@@ -144,13 +134,11 @@ tests: \
 	pytest_tests \
 	mypy \
 	flake8 \
-	isort \
 	black \
 	check-copyright
 
 .PHONY: format
 format: \
-    format_isort \
 	format_black
 	@true
 ##

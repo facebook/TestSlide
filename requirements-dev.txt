@@ -2,7 +2,6 @@ black
 coverage
 coveralls
 flake8
-isort~=5.1
 mypy==1.2
 ipython
 sphinx
