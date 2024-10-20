@@ -14,6 +14,9 @@ from time import time
 from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
 
 import testslide.bdd
+
+# pyre-fixme[21]: Could not find name `_TestSlideTestResult` in `testslide.bdd.lib`
+#  (stubbed).
 from testslide.bdd.lib import _TestSlideTestResult, Context
 from testslide.core import TestCase
 from testslide.core.strict_mock import StrictMock
@@ -41,6 +44,8 @@ def _filename_to_module_name(name: str) -> str:
 
 def _get_all_test_case_subclasses() -> List[TestCase]:
     def get_all_subclasses(base: Type[unittest.TestCase]) -> List[TestCase]:
+        # pyre-fixme[7]: Expected `List[TestCase]` but got
+        #  `List[Union[Type[case.TestCase], TestCase]]`.
         return list(
             {  # type: ignore[arg-type]
                 "{}.{}".format(c.__module__, c.__name__): c  # type: ignore
@@ -103,7 +108,11 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
                 for test_method_name in test_method_names:
 
                     @contextmanager
+                    # pyre-fixme[11]: Annotation `_TestSlideTestResult` is not
+                    #  defined as a type.
                     def test_result() -> Iterator[_TestSlideTestResult]:
+                        # pyre-fixme[16]: Module `lib` has no attribute
+                        #  `_TestSlideTestResult`.
                         result = _TestSlideTestResult()
                         yield result
                         result.aggregated_exceptions.raise_correct_exception()
@@ -327,8 +336,10 @@ class Cli:
                 __import__(module_name, level=0)
 
         if profile_threshold_ms is not None:
+            # pyre-fixme[21]: Could not find module `testslide.import_profiler`.
             from testslide.import_profiler import ImportProfiler
 
+            # pyre-fixme[16]: Module `testslide` has no attribute `import_profiler`.
             with ImportProfiler() as import_profiler:
                 start_time = time()
                 import_all()
@@ -416,10 +427,19 @@ class Cli:
             )
             StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
             if config.list:
+                # pyre-fixme[16]: Item `DocumentFormatter` of
+                #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
+                #  attribute `discovery_start`.
                 formatter.discovery_start()
                 for context in Context.all_top_level_contexts:
                     for example in context.all_examples:
+                        # pyre-fixme[16]: Item `DocumentFormatter` of
+                        #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]`
+                        #  has no attribute `example_discovered`.
                         formatter.example_discovered(example)
+                # pyre-fixme[16]: Item `DocumentFormatter` of
+                #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
+                #  attribute `discovery_finish`.
                 formatter.discovery_finish()
                 return 0
             else:

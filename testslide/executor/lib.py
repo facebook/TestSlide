@@ -11,6 +11,16 @@ import testslide.core.matchers
 import testslide.core.mock_callable
 import testslide.core.mock_constructor
 import testslide.core.patch_attribute
+
+# pyre-fixme[21]: Could not find name `AggregatedExceptions` in `testslide.bdd.lib`
+#  (stubbed).
+# pyre-fixme[21]: Could not find name `BaseFormatter` in `testslide.bdd.lib` (stubbed).
+# pyre-fixme[21]: Could not find name `Example` in `testslide.bdd.lib` (stubbed).
+# pyre-fixme[21]: Could not find name `Skip` in `testslide.bdd.lib` (stubbed).
+# pyre-fixme[21]: Could not find name `SlowCallback` in `testslide.bdd.lib` (stubbed).
+# pyre-fixme[21]: Could not find name `_async_ensure_no_leaked_tasks` in
+#  `testslide.bdd.lib` (stubbed).
+# pyre-fixme[21]: Could not find name `asyncio_run` in `testslide.bdd.lib` (stubbed).
 from testslide.bdd.lib import (
     _async_ensure_no_leaked_tasks,
     _ContextData,
@@ -27,7 +37,9 @@ from testslide.core.strict_mock import StrictMock  # noqa
 class _ExampleRunner:
     def __init__(
         self,
+        # pyre-fixme[11]: Annotation `Example` is not defined as a type.
         example: Example,
+        # pyre-fixme[11]: Annotation `BaseFormatter` is not defined as a type.
         formatter: BaseFormatter,
         slow_callback_is_not_fatal: bool = False,
     ) -> None:
@@ -63,6 +75,7 @@ class _ExampleRunner:
             around_functions = list(reversed(self.example.context.all_around_functions))
 
         if not around_functions:
+            # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
             aggregated_exceptions = AggregatedExceptions()
             with aggregated_exceptions.catch():
                 for before_code in self.example.context.all_before_functions:
@@ -76,6 +89,8 @@ class _ExampleRunner:
                         before_code, context_data
                     )
                 self.formatter.dsl_example(self.example, self.example.code)
+                # pyre-fixme[16]: Module `lib` has no attribute
+                #  `_async_ensure_no_leaked_tasks`.
                 await _async_ensure_no_leaked_tasks(
                     self._fail_if_not_coroutine_function(
                         self.example.code, context_data
@@ -152,6 +167,7 @@ class _ExampleRunner:
                     "Tip: you can customize the detection threshold with:\n"
                     "  asyncio.get_running_loop().slow_callback_duration = seconds"
                 )
+                # pyre-fixme[16]: Module `lib` has no attribute `SlowCallback`.
                 caught_failures.append(SlowCallback(msg % args))
             else:
                 original_logger_warning(msg, *args, **kwargs)
@@ -159,6 +175,7 @@ class _ExampleRunner:
         if not slow_callback_is_not_fatal:
             asyncio.log.logger.warning = logger_warning  # type: ignore
 
+        # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
         aggregated_exceptions = AggregatedExceptions()
 
         try:
@@ -177,6 +194,7 @@ class _ExampleRunner:
         with self._raise_if_asyncio_warnings(
             context_data, self.slow_callback_is_not_fatal
         ):
+            # pyre-fixme[16]: Module `lib` has no attribute `asyncio_run`.
             asyncio_run(coro)
 
     @staticmethod
@@ -206,6 +224,7 @@ class _ExampleRunner:
             around_functions = list(reversed(self.example.context.all_around_functions))
 
         if not around_functions:
+            # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
             aggregated_exceptions = AggregatedExceptions()
             with aggregated_exceptions.catch():
                 for before_code in self.example.context.all_before_functions:
@@ -249,6 +268,7 @@ class _ExampleRunner:
     def run(self) -> None:
         try:
             if self.example.skip:
+                # pyre-fixme[16]: Module `lib` has no attribute `Skip`.
                 raise Skip()
             context_data = _ContextData(self.example, self.formatter)
             if self.example.is_async:

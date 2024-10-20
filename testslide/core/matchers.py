@@ -36,6 +36,7 @@ class _AlreadyChainedMatcher:
     def __invert__(self) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
@@ -54,6 +55,7 @@ class Matcher:
     def __invert__(self) -> "_InvMatcher":
         return _InvMatcher(self)
 
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: "Matcher") -> "_OrMatcher":
         return _OrMatcher(self, other)
 
@@ -384,12 +386,14 @@ class StrEndingWith(Matcher):
 # lists
 class AnyList(_RichComparison):
     def __init__(self) -> None:
+        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=List)
 
 
 class ListContaining(_RichComparison):
     def __init__(self, needle: AnyType) -> None:
         self.needle = needle
+        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=List)
 
     def __eq__(self, other: List[AnyType]) -> bool:  # type: ignore
@@ -410,6 +414,7 @@ class ListContainingAll(_RichComparison):
                 f"ListContainingAll(...) expects a 'list' as argument while '{type(subset).__name__}' was provided"
             )
         self.subset = subset
+        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=List)
 
     def __eq__(self, other: List[AnyType]) -> bool:  # type: ignore
@@ -436,6 +441,7 @@ class EmptyList(AnyList):
 # dicts
 class AnyDict(_RichComparison):
     def __init__(self) -> None:
+        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=Dict)
 
 
@@ -456,6 +462,7 @@ class DictContainingKeys(_RichComparison):
                 f"DictContainingKeys(...) expects a 'list' as argument while '{type(expected_keys).__name__}' was provided"
             )
         self.expected_keys = expected_keys
+        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=Dict)
 
     def __eq__(self, other: Dict[AnyType, AnyType]) -> bool:  # type: ignore
@@ -474,6 +481,7 @@ class DictSupersetOf(_RichComparison):
                 f"DictSupersetOf(...) expects a 'dict' as argument while '{type(subset).__name__}' was provided"
             )
         self.subset = subset
+        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=Dict)
 
     def __eq__(self, other: Dict[AnyType, AnyType]) -> bool:  # type: ignore

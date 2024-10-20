@@ -31,8 +31,13 @@ from pygments.token import (
     Whitespace,
 )
 
+# pyre-fixme[21]: Could not find name `BaseFormatter` in `testslide.bdd.lib` (stubbed).
+# pyre-fixme[21]: Could not find name `Example` in `testslide.bdd.lib` (stubbed).
 from testslide.bdd.lib import BaseFormatter, Context, Example
 
+# pyre-fixme[21]: Could not find name `AggregatedExceptions` in
+#  `testslide.executor.lib`.
+# pyre-fixme[21]: Could not find name `Skip` in `testslide.executor.lib`.
 from .lib import _ExampleRunner, AggregatedExceptions, Skip
 
 ##
@@ -73,9 +78,11 @@ TS_COLORSCHEME = {
 ##
 
 
+# pyre-fixme[11]: Annotation `BaseFormatter` is not defined as a type.
 class ColorFormatterMixin(BaseFormatter):
     @property
     def colored(self) -> bool:
+        # pyre-fixme[16]: `ColorFormatterMixin` has no attribute `force_color`.
         return sys.stdout.isatty() or self.force_color
 
     def remove_terminal_escape(self, text: str) -> str:
@@ -156,6 +163,8 @@ class FailurePrinterMixin(ColorFormatterMixin):
     def _get_test_module_index(self, tb: traceback.StackSummary) -> Optional[int]:
         test_module_paths = [
             import_module(import_module_name).__file__
+            # pyre-fixme[16]: `FailurePrinterMixin` has no attribute
+            #  `import_module_names`.
             for import_module_name in self.import_module_names
         ]
 
@@ -185,11 +194,14 @@ class FailurePrinterMixin(ColorFormatterMixin):
         test_module_index = self._get_test_module_index(tb)
 
         for index, (path, line, function_name, text) in enumerate(tb):
+            # pyre-fixme[16]: `FailurePrinterMixin` has no attribute
+            #  `show_testslide_stack_trace`.
             if not self.show_testslide_stack_trace:
                 if test_module_index is not None and index < test_module_index:
                     continue
                 if os.path.abspath(path).startswith(self.TESTSLIDE_PATH):
                     continue
+            # pyre-fixme[16]: `FailurePrinterMixin` has no attribute `trim_path_prefix`.
             if self.trim_path_prefix:
                 split = path.split(self.trim_path_prefix)
                 if len(split) == 2 and not split[0]:
@@ -221,6 +233,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
     def print_failed_example(
         self,
         number: int,
+        # pyre-fixme[11]: Annotation `Example` is not defined as a type.
         example: Example,
         exception: BaseException,
     ) -> None:
@@ -229,6 +242,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
                 number=number, context=example.context.full_name, example=example
             )
         )
+        # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
         if type(exception) is AggregatedExceptions:
             exception_list = exception.exceptions  # type: ignore
         else:
@@ -246,6 +260,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
 class SlowImportWarningMixin(ColorFormatterMixin):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        # pyre-fixme[16]: `SlowImportWarningMixin` has no attribute `import_secs`.
         if self.import_secs and self.import_secs > 1 and self._import_secs_warn:
             self.print_yellow(
                 "Warning: Importing test modules alone took %.1fs! To speed this up, "
@@ -359,6 +374,7 @@ class VerboseFinishMixin(ColorFormatterMixin):
     ) -> List[str]:
         summary_lines: List[str] = []
 
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `import_secs`.
         if self.import_secs and self.import_secs > 2:
             summary_lines.append(
                 self.format_yellow_bright("Imports took: %.1fs!" % (self.import_secs))
@@ -373,6 +389,7 @@ class VerboseFinishMixin(ColorFormatterMixin):
         summary_lines.append(
             self.format_bright(
                 "Executed %s %s in %.1fs:"
+                # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `duration_secs`.
                 % (total, example, cast(float, self.duration_secs)),
             )
         )
@@ -408,7 +425,9 @@ class VerboseFinishMixin(ColorFormatterMixin):
         return summary_lines
 
     def finish(self, not_executed_examples: List[Example]) -> None:
+        # pyre-fixme[16]: `ColorFormatterMixin` has no attribute `finish`.
         super().finish(not_executed_examples)
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `results`.
         success = len(self.results["success"])
         fail = len(self.results["fail"])
         skip = len(self.results["skip"])
@@ -480,24 +499,32 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
     """
 
     def new_example(self, example: Example) -> None:
+        # pyre-fixme[16]: `DSLDebugMixin` has no attribute `new_example`.
         super().new_example(example)
+        # pyre-fixme[16]: `ProgressFormatter` has no attribute `dsl_debug`.
         if self.dsl_debug:
             print("")
 
     def success(self, example: Example) -> None:
+        # pyre-fixme[16]: `DSLDebugMixin` has no attribute `success`.
         super().success(example)
         self.print_green(".", end="")
 
     def fail(self, example: Example, exception: BaseException) -> None:
+        # pyre-fixme[16]: `DSLDebugMixin` has no attribute `fail`.
         super().fail(example, exception)
         self.print_red("F", end="")
 
     def skip(self, example: Example) -> None:
+        # pyre-fixme[16]: `DSLDebugMixin` has no attribute `skip`.
         super().skip(example)
         self.print_yellow("S", end="")
 
     def finish(self, not_executed_examples: List[Example]) -> None:
+        # pyre-fixme[16]: `DSLDebugMixin` has no attribute `finish`.
         super().finish(not_executed_examples)
+        # pyre-fixme[16]: `ProgressFormatter` has no attribute `results`.
+        # pyre-fixme[16]: `ProgressFormatter` has no attribute `dsl_debug`.
         if self.results["fail"] and not self.dsl_debug:
             self.print_red("\nFailures:")
             for number, result in enumerate(self.results["fail"]):
@@ -521,9 +548,11 @@ class DocumentFormatter(
         )
 
     def _color_output(self) -> bool:
+        # pyre-fixme[16]: `DocumentFormatter` has no attribute `force_color`.
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example: Example) -> None:
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `success`.
         super().success(example)
         self.print_green(
             "{indent}{focus}{example}{pass_text}".format(
@@ -535,11 +564,14 @@ class DocumentFormatter(
         )
 
     def fail(self, example: Example, exception: BaseException) -> None:
+        # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
         if isinstance(exception, AggregatedExceptions) and 1 == len(
+            # pyre-fixme[16]: `BaseException` has no attribute `exceptions`.
             exception.exceptions
         ):
             exception = exception.exceptions[0]
 
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `fail`.
         super().fail(example, exception)
 
         self.print_red(
@@ -553,6 +585,7 @@ class DocumentFormatter(
         )
 
     def skip(self, example: Example) -> None:
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `skip`.
         super().skip(example)
         self.print_yellow(
             "{indent}{focus}{example}{skip_text}".format(
@@ -577,14 +610,18 @@ class LongFormatter(
             ),
             end="",
         )
+        # pyre-fixme[16]: `LongFormatter` has no attribute `dsl_debug`.
         if self.dsl_debug:
             print("")
 
     def _color_output(self) -> bool:
+        # pyre-fixme[16]: `LongFormatter` has no attribute `force_color`.
         return sys.stdout.isatty() or self.force_color
 
     def success(self, example: Example) -> None:
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `success`.
         super().success(example)
+        # pyre-fixme[16]: `LongFormatter` has no attribute `dsl_debug`.
         if self.dsl_debug:
             print("  ", end="")
         self.print_green(
@@ -596,12 +633,16 @@ class LongFormatter(
         )
 
     def fail(self, example: Example, exception: BaseException) -> None:
+        # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
         if isinstance(exception, AggregatedExceptions) and 1 == len(
+            # pyre-fixme[16]: `BaseException` has no attribute `exceptions`.
             exception.exceptions
         ):
             exception = exception.exceptions[0]
 
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `fail`.
         super().fail(example, exception)
+        # pyre-fixme[16]: `LongFormatter` has no attribute `dsl_debug`.
         if self.dsl_debug:
             print("  ", end="")
         self.print_red(
@@ -614,7 +655,9 @@ class LongFormatter(
         )
 
     def skip(self, example: Example) -> None:
+        # pyre-fixme[16]: `VerboseFinishMixin` has no attribute `skip`.
         super().skip(example)
+        # pyre-fixme[16]: `LongFormatter` has no attribute `dsl_debug`.
         if self.dsl_debug:
             print("  ", end="")
         self.print_yellow(
@@ -682,6 +725,7 @@ class Runner:
                 except BaseException as ex:
                     example_exception = ex
             if example_exception:
+                # pyre-fixme[16]: Module `lib` has no attribute `Skip`.
                 if not isinstance(example_exception, Skip):
                     if stdout.getvalue():
                         print("stdout:\n{}".format(stdout.getvalue()))
@@ -703,25 +747,41 @@ class Runner:
         exit_code = 0
         for example in self._to_execute_examples:
             executed_examples.append(example)
+            # pyre-fixme[16]: Item `DocumentFormatter` of `Union[DocumentFormatter,
+            #  SlowImportWarningMixin]` has no attribute `start`.
             self.formatter.start(example)
             sys.stdout.flush()
             sys.stderr.flush()
             try:
                 self._run_example(example)
+            # pyre-fixme[66]: Exception handler type annotation `unknown` must
+            #  extend BaseException.
+            # pyre-fixme[16]: Module `lib` has no attribute `Skip`.
             except Skip:
+                # pyre-fixme[16]: Item `SlowImportWarningMixin` of
+                #  `Union[DocumentFormatter, SlowImportWarningMixin]` has no attribute
+                #  `skip`.
                 self.formatter.skip(example)
             except BaseException as exception:
+                # pyre-fixme[16]: Item `SlowImportWarningMixin` of
+                #  `Union[DocumentFormatter, SlowImportWarningMixin]` has no attribute
+                #  `fail`.
                 self.formatter.fail(example, exception)
                 exit_code = 1
                 if self.fail_fast:
                     break
             else:
+                # pyre-fixme[16]: Item `SlowImportWarningMixin` of
+                #  `Union[DocumentFormatter, SlowImportWarningMixin]` has no attribute
+                #  `success`.
                 self.formatter.success(example)
         not_executed_examples = [
             example
             for example in self._all_examples
             if example not in executed_examples
         ]
+        # pyre-fixme[16]: Item `SlowImportWarningMixin` of `Union[DocumentFormatter,
+        #  SlowImportWarningMixin]` has no attribute `finish`.
         self.formatter.finish(not_executed_examples)
         sys.stdout.flush()
         sys.stderr.flush()

@@ -61,6 +61,7 @@ class ImportedModule:
     def __str__(self) -> str:
         if self.globals and self.level:
             if self.level == 1:
+                # pyre-fixme[16]: `Optional` has no attribute `__getitem__`.
                 prefix = self.globals["__package__"]
             else:
                 end = -1 * (self.level - 1)
@@ -70,6 +71,7 @@ class ImportedModule:
         return "{}{}".format(prefix, self.name)
 
     def __enter__(self) -> None:
+        # pyre-fixme[16]: `ImportedModule` has no attribute `_start_time`.
         self._start_time = time.time()
 
     def __exit__(
@@ -78,6 +80,7 @@ class ImportedModule:
         exc_val: Optional[Exception],
         exc_tb: TracebackType,
     ) -> None:
+        # pyre-fixme[16]: `ImportedModule` has no attribute `_start_time`.
         self.time = time.time() - self._start_time
 
 
@@ -105,9 +108,13 @@ class ImportProfiler:
 
     def __enter__(self) -> "ImportProfiler":
         __builtins__["__import__"] = self._profiled_import  # type:ignore
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `_top_imp_modules`.
         self._top_imp_modules: List[ImportedModule] = []
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `_import_stack`.
         self._import_stack: List[ImportedModule] = []
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
         self.total_time: float = 0
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `_start_time`.
         self._start_time = time.time()
         return self
 
@@ -117,6 +124,8 @@ class ImportProfiler:
         exc_val: Optional[Exception],
         exc_tb: Optional[TracebackType],
     ) -> None:
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `_start_time`.
         self.total_time = time.time() - self._start_time
         __builtins__["__import__"] = self._original_import  # type:ignore
 
@@ -134,9 +143,11 @@ class ImportProfiler:
             name=name,
             globals=globals,
             level=level,
+            # pyre-fixme[16]: `ImportProfiler` has no attribute `_import_stack`.
             parent=self._import_stack[-1] if self._import_stack else None,
         )
         if not self._import_stack:
+            # pyre-fixme[16]: `ImportProfiler` has no attribute `_top_imp_modules`.
             self._top_imp_modules.append(imp_mod)
         self._import_stack.append(imp_mod)
         with imp_mod:
@@ -157,7 +168,9 @@ class ImportProfiler:
             for child_imp_mod in imp_mod.children:
                 print_imp_mod(child_imp_mod, indent + 1)
 
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `_top_imp_modules`.
         for imp_mod in self._top_imp_modules:
             print_imp_mod(imp_mod)
         print()
+        # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
         print("Total import time: {}ms".format(int(self.total_time * 1000)))

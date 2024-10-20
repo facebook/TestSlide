@@ -188,11 +188,13 @@ class _DSLContext:
 
     @_require_context("merge a TestCase")
     def merge_test_case(self, test_case: "TestCase", attr_name: str) -> HaltingFunction:
+        # pyre-fixme[16]: `Optional` has no attribute `add_test_case`.
         self.current_context.add_test_case(test_case, attr_name)  # type:ignore
         return self._not_callable
 
     @_require_context("nest a shared context")
     def nest_context(self, name: str, *args: Any, **kwargs: Any) -> None:
+        # pyre-fixme[16]: `Optional` has no attribute `all_shared_contexts`.
         if name not in self.current_context.all_shared_contexts:  # type:ignore
             raise TypeError('Shared context "{}" does not exist'.format(name))
         self._create_context(

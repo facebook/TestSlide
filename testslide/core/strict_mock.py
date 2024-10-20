@@ -625,6 +625,8 @@ class StrictMock:
 
     @property  # type: ignore
     def __class__(self) -> type:
+        # pyre-fixme[7]: Expected `Type[typing.Any]` but got
+        #  `Optional[Type[StrictMock]]`.
         return self._template if self._template is not None else type(self)
 
     @property
