@@ -1,3 +1,4 @@
+# pyre-unsafe
 from typing import Any
 
 from testslide.core.mock_constructor import *

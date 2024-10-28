@@ -1,3 +1,4 @@
+# pyre-unsafe
 import asyncio
 import asyncio.log
 import inspect

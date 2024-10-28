@@ -1,3 +1,4 @@
+# pyre-unsafe
 from typing import Any
 
 from testslide.bdd.dsl import _DSLContext as DSLContext
