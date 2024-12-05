@@ -553,6 +553,7 @@ class _AsyncImplementationRunner(_AsyncRunner):
         self.new_implementation = new_implementation
 
     async def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
+
         await super().run(*args, **kwargs)
         coro = self.new_implementation(*args, **kwargs)
         if not _is_coroutine(coro):
