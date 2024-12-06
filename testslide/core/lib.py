@@ -98,7 +98,7 @@ MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Mock], Optional[Any]]] = {
 
 
 def _extract_mock_template(
-    mock: Union[Mock, "StrictMock"]
+    mock: Union[Mock, "StrictMock"],
 ) -> Optional[Union[Type[str], Type[dict], Type[int]]]:
     template = None
     for mock_class, extract_mock_template in MOCK_TEMPLATE_EXTRACTORS.items():

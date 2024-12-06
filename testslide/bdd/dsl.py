@@ -200,7 +200,10 @@ class _DSLContext:
         if name not in self.current_context.all_shared_contexts:  # type:ignore
             raise TypeError('Shared context "{}" does not exist'.format(name))
         self._create_context(
-            name, self.current_context.all_shared_contexts[name], *args, **kwargs  # type: ignore
+            name,
+            self.current_context.all_shared_contexts[name],
+            *args,
+            **kwargs,  # type: ignore
         )
 
     # Helper function

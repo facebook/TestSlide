@@ -25,9 +25,7 @@ class TestAcceptAnyArg(TestCase):
         self.mock_callable(
             sample_module,
             "test_function",
-        ).for_partial_call(
-            "firstarg", kwarg1="a"
-        ).to_return_value(["blah"])
+        ).for_partial_call("firstarg", kwarg1="a").to_return_value(["blah"])
         sample_module.test_function("firstarg", "xx", kwarg1="a", kwarg2="x")
 
     def test_for_partial_call_fails_if_no_required_args_are_present(self):
@@ -35,9 +33,7 @@ class TestAcceptAnyArg(TestCase):
             self.mock_callable(
                 sample_module,
                 "test_function",
-            ).for_partial_call(
-                "firstarg", kwarg1="a"
-            ).to_return_value(["blah"])
+            ).for_partial_call("firstarg", kwarg1="a").to_return_value(["blah"])
             sample_module.test_function(
                 "differentarg", "alsodifferent", kwarg1="a", kwarg2="x"
             )
@@ -47,16 +43,12 @@ class TestAcceptAnyArg(TestCase):
             self.mock_callable(
                 sample_module,
                 "test_function",
-            ).for_partial_call(
-                "firstarg", kwarg1="x"
-            ).to_return_value(["blah"])
+            ).for_partial_call("firstarg", kwarg1="x").to_return_value(["blah"])
             sample_module.test_function("firstarg", "secondarg", kwarg1="a", kwarg2="x")
 
     def test_matchers_work_with_for_partial_call(self):
         self.mock_callable(
             sample_module,
             "test_function",
-        ).for_partial_call(
-            matchers.Any(), "secondarg"
-        ).to_return_value(["blah"])
+        ).for_partial_call(matchers.Any(), "secondarg").to_return_value(["blah"])
         sample_module.test_function("asdasdeas", "secondarg", kwarg1="a", kwarg2="x")

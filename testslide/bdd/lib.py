@@ -453,7 +453,16 @@ class _TestSlideTestResult(unittest.TestResult):
         super(_TestSlideTestResult, self).addUnexpectedSuccess(test)
         self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None))  # type: ignore
 
-    def addSubTest(self, test: "TestCase", subtest: "TestCase", err: Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]]) -> None:  # type: ignore
+    def addSubTest(
+        self,
+        test: "TestCase",
+        subtest: "TestCase",
+        err: Tuple[
+            Optional[Type[BaseException]],
+            Optional[BaseException],
+            Optional[types.TracebackType],
+        ],
+    ) -> None:  # type: ignore
         """Called at the end of a subtest.
         'err' is None if the subtest ended successfully, otherwise it's a
         tuple of values as returned by sys.exc_info().
@@ -816,7 +825,8 @@ class Context:
 
             # This suite will only contain TestSlide's example test.
             test_suite = unittest.TestLoader().loadTestsFromName(
-                "test_test_slide", test_slide_test_case  # type: ignore
+                "test_test_slide",
+                test_slide_test_case,  # type: ignore
             )
             setattr(self, attr_name, list(test_suite)[0])
             result = _TestSlideTestResult()

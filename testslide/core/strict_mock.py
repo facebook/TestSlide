@@ -742,18 +742,21 @@ class StrictMock:
                                     raise NonAwaitableReturn(self, name)
 
                                 return_value = await result_awaitable
-                                if not lib._is_wrapped_for_signature_and_type_validation(
-                                    # The original value was already wrapped for type
-                                    # validation. Skipping additional validation to
-                                    # allow, for example, mock_callable to disable
-                                    # validation for a very specific mock call rather
-                                    # for the whole StrictMock instance
-                                    value
-                                ) and not isinstance(
-                                    # If the return value is a _BaseRunner then type
-                                    # validation, if needed, has already been performed
-                                    return_value,
-                                    mock_callable._BaseRunner,
+                                if (
+                                    not lib._is_wrapped_for_signature_and_type_validation(
+                                        # The original value was already wrapped for type
+                                        # validation. Skipping additional validation to
+                                        # allow, for example, mock_callable to disable
+                                        # validation for a very specific mock call rather
+                                        # for the whole StrictMock instance
+                                        value
+                                    )
+                                    and not isinstance(
+                                        # If the return value is a _BaseRunner then type
+                                        # validation, if needed, has already been performed
+                                        return_value,
+                                        mock_callable._BaseRunner,
+                                    )
                                 ):
                                     lib._validate_return_type(
                                         template_value,
@@ -769,18 +772,21 @@ class StrictMock:
                                 return_value = signature_validation_wrapper(
                                     *args, **kwargs
                                 )
-                                if not lib._is_wrapped_for_signature_and_type_validation(
-                                    # The original value was already wrapped for type
-                                    # validation. Skipping additional validation to
-                                    # allow, for example, mock_callable to disable
-                                    # validation for a very specific mock call rather
-                                    # for the whole StrictMock instance
-                                    value
-                                ) and not isinstance(
-                                    # If the return value is a _BaseRunner then type
-                                    # validation, if needed, has already been performed
-                                    return_value,
-                                    mock_callable._BaseRunner,
+                                if (
+                                    not lib._is_wrapped_for_signature_and_type_validation(
+                                        # The original value was already wrapped for type
+                                        # validation. Skipping additional validation to
+                                        # allow, for example, mock_callable to disable
+                                        # validation for a very specific mock call rather
+                                        # for the whole StrictMock instance
+                                        value
+                                    )
+                                    and not isinstance(
+                                        # If the return value is a _BaseRunner then type
+                                        # validation, if needed, has already been performed
+                                        return_value,
+                                        mock_callable._BaseRunner,
+                                    )
                                 ):
                                     lib._validate_return_type(
                                         template_value,

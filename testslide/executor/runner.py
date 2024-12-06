@@ -365,11 +365,7 @@ class VerboseFinishMixin(ColorFormatterMixin):
 {self._red_bright_attr("| |")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(f"|   {backslash}|/")} {self._green_bright_attr("|")}
 {self._red_bright_attr(f"|.{quote}")}{self._yellow_bright_attr("|  |")}{self._green_bright_attr("|")}  {self._bright_attr(f"--{quote}{quote}")} {self._bright_attr("'")}{self._green_bright_attr("__|")}
    {self._yellow_bright_attr(f"--{quote}")} {self._green_bright_attr(f"|__---{quote}{quote}{quote}")}
-""".split(
-            "\n"
-        )[
-            1:8
-        ]
+""".split("\n")[1:8]
 
     def _get_summary_lines(
         self, total: int, success: int, fail: int, skip: int, not_executed_examples: int
@@ -440,7 +436,9 @@ class VerboseFinishMixin(ColorFormatterMixin):
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(  # type: ignore
-                    number + 1, result["example"], result["exception"]  # type: ignore
+                    number + 1,
+                    result["example"],
+                    result["exception"],  # type: ignore
                 )
 
         summary_lines = self._get_summary_lines(
@@ -533,7 +531,9 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
                 result = cast(Dict[str, Union[Example, BaseException]], result)
                 print("")
                 self.print_failed_example(
-                    number + 1, result["example"], result["exception"]  # type: ignore
+                    number + 1,
+                    result["example"],
+                    result["exception"],  # type: ignore
                 )
         print("")
 

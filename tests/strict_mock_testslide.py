@@ -159,8 +159,7 @@ def strict_mock(context):
         self.assertEqual(
             ex_msg,
             msg,
-            "Expected exception {}.{} message "
-            "to be\n{}\nbut got\n{}.".format(
+            "Expected exception {}.{} message " "to be\n{}\nbut got\n{}.".format(
                 exception.__module__, exception.__name__, repr(msg), repr(ex_msg)
             ),
         )
@@ -901,9 +900,11 @@ def strict_mock(context):
 
                                     setattr(self.strict_mock, self.method_name, mock)
                                     with self.assertRaises(NonAwaitableReturn):
-                                        await getattr(
-                                            self.strict_mock, self.method_name
-                                        )("hello"),
+                                        (
+                                            await getattr(
+                                                self.strict_mock, self.method_name
+                                            )("hello"),
+                                        )
 
                                 @context.example
                                 async def fails_on_wrong_type_call(self):

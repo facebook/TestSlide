@@ -367,7 +367,9 @@ def mock_constructor(
             prev_frame = caller_frame.f_back
             if prev_frame:
                 caller_frame_info = inspect.getframeinfo(prev_frame, context=0)
-                callable_mock = _CallableMock(original_class, "__new__", caller_frame_info)  # type: ignore[assignment]
+                callable_mock = _CallableMock(
+                    original_class, "__new__", caller_frame_info
+                )  # type: ignore[assignment]
                 mocked_class = _patch_and_return_mocked_class(
                     target,
                     class_name,

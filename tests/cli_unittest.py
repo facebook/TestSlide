@@ -460,8 +460,7 @@ class TestCliDocumentFormatter(FormatterMixin, TestCliBase):
         self.argv.append("--focus")
         self.run_testslide(
             expected_stdout_startswith=(
-                "top context\n"
-                "  *focused example: PASS\n"
+                "top context\n" "  *focused example: PASS\n"
                 # TODO add remaining bits of the output (using regexes)
             )
         )

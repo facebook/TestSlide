@@ -107,7 +107,12 @@ def unpatch_all_callable_mocks() -> None:
     This method must be called after every test unconditionally to remove all
     active mock_callable() patches.
     """
-    global register_assertion, _default_register_assertion, _call_order_assertion_registered, _received_ordered_calls, _expected_ordered_calls
+    global \
+        register_assertion, \
+        _default_register_assertion, \
+        _call_order_assertion_registered, \
+        _received_ordered_calls, \
+        _expected_ordered_calls
 
     register_assertion = _default_register_assertion
     _call_order_assertion_registered = False
@@ -162,7 +167,9 @@ def _is_coroutine(obj: Any) -> bool:
         3,
         11,
     ]:
-        return inspect.iscoroutine(obj) or isinstance(obj, asyncio.coroutines.CoroWrapper)  # type: ignore
+        return inspect.iscoroutine(obj) or isinstance(
+            obj, asyncio.coroutines.CoroWrapper
+        )  # type: ignore
     else:
         return inspect.iscoroutine(obj)
 
@@ -371,7 +378,10 @@ class _BaseRunner:
         register_assertion(assertion)
 
     def add_call_order_assertion(self) -> None:
-        global _call_order_assertion_registered, _received_ordered_calls, _expected_ordered_calls
+        global \
+            _call_order_assertion_registered, \
+            _received_ordered_calls, \
+            _expected_ordered_calls
 
         if not _call_order_assertion_registered:
 
@@ -553,7 +563,6 @@ class _AsyncImplementationRunner(_AsyncRunner):
         self.new_implementation = new_implementation
 
     async def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
-
         await super().run(*args, **kwargs)
         coro = self.new_implementation(*args, **kwargs)
         if not _is_coroutine(coro):
@@ -1001,13 +1010,19 @@ class _MockCallableDSL:
         if isinstance(ex, BaseException):
             self._add_runner(
                 _RaiseRunner(
-                    self._original_target, self._method, self._original_callable, ex  # type: ignore
+                    self._original_target,
+                    self._method,
+                    self._original_callable,
+                    ex,  # type: ignore
                 )
             )
         elif isinstance(ex(), BaseException):
             self._add_runner(
                 _RaiseRunner(
-                    self._original_target, self._method, self._original_callable, ex()  # type: ignore
+                    self._original_target,
+                    self._method,
+                    self._original_callable,
+                    ex(),  # type: ignore
                 )
             )
         else:
@@ -1227,7 +1242,10 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             raise ValueError("{} must be callable.".format(func))
         self._add_runner(
             _AsyncImplementationRunner(
-                self._original_target, self._method, self._original_callable, func  # type: ignore
+                self._original_target,
+                self._method,
+                self._original_callable,
+                func,  # type: ignore
             )
         )
         return self
