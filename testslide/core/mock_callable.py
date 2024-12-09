@@ -168,8 +168,10 @@ def _is_coroutine(obj: Any) -> bool:
         11,
     ]:
         return inspect.iscoroutine(obj) or isinstance(
-            obj, asyncio.coroutines.CoroWrapper
-        )  # type: ignore
+            obj,
+            # pyre-ignore
+            asyncio.coroutines.CoroWrapper,
+        )
     else:
         return inspect.iscoroutine(obj)
 
