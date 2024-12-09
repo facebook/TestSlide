@@ -453,6 +453,7 @@ class _TestSlideTestResult(unittest.TestResult):
         super(_TestSlideTestResult, self).addUnexpectedSuccess(test)
         self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None))  # type: ignore
 
+    # pyre-ignore
     def addSubTest(
         self,
         test: "TestCase",
@@ -462,7 +463,7 @@ class _TestSlideTestResult(unittest.TestResult):
             Optional[BaseException],
             Optional[types.TracebackType],
         ],
-    ) -> None:  # type: ignore
+    ) -> None:
         """Called at the end of a subtest.
         'err' is None if the subtest ended successfully, otherwise it's a
         tuple of values as returned by sys.exc_info().

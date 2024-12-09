@@ -155,10 +155,12 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
             return context_code
 
         testslide.bdd.dsl.context(
-            "{}.{}".format(test_case.__module__, test_case.__name__)
-        )(  # type: ignore
-            get_context_code(test_case)
-        )
+            "{}.{}".format(
+                test_case.__module__,
+                # pyre-ignore
+                test_case.__name__,
+            )
+        )(get_context_code(test_case))
 
 
 @dataclass(frozen=True)
