@@ -204,13 +204,24 @@ def mock_constructor(context):
                 self.assertEqual(original_target_class.CLASS_ATTR, "CLASS_ATTR")
 
             @context.example
-            def can_call_class_methods(self):
-                for name in [
-                    "regular_class_method",
+            def can_call_regular_class_method(self):
+                self.assertEqual(
+                    original_target_class.regular_class_method(), "regular_class_method"
+                )
+
+            @context.example
+            def can_call_p2_super_class_method(self):
+                self.assertEqual(
+                    original_target_class.p2_super_class_method(),
                     "p2_super_class_method",
+                )
+
+            @context.example
+            def can_call_p3_super_class_method(self):
+                self.assertEqual(
+                    original_target_class.p3_super_class_method(),
                     "p3_super_class_method",
-                ]:
-                    self.assertEqual(getattr(original_target_class, name)(), name)
+                )
 
             @context.example
             def can_call_static_methods(self):
