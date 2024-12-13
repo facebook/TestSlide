@@ -364,6 +364,7 @@ def _validate_return_type(context):
     @context.example
     def fails_for_wrong_type(self):
         self.assert_fails(42)
+        self.assert_fails(["arg1", 42])
 
     @context.example
     def fails_for_mock_with_wrong_template(self):
@@ -379,7 +380,7 @@ def _validate_return_type(context):
     def fails_for_valid_forward_reference_but_bad_type_passed(self):
         with self.assertRaisesRegex(
             testslide.lib.TypeCheckError,
-            "type of return must be one of .*; got int instead:",
+            "type of return must be .*; got <class 'int'> instead:",
         ):
             testslide.lib._validate_return_type(
                 Foo.get_maybe_foo, 33, self.caller_frame_info

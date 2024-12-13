@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, Type, TYPE_CHECKING, Un
 from unittest.mock import Mock
 
 import typeguard
+import typing_extensions
 
 if sys.version_info >= (3, 8):
     from typing import get_args, get_origin
@@ -59,6 +60,11 @@ if TYPE_CHECKING:
 ## Type validation
 ##
 
+# Typeguard by default only type checks the first item of a list
+typeguard.config.collection_check_strategy = (
+    typeguard._config.CollectionCheckStrategy.ALL_ITEMS
+)
+
 
 class TypeCheckError(BaseException):
     """
@@ -82,7 +88,7 @@ class WrappedMock(unittest.mock.NonCallableMock):
     """Needed to be able to show the useful qualified name for mock specs"""
 
     def get_qualified_name(self) -> str:
-        return typeguard.qualified_name(self._spec_class)
+        return typeguard._utils.qualified_name(self._spec_class)
 
 
 def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
@@ -187,8 +193,8 @@ def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
         # TODO: #165
         return
 
-    original_check_type = typeguard.check_type
-    original_qualified_name = typeguard.qualified_name
+    original_check_type_internal = typeguard._checkers.check_type_internal
+    original_qualified_name = typeguard._utils.qualified_name
 
     def wrapped_qualified_name(obj: object) -> str:
         """Needed to be able to show the useful qualified name for mock specs"""
@@ -197,48 +203,41 @@ def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
 
         return original_qualified_name(obj)
 
-    def wrapped_check_type(
-        argname: str,
-        inner_value: Any,
-        inner_expected_type: Type,
-        *args: Any,
-        globals: Optional[Dict[str, Any]] = None,
-        locals: Optional[Dict[str, Any]] = None,
-        **kwargs: Any,
+    # We wrap the internal check because this is recursively called
+    # in typeguard for nested types like Dict[str, Union[str, int]]
+    def wrapped_check_type_internal(
+        inner_value: Any, inner_expected_type: Type, memo: typeguard.TypeCheckMemo
     ) -> None:
+        # We need this since Typeguard 3.02 no longer gives a free pass if expected_type is not a type()
+        # If it is a string (ie "int" as opposed to int), then typeguard fails.
+        # Need testslide PR 333 to fix this: https://github.com/facebook/TestSlide/pull/333
+        if isinstance(inner_expected_type, str):
+            return
+
         if _is_a_mock(inner_value):
             inner_type = _extract_mock_template(inner_value)
             if inner_type is None:
                 return
-
             # Ugly hack to make mock objects not be subclass of Mock
             inner_value = WrappedMock(spec=inner_type)
 
-        # typeguard only checks the previous caller stack, so in order to be
-        # able to do forward type references we have to extract the caller
-        # stack ourselves.
-        if kwargs.get("memo") is None and globals is None and locals is None:
-            globals, locals = _get_caller_vars()
+        return original_check_type_internal(inner_value, inner_expected_type, memo)
 
-        return original_check_type(
-            argname,
-            inner_value,
-            inner_expected_type,
-            *args,
-            globals=globals,
-            locals=locals,
-            **kwargs,
-        )
+    # typeguard only checks the previous caller stack, so in order to be
+    # able to do forward type references we have to extract the caller
+    # stack ourselves.
+    globals, locals = _get_caller_vars()
+    memo = typeguard.TypeCheckMemo(globals, locals)
 
     with unittest.mock.patch.object(
-        typeguard, "check_type", new=wrapped_check_type
+        typeguard._checkers, "check_type_internal", new=wrapped_check_type_internal
     ), unittest.mock.patch.object(
-        typeguard, "qualified_name", new=wrapped_qualified_name
+        typeguard._utils, "qualified_name", new=wrapped_qualified_name
     ):
         try:
-            typeguard.check_type(name, value, expected_type)
-        except TypeError as type_error:
-            raise TypeCheckError(str(type_error))
+            typeguard._checkers.check_type_internal(value, expected_type, memo)
+        except typeguard.TypeCheckError as type_error:
+            raise TypeCheckError(type_error)
 
 
 def _validate_callable_arg_types(
@@ -383,13 +382,15 @@ def _validate_return_type(
                 expected_type = type_args[2]
 
         try:
+            if expected_type == typing_extensions.Self:
+                expected_type = template
             _validate_argument_type(expected_type, "return", value)
         except TypeCheckError as runtime_type_error:
             raise TypeCheckError(
-                f"{str(runtime_type_error)}: {repr(value)}\n"
+                f"type of return must be {repr(expected_type)}; got {repr(type(value))} instead: {repr(value)}\n"
                 f"Defined at {caller_frame_info.filename}:"
                 f"{caller_frame_info.lineno}"
-            )
+            ) from runtime_type_error
 
 
 ##

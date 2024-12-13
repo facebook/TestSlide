@@ -176,7 +176,7 @@ def mock_async_callable_tests(context):
 
                 with self.assertRaisesRegex(
                     TypeCheckError,
-                    "^type of return must be a list; got (asyncio|coroutine)",
+                    r"^type of return must be typing.List\[str\]; got .+(asyncio|coroutine)",
                 ):
                     await self.callable_target(*self.call_args, **self.call_kwargs)
 
@@ -629,12 +629,8 @@ def mock_async_callable_tests(context):
                     self.target_arg, self.callable_arg
                 ).to_call_original()
                 self.assertEqual(
-                    id(await self.callable_target(*self.call_args, **self.call_kwargs)),
-                    id(
-                        await self.original_callable(
-                            *self.call_args, **self.call_kwargs
-                        )
-                    ),
+                    await self.callable_target(*self.call_args, **self.call_kwargs),
+                    await self.original_callable(*self.call_args, **self.call_kwargs),
                 )
 
         else:
