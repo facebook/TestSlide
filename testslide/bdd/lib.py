@@ -429,7 +429,7 @@ class _TestSlideTestResult(unittest.TestResult):
     #  inconsistently.
     def addFailure(  # type:ignore
         self,
-        test: "TestCase",
+        test: "TestCase",  # type: ignore
         err: Tuple[
             Type[BaseException],
             BaseException,
@@ -456,9 +456,9 @@ class _TestSlideTestResult(unittest.TestResult):
     # pyre-ignore
     def addSubTest(
         self,
-        test: "TestCase",
-        subtest: "TestCase",
-        err: Tuple[
+        test: "TestCase",  # type: ignore
+        subtest: "TestCase",  # type: ignore
+        err: Tuple[  # type: ignore
             Optional[Type[BaseException]],
             Optional[BaseException],
             Optional[types.TracebackType],
@@ -532,7 +532,7 @@ class Context:
     def __init__(
         self,
         name: str,
-        parent_context: Optional["Context"] = None,
+        parent_context: Optional["Context"] = None,  # type: ignore
         shared: bool = False,
         skip: bool = False,
         focus: bool = False,

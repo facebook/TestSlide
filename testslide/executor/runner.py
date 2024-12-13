@@ -532,7 +532,7 @@ class ProgressFormatter(DSLDebugMixin, SlowImportWarningMixin, FailurePrinterMix
                 print("")
                 self.print_failed_example(
                     number + 1,
-                    result["example"],
+                    result["example"],  # type: ignore
                     result["exception"],  # type: ignore
                 )
         print("")

@@ -170,7 +170,7 @@ def _is_coroutine(obj: Any) -> bool:
         return inspect.iscoroutine(obj) or isinstance(
             obj,
             # pyre-ignore
-            asyncio.coroutines.CoroWrapper,
+            asyncio.coroutines.CoroWrapper,  # type: ignore
         )
     else:
         return inspect.iscoroutine(obj)
@@ -1014,7 +1014,7 @@ class _MockCallableDSL:
                 _RaiseRunner(
                     self._original_target,
                     self._method,
-                    self._original_callable,
+                    self._original_callable,  # type: ignore
                     ex,  # type: ignore
                 )
             )
@@ -1023,7 +1023,7 @@ class _MockCallableDSL:
                 _RaiseRunner(
                     self._original_target,
                     self._method,
-                    self._original_callable,
+                    self._original_callable,  # type: ignore
                     ex(),  # type: ignore
                 )
             )
@@ -1246,7 +1246,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
             _AsyncImplementationRunner(
                 self._original_target,
                 self._method,
-                self._original_callable,
+                self._original_callable,  # type: ignore
                 func,  # type: ignore
             )
         )

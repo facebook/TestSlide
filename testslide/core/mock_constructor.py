@@ -341,7 +341,7 @@ def mock_constructor(
 
     if target_class_id in _mocked_target_classes:
         original_class, mocked_class = _mocked_target_classes[target_class_id]
-        if not getattr(target, class_name) is mocked_class:
+        if getattr(target, class_name) is not mocked_class:
             raise AssertionError(
                 "The class {} at {} was changed after mock_constructor() mocked "
                 "it!".format(class_name, target)

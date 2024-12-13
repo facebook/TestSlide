@@ -117,15 +117,15 @@ flake8: venv
 	@printf "${TERM_BRIGHT}FLAKE8 ${ALL_SRCS}\n${TERM_NONE}"
 	${Q} ${CURDIR}/venv/bin/flake8 --select=F,C90 $(ALL_SRCS)
 
-.PHONY: black
-black: venv
-	@printf "${TERM_BRIGHT}BLACK ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} ${CURDIR}/venv/bin/black --check --diff $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
+.PHONY: ruff
+ruff: venv
+	@printf "${TERM_BRIGHT}RUFF check ${ALL_SRCS}\n${TERM_NONE}"
+	${Q} ${CURDIR}/venv/bin/ruff check --diff $(ALL_SRCS) || { echo "Formatting errors found, try running 'make format'."; exit 1; }
 
-.PHONY: format_black
-format_black: venv
+.PHONY: format_ruff
+format_ruff: venv
 	@printf "${TERM_BRIGHT}FORMAT BLACK ${ALL_SRCS}\n${TERM_NONE}"
-	${Q} ${CURDIR}/venv/bin/black $(ALL_SRCS)
+	${Q} ${CURDIR}/venv/bin/ruff format $(ALL_SRCS)
 
 .PHONY: tests
 tests: \
@@ -134,12 +134,12 @@ tests: \
 	pytest_tests \
 	mypy \
 	flake8 \
-	black \
+	ruff \
 	check-copyright
 
 .PHONY: format
 format: \
-	format_black
+	format_ruff
 	@true
 ##
 ## Coverage
