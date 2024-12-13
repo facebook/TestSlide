@@ -1,4 +1,4 @@
-black
+ruff
 coverage
 coveralls
 flake8

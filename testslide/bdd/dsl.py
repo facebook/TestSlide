@@ -201,7 +201,7 @@ class _DSLContext:
             raise TypeError('Shared context "{}" does not exist'.format(name))
         self._create_context(
             name,
-            self.current_context.all_shared_contexts[name],
+            self.current_context.all_shared_contexts[name],  # type: ignore
             *args,
             **kwargs,  # type: ignore
         )

@@ -158,7 +158,7 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
             "{}.{}".format(
                 test_case.__module__,
                 # pyre-ignore
-                test_case.__name__,
+                test_case.__name__,  # type: ignore
             )
         )(get_context_code(test_case))
 
