@@ -70,45 +70,45 @@ class Template(TemplateParent):
     non_callable: str = "original value"
 
     def __init__(self):
-        super(Template, self).__init__()
+        super().__init__()
         self.runtime_attr_from_init = True
         self.attr = None
 
     def instance_method(self, message: str) -> str:
-        return "instance_method: {}".format(message)
+        return f"instance_method: {message}"
 
     async def async_instance_method(self, message: str) -> str:
-        return "async_instance_method: {}".format(message)
+        return f"async_instance_method: {message}"
 
     @staticmethod
     def static_method(message: str) -> str:
-        return "static_method: {}".format(message)
+        return f"static_method: {message}"
 
     @staticmethod
     async def async_static_method(message: str) -> str:
-        return "async_static_method: {}".format(message)
+        return f"async_static_method: {message}"
 
     @classmethod
     def class_method(cls, message: str) -> str:
-        return "class_method: {}".format(message)
+        return f"class_method: {message}"
 
     @classmethod
     async def async_class_method(cls, message: str) -> str:
-        return "async_class_method: {}".format(message)
+        return f"async_class_method: {message}"
 
     @extra_arg_with_wraps
     def instance_method_wrapped(self, extra, message):
-        return "instance_method: {}".format(message)
+        return f"instance_method: {message}"
 
     @extra_arg_with_wraps
     @staticmethod
     def static_method_wrapped(extra, message):
-        return "static_method: {}".format(message)
+        return f"static_method: {message}"
 
     @extra_arg_with_wraps
     @classmethod
     def class_method_wrapped(cls, extra, message):
-        return "class_method: {}".format(message)
+        return f"class_method: {message}"
 
     def __eq__(self, other):
         return id(self) == id(other)
@@ -212,7 +212,7 @@ def strict_mock(context):
         @context.memoize
         def strict_mock_rgx(self):
             return (
-                "<StrictMock 0x{:02X} ".format(id(self.strict_mock))
+                f"<StrictMock 0x{id(self.strict_mock):02X} "
                 + re.escape(self.caller_filename)
                 + r":\d+>"
             )
@@ -355,7 +355,7 @@ def strict_mock(context):
                 @context.memoize
                 def mock_function(self):
                     def mock_function(message):
-                        return "mock: {}".format(message)
+                        return f"mock: {message}"
 
                     return mock_function
 
@@ -545,7 +545,7 @@ def strict_mock(context):
                                     setattr(
                                         self.strict_mock,
                                         test_method_name,
-                                        lambda message: "mock: {}".format(message),
+                                        lambda message: f"mock: {message}",
                                     )
                                     method = getattr(self.strict_mock, test_method_name)
                                     self.assertEqual(method("hello"), "mock: hello")
@@ -701,14 +701,14 @@ def strict_mock(context):
                                     setattr(
                                         self.strict_mock,
                                         self.test_method_name,
-                                        lambda message: "mock: {}".format(message),
+                                        lambda message: f"mock: {message}",
                                     )
 
                                 @context.example
                                 def can_mock_with_instancemethod(self):
                                     class SomeClass:
                                         def mock_method(self, message):
-                                            return "mock: {}".format(message)
+                                            return f"mock: {message}"
 
                                     setattr(
                                         self.strict_mock,

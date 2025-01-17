@@ -5,7 +5,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from __future__ import print_function
 
 import difflib
 import os
@@ -44,10 +43,10 @@ def verify_file(filename, sample, formula):
     :return bool
     """
     try:
-        with open(filename, "r") as f:
+        with open(filename) as f:
             data = f.read()
     except Exception as exc:
-        print_logs("Unable to open {0}: {1}".format(filename, exc))
+        print_logs(f"Unable to open {filename}: {exc}")
         return False
 
     basename = os.path.basename(filename)
@@ -63,7 +62,7 @@ def verify_file(filename, sample, formula):
     # if our test file is smaller than the reference it surely fails!
     if len(demo) > len(data):
         print_logs(
-            "File {0} smaller than sample file({1} < {2})".format(
+            "File {} smaller than sample file({} < {})".format(
                 filename, len(data), len(demo)
             )
         )
@@ -73,7 +72,7 @@ def verify_file(filename, sample, formula):
     data = data[: len(demo)]
 
     if demo != data:
-        print_logs("Header in {} does not match sample file, diff:".format(filename))
+        print_logs(f"Header in {filename} does not match sample file, diff:")
         if config.debug_logs:
             for line in difflib.unified_diff(
                 demo, data, "sample", filename, lineterm=""

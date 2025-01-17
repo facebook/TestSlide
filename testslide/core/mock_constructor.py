@@ -5,7 +5,8 @@
 
 # pyre-unsafe
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from collections.abc import Callable
+from typing import Any
 
 from testslide.core.mock_callable import _CallableMock, _MockCallableDSL
 
@@ -24,13 +25,13 @@ _DO_NOT_COPY_CLASS_ATTRIBUTES = (
 )
 
 
-_unpatchers: List[Callable] = []
-_mocked_target_classes: Dict[Union[int, Tuple[int, str]], Tuple[type, object]] = {}
-_restore_dict: Dict[Union[int, Tuple[int, str]], Dict[str, Any]] = {}
-_init_args_from_original_callable: Optional[Tuple[Any, ...]] = None
-_init_kwargs_from_original_callable: Optional[Dict[str, Any]] = None
-_mocked_class_by_original_class_id: Dict[Union[Tuple[int, str], int], type] = {}
-_target_class_id_by_original_class_id: Dict[int, Union[Tuple[int, str], int]] = {}
+_unpatchers: list[Callable] = []
+_mocked_target_classes: dict[int | tuple[int, str], tuple[type, object]] = {}
+_restore_dict: dict[int | tuple[int, str], dict[str, Any]] = {}
+_init_args_from_original_callable: tuple[Any, ...] | None = None
+_init_kwargs_from_original_callable: dict[str, Any] | None = None
+_mocked_class_by_original_class_id: dict[tuple[int, str] | int, type] = {}
+_target_class_id_by_original_class_id: dict[int, tuple[int, str] | int] = {}
 
 
 def _get_class_or_mock(original_class: Any) -> Any:
@@ -41,7 +42,7 @@ def _get_class_or_mock(original_class: Any) -> Any:
     return _mocked_class_by_original_class_id.get(id(original_class), original_class)
 
 
-def _is_mocked_class(klass: Type[object]) -> bool:
+def _is_mocked_class(klass: type[object]) -> bool:
     return id(klass) in [id(k) for k in _mocked_class_by_original_class_id.values()]
 
 
@@ -66,20 +67,20 @@ class _MockConstructorDSL(_MockCallableDSL):
 
     def __init__(
         self,
-        target: Union[type, str, object],
+        target: type | str | object,
         method: str,
         cls: object,
-        callable_mock: Union[
-            Optional[Callable[[Type[object]], Any]], Optional[_CallableMock]
-        ] = None,
-        original_callable: Optional[Callable] = None,
+        callable_mock: (
+            Callable[[type[object]], Any] | None | _CallableMock | None
+        ) = None,
+        original_callable: Callable | None = None,
     ) -> None:
         self.cls = cls
         caller_frame = inspect.currentframe().f_back  # type: ignore
         # loading the context ends up reading files from disk and that might block
         # the event loop, so we don't do it.
         caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
-        super(_MockConstructorDSL, self).__init__(  # type: ignore
+        super().__init__(  # type: ignore
             target,
             method,
             caller_frame_info,
@@ -88,7 +89,7 @@ class _MockConstructorDSL(_MockCallableDSL):
         )
 
     def for_call(self, *args: Any, **kwargs: Any) -> "_MockConstructorDSL":
-        return super(_MockConstructorDSL, self).for_call(  # type: ignore
+        return super().for_call(  # type: ignore
             *((self.cls,) + args), **kwargs
         )
 
@@ -103,14 +104,14 @@ class _MockConstructorDSL(_MockCallableDSL):
 
             return func(new_original_callable, *args, **kwargs)
 
-        return super(_MockConstructorDSL, self).with_wrapper(new_func)  # type: ignore
+        return super().with_wrapper(new_func)  # type: ignore
 
     def with_implementation(self, func: Callable) -> "_MockConstructorDSL":
         def new_func(cls: object, *args: Any, **kwargs: Any) -> Any:
             assert cls == self.cls
             return func(*args, **kwargs)
 
-        return super(_MockConstructorDSL, self).with_implementation(new_func)  # type: ignore
+        return super().with_implementation(new_func)  # type: ignore
 
 
 def _get_original_init(original_class: type, instance: object, owner: type) -> Any:
@@ -136,9 +137,7 @@ class AttrAccessValidation:
         self.original_class = original_class
         self.mocked_class = mocked_class
 
-    def __get__(
-        self, instance: Optional[type], owner: Type[type]
-    ) -> Union[Callable, str]:
+    def __get__(self, instance: type | None, owner: type[type]) -> Callable | str:
         mro = owner.mro()  # type: ignore
         # If owner is a subclass, allow it
         if mro.index(owner) < mro.index(self.original_class):
@@ -183,7 +182,7 @@ class AttrAccessValidation:
 
 
 def _wrap_type_validation(
-    template: object, callable_mock: _CallableMock, callable_templates: List[Callable]
+    template: object, callable_mock: _CallableMock, callable_templates: list[Callable]
 ) -> Callable:
     def callable_mock_with_type_validation(*args: Any, **kwargs: Any) -> Any:
         for callable_template in callable_templates:
@@ -203,7 +202,7 @@ def _wrap_type_validation(
 
 def _get_mocked_class(
     original_class: type,
-    target_class_id: Union[Tuple[int, str], int],
+    target_class_id: tuple[int, str] | int,
     callable_mock: _CallableMock,
     type_validation: bool,
     **kwargs: Any,
@@ -295,7 +294,7 @@ def _get_mocked_class(
 def _patch_and_return_mocked_class(
     target: object,
     class_name: str,
-    target_class_id: Union[Tuple[int, str], int],
+    target_class_id: tuple[int, str] | int,
     original_class: type,
     callable_mock: _CallableMock,
     type_validation: bool,

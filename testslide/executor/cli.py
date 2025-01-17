@@ -10,10 +10,12 @@ import os
 import re
 import sys
 import unittest
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from re import Pattern
 from time import time
-from typing import Any, Callable, Iterator, List, Optional, Pattern, Type
+from typing import Any
 
 import testslide.bdd
 
@@ -33,7 +35,7 @@ def _filename_to_module_name(name: str) -> str:
         os.path.isfile(name)
         and (name.lower().endswith(".py") or name.lower().endswith(".pyc"))
     ):
-        raise ValueError("Expected a .py file, got {}".format(name))
+        raise ValueError(f"Expected a .py file, got {name}")
 
     if os.path.isabs(name):
         name = os.path.relpath(name, os.getcwd())
@@ -44,13 +46,13 @@ def _filename_to_module_name(name: str) -> str:
     return name[:end].replace(os.path.sep, ".")
 
 
-def _get_all_test_case_subclasses() -> List[TestCase]:
-    def get_all_subclasses(base: Type[unittest.TestCase]) -> List[TestCase]:
+def _get_all_test_case_subclasses() -> list[TestCase]:
+    def get_all_subclasses(base: type[unittest.TestCase]) -> list[TestCase]:
         # pyre-fixme[7]: Expected `List[TestCase]` but got
         #  `List[Union[Type[case.TestCase], TestCase]]`.
         return list(
             {  # type: ignore[arg-type]
-                "{}.{}".format(c.__module__, c.__name__): c  # type: ignore
+                f"{c.__module__}.{c.__name__}": c  # type: ignore
                 for c in (
                     base.__subclasses__()  # type: ignore
                     + [g for s in base.__subclasses__() for g in get_all_subclasses(s)]  # type: ignore
@@ -61,7 +63,7 @@ def _get_all_test_case_subclasses() -> List[TestCase]:
     return get_all_subclasses(unittest.TestCase)
 
 
-def _get_all_test_cases(import_module_names: List[str]) -> List[TestCase]:
+def _get_all_test_cases(import_module_names: list[str]) -> list[TestCase]:
     if import_module_names:
         return [
             test_case
@@ -72,7 +74,7 @@ def _get_all_test_cases(import_module_names: List[str]) -> List[TestCase]:
         return _get_all_test_case_subclasses()
 
 
-def _load_unittest_test_cases(import_module_names: List[str]) -> None:
+def _load_unittest_test_cases(import_module_names: list[str]) -> None:
     """
     Beta!
     Search for all unittest.TestCase classes that have tests defined, and import them
@@ -165,7 +167,7 @@ def _load_unittest_test_cases(import_module_names: List[str]) -> None:
 
 @dataclass(frozen=True)
 class _Config:
-    import_module_names: List[str]
+    import_module_names: list[str]
     shuffle: bool
     list: bool
     quiet: bool
@@ -174,14 +176,14 @@ class _Config:
     focus: bool
     trim_path_prefix: str
     format: str
-    seed: Optional[int] = None
-    force_color: Optional[bool] = False
-    show_testslide_stack_trace: Optional[bool] = False
-    names_text_filter: Optional[str] = None
-    names_regex_filter: Optional[Pattern[Any]] = None
-    names_regex_exclude: Optional[Pattern[Any]] = None
-    dsl_debug: Optional[bool] = False
-    profile_threshold_ms: Optional[int] = None
+    seed: int | None = None
+    force_color: bool | None = False
+    show_testslide_stack_trace: bool | None = False
+    names_text_filter: str | None = None
+    names_regex_filter: Pattern[Any] | None = None
+    names_regex_exclude: Pattern[Any] | None = None
+    dsl_debug: bool | None = False
+    profile_threshold_ms: int | None = None
     slow_callback_is_not_fatal: bool = False
 
 
@@ -321,8 +323,8 @@ class Cli:
     def __init__(
         self,
         args: Any,
-        default_trim_path_prefix: Optional[str] = None,
-        modules: Optional[List[str]] = None,
+        default_trim_path_prefix: str | None = None,
+        modules: list[str] | None = None,
     ) -> None:
         self.args = args
         self._default_trim_path_prefix = (
@@ -335,7 +337,7 @@ class Cli:
 
     @staticmethod
     def _do_imports(
-        import_module_names: List[str], profile_threshold_ms: Optional[int] = None
+        import_module_names: list[str], profile_threshold_ms: int | None = None
     ) -> float:
         def import_all() -> None:
             for module_name in import_module_names:
@@ -360,7 +362,7 @@ class Cli:
 
         return end_time - start_time
 
-    def _load_all_examples(self, import_module_names: List[str]) -> float:
+    def _load_all_examples(self, import_module_names: list[str]) -> float:
         """
         Import all required modules.
         """

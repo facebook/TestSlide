@@ -3,7 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Awaitable, Coroutine, Dict, List, Optional, Tuple, Union
+from collections.abc import Awaitable, Coroutine
+from typing import Any, Union
 
 attribute = "value"
 typedattr: str = "bruh"
@@ -27,7 +28,7 @@ class SomeClass:
         return "property_attribute"
 
     def instance_method_with_star_args(
-        self, first, *args: str, a: bool, b: int, c: Optional[int], d: int = 3
+        self, first, *args: str, a: bool, b: int, c: int | None, d: int = 3
     ) -> int:
         return 3
 
@@ -69,36 +70,36 @@ class TargetStr:
 class ParentTarget(TargetStr):
     def instance_method(
         self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
         return ["original response"]
 
     async def async_instance_method(
         self, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
         return ["async original response"]
 
     @staticmethod
     def static_method(
         arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
         return ["original response"]
 
     @staticmethod
     async def async_static_method(
         arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
         return ["async original response"]
 
     @classmethod
     def class_method(
         cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
         return ["original response"]
 
     @classmethod
     async def async_class_method(
         cls, arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
         return ["async original response"]
 
     async def __aiter__(self):
@@ -110,7 +111,7 @@ class Target(ParentTarget):
         self.dynamic_instance_method = (
             lambda arg1, arg2, kwarg1=None, kwarg2=None: "original response"
         )
-        super(Target, self).__init__()
+        super().__init__()
 
     @property
     def invalid(self) -> None:
@@ -128,48 +129,48 @@ class CallOrderTarget:
         return self.name
 
     def f1(self, arg: Any) -> str:
-        return "f1: {}".format(repr(arg))
+        return f"f1: {repr(arg)}"
 
     def f2(self, arg: Any) -> str:
-        return "f2: {}".format(repr(arg))
+        return f"f2: {repr(arg)}"
 
 
 def test_function(
     arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-) -> List[str]:
+) -> list[str]:
     "This function is used by some unit tests only"
     return ["original response"]
 
 
 async def async_test_function(
     arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-) -> List[str]:
+) -> list[str]:
     "This function is used by some unit tests only"
     return ["original response"]
 
 
 def test_function_returns_awaitable(
     arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-) -> Awaitable[List[str]]:
+) -> Awaitable[list[str]]:
     "This function is used by some unit tests only"
     return async_test_function(arg1, arg2, kwarg1, kwarg2)
 
 
 def test_function_returns_coroutine(
     arg1: str, arg2: str, kwarg1: str = "", kwarg2: str = ""
-) -> Coroutine[Any, Any, List[str]]:
+) -> Coroutine[Any, Any, list[str]]:
     "This function is used by some unit tests only"
     return async_test_function(arg1, arg2, kwarg1, kwarg2)
 
 
-UnionArgType = Dict[str, Union[str, int]]
+UnionArgType = dict[str, Union[str, int]]
 
 
 def test_union(arg: UnionArgType) -> None:
     pass
 
 
-TupleArgType = Dict[str, Tuple[str, int]]
+TupleArgType = dict[str, tuple[str, int]]
 
 
 def test_tuple(arg: TupleArgType) -> None:

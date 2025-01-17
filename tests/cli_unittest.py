@@ -23,7 +23,7 @@ class TestCliBase(unittest.TestCase):
         self.env = {
             "COVERAGE_PROCESS_START": ".coveragerc",
         }
-        super(TestCliBase, self).setUp()
+        super().setUp()
 
     def run_testslide(
         self,
@@ -159,23 +159,23 @@ class TestCliBase(unittest.TestCase):
 
     @staticmethod
     def bright(text):
-        return "\x1b[0m\x1b[1m{}\x1b[0m".format(text)
+        return f"\x1b[0m\x1b[1m{text}\x1b[0m"
 
     @staticmethod
     def green(text):
-        return "\x1b[0m\x1b[32m{}\x1b[0m".format(text)
+        return f"\x1b[0m\x1b[32m{text}\x1b[0m"
 
     @staticmethod
     def red(text):
-        return "\x1b[0m\x1b[31m{}\x1b[0m".format(text)
+        return f"\x1b[0m\x1b[31m{text}\x1b[0m"
 
     @staticmethod
     def yellow(text):
-        return "\x1b[0m\x1b[33m{}\x1b[0m".format(text)
+        return f"\x1b[0m\x1b[33m{text}\x1b[0m"
 
     @staticmethod
     def cyan(text):
-        return "\x1b[0m\x1b[36m{}\x1b[0m".format(text)
+        return f"\x1b[0m\x1b[36m{text}\x1b[0m"
 
 
 class TestCliList(TestCliBase):

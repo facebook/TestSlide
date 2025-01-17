@@ -37,11 +37,11 @@ def mock_callable_tests(context):
 
     @context.memoize
     def specific_call_args(self):
-        return tuple("specific {}".format(arg) for arg in self.call_args)
+        return tuple(f"specific {arg}" for arg in self.call_args)
 
     @context.memoize
     def specific_call_kwargs(self):
-        return {k: "specific {}".format(v) for k, v in self.call_kwargs.items()}
+        return {k: f"specific {v}" for k, v in self.call_kwargs.items()}
 
     ##
     ## Functions
@@ -132,14 +132,14 @@ def mock_callable_tests(context):
         @context.function
         def no_behavior_msg(self):
             if self.call_args:
-                args_msg = "    {}\n".format(self.call_args)
+                args_msg = f"    {self.call_args}\n"
             else:
                 args_msg = ""
             if self.call_kwargs:
                 kwargs_msg = (
                     "    {\n"
                     + "".join(
-                        "      {}={},\n".format(k, repr(self.call_kwargs[k]))
+                        f"      {k}={repr(self.call_kwargs[k])},\n"
                         for k in sorted(self.call_kwargs.keys())
                     )
                     + "    }\n"
@@ -147,7 +147,7 @@ def mock_callable_tests(context):
             else:
                 kwargs_msg = ""
             return str(
-                "{}, {}:\n".format(repr(self.target_arg), repr(self.callable_arg))
+                f"{repr(self.target_arg)}, {repr(self.callable_arg)}:\n"
                 + "  Received call:\n"
                 + args_msg
                 + kwargs_msg
@@ -263,7 +263,7 @@ def mock_callable_tests(context):
                                 UnexpectedCallArguments,
                                 self.no_behavior_msg()
                                 + "\n  These are the registered calls:\n"
-                                + "    {}\n".format(self.specific_call_args)
+                                + f"    {self.specific_call_args}\n"
                                 + "    {\n"
                                 + "".join(
                                     "      {}={},\n".format(

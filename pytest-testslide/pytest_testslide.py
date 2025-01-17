@@ -5,8 +5,9 @@
 
 # pyre-unsafe
 
+from collections.abc import Callable, Iterator
 from types import TracebackType
-from typing import Any, Callable, Iterator, List, Optional
+from typing import Any
 
 import pytest
 
@@ -20,14 +21,14 @@ class _TestSlideFixture:
 
     def __enter__(self) -> "_TestSlideFixture":
         # pyre-fixme[16]: `_TestSlideFixture` has no attribute `_assertions`.
-        self._assertions: List[Callable] = []
+        self._assertions: list[Callable] = []
         testslide_module.mock_callable.register_assertion = self._register_assertion
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[Exception],
+        exc_type: type | None,
+        exc_val: Exception | None,
         exc_tb: TracebackType,
     ):
         # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.

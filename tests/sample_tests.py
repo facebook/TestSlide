@@ -16,12 +16,12 @@ class SimulatedFailure(Exception):
         This method purposely accepts an extra argument to catch failures when
         reraising exceptions.
         """
-        super(SimulatedFailure, self).__init__(message, second_message)
+        super().__init__(message, second_message)
         self.message = message
         self.second_message = second_message
 
     def __str__(self):
-        return "{} {}".format(self.message, self.second_message)
+        return f"{self.message} {self.second_message}"
 
 
 def _cond_print(name):

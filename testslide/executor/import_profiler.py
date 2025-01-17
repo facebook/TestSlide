@@ -6,7 +6,7 @@
 # pyre-unsafe
 
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 # In Cinder tests, imports are lazy. We use time.time() while profiling the imports.
 # If the first time we call time.time() is inside the profiling, then we will import
@@ -27,7 +27,7 @@ class ImportedModule:
     def __init__(
         self,
         name: str,
-        globals: Optional[Dict[str, Any]],
+        globals: dict[str, Any] | None,
         level: int,
         parent: Optional["ImportedModule"] = None,
     ) -> None:
@@ -35,7 +35,7 @@ class ImportedModule:
         self.globals = globals
         self.level = level
         self.parent = parent
-        self.children: List["ImportedModule"] = []
+        self.children: list["ImportedModule"] = []
         self.time: float = 0
         if parent:
             parent.children.append(self)
@@ -44,7 +44,7 @@ class ImportedModule:
         return str(self) == str(value)
 
     @property
-    def all_children(self) -> List["ImportedModule"]:
+    def all_children(self) -> list["ImportedModule"]:
         children = []
 
         for child in self.children:
@@ -70,7 +70,7 @@ class ImportedModule:
                 prefix = ".".join(self.globals["__package__"].split(".")[:end]) + "."
         else:
             prefix = ""
-        return "{}{}".format(prefix, self.name)
+        return f"{prefix}{self.name}"
 
     def __enter__(self) -> None:
         # pyre-fixme[16]: `ImportedModule` has no attribute `_start_time`.
@@ -78,8 +78,8 @@ class ImportedModule:
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[Exception],
+        exc_type: type | None,
+        exc_val: Exception | None,
         exc_tb: TracebackType,
     ) -> None:
         # pyre-fixme[16]: `ImportedModule` has no attribute `_start_time`.
@@ -111,9 +111,9 @@ class ImportProfiler:
     def __enter__(self) -> "ImportProfiler":
         __builtins__["__import__"] = self._profiled_import  # type:ignore
         # pyre-fixme[16]: `ImportProfiler` has no attribute `_top_imp_modules`.
-        self._top_imp_modules: List[ImportedModule] = []
+        self._top_imp_modules: list[ImportedModule] = []
         # pyre-fixme[16]: `ImportProfiler` has no attribute `_import_stack`.
-        self._import_stack: List[ImportedModule] = []
+        self._import_stack: list[ImportedModule] = []
         # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
         self.total_time: float = 0
         # pyre-fixme[16]: `ImportProfiler` has no attribute `_start_time`.
@@ -122,9 +122,9 @@ class ImportProfiler:
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[Exception],
-        exc_tb: Optional[TracebackType],
+        exc_type: type | None,
+        exc_val: Exception | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
         # pyre-fixme[16]: `ImportProfiler` has no attribute `_start_time`.
@@ -135,9 +135,9 @@ class ImportProfiler:
     def _profiled_import(
         self,
         name: str,
-        globals: Optional[Dict[str, Any]] = None,
-        locals: Optional[Dict[str, Any]] = None,
-        fromlist: Tuple = (),
+        globals: dict[str, Any] | None = None,
+        locals: dict[str, Any] | None = None,
+        fromlist: tuple = (),
         level: int = 0,
     ) -> None:
         # print('Importing {}'.format(repr(name)))
@@ -175,4 +175,4 @@ class ImportProfiler:
             print_imp_mod(imp_mod)
         print()
         # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
-        print("Total import time: {}ms".format(int(self.total_time * 1000)))
+        print(f"Total import time: {int(self.total_time * 1000)}ms")

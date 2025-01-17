@@ -11,7 +11,8 @@ import inspect
 import re
 import sys
 import warnings
-from typing import Any, Callable, Dict, Iterator, List, Optional, TextIO, Type, Union
+from collections.abc import Callable, Iterator
+from typing import Any, TextIO
 
 import testslide.core.matchers
 import testslide.core.mock_callable
@@ -65,7 +66,7 @@ class _ExampleRunner:
     async def _real_async_run_all_hooks_and_example(
         self,
         context_data: _ContextData,
-        around_functions: Optional[List[Callable]] = None,
+        around_functions: list[Callable] | None = None,
     ) -> None:
         """
         ***********************************************************************
@@ -102,7 +103,7 @@ class _ExampleRunner:
                         self.example.code, context_data
                     )
                 )
-            after_functions: List[Callable] = []
+            after_functions: list[Callable] = []
             after_functions.extend(context_data._mock_callable_after_functions)
             after_functions.extend(self.example.context.all_after_functions)
             after_functions.extend(context_data._after_functions)
@@ -115,7 +116,7 @@ class _ExampleRunner:
             return
 
         around_code = around_functions.pop()
-        wrapped_called: List[bool] = []
+        wrapped_called: list[bool] = []
 
         async def async_wrapped() -> None:
             wrapped_called.append(True)
@@ -140,17 +141,17 @@ class _ExampleRunner:
         self, context_data: _ContextData, slow_callback_is_not_fatal: bool = False
     ) -> Iterator[None]:
         original_showwarning = warnings.showwarning
-        caught_failures: List[Union[Exception, str]] = []
+        caught_failures: list[Exception | str] = []
 
         def showwarning(
             message: str,
-            category: Type[Warning],
+            category: type[Warning],
             filename: str,
             lineno: int,
-            file: Optional[TextIO] = None,
-            line: Optional[str] = None,
+            file: TextIO | None = None,
+            line: str | None = None,
         ) -> None:
-            failure_warning_messages: Dict[Any, str] = {
+            failure_warning_messages: dict[Any, str] = {
                 RuntimeWarning: "^coroutine '.+' was never awaited"
             }
             warning_class = type(message)
@@ -206,7 +207,7 @@ class _ExampleRunner:
     @staticmethod
     def _fail_if_coroutine_function(
         func: Callable, *args: Any, **kwargs: Any
-    ) -> Optional[Any]:
+    ) -> Any | None:
         if inspect.iscoroutinefunction(func):
             raise ValueError(f"Function can not be a coroutine function: {repr(func)}")
         return func(*args, **kwargs)
@@ -214,7 +215,7 @@ class _ExampleRunner:
     def _sync_run_all_hooks_and_example(
         self,
         context_data: _ContextData,
-        around_functions: Optional[List[Callable]] = None,
+        around_functions: list[Callable] | None = None,
     ) -> None:
         """
         ***********************************************************************
@@ -243,7 +244,7 @@ class _ExampleRunner:
                     self._fail_if_coroutine_function(before_code, context_data)
                 self.formatter.dsl_example(self.example, self.example.code)
                 self._fail_if_coroutine_function(self.example.code, context_data)
-            after_functions: List[Callable] = []
+            after_functions: list[Callable] = []
             after_functions.extend(context_data._mock_callable_after_functions)
             after_functions.extend(self.example.context.all_after_functions)
             after_functions.extend(context_data._after_functions)
@@ -255,7 +256,7 @@ class _ExampleRunner:
             return
         around_code = around_functions.pop()
 
-        wrapped_called: List[bool] = []
+        wrapped_called: list[bool] = []
 
         def wrapped() -> None:
             wrapped_called.append(True)

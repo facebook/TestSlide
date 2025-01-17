@@ -5,7 +5,7 @@
 
 import inspect
 import unittest.mock
-from typing import Optional, Type, TypeVar
+from typing import Optional, TypeVar
 
 import testslide.core.lib
 from testslide.bdd.dsl import context
@@ -190,7 +190,7 @@ def _validate_callable_arg_types(context):
             https://github.com/facebook/TestSlide/issues/165
             """
 
-            def with_typevar(arg1: Type[T]) -> None:
+            def with_typevar(arg1: type[T]) -> None:
                 pass
 
             self.callable_template = with_typevar
@@ -355,7 +355,7 @@ def _validate_return_type(context):
         https://github.com/facebook/TestSlide/issues/165
         """
 
-        def with_typevar_return() -> Type[TypeVar("T")]:  # type: ignore[empty-body]
+        def with_typevar_return() -> type[TypeVar("T")]:  # type: ignore[empty-body]
             pass
 
         self.callable_template = with_typevar_return

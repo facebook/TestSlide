@@ -10,18 +10,9 @@ import functools
 import inspect
 import platform
 import re
+from collections.abc import Callable
 from inspect import Traceback
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TYPE_CHECKING,
-    Union,
-)
+from typing import Any, TYPE_CHECKING, Union
 from unittest.mock import Mock
 
 from testslide.core.lib import (
@@ -47,7 +38,7 @@ def mock_callable(
     #           with disabled type validation
     #  * True:  type validation will be enabled (regardless of target type)
     #  * False:  type validation will be disabled
-    type_validation: Optional[bool] = None,
+    type_validation: bool | None = None,
 ) -> "_MockCallableDSL":
     caller_frame = inspect.currentframe().f_back.f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
@@ -63,7 +54,7 @@ def mock_callable(
 
 
 def mock_async_callable(
-    target: Union[type, str],
+    target: type | str,
     method: str,
     callable_returns_coroutine: bool = False,
     allow_private: bool = False,
@@ -83,7 +74,7 @@ def mock_async_callable(
     )
 
 
-_unpatchers: List[Callable] = []  # noqa T484
+_unpatchers: list[Callable] = []  # noqa T484
 
 
 def _default_register_assertion(assertion: Callable) -> None:
@@ -98,8 +89,8 @@ def _default_register_assertion(assertion: Callable) -> None:
 
 register_assertion = _default_register_assertion
 _call_order_assertion_registered: bool = False
-_received_ordered_calls: List[Tuple[Any, str, "_BaseRunner"]] = []
-_expected_ordered_calls: List[Tuple[Any, str, "_BaseRunner"]] = []
+_received_ordered_calls: list[tuple[Any, str, "_BaseRunner"]] = []
+_expected_ordered_calls: list[tuple[Any, str, "_BaseRunner"]] = []
 
 
 def unpatch_all_callable_mocks() -> None:
@@ -127,9 +118,7 @@ def unpatch_all_callable_mocks() -> None:
             unpatch_exceptions.append(e)
     del _unpatchers[:]
     if unpatch_exceptions:
-        raise RuntimeError(
-            "Exceptions raised when unpatching: {}".format(unpatch_exceptions)
-        )
+        raise RuntimeError(f"Exceptions raised when unpatching: {unpatch_exceptions}")
 
 
 def _is_setup() -> bool:
@@ -137,7 +126,7 @@ def _is_setup() -> bool:
     return register_assertion is not _default_register_assertion
 
 
-def _format_target(target: Union[str, type]) -> str:
+def _format_target(target: str | type) -> str:
     if hasattr(target, "__repr__"):
         return repr(target)
     else:
@@ -156,8 +145,8 @@ def _format_args(indent: int, *args: Any, **kwargs: Any) -> str:
         if kwargs:
             s += "\n"
             for k in sorted(kwargs.keys()):
-                s += "{}  {}={},\n".format(indentation, k, repr(kwargs[k]))
-            s += "{}".format(indentation)
+                s += f"{indentation}  {k}={repr(kwargs[k])},\n"
+            s += f"{indentation}"
         s += "}\n"
     return s
 
@@ -230,15 +219,15 @@ class _BaseRunner:
     TYPE_VALIDATION = True
 
     def __init__(
-        self, target: Any, method: str, original_callable: Union[Callable, Mock]
+        self, target: Any, method: str, original_callable: Callable | Mock
     ) -> None:
         self.target = target
         self.method = method
         self.original_callable = original_callable
-        self.accepted_args: Optional[Tuple[Any, Any]] = None
+        self.accepted_args: tuple[Any, Any] | None = None
 
         self._call_count: int = 0
-        self._max_calls: Optional[int] = None
+        self._max_calls: int | None = None
         self._has_order_assertion = False
         self._accept_partial_call = False
 
@@ -255,7 +244,7 @@ class _BaseRunner:
         return self._call_count
 
     @property
-    def max_calls(self) -> Optional[int]:
+    def max_calls(self) -> int | None:
         return self._max_calls
 
     def _set_max_calls(self, times: int) -> None:
@@ -446,8 +435,8 @@ class _ReturnValueRunner(_Runner):
         self,
         target: Any,
         method: str,
-        original_callable: Union[Callable, Mock],
-        value: Optional[Any],
+        original_callable: Callable | Mock,
+        value: Any | None,
         allow_coro: bool = False,
     ) -> None:
         super().__init__(target, method, original_callable)
@@ -455,7 +444,7 @@ class _ReturnValueRunner(_Runner):
             raise CoroutineValueError()
         self.return_value = value
 
-    def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
+    def run(self, *args: Any, **kwargs: Any) -> Any | None:
         super().run(*args, **kwargs)
         return self.return_value
 
@@ -463,20 +452,20 @@ class _ReturnValueRunner(_Runner):
 class _ReturnValuesRunner(_Runner):
     def __init__(
         self,
-        target: Union[type, str],
+        target: type | str,
         method: str,
-        original_callable: Union[Callable[..., Any], Mock],
-        values_list: List[Any],
+        original_callable: Callable[..., Any] | Mock,
+        values_list: list[Any],
         allow_coro: bool = False,
     ) -> None:
-        super(_ReturnValuesRunner, self).__init__(target, method, original_callable)
+        super().__init__(target, method, original_callable)
         # Reverse original list for popping efficiency
         if not allow_coro and any(_is_coroutine(rv) for rv in values_list):
             raise CoroutineValueError()
         self.values_list = list(reversed(values_list))
 
     def run(self, *args: Any, **kwargs: Any) -> Any:
-        super(_ReturnValuesRunner, self).run(*args, **kwargs)
+        super().run(*args, **kwargs)
         if self.values_list:
             return self.values_list.pop()
         else:
@@ -488,13 +477,13 @@ class _YieldValuesRunner(_Runner):
 
     def __init__(
         self,
-        target: Union[type, str],
+        target: type | str,
         method: str,
-        original_callable: Union[Callable[..., Any], Mock],
-        values_list: List[Any],
+        original_callable: Callable[..., Any] | Mock,
+        values_list: list[Any],
         allow_coro: bool = False,
     ) -> None:
-        super(_YieldValuesRunner, self).__init__(target, method, original_callable)
+        super().__init__(target, method, original_callable)
         self.values_list = values_list
         self.index = 0
         if not allow_coro and any(_is_coroutine(rv) for rv in values_list):
@@ -512,41 +501,41 @@ class _YieldValuesRunner(_Runner):
         return item
 
     def run(self, *args: Any, **kwargs: Any) -> "_YieldValuesRunner":  # type: ignore
-        super(_YieldValuesRunner, self).run(*args, **kwargs)
+        super().run(*args, **kwargs)
         return self
 
 
 class _RaiseRunner(_Runner):
     def __init__(
         self,
-        target: Union[type, str],
+        target: type | str,
         method: str,
-        original_callable: Union[Callable[..., Any], Mock],
+        original_callable: Callable[..., Any] | Mock,
         exception: BaseException,
     ) -> None:
-        super(_RaiseRunner, self).__init__(target, method, original_callable)
+        super().__init__(target, method, original_callable)
         self.exception = exception
 
     def run(self, *args: Any, **kwargs: Any) -> None:
-        super(_RaiseRunner, self).run(*args, **kwargs)
+        super().run(*args, **kwargs)
         raise self.exception
 
 
 class _ImplementationRunner(_Runner):
     def __init__(
         self,
-        target: Union[type, str],
+        target: type | str,
         method: str,
-        original_callable: Union[Callable[..., Any], Mock],
+        original_callable: Callable[..., Any] | Mock,
         new_implementation: Callable,
         allow_coro: bool = False,
     ) -> None:
-        super(_ImplementationRunner, self).__init__(target, method, original_callable)
+        super().__init__(target, method, original_callable)
         self.new_implementation = new_implementation
         self._allow_coro = allow_coro
 
-    def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
-        super(_ImplementationRunner, self).run(*args, **kwargs)
+    def run(self, *args: Any, **kwargs: Any) -> Any | None:
+        super().run(*args, **kwargs)
         new_impl = self.new_implementation(*args, **kwargs)
         if not self._allow_coro and _is_coroutine(new_impl):
             raise CoroutineValueError()
@@ -556,15 +545,15 @@ class _ImplementationRunner(_Runner):
 class _AsyncImplementationRunner(_AsyncRunner):
     def __init__(
         self,
-        target: Union[type, str],
+        target: type | str,
         method: str,
-        original_callable: Union[Callable[..., Any], Mock],
+        original_callable: Callable[..., Any] | Mock,
         new_implementation: Callable,
     ) -> None:
         super().__init__(target, method, original_callable)
         self.new_implementation = new_implementation
 
-    async def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
+    async def run(self, *args: Any, **kwargs: Any) -> Any | None:
         await super().run(*args, **kwargs)
         coro = self.new_implementation(*args, **kwargs)
         if not _is_coroutine(coro):
@@ -576,13 +565,13 @@ class _AsyncImplementationRunner(_AsyncRunner):
 
 
 class _CallOriginalRunner(_Runner):
-    def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
-        super(_CallOriginalRunner, self).run(*args, **kwargs)
+    def run(self, *args: Any, **kwargs: Any) -> Any | None:
+        super().run(*args, **kwargs)
         return self.original_callable(*args, **kwargs)
 
 
 class _AsyncCallOriginalRunner(_AsyncRunner):
-    async def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
+    async def run(self, *args: Any, **kwargs: Any) -> Any | None:
         await super().run(*args, **kwargs)
         return await self.original_callable(*args, **kwargs)
 
@@ -605,11 +594,11 @@ class _CallableMock:
         #           with disabled type validation
         #  * True:  type validation will be enabled (regardless of target type)
         #  * False:  type validation will be disabled
-        type_validation: Optional[bool] = None,
+        type_validation: bool | None = None,
     ) -> None:
         self.target = target
         self.method = method
-        self.runners: List[_BaseRunner] = []
+        self.runners: list[_BaseRunner] = []
         self.is_async = is_async
         self.callable_returns_coroutine = callable_returns_coroutine
         self.type_validation = type_validation or type_validation is None
@@ -641,7 +630,7 @@ class _CallableMock:
                     getattr(runner.target, runner.method), value, self.caller_frame_info
                 )
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Optional[Any]:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
         runner = self._get_runner(*args, **kwargs)
         if runner:
             if self.is_async:
@@ -697,9 +686,7 @@ class _CallableMock:
 
 
 class _MockCallableDSL:
-    CALLABLE_MOCKS: Dict[
-        Union[int, Tuple[int, str]], Union[Callable[[Type[object]], Any]]
-    ] = {}
+    CALLABLE_MOCKS: dict[int | tuple[int, str], Callable[[type[object]], Any]] = {}
     _NAME: str = "mock_callable"
 
     def _validate_patch(
@@ -778,8 +765,8 @@ class _MockCallableDSL:
                 )
 
     def _patch(
-        self, new_value: Union[Callable, _CallableMock]
-    ) -> Union[Tuple[Callable, Callable], Tuple[Mock, Callable], Tuple[None, Callable]]:
+        self, new_value: Callable | _CallableMock
+    ) -> tuple[Callable, Callable] | tuple[Mock, Callable] | tuple[None, Callable]:
         self._validate_patch()
 
         if isinstance(self._target, StrictMock):
@@ -825,10 +812,10 @@ class _MockCallableDSL:
         target: Any,
         method: str,
         caller_frame_info: Traceback,
-        callable_mock: Union[Callable[[Type[object]], Any], _CallableMock, None] = None,
-        original_callable: Optional[Callable] = None,
+        callable_mock: Callable[[type[object]], Any] | _CallableMock | None = None,
+        original_callable: Callable | None = None,
         allow_private: bool = False,
-        type_validation: Optional[bool] = None,
+        type_validation: bool | None = None,
     ) -> None:
         if not _is_setup():
             raise RuntimeError(
@@ -843,7 +830,7 @@ class _MockCallableDSL:
             )
         self._original_target = target
         self._method = method
-        self._runner: Optional[_BaseRunner] = None
+        self._runner: _BaseRunner | None = None
         self._next_runner_accepted_args: Any = None
         self.allow_private = allow_private
         self.type_validation = type_validation
@@ -964,14 +951,14 @@ class _MockCallableDSL:
         return self
 
     def to_return_values(
-        self, values_list: List[Any]
+        self, values_list: list[Any]
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         For each call, return each value from given list in order.
         When list is exhausted, goes to the next behavior set.
         """
         if not isinstance(values_list, list):
-            raise ValueError("{} is not a list".format(values_list))
+            raise ValueError(f"{values_list} is not a list")
         self._add_runner(
             _ReturnValuesRunner(
                 self._original_target,
@@ -984,14 +971,14 @@ class _MockCallableDSL:
         return self
 
     def to_yield_values(
-        self, values_list: List[Any]
+        self, values_list: list[Any]
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Callable will return an iterator what will yield each value from the
         given list.
         """
         if not isinstance(values_list, list):
-            raise ValueError("{} is not a list".format(values_list))
+            raise ValueError(f"{values_list} is not a list")
         self._add_runner(
             _YieldValuesRunner(
                 self._original_target,
@@ -1004,7 +991,7 @@ class _MockCallableDSL:
         return self
 
     def to_raise(
-        self, ex: Union[Type[BaseException], BaseException]
+        self, ex: type[BaseException] | BaseException
     ) -> Union["_MockCallableDSL", "_MockAsyncCallableDSL", "_MockConstructorDSL"]:
         """
         Raises given exception class or exception instance.
@@ -1028,9 +1015,7 @@ class _MockCallableDSL:
                 )
             )
         else:
-            raise ValueError(
-                "{} is not subclass or instance of BaseException".format(ex)
-            )
+            raise ValueError(f"{ex} is not subclass or instance of BaseException")
         return self
 
     def with_implementation(
@@ -1040,7 +1025,7 @@ class _MockCallableDSL:
         Replace callable by given function.
         """
         if not callable(func):
-            raise ValueError("{} must be callable.".format(func))
+            raise ValueError(f"{func} must be callable.")
         self._add_runner(
             _ImplementationRunner(
                 self._original_target,
@@ -1064,7 +1049,7 @@ class _MockCallableDSL:
         arguments.
         """
         if not callable(func):
-            raise ValueError("{} must be callable.".format(func))
+            raise ValueError(f"{func} must be callable.")
 
         if not self._original_callable:
             raise ValueError("Can not wrap original callable that does not exist.")
@@ -1201,7 +1186,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
 
     def __init__(
         self,
-        target: Union[str, type],
+        target: str | type,
         method: str,
         caller_frame_info: Traceback,
         callable_returns_coroutine: bool,
@@ -1241,7 +1226,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         Replace callable by given async function.
         """
         if not callable(func):
-            raise ValueError("{} must be callable.".format(func))
+            raise ValueError(f"{func} must be callable.")
         self._add_runner(
             _AsyncImplementationRunner(
                 self._original_target,
@@ -1262,7 +1247,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
         arguments.
         """
         if not callable(func):
-            raise ValueError("{} must be callable.".format(func))
+            raise ValueError(f"{func} must be callable.")
 
         if not self._original_callable:
             raise ValueError("Can not wrap original callable that does not exist.")

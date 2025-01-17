@@ -24,9 +24,6 @@ from . import (
 )
 from .strict_mock import StrictMock  # noqa
 
-if sys.version_info < (3, 7):
-    raise RuntimeError("Python >=3.7 required.")
-
 
 def _importer(target: str) -> Any:
     components = target.split(".")
@@ -56,7 +53,7 @@ class TestCase(unittest.TestCase):
         self.addCleanup(_mock_callable.unpatch_all_callable_mocks)
         self.addCleanup(_mock_constructor.unpatch_all_constructor_mocks)
         self.addCleanup(_patch_attribute.unpatch_all_mocked_attributes)
-        super(TestCase, self).setUp()
+        super().setUp()
 
     @staticmethod
     def mock_callable(*args: Any, **kwargs: Any) -> _mock_callable._MockCallableDSL:

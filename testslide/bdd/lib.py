@@ -13,9 +13,10 @@ import sys
 import time
 import types
 import unittest
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from functools import partial
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 import psutil
 
@@ -29,10 +30,7 @@ from testslide.core.strict_mock import StrictMock  # noqa
 asyncio_run = partial(asyncio.run, debug=True)
 
 
-if sys.version_info < (3, 8):
-    get_all_tasks = asyncio.Task.all_tasks
-else:
-    get_all_tasks = asyncio.all_tasks
+get_all_tasks = asyncio.all_tasks
 
 
 class LeftOverActiveTasks(BaseException):
@@ -90,10 +88,10 @@ class BaseFormatter:
 
     def __init__(
         self,
-        import_module_names: List[str],
+        import_module_names: list[str],
         force_color: bool = False,
-        import_secs: Optional[float] = None,
-        trim_path_prefix: Optional[str] = None,
+        import_secs: float | None = None,
+        trim_path_prefix: str | None = None,
         show_testslide_stack_trace: bool = False,
         dsl_debug: bool = False,
     ) -> None:
@@ -104,17 +102,17 @@ class BaseFormatter:
         self.trim_path_prefix = trim_path_prefix
         self.show_testslide_stack_trace = show_testslide_stack_trace
         self.dsl_debug = dsl_debug
-        self.current_hierarchy: List[Context] = []
-        self.results: Dict[
-            str, List[Union["Example", Dict[str, Union["Example", BaseException]]]]
+        self.current_hierarchy: list[Context] = []
+        self.results: dict[
+            str, list[Union["Example", dict[str, Union["Example", BaseException]]]]
         ] = {
             "success": [],
             "fail": [],
             "skip": [],
         }
         self.start_time = psutil.Process(os.getpid()).create_time()
-        self.end_time: Optional[float] = None
-        self.duration_secs: Optional[float] = None
+        self.end_time: float | None = None
+        self.duration_secs: float | None = None
 
     # Example Discovery
 
@@ -183,7 +181,7 @@ class BaseFormatter:
         """
         self.results["skip"].append(example)
 
-    def finish(self, not_executed_examples: List["Example"]) -> None:
+    def finish(self, not_executed_examples: list["Example"]) -> None:
         """
         Called when all examples finished execution.
         """
@@ -244,7 +242,7 @@ class _ContextData:
         self.mock_async_callable = testslide.core.mock_callable.mock_async_callable
         self.mock_constructor = testslide.core.mock_constructor.mock_constructor
         self.patch_attribute = testslide.core.patch_attribute.patch_attribute
-        self._mock_callable_after_functions: List[Callable] = []
+        self._mock_callable_after_functions: list[Callable] = []
 
         def register_assertion(assertion: Callable) -> None:
             if self._example.is_async:
@@ -262,7 +260,7 @@ class _ContextData:
         self._example = example
         self._formatter = formatter
         self._context = example.context
-        self._after_functions: List[Callable] = []
+        self._after_functions: list[Callable] = []
         self._test_case = unittest.TestCase()
         self._init_sub_example()
         self._init_mocks()
@@ -272,11 +270,11 @@ class _ContextData:
         raise BaseException("This function should not be called outside test code.")
 
     @property
-    def _all_methods(self) -> Dict[str, Callable]:
+    def _all_methods(self) -> dict[str, Callable]:
         return self._context.all_context_data_methods
 
     @property
-    def _all_memoizable_attributes(self) -> Dict[str, Callable]:
+    def _all_memoizable_attributes(self) -> dict[str, Callable]:
         return self._context.all_context_data_memoizable_attributes
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -292,7 +290,7 @@ class _ContextData:
                 "https://testslide.readthedocs.io/en/main/testslide_dsl/context_attributes_and_functions/index.html"
             )
         else:
-            super(_ContextData, self).__setattr__(name, value)
+            super().__setattr__(name, value)
 
     def __getattr__(self, name: str) -> Any:
         if name in self._all_methods.keys():
@@ -317,9 +315,7 @@ class _ContextData:
             # Forward assert* methods to unittest.TestCase
             if re.match("^assert", name) and hasattr(self._test_case, name):
                 return getattr(self._test_case, name)
-            raise AttributeError(
-                "Context '{}' has no attribute '{}'".format(self._context, name)
-            )
+            raise AttributeError(f"Context '{self._context}' has no attribute '{name}'")
 
     def after(self, after_code: Callable) -> Callable:
         """
@@ -330,7 +326,7 @@ class _ContextData:
         return self._not_callable
 
     @contextmanager
-    def sub_example(self, name: Optional[str] = None) -> Iterator[None]:
+    def sub_example(self, name: str | None = None) -> Iterator[None]:
         """
         Use this as a context manager many times inside the same
         example. Failures in the code inside the context manager
@@ -355,8 +351,8 @@ class AggregatedExceptions(Exception):
     """
 
     def __init__(self) -> None:
-        super(AggregatedExceptions, self).__init__()
-        self.exceptions: List[BaseException] = []
+        super().__init__()
+        self.exceptions: list[BaseException] = []
 
     def append_exception(self, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions):
@@ -372,7 +368,7 @@ class AggregatedExceptions(Exception):
             self.append_exception(exception)
 
     def __str__(self) -> str:
-        return "{} failures.\n".format(len(self.exceptions)) + "\n".join(
+        return f"{len(self.exceptions)} failures.\n" + "\n".join(
             f"{type(e)}: {str(e)}" for e in self.exceptions
         )
 
@@ -399,15 +395,15 @@ class _TestSlideTestResult(unittest.TestResult):
     """
 
     def __init__(self) -> None:
-        super(_TestSlideTestResult, self).__init__()
+        super().__init__()
         self.aggregated_exceptions = AggregatedExceptions()
 
     def _add_exception(
         self,
-        err: Tuple[
-            Type[BaseException],
+        err: tuple[
+            type[BaseException],
             BaseException,
-            Optional[types.TracebackType],
+            types.TracebackType | None,
         ],
     ) -> None:
         exc_type, exc_value, exc_traceback = err
@@ -418,8 +414,8 @@ class _TestSlideTestResult(unittest.TestResult):
     def addError(  # type:ignore
         self,
         test: "TestCase",
-        err: Tuple[
-            Type[BaseException],
+        err: tuple[
+            type[BaseException],
             BaseException,
             types.TracebackType,
         ],
@@ -427,7 +423,7 @@ class _TestSlideTestResult(unittest.TestResult):
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info().
         """
-        super(_TestSlideTestResult, self).addError(test, err)  # type: ignore
+        super().addError(test, err)  # type: ignore
         self._add_exception(err)
 
     # pyre-fixme[14]: `addFailure` overrides method defined in `TestResult`
@@ -435,27 +431,27 @@ class _TestSlideTestResult(unittest.TestResult):
     def addFailure(  # type:ignore
         self,
         test: "TestCase",  # type: ignore
-        err: Tuple[
-            Type[BaseException],
+        err: tuple[
+            type[BaseException],
             BaseException,
             types.TracebackType,
         ],
     ) -> None:
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info()."""
-        super(_TestSlideTestResult, self).addFailure(test, err)
+        super().addFailure(test, err)
         self._add_exception(err)
 
     def addSkip(self, test: "TestCase", reason: str) -> None:  # type: ignore
         """Called when the test case test is skipped. reason is the reason
         the test gave for skipping."""
-        super(_TestSlideTestResult, self).addSkip(test, reason)
+        super().addSkip(test, reason)
         self._add_exception((type(Skip), Skip(), None))  # type: ignore
 
     def addUnexpectedSuccess(self, test: "TestCase") -> None:  # type: ignore
         """Called when the test case test was marked with the expectedFailure()
         decorator, but succeeded."""
-        super(_TestSlideTestResult, self).addUnexpectedSuccess(test)
+        super().addUnexpectedSuccess(test)
         self._add_exception((type(UnexpectedSuccess), UnexpectedSuccess(), None))  # type: ignore
 
     # pyre-ignore
@@ -463,17 +459,17 @@ class _TestSlideTestResult(unittest.TestResult):
         self,
         test: "TestCase",  # type: ignore
         subtest: "TestCase",  # type: ignore
-        err: Tuple[  # type: ignore
-            Optional[Type[BaseException]],
-            Optional[BaseException],
-            Optional[types.TracebackType],
+        err: tuple[  # type: ignore
+            type[BaseException] | None,
+            BaseException | None,
+            types.TracebackType | None,
         ],
     ) -> None:
         """Called at the end of a subtest.
         'err' is None if the subtest ended successfully, otherwise it's a
         tuple of values as returned by sys.exc_info().
         """
-        super(_TestSlideTestResult, self).addSubTest(test, subtest, err)  # type: ignore
+        super().addSubTest(test, subtest, err)  # type: ignore
         if err:
             self._add_exception(err)  # type: ignore
 
@@ -530,7 +526,7 @@ class Context:
     _SAME_CONTEXT_NAME_ERROR = "A context with the same name is already defined"
 
     # List of all top level contexts created
-    all_top_level_contexts: List["Context"] = []
+    all_top_level_contexts: list["Context"] = []
 
     # Constructor
 
@@ -558,14 +554,14 @@ class Context:
         self.shared = shared
         self.__dict__["skip"] = skip
         self.__dict__["focus"] = focus
-        self.children_contexts: List["Context"] = []
-        self.examples: List["Example"] = []
-        self.before_functions: List[Callable] = []
-        self.after_functions: List[Callable] = []
-        self.around_functions: List[Callable] = []
-        self.context_data_methods: Dict[str, Callable] = {}
-        self.context_data_memoizable_attributes: Dict[str, Callable] = {}
-        self.shared_contexts: Dict[str, "Context"] = {}
+        self.children_contexts: list["Context"] = []
+        self.examples: list["Example"] = []
+        self.before_functions: list[Callable] = []
+        self.after_functions: list[Callable] = []
+        self.around_functions: list[Callable] = []
+        self.context_data_methods: dict[str, Callable] = {}
+        self.context_data_memoizable_attributes: dict[str, Callable] = {}
+        self.shared_contexts: dict[str, "Context"] = {}
 
         if not self.parent_context and not self.shared:
             self.all_top_level_contexts.append(self)
@@ -573,7 +569,7 @@ class Context:
     # Properties
 
     @property
-    def parent_contexts(self) -> List["Context"]:
+    def parent_contexts(self) -> list["Context"]:
         """
         Returns a list of all parent contexts, from bottom to top.
         """
@@ -591,15 +587,15 @@ class Context:
         """
         return len(self.parent_contexts)
 
-    def _all_parents_as_dict(original: type) -> Callable[["Context"], Dict[str, Any]]:  # type: ignore # noqa: B902
+    def _all_parents_as_dict(original: type) -> Callable[["Context"], dict[str, Any]]:  # type: ignore # noqa: B902
         """
         Use as a decorator for empty functions named all_attribute_name, to make
         them return a dict with self.parent_context.all_attribute_name and
         self.attribute_name.
         """
 
-        def get_all(self: "Context") -> Dict[str, Any]:
-            final_dict: Dict[str, Any] = {}
+        def get_all(self: "Context") -> dict[str, Any]:
+            final_dict: dict[str, Any] = {}
             if self.parent_context:
                 final_dict.update(getattr(self.parent_context, original.__name__))
             final_dict.update(getattr(self, original.__name__.split("all_")[1]))
@@ -607,15 +603,15 @@ class Context:
 
         return get_all
 
-    def _all_parents_as_list(original: type) -> Callable[["Context"], List[Any]]:  # type: ignore  # noqa: B902
+    def _all_parents_as_list(original: type) -> Callable[["Context"], list[Any]]:  # type: ignore  # noqa: B902
         """
         Use as a decorator for empty functions named all_attribute_name, to make
         them return a list with self.parent_context.all_attribute_name and
         self.attribute_name.
         """
 
-        def get_all(self: "Context") -> List[Any]:
-            final_list: List[str] = []
+        def get_all(self: "Context") -> list[Any]:
+            final_list: list[str] = []
             if self.parent_context:
                 final_list.extend(getattr(self.parent_context, original.__name__))
             final_list.extend(getattr(self, original.__name__.split("all_")[1]))
@@ -675,7 +671,7 @@ class Context:
         pass
 
     @property
-    def all_examples(self) -> List[Example]:
+    def all_examples(self) -> list[Example]:
         """
         List of of all examples in this context and nested contexts.
         """
@@ -686,7 +682,7 @@ class Context:
         return final_list
 
     @property
-    def hierarchy(self) -> List["Context"]:
+    def hierarchy(self) -> list["Context"]:
         """
         Returns a list of all contexts in this hierarchy.
         """
@@ -759,9 +755,7 @@ class Context:
         Add given function to example execution scope.
         """
         if self.has_attribute(name):
-            raise AttributeError(
-                'Attribute "{}" already set for context "{}"'.format(name, self)
-            )
+            raise AttributeError(f'Attribute "{name}" already set for context "{self}"')
         self.context_data_methods[name] = function_code
 
     def add_memoized_attribute(
@@ -772,9 +766,7 @@ class Context:
         value of memoizable_code().
         """
         if self.has_attribute(name):
-            raise AttributeError(
-                'Attribute "{}" already set for context "{}"'.format(name, self)
-            )
+            raise AttributeError(f'Attribute "{name}" already set for context "{self}"')
         self.context_data_memoizable_attributes[name] = memoizable_code
 
         if before:
@@ -809,7 +801,7 @@ class Context:
             raise RuntimeError("A shared context with the same name is already defined")
         self.shared_contexts[name] = shared_context_code
 
-    def add_test_case(self, test_case: Type["TestCase"], attr_name: str) -> None:
+    def add_test_case(self, test_case: type["TestCase"], attr_name: str) -> None:
         """
         Add around hooks to context from given unittest.TestCase class. Only
         hooks such as setUp or tearDown will be called, no tests will be
@@ -820,7 +812,7 @@ class Context:
             def test_test_slide(_: Any) -> None:
                 example()
 
-            def exec_body(ns: Dict[str, Callable]) -> None:
+            def exec_body(ns: dict[str, Callable]) -> None:
                 ns.update({"test_test_slide": test_test_slide})
 
             # Build a child class of given TestCase, with a defined test that

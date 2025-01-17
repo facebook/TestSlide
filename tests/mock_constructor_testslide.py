@@ -5,7 +5,6 @@
 
 import contextlib
 import sys
-from typing import Optional
 
 from testslide.bdd.dsl import context
 from testslide.core.lib import TypeCheckError
@@ -45,16 +44,16 @@ class Target(TargetParent):
     CLASS_ATTR = "CLASS_ATTR"
     __slots__ = ("args", "kwargs", "p2_super", "p3_super")
 
-    def __init__(self, message: Optional[str] = None, *args, **kwargs):
+    def __init__(self, message: str | None = None, *args, **kwargs):
         self.p2_super = False
-        super(Target, self).__init__(p2_super=True)
+        super().__init__(p2_super=True)
 
         self.p3_super = False
         super().__init__(p3_super=True)
 
         if message is not None:
             args = tuple([message] + list(args))
-        super(Target, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.dynamic_attr = "dynamic_attr"
 
@@ -62,7 +61,7 @@ class Target(TargetParent):
         return "regular_instance_method"
 
     def p2_super_instance_method(self):
-        return super(Target, self).p2_super_instance_method()
+        return super().p2_super_instance_method()
 
     def p3_super_instance_method(self):
         return super().p3_super_instance_method()
@@ -77,7 +76,7 @@ class Target(TargetParent):
 
     @classmethod
     def p2_super_class_method(cls):
-        return super(Target, cls).p2_super_class_method()
+        return super().p2_super_class_method()
 
     @classmethod
     def p3_super_class_method(cls):
@@ -374,7 +373,7 @@ def mock_constructor(context):
                 @context.example
                 def factory_works(self):
                     def factory(original_callable, message):
-                        return "got: {}".format(message)
+                        return f"got: {message}"
 
                     self.mock_constructor(
                         self.target_module, self.target_class_name

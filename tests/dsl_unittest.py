@@ -8,7 +8,6 @@ import os
 import subprocess
 import time
 import unittest
-from typing import List
 from unittest.mock import call, Mock, patch
 
 from testslide.bdd.dsl import context, fcontext, xcontext
@@ -39,27 +38,27 @@ class SomeTestCase(unittest.TestCase):
     Used to test TestSlide and unittest.TestCase integration.
     """
 
-    CALLS: List[str] = []
+    CALLS: list[str] = []
 
     def setUp(self):
         self.CALLS.append("setUp")
-        super(SomeTestCase, self).setUp()
+        super().setUp()
 
     tearDown_calls = 0
 
     def tearDown(self):
         self.CALLS.append("tearDown")
-        super(SomeTestCase, self).tearDown()
+        super().tearDown()
 
     @classmethod
     def setUpClass(cls):
         cls.CALLS.append("setUpClass")
-        super(SomeTestCase, cls).setUpClass()
+        super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         cls.CALLS.append("tearDownClass")
-        super(SomeTestCase, cls).tearDownClass()
+        super().tearDownClass()
 
     def test_should_not_run(self):
         self.CALLS.append("test_should_not_run")
@@ -70,27 +69,27 @@ class SomeTestCase2(unittest.TestCase):
     Used to test TestSlide and unittest.TestCase integration.
     """
 
-    CALLS: List[str] = []
+    CALLS: list[str] = []
 
     def setUp(self):
         self.CALLS.append("setUp2")
-        super(SomeTestCase2, self).setUp()
+        super().setUp()
 
     tearDown_calls = 0
 
     def tearDown(self):
         self.CALLS.append("tearDown2")
-        super(SomeTestCase2, self).tearDown()
+        super().tearDown()
 
     @classmethod
     def setUpClass(cls):
         cls.CALLS.append("setUpClass2")
-        super(SomeTestCase2, cls).setUpClass()
+        super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         cls.CALLS.append("tearDownClass2")
-        super(SomeTestCase2, cls).tearDownClass()
+        super().tearDownClass()
 
     def test_should_not_run(self):
         self.CALLS.append("test_should_not_run2")
@@ -102,12 +101,12 @@ class SimulatedFailure(Exception):
         This method purposely accepts an extra argument to catch failures when
         reraising exceptions.
         """
-        super(SimulatedFailure, self).__init__(message, second_message)
+        super().__init__(message, second_message)
         self.message = message
         self.second_message = second_message
 
     def __str__(self):
-        return "{} {}".format(self.message, self.second_message)
+        return f"{self.message} {self.second_message}"
 
 
 class TestDSLBase(unittest.TestCase):
@@ -140,13 +139,11 @@ class TestDSLBase(unittest.TestCase):
                 )
             )
             for name in ctx.shared_contexts.keys():
-                print('  {}Shared context: "{}"'.format(indent, name))
+                print(f'  {indent}Shared context: "{name}"')
             for example in ctx.all_examples:
-                print('  {}Example: "{}"'.format(indent, example))
+                print(f'  {indent}Example: "{example}"')
             if ctx.children_contexts:
-                self._print_context_hierarchy(
-                    ctx.children_contexts, "{}  ".format(indent)
-                )
+                self._print_context_hierarchy(ctx.children_contexts, f"{indent}  ")
 
 
 class TestDSLContext(TestDSLBase):
@@ -527,7 +524,7 @@ class TestDSLSharedContext(TestDSLBase):
         """
         invalid_name = "invalid shared context name"
         with self.assertRaisesRegex(
-            TypeError, 'Shared context "{}" does not exist'.format(invalid_name)
+            TypeError, f'Shared context "{invalid_name}" does not exist'
         ):
 
             @context
@@ -600,7 +597,7 @@ class TestDSLSharedContext(TestDSLBase):
         """
         invalid_name = "invalid shared context name"
         with self.assertRaisesRegex(
-            TypeError, 'Shared context "{}" does not exist'.format(invalid_name)
+            TypeError, f'Shared context "{invalid_name}" does not exist'
         ):
 
             @context

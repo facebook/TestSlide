@@ -10,10 +10,11 @@ import inspect
 import os
 import sys
 import unittest.mock
+from collections.abc import Callable
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
-from typing import Any, Callable, Dict, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING, Union
 from unittest.mock import Mock
 
 import typeguard
@@ -21,7 +22,7 @@ import typing_extensions
 
 if sys.version_info >= (3, 8):
     from typing import get_args, get_origin
-elif sys.version_info > (3, 7):
+else:
     from typing import _GenericAlias
 
     # Versions of `get_origin` that only support GenericAlias.
@@ -32,21 +33,6 @@ elif sys.version_info > (3, 7):
 
     def get_args(tp):
         if isinstance(tp, _GenericAlias) and tp.__origin__ is not abc.Callable:
-            return tp.__args__
-        return ()
-
-else:
-    from typing import GenericMeta  # type: ignore
-
-    def get_origin(tp):
-        if isinstance(tp, GenericMeta):
-            if hasattr(tp, "__extra__"):
-                return tp.__extra__
-            return tp.__origin__
-        return None
-
-    def get_args(tp):
-        if isinstance(tp, GenericMeta) and tp.__origin__ is not Callable:
             return tp.__args__
         return ()
 
@@ -91,21 +77,21 @@ class WrappedMock(unittest.mock.NonCallableMock):
         return typeguard._utils.qualified_name(self._spec_class)
 
 
-def _extract_NonCallableMock_template(mock_obj: Mock) -> Optional[Any]:
+def _extract_NonCallableMock_template(mock_obj: Mock) -> Any | None:
     if "_spec_class" in mock_obj.__dict__ and mock_obj._spec_class is not None:
         return mock_obj._spec_class
 
     return None
 
 
-MOCK_TEMPLATE_EXTRACTORS: Dict[Type, Callable[[Mock], Optional[Any]]] = {
+MOCK_TEMPLATE_EXTRACTORS: dict[type, Callable[[Mock], Any | None]] = {
     unittest.mock.NonCallableMock: _extract_NonCallableMock_template
 }
 
 
 def _extract_mock_template(
     mock: Union[Mock, "StrictMock"],
-) -> Optional[Union[Type[str], Type[dict], Type[int]]]:
+) -> type[str] | type[dict] | type[int] | None:
     template = None
     for mock_class, extract_mock_template in MOCK_TEMPLATE_EXTRACTORS.items():
         if isinstance(mock, mock_class):
@@ -132,7 +118,7 @@ def _is_a_builtin(obj: Any) -> bool:
     )
 
 
-def _get_caller_vars() -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def _get_caller_vars() -> tuple[dict[str, Any], dict[str, Any]]:
     """
     Retrieves the globals and locals of the first frame that is not from TestSlide code.
     """
@@ -162,7 +148,7 @@ def _validate_callable_signature(
     template: Any,
     attr_name: str,
     args: Any,
-    kwargs: Dict[str, Any],
+    kwargs: dict[str, Any],
 ) -> bool:
     # python stdlib tests have to exempt some builtins for signature validation tests
     # they use a giant allow/deny list, which is impractical here so just ignore
@@ -181,11 +167,11 @@ def _validate_callable_signature(
     try:
         signature.bind(*args, **kwargs)
     except TypeError as e:
-        raise TypeError("{}, {}: {}".format(repr(template), repr(attr_name), str(e)))
+        raise TypeError(f"{repr(template)}, {repr(attr_name)}: {str(e)}")
     return True
 
 
-def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
+def _validate_argument_type(expected_type: type, name: str, value: Any) -> None:
     if "~" in str(expected_type):
         # this means that we have a TypeVar type, and those require
         # checking all the types of all the params as a whole, but we
@@ -206,7 +192,7 @@ def _validate_argument_type(expected_type: Type, name: str, value: Any) -> None:
     # We wrap the internal check because this is recursively called
     # in typeguard for nested types like Dict[str, Union[str, int]]
     def wrapped_check_type_internal(
-        inner_value: Any, inner_expected_type: Type, memo: typeguard.TypeCheckMemo
+        inner_value: Any, inner_expected_type: type, memo: typeguard.TypeCheckMemo
     ) -> None:
         # We need this since Typeguard 3.02 no longer gives a free pass if expected_type is not a type()
         # If it is a string (ie "int" as opposed to int), then typeguard fails.
@@ -244,7 +230,7 @@ def _validate_callable_arg_types(
     skip_first_arg: bool,
     callable_template: Callable,
     args: Any,
-    kwargs: Dict[str, Any],
+    kwargs: dict[str, Any],
 ) -> None:
     argspec = inspect.getfullargspec(callable_template)
     idx_offset = 1 if skip_first_arg else 0
@@ -353,7 +339,7 @@ def _is_wrapped_for_signature_and_type_validation(value: Callable) -> bool:
 
 
 def _validate_return_type(
-    template: Union[Mock, Callable],
+    template: Mock | Callable,
     value: Any,
     caller_frame_info: Traceback,
     unwrap_template_awaitable: bool = False,
