@@ -162,7 +162,7 @@ As projects grow with more dependencies, running a test for a few lines of code 
 Tip: Automatic Test Execution
 -----------------------------
 
-To help iterate even quicker, you can pair ``testslide`` execution with `entr <http://www.entrproject.org/>`_ (or any similar):
+To help iterate even quicker, you can pair ``testslide`` execution with `entr <http://eradman.com/entrproject/>`_ (or any similar):
 
 .. code-block:: none
 
