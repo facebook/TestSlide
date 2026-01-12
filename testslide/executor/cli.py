@@ -269,8 +269,7 @@ class Cli:
             "--dsl-debug",
             action="store_true",
             help=(
-                "Print debugging information during execution of TestSlide's "
-                "DSL tests."
+                "Print debugging information during execution of TestSlide's DSL tests."
             ),
         )
         parser.add_argument(

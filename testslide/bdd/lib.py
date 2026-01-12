@@ -19,7 +19,6 @@ from functools import partial
 from typing import Any, Optional, Union
 
 import psutil
-
 import testslide.core.matchers
 import testslide.core.mock_callable
 import testslide.core.mock_constructor

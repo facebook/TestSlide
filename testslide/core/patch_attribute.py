@@ -97,8 +97,7 @@ def patch_attribute(
             skip_unpatcher = False
         if isinstance(restore_value, type):
             raise ValueError(
-                "Attribute can not be a class!\n"
-                "You can use mock_constructor() instead."
+                "Attribute can not be a class!\nYou can use mock_constructor() instead."
             )
         if callable(restore_value):
             raise ValueError(

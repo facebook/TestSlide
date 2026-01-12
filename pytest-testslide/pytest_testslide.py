@@ -10,7 +10,6 @@ from types import TracebackType
 from typing import Any
 
 import pytest
-
 import testslide as testslide_module
 
 

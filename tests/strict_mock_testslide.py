@@ -159,7 +159,7 @@ def strict_mock(context):
         self.assertEqual(
             ex_msg,
             msg,
-            "Expected exception {}.{} message " "to be\n{}\nbut got\n{}.".format(
+            "Expected exception {}.{} message to be\n{}\nbut got\n{}.".format(
                 exception.__module__, exception.__name__, repr(msg), repr(ex_msg)
             ),
         )

@@ -26,7 +26,7 @@ def _validate_parameter(
     parameters = list(inspect.signature(code).parameters.keys())
     if not parameters or parameters[index] != name:
         raise ValueError(
-            f"Function must receive parameter #{index+1} named "
+            f"Function must receive parameter #{index + 1} named "
             f"'{name}', but given function has parameters: {parameters}."
         )
     if not allow_async and inspect.iscoroutinefunction(code):

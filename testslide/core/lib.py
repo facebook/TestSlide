@@ -215,10 +215,13 @@ def _validate_argument_type(expected_type: type, name: str, value: Any) -> None:
     globals, locals = _get_caller_vars()
     memo = typeguard.TypeCheckMemo(globals, locals)
 
-    with unittest.mock.patch.object(
-        typeguard._checkers, "check_type_internal", new=wrapped_check_type_internal
-    ), unittest.mock.patch.object(
-        typeguard._utils, "qualified_name", new=wrapped_qualified_name
+    with (
+        unittest.mock.patch.object(
+            typeguard._checkers, "check_type_internal", new=wrapped_check_type_internal
+        ),
+        unittest.mock.patch.object(
+            typeguard._utils, "qualified_name", new=wrapped_qualified_name
+        ),
     ):
         try:
             typeguard._checkers.check_type_internal(value, expected_type, memo)

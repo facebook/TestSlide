@@ -211,8 +211,7 @@ class FailurePrinterMixin(ColorFormatterMixin):
                 if len(split) == 2 and not split[0]:
                     path = split[1]
             row_text = (
-                '  File "{path}", line {line}, in {function_name}\n'
-                "    {text}\n".format(
+                '  File "{path}", line {line}, in {function_name}\n    {text}\n'.format(
                     path=path,
                     line=line,
                     function_name=function_name,

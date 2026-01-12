@@ -656,17 +656,14 @@ class _CallableMock:
             return value
         else:
             ex_msg = (
-                "{}, {}:\n"
-                "  Received call:\n"
-                "{}"
-                "  But no behavior was defined for it."
+                "{}, {}:\n  Received call:\n{}  But no behavior was defined for it."
             ).format(
                 _format_target(self.target),
                 repr(self.method),
                 _format_args(2, *args, **kwargs),
             )
             if self._registered_calls:
-                ex_msg += "\n  These are the registered calls:\n" "{}".format(
+                ex_msg += "\n  These are the registered calls:\n{}".format(
                     "".join(
                         _format_args(2, *reg_args, **reg_kwargs)
                         for reg_args, reg_kwargs in self._registered_calls
