@@ -86,7 +86,9 @@ class TestWithoutWarning(TestCase):
         )
 
         output = result.stdout + result.stderr
-        self.assertEqual(result.returncode, 0, f"Expected zero exit code. Output: {output}")
+        self.assertEqual(
+            result.returncode, 0, f"Expected zero exit code. Output: {output}"
+        )
         self.assertNotIn("WARNINGS DETECTED", output)
 
     def test_warning_include_path_filters_correctly(self):
