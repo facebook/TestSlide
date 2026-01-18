@@ -22,14 +22,18 @@ class TestFailIfWarningIntegration(TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.python = sys.executable
         self.testslide_cli = [self.python, "-m", "testslide.executor.cli"]
+        # Get the TestSlide project root (parent of tests directory)
+        self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Set up environment with PYTHONPATH so testslide can be imported
+        self.env = os.environ.copy()
+        self.env["PYTHONPATH"] = self.project_root
 
     def _write_test_file(self, filename, content):
         """Helper to write a test file."""
         filepath = os.path.join(self.test_dir, filename)
         with open(filepath, "w") as f:
             f.write(content)
-        # Return just the filename, tests will run from temp dir
-        return filename
+        return filepath
 
     def test_fails_when_warning_issued_during_test(self):
         """Test that --fail-if-warning causes failure when warning is issued."""
@@ -50,6 +54,8 @@ class TestWithWarning(TestCase):
             self.testslide_cli + ["--fail-if-warning", test_file],
             capture_output=True,
             text=True,
+            env=self.env,
+            cwd=self.test_dir,
         )
 
         output = result.stdout + result.stderr
@@ -75,6 +81,7 @@ class TestWithoutWarning(TestCase):
             self.testslide_cli + ["--fail-if-warning", test_file],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
@@ -108,6 +115,7 @@ class MyTest(TestCase):
             ],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
@@ -125,6 +133,7 @@ class MyTest(TestCase):
             ],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
@@ -158,6 +167,7 @@ class ExcludedTest(TestCase):
             ],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
@@ -189,6 +199,7 @@ class TestMultipleWarnings(TestCase):
             self.testslide_cli + ["--fail-if-warning", test_file],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
@@ -221,6 +232,7 @@ class TestImportWarning(TestCase):
             self.testslide_cli + ["--fail-if-warning", test_file],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
@@ -249,6 +261,7 @@ class TestWarningNoFlag(TestCase):
             self.testslide_cli + [test_file],
             capture_output=True,
             text=True,
+            env=self.env,
             cwd=self.test_dir,
         )
 
