@@ -185,6 +185,9 @@ class _Config:
     dsl_debug: bool | None = False
     profile_threshold_ms: int | None = None
     slow_callback_is_not_fatal: bool = False
+    fail_if_warning: bool = False
+    warning_include_paths: list[str] | None = None
+    warning_exclude_paths: list[str] | None = None
 
 
 class Cli:
@@ -306,6 +309,23 @@ class Cli:
             action="store_true",
             help="Disable treating slow callback as a test failure",
         )
+        parser.add_argument(
+            "--fail-if-warning",
+            action="store_true",
+            help="Fail the test run if any warnings are issued during import, execution, or shutdown",
+        )
+        parser.add_argument(
+            "--warning-include-path",
+            action="append",
+            default=[],
+            help="Only track warnings from files matching this pattern (can be used multiple times). If not specified, tracks all warnings.",
+        )
+        parser.add_argument(
+            "--warning-exclude-path",
+            action="append",
+            default=[],
+            help="Exclude warnings from files matching this pattern (can be used multiple times). Takes precedence over --warning-include-path.",
+        )
         if not disable_test_files:
             parser.add_argument(
                 "test_files",
@@ -404,6 +424,9 @@ class Cli:
                 ]
             ),
             slow_callback_is_not_fatal=parsed_args.slow_callback_is_not_fatal,
+            fail_if_warning=parsed_args.fail_if_warning,
+            warning_include_paths=parsed_args.warning_include_path if parsed_args.warning_include_path else None,
+            warning_exclude_paths=parsed_args.warning_exclude_path if parsed_args.warning_exclude_path else None,
         )
         return config
 
@@ -423,47 +446,64 @@ class Cli:
             )
             return 0
         else:
-            import_secs = self._load_all_examples(config.import_module_names)
-            formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
-                import_module_names=config.import_module_names,
-                force_color=config.force_color,
-                import_secs=import_secs,
-                trim_path_prefix=config.trim_path_prefix,
-                show_testslide_stack_trace=config.show_testslide_stack_trace,
-                dsl_debug=config.dsl_debug,
-            )
-            StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
-            if config.list:
-                # pyre-fixme[16]: Item `DocumentFormatter` of
-                #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
-                #  attribute `discovery_start`.
-                formatter.discovery_start()
-                for context in Context.all_top_level_contexts:
-                    for example in context.all_examples:
-                        # pyre-fixme[16]: Item `DocumentFormatter` of
-                        #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]`
-                        #  has no attribute `example_discovered`.
-                        formatter.example_discovered(example)
-                # pyre-fixme[16]: Item `DocumentFormatter` of
-                #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
-                #  attribute `discovery_finish`.
-                formatter.discovery_finish()
-                return 0
-            else:
-                return Runner(
-                    contexts=Context.all_top_level_contexts,
-                    formatter=formatter,
-                    shuffle=config.shuffle,
-                    seed=config.seed,
-                    focus=config.focus,
-                    fail_fast=config.fail_fast,
-                    fail_if_focused=config.fail_if_focused,
-                    names_text_filter=config.names_text_filter,
-                    names_regex_filter=config.names_regex_filter,
-                    names_regex_exclude=config.names_regex_exclude,
-                    quiet=config.quiet,
-                    slow_callback_is_not_fatal=not config.slow_callback_is_not_fatal,
-                ).run()
+            # Setup warning tracker if --fail-if-warning is enabled
+            warning_tracker = None
+            if config.fail_if_warning:
+                from .warning_tracker import WarningTracker
+                warning_tracker = WarningTracker(
+                    include_patterns=config.warning_include_paths,
+                    exclude_patterns=config.warning_exclude_paths,
+                )
+                warning_tracker.start()
+
+            try:
+                import_secs = self._load_all_examples(config.import_module_names)
+                formatter = self.FORMAT_NAME_TO_FORMATTER_CLASS[config.format](
+                    import_module_names=config.import_module_names,
+                    force_color=config.force_color,
+                    import_secs=import_secs,
+                    trim_path_prefix=config.trim_path_prefix,
+                    show_testslide_stack_trace=config.show_testslide_stack_trace,
+                    dsl_debug=config.dsl_debug,
+                )
+                StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
+                if config.list:
+                    # pyre-fixme[16]: Item `DocumentFormatter` of
+                    #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
+                    #  attribute `discovery_start`.
+                    formatter.discovery_start()
+                    for context in Context.all_top_level_contexts:
+                        for example in context.all_examples:
+                            # pyre-fixme[16]: Item `DocumentFormatter` of
+                            #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]`
+                            #  has no attribute `example_discovered`.
+                            formatter.example_discovered(example)
+                    # pyre-fixme[16]: Item `DocumentFormatter` of
+                    #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
+                    #  attribute `discovery_finish`.
+                    formatter.discovery_finish()
+                    return 0
+                else:
+                    return Runner(
+                        contexts=Context.all_top_level_contexts,
+                        formatter=formatter,
+                        shuffle=config.shuffle,
+                        seed=config.seed,
+                        focus=config.focus,
+                        fail_fast=config.fail_fast,
+                        fail_if_focused=config.fail_if_focused,
+                        names_text_filter=config.names_text_filter,
+                        names_regex_filter=config.names_regex_filter,
+                        names_regex_exclude=config.names_regex_exclude,
+                        quiet=config.quiet,
+                        slow_callback_is_not_fatal=not config.slow_callback_is_not_fatal,
+                        warning_tracker=warning_tracker,
+                    ).run()
+            finally:
+                # Stop warning tracker and check for warnings
+                # This happens during shutdown, catching any warnings from cleanup
+                if warning_tracker:
+                    warning_tracker.stop()
 
 
 def main() -> None:
