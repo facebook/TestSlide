@@ -425,8 +425,12 @@ class Cli:
             ),
             slow_callback_is_not_fatal=parsed_args.slow_callback_is_not_fatal,
             fail_if_warning=parsed_args.fail_if_warning,
-            warning_include_paths=parsed_args.warning_include_path if parsed_args.warning_include_path else None,
-            warning_exclude_paths=parsed_args.warning_exclude_path if parsed_args.warning_exclude_path else None,
+            warning_include_paths=parsed_args.warning_include_path
+            if parsed_args.warning_include_path
+            else None,
+            warning_exclude_paths=parsed_args.warning_exclude_path
+            if parsed_args.warning_exclude_path
+            else None,
         )
         return config
 
@@ -450,6 +454,7 @@ class Cli:
             warning_tracker = None
             if config.fail_if_warning:
                 from .warning_tracker import WarningTracker
+
                 warning_tracker = WarningTracker(
                     include_patterns=config.warning_include_paths,
                     exclude_patterns=config.warning_exclude_paths,
