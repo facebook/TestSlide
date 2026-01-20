@@ -401,14 +401,16 @@ class StrictMock:
         for klass in type(self).mro():
             if klass is object:
                 continue
-            for name in klass.__dict__:
+            # Copy keys to avoid RuntimeError from dict changing size during iteration
+            for name in list(klass.__dict__):
                 if name.startswith("__") and name.endswith("__"):
                     implemented_magic_methods.append(name)
 
         for klass in self._template.mro():
             if klass is object:
                 continue
-            for name in klass.__dict__:
+            # Copy keys to avoid RuntimeError from dict changing size during iteration
+            for name in list(klass.__dict__):
                 if name in type(self).__dict__:
                     continue
                 if name == "__hash__":
@@ -548,7 +550,8 @@ class StrictMock:
         for klass in type(self).mro()[1:]:
             if klass == StrictMock:
                 break
-            for name in klass.__dict__.keys():
+            # Copy keys to avoid RuntimeError from dict changing size during iteration
+            for name in list(klass.__dict__.keys()):
                 if name in [
                     "__doc__",
                     "__init__",
