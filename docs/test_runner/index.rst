@@ -185,7 +185,7 @@ and then you can run all your tests and get a report like this
 Tip: Automatic Test Execution
 -----------------------------
 
-To help iterate even quicker, you can pair ``testslide`` execution with `entr <http://www.entrproject.org/>`_ (or any similar):
+To help iterate even quicker, you can pair ``testslide`` execution with `entr <http://eradman.com/entrproject/>`_ (or any similar):
 
 .. code-block:: none
 
