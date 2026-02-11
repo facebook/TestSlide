@@ -14,7 +14,7 @@ from collections.abc import Callable
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, Self, TYPE_CHECKING, Union
 from unittest.mock import Mock
 
 import typeguard
@@ -371,7 +371,7 @@ def _validate_return_type(
                 expected_type = type_args[2]
 
         try:
-            if expected_type == typing_extensions.Self:
+            if expected_type == Self:
                 expected_type = template
             _validate_argument_type(expected_type, "return", value)
         except TypeCheckError as runtime_type_error:
