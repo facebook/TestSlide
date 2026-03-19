@@ -377,14 +377,12 @@ class StrEndingWith(Matcher):
 # lists
 class AnyList(_RichComparison):
     def __init__(self) -> None:
-        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=list)
 
 
 class ListContaining(_RichComparison):
     def __init__(self, needle: AnyType) -> None:
         self.needle = needle
-        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=list)
 
     def __eq__(self, other: list[AnyType]) -> bool:  # type: ignore
@@ -405,7 +403,6 @@ class ListContainingAll(_RichComparison):
                 f"ListContainingAll(...) expects a 'list' as argument while '{type(subset).__name__}' was provided"
             )
         self.subset = subset
-        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=list)
 
     def __eq__(self, other: list[AnyType]) -> bool:  # type: ignore
@@ -432,7 +429,6 @@ class EmptyList(AnyList):
 # dicts
 class AnyDict(_RichComparison):
     def __init__(self) -> None:
-        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=dict)
 
 
@@ -453,7 +449,6 @@ class DictContainingKeys(_RichComparison):
                 f"DictContainingKeys(...) expects a 'list' as argument while '{type(expected_keys).__name__}' was provided"
             )
         self.expected_keys = expected_keys
-        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=dict)
 
     def __eq__(self, other: dict[AnyType, AnyType]) -> bool:  # type: ignore
@@ -472,7 +467,6 @@ class DictSupersetOf(_RichComparison):
                 f"DictSupersetOf(...) expects a 'dict' as argument while '{type(subset).__name__}' was provided"
             )
         self.subset = subset
-        # pyre-fixme[6]: For 1st argument expected `Type[typing.Any]` but got `_Alias`.
         super().__init__(klass=dict)
 
     def __eq__(self, other: dict[AnyType, AnyType]) -> bool:  # type: ignore
