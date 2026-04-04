@@ -695,6 +695,7 @@ class Runner:
         names_regex_exclude: Pattern | None = None,
         quiet: bool = False,
         slow_callback_is_not_fatal: bool = False,
+        warning_tracker: Any = None,
     ) -> None:
         self.contexts = contexts
         self.formatter = formatter
@@ -708,6 +709,7 @@ class Runner:
         self.names_regex_exclude = names_regex_exclude
         self.quiet = quiet
         self.slow_callback_is_not_fatal = slow_callback_is_not_fatal
+        self.warning_tracker = warning_tracker
 
     def _run_example(self, example: Example) -> None:
         if example.focus and self.fail_if_focused:
@@ -787,6 +789,23 @@ class Runner:
         self.formatter.finish(not_executed_examples)
         sys.stdout.flush()
         sys.stderr.flush()
+
+        # Check for warnings if warning tracker is enabled
+        if self.warning_tracker and self.warning_tracker.has_warnings():
+            warnings = self.warning_tracker.get_warnings()
+            print("\n")
+            print("=" * 70)
+            print("WARNINGS DETECTED")
+            print("=" * 70)
+            for warning in warnings:
+                print(f"  {warning}")
+            print("\n")
+            print(f"Total warnings: {len(warnings)}")
+            print("\nTest run failed due to --fail-if-warning")
+            # Set exit code to 2 to indicate warnings caused the failure
+            exit_code = 2
+            return 2
+
         return exit_code
 
     def _filter(self, example: Example, focus: bool) -> bool:
