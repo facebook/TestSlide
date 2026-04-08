@@ -1,5 +1,5 @@
 ---
-oncalls: ['aps_ads_trunk']
+oncalls: ['minimal_viable_ai']
 apply_to_regex: '(hpc|torchrec|caffe2|testslide|sigrid|generative_recommenders)/.*\.(py|bzl|cpp|h)$'
 apply_to_content: 'import |def |class |load\(|python_version'
 apply_to_clients: ['code_review']
@@ -37,7 +37,7 @@ Report format:
 This diff's test plan states: "<exact quoted text>"
 Landing diffs with known breakage requires explicit sign-off from
 affected downstream oncalls before proceeding.
-This pattern caused S622078. Please coordinate with aps_ads_trunk before landing.
+This pattern caused S622078. Please coordinate with minimal_viable_ai before landing.
 ```
 
 ### Check 2: Incomplete test plan on shared code
