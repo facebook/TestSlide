@@ -285,7 +285,6 @@ class _BaseRunner:
                 )
                 kwargs_match = all(
                     elem in kwargs.keys()
-                    # pyre-fixme[16]: `Optional` has no attribute `__getitem__`.
                     and kwargs[elem] == self.accepted_args[1][elem]
                     for elem in self.accepted_args[1].keys()
                 )
@@ -298,7 +297,6 @@ class _BaseRunner:
     def _args_message(self) -> str:
         if self.accepted_args:
             return "arguments:\n{}".format(
-                # pyre-fixme[16]: `Optional` has no attribute `__getitem__`.
                 _format_args(2, *self.accepted_args[0], **self.accepted_args[1])
             )
         else:
@@ -892,7 +890,6 @@ class _MockCallableDSL:
         if self._runner._call_count > 0:
             raise ValueError(
                 f"No extra configuration is allowed after {self._NAME} "
-                # pyre-fixme[16]: `Optional` has no attribute `_call_count`.
                 f"receives its first call, it received {self._runner._call_count} "
                 f"call{'s' if self._runner._call_count > 1 else ''} already. "
                 "You should instead define it all at once, "

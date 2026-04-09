@@ -98,6 +98,7 @@ class _DSLContext:
             return self._create_context(name, context_code)
         else:
             name = arg
+            # pyrefly: ignore [bad-argument-type]
             return functools.partial(self._create_context, name)
 
     def _reset(self) -> None:

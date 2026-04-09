@@ -63,7 +63,6 @@ class ImportedModule:
     def __str__(self) -> str:
         if self.globals and self.level:
             if self.level == 1:
-                # pyre-fixme[16]: `Optional` has no attribute `__getitem__`.
                 prefix = self.globals["__package__"]
             else:
                 end = -1 * (self.level - 1)
@@ -82,7 +81,6 @@ class ImportedModule:
         exc_val: Exception | None,
         exc_tb: TracebackType,
     ) -> None:
-        # pyre-fixme[16]: `ImportedModule` has no attribute `_start_time`.
         self.time = time.time() - self._start_time
 
 
@@ -126,8 +124,6 @@ class ImportProfiler:
         exc_val: Exception | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
-        # pyre-fixme[16]: `ImportProfiler` has no attribute `_start_time`.
         self.total_time = time.time() - self._start_time
         __builtins__["__import__"] = self._original_import  # type:ignore
 
@@ -145,13 +141,12 @@ class ImportProfiler:
             name=name,
             globals=globals,
             level=level,
-            # pyre-fixme[16]: `ImportProfiler` has no attribute `_import_stack`.
             parent=self._import_stack[-1] if self._import_stack else None,
         )
         if not self._import_stack:
-            # pyre-fixme[16]: `ImportProfiler` has no attribute `_top_imp_modules`.
             self._top_imp_modules.append(imp_mod)
         self._import_stack.append(imp_mod)
+        # pyrefly: ignore [bad-context-manager]
         with imp_mod:
             try:
                 return self._original_import(name, globals, locals, fromlist, level)
@@ -170,9 +165,7 @@ class ImportProfiler:
             for child_imp_mod in imp_mod.children:
                 print_imp_mod(child_imp_mod, indent + 1)
 
-        # pyre-fixme[16]: `ImportProfiler` has no attribute `_top_imp_modules`.
         for imp_mod in self._top_imp_modules:
             print_imp_mod(imp_mod)
         print()
-        # pyre-fixme[16]: `ImportProfiler` has no attribute `total_time`.
         print(f"Total import time: {int(self.total_time * 1000)}ms")

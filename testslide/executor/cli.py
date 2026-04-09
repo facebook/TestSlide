@@ -112,10 +112,8 @@ def _load_unittest_test_cases(import_module_names: list[str]) -> None:
                 for test_method_name in test_method_names:
 
                     @contextmanager
-                    # pyre-fixme[11]: Annotation `_TestSlideTestResult` is not
                     #  defined as a type.
                     def test_result() -> Iterator[_TestSlideTestResult]:
-                        # pyre-fixme[16]: Module `lib` has no attribute
                         #  `_TestSlideTestResult`.
                         result = _TestSlideTestResult()
                         yield result
@@ -346,7 +344,6 @@ class Cli:
             # pyre-fixme[21]: Could not find module `testslide.import_profiler`.
             from testslide.import_profiler import ImportProfiler
 
-            # pyre-fixme[16]: Module `testslide` has no attribute `import_profiler`.
             with ImportProfiler() as import_profiler:
                 start_time = time()
                 import_all()
@@ -434,23 +431,22 @@ class Cli:
             )
             StrictMock.TRIM_PATH_PREFIX = config.trim_path_prefix
             if config.list:
-                # pyre-fixme[16]: Item `DocumentFormatter` of
                 #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
                 #  attribute `discovery_start`.
                 formatter.discovery_start()
+                # pyrefly: ignore [missing-attribute]
                 for context in Context.all_top_level_contexts:
                     for example in context.all_examples:
-                        # pyre-fixme[16]: Item `DocumentFormatter` of
                         #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]`
                         #  has no attribute `example_discovered`.
                         formatter.example_discovered(example)
-                # pyre-fixme[16]: Item `DocumentFormatter` of
                 #  `Union[DocumentFormatter, LongFormatter, ProgressFormatter]` has no
                 #  attribute `discovery_finish`.
                 formatter.discovery_finish()
                 return 0
             else:
                 return Runner(
+                    # pyrefly: ignore [missing-attribute]
                     contexts=Context.all_top_level_contexts,
                     formatter=formatter,
                     shuffle=config.shuffle,

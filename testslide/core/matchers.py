@@ -27,7 +27,6 @@ class _AlreadyChainedMatcher:
     def __invert__(self) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
-    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
         raise AlreadyChainedException("Cannot chain more than two matchers")
 
@@ -46,7 +45,6 @@ class Matcher:
     def __invert__(self) -> "_InvMatcher":
         return _InvMatcher(self)
 
-    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: "Matcher") -> "_OrMatcher":
         return _OrMatcher(self, other)
 
@@ -581,6 +579,7 @@ T = TypeVar("T")
 
 class AnyWithCall(Matcher):
     def __init__(self, call: Callable[[T], bool]) -> None:
+        # pyrefly: ignore [invalid-type-var]
         self.call = call
 
     def __eq__(self, other: T) -> bool:

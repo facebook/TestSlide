@@ -15,7 +15,6 @@ import testslide as testslide_module
 
 class _TestSlideFixture:
     def _register_assertion(self, assertion: Callable) -> None:
-        # pyre-fixme[16]: `_TestSlideFixture` has no attribute `_assertions`.
         self._assertions.append(assertion)
 
     def __enter__(self) -> "_TestSlideFixture":
@@ -33,7 +32,6 @@ class _TestSlideFixture:
         # pyre-fixme[16]: Module `lib` has no attribute `AggregatedExceptions`.
         aggregated_exceptions = testslide_module.bdd.lib.AggregatedExceptions()
         try:
-            # pyre-fixme[16]: `_TestSlideFixture` has no attribute `_assertions`.
             for assertion in self._assertions:
                 try:
                     assertion()
@@ -72,5 +70,6 @@ class _TestSlideFixture:
 
 @pytest.fixture
 def testslide() -> Iterator[_TestSlideFixture]:
+    # pyrefly: ignore [bad-context-manager]
     with _TestSlideFixture() as testslide_fixture:
         yield testslide_fixture

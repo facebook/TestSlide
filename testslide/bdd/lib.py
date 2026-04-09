@@ -619,6 +619,7 @@ class Context:
         return get_all
 
     @property  # type: ignore
+    # pyrefly: ignore [bad-argument-type]
     @_all_parents_as_dict
     def all_context_data_methods(self) -> None:
         """
@@ -628,6 +629,7 @@ class Context:
         pass
 
     @property  # type: ignore
+    # pyrefly: ignore [bad-argument-type]
     @_all_parents_as_dict
     def all_context_data_memoizable_attributes(self) -> None:
         """
@@ -637,6 +639,7 @@ class Context:
         pass
 
     @property  # type: ignore
+    # pyrefly: ignore [bad-argument-type]
     @_all_parents_as_list
     def all_around_functions(self) -> None:
         """
@@ -645,6 +648,7 @@ class Context:
         pass
 
     @property  # type: ignore
+    # pyrefly: ignore [bad-argument-type]
     @_all_parents_as_list
     def all_before_functions(self) -> None:
         """
@@ -653,6 +657,7 @@ class Context:
         pass
 
     @property  # type: ignore
+    # pyrefly: ignore [bad-argument-type]
     @_all_parents_as_list
     def all_after_functions(self) -> None:
         """
@@ -661,6 +666,7 @@ class Context:
         pass
 
     @property  # type: ignore
+    # pyrefly: ignore [bad-argument-type]
     @_all_parents_as_dict
     def all_shared_contexts(self) -> None:
         """
