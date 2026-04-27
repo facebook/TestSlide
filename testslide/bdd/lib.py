@@ -9,7 +9,6 @@ import asyncio.log
 import inspect
 import os
 import re
-import sys
 import time
 import types
 import unittest

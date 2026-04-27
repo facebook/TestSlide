@@ -13,7 +13,6 @@ if "COVERAGE_PROCESS_START" in os.environ:
     coverage.process_startup()
 
 import os
-import sys
 import unittest
 from typing import Any
 
