@@ -14,7 +14,7 @@ from collections.abc import Callable
 from functools import wraps
 from inspect import Traceback
 from types import FrameType
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, cast, TYPE_CHECKING, Union
 from unittest.mock import Mock
 
 import typeguard
@@ -95,7 +95,7 @@ def _extract_mock_template(
     template = None
     for mock_class, extract_mock_template in MOCK_TEMPLATE_EXTRACTORS.items():
         if isinstance(mock, mock_class):
-            template = extract_mock_template(mock)
+            template = extract_mock_template(cast(Mock, mock))
     return template
 
 
