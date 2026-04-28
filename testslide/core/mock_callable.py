@@ -98,12 +98,7 @@ def unpatch_all_callable_mocks() -> None:
     This method must be called after every test unconditionally to remove all
     active mock_callable() patches.
     """
-    global \
-        register_assertion, \
-        _default_register_assertion, \
-        _call_order_assertion_registered, \
-        _received_ordered_calls, \
-        _expected_ordered_calls
+    global register_assertion, _default_register_assertion, _call_order_assertion_registered, _received_ordered_calls, _expected_ordered_calls  # noqa: F824
 
     register_assertion = _default_register_assertion
     _call_order_assertion_registered = False
@@ -122,7 +117,7 @@ def unpatch_all_callable_mocks() -> None:
 
 
 def _is_setup() -> bool:
-    global register_assertion, _default_register_assertion
+    global register_assertion, _default_register_assertion  # noqa: F824
     return register_assertion is not _default_register_assertion
 
 
@@ -232,7 +227,7 @@ class _BaseRunner:
         self._accept_partial_call = False
 
     def register_call(self, *args: Any, **kwargs: Any) -> None:
-        global _received_ordered_calls
+        global _received_ordered_calls  # noqa: F824
 
         if self._has_order_assertion:
             _received_ordered_calls.append((self.target, self.method, self))
@@ -367,10 +362,7 @@ class _BaseRunner:
         register_assertion(assertion)
 
     def add_call_order_assertion(self) -> None:
-        global \
-            _call_order_assertion_registered, \
-            _received_ordered_calls, \
-            _expected_ordered_calls
+        global _call_order_assertion_registered, _received_ordered_calls, _expected_ordered_calls  # noqa: F824
 
         if not _call_order_assertion_registered:
 
