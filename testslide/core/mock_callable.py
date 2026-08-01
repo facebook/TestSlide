@@ -54,7 +54,7 @@ def mock_callable(
 
 
 def mock_async_callable(
-    target: type | str,
+    target: Any,
     method: str,
     callable_returns_coroutine: bool = False,
     allow_private: bool = False,
@@ -1172,7 +1172,7 @@ class _MockAsyncCallableDSL(_MockCallableDSL):
 
     def __init__(
         self,
-        target: str | type,
+        target: Any,
         method: str,
         caller_frame_info: Traceback,
         callable_returns_coroutine: bool,
