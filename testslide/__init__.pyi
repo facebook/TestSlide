@@ -9,6 +9,8 @@ from testslide.core import _importer  # noqa
 #  `testslide.executor.lib`.
 from testslide.executor.lib import *
 
+from testslide.strict_mock import StrictMock as StrictMock  # noqa
+
 class TestCase(unittest.TestCase):  # type: ignore
     def setUp(self) -> None: ...
     @staticmethod
