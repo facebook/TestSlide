@@ -5,6 +5,7 @@
 
 # pyre-unsafe
 import collections.abc as abc
+import contextlib
 import functools
 import inspect
 import os
@@ -341,6 +342,33 @@ def _is_wrapped_for_signature_and_type_validation(value: Callable) -> bool:
     return getattr(value, "__is_testslide_type_validation_wrapping", False)
 
 
+def _get_contextmanager_return_type(template: Any) -> Any:
+    """Return the context manager type produced by a contextlib-decorated function.
+
+    ``contextlib.contextmanager`` and ``contextlib.asynccontextmanager`` wrap the
+    decorated generator function with ``functools.wraps``, which copies
+    ``__annotations__`` over verbatim. The recorded return type therefore
+    describes what the *generator* yields (eg ``AsyncGenerator[Foo, None]``),
+    while calling the decorated function actually returns a context manager.
+    Validating a mocked return value against the generator type rejects every
+    legitimate value.
+
+    Returns ``None`` when ``template`` is not such a decorated function.
+    """
+    wrapped = getattr(template, "__wrapped__", None)
+    if wrapped is None:
+        return None
+    # The decorator turns a generator function into one that is no longer a
+    # generator function, which is what distinguishes it from @wraps in general.
+    if inspect.isasyncgenfunction(wrapped) and not inspect.isasyncgenfunction(template):
+        return contextlib.AbstractAsyncContextManager
+    if inspect.isgeneratorfunction(wrapped) and not inspect.isgeneratorfunction(
+        template
+    ):
+        return contextlib.AbstractContextManager
+    return None
+
+
 def _validate_return_type(
     template: Mock | Callable,
     value: Any,
@@ -352,6 +380,9 @@ def _validate_return_type(
     except TypeError:
         return
     expected_type = argspec.annotations.get("return")
+    contextmanager_type = _get_contextmanager_return_type(template)
+    if contextmanager_type is not None:
+        expected_type = contextmanager_type
     if expected_type:
         if unwrap_template_awaitable:
             type_origin = get_origin(expected_type)

@@ -377,6 +377,32 @@ def _validate_return_type(context):
         )
 
     @context.example
+    def passes_for_context_manager_template(self):
+        """
+        contextlib.contextmanager copies __annotations__ from the generator
+        function it wraps, so the recorded return type describes what the
+        generator yields rather than the context manager that calling it
+        actually returns.
+        https://github.com/facebook/TestSlide/issues/193
+        """
+        self.callable_template = sample_module.test_function_returns_context_manager
+        self.assert_passes(StrictMock(template=sample_module.ContextManagerTarget))
+
+    @context.example
+    def passes_for_async_context_manager_template(self):
+        """Same as above, for contextlib.asynccontextmanager."""
+        self.callable_template = (
+            sample_module.test_function_returns_async_context_manager
+        )
+        self.assert_passes(StrictMock(template=sample_module.ContextManagerTarget))
+
+    @context.example
+    def fails_for_context_manager_template_given_a_non_context_manager(self):
+        """The check is redirected, not disabled."""
+        self.callable_template = sample_module.test_function_returns_context_manager
+        self.assert_fails(42)
+
+    @context.example
     def fails_for_valid_forward_reference_but_bad_type_passed(self):
         with self.assertRaisesRegex(
             testslide.lib.TypeCheckError,
