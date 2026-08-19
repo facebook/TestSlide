@@ -371,7 +371,6 @@ def _validate_return_type(
                 expected_type = type_args[2]
 
         try:
-            # pyrefly: ignore [invalid-annotation]
             if expected_type == typing_extensions.Self:
                 expected_type = template
             _validate_argument_type(expected_type, "return", value)
