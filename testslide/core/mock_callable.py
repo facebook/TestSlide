@@ -722,6 +722,14 @@ class _MockCallableDSL:
                     "assertions on calls are ambiguous (for every instance or one "
                     "global assertion?)."
                 )
+            if hasattr(type(self._target), self._method) and isinstance(
+                getattr(type(self._target), self._method), property
+            ):
+                raise ValueError(
+                    f"{name}() can not be used with properties: "
+                    f"{repr(self._method)} is a property. Use patch_attribute() "
+                    "to patch its value."
+                )
             original_callable = getattr(self._target, self._method)
             if not callable(original_callable):
                 raise ValueError(

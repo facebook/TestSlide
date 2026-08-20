@@ -217,3 +217,67 @@ def patch_attribute_tests(context):
         self.patch_attribute(
             sample_module.SomeClass, "_private_attr", "notsoprivate", allow_private=True
         )
+
+    @context.example
+    def patch_attribute_does_not_call_property_getter(self):
+        class SampleClass:
+            def __init__(self):
+                self._getter_called = False
+
+            @property
+            def prop(self):
+                self._getter_called = True
+                return "original"
+
+        host = SampleClass()
+        self.patch_attribute(host, "prop", "patched")
+        self.assertFalse(host._getter_called, "getter was called during patching")
+        self.assertEqual(host.prop, "patched")
+
+    @context.example
+    def patch_attribute_works_for_properties_that_raise(self):
+        class SampleClass:
+            @property
+            def prop(self):
+                raise RuntimeError("must not be called")
+
+        host = SampleClass()
+        self.patch_attribute(host, "prop", "patched")
+        self.assertEqual(host.prop, "patched")
+
+    @context.example
+    def patch_attribute_unpatches_property_correctly(self):
+        class SampleClass:
+            @property
+            def prop(self):
+                return "original"
+
+        host = SampleClass()
+        self.patch_attribute(host, "prop", "patched")
+        self.assertEqual(host.prop, "patched")
+        unpatch_all_mocked_attributes()
+        self.assertEqual(host.prop, "original")
+
+    @context.example
+    def patch_attribute_unpatches_property_correctly_when_getter_returns_falsy(self):
+        class SampleClass:
+            @property
+            def prop(self):
+                return None
+
+        host = SampleClass()
+        self.patch_attribute(host, "prop", "patched")
+        self.assertEqual(host.prop, "patched")
+        unpatch_all_mocked_attributes()
+        self.assertEqual(host.prop, None)
+
+    @context.example
+    def patch_attribute_validates_property_type_against_getter_annotation(self):
+        class SampleClass:
+            @property
+            def prop(self) -> int:
+                return 1
+
+        host = SampleClass()
+        with self.assertRaises(TypeCheckError):
+            self.patch_attribute(host, "prop", "notanint")

@@ -97,10 +97,10 @@ def _patch(
         setattr(type(target), attribute, property(fget=lambda _: new_value))
 
         def unpatcher() -> None:
-            if restore_value:
-                setattr(type(target), attribute, original_property)
-            else:
-                delattr(target, attribute)
+            # The patch always replaces the class attribute with a new property,
+            # so unpatching always means restoring the original property, no
+            # matter what the patched value was.
+            setattr(type(target), attribute, original_property)
 
     else:
         setattr(target, attribute, new_value)

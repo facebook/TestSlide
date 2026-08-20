@@ -87,13 +87,23 @@ def patch_attribute(
             restore_value = None
         skip_unpatcher = False
     else:
+        is_property = hasattr(type(target), attribute) and isinstance(
+            getattr(type(target), attribute), property
+        )
         if key in _unpatchers:
             restore = False
             restore_value = _restore_values[key]
             skip_unpatcher = True
         else:
             restore = True
-            restore_value = getattr(target, attribute)
+            if is_property:
+                # Accessing the property would call its getter, which may have
+                # side effects or raise exceptions, eg when it calls an external
+                # service that is not available during tests. Save the property
+                # itself instead, so it can be restored later.
+                restore_value = getattr(type(target), attribute)
+            else:
+                restore_value = getattr(target, attribute)
             skip_unpatcher = False
         if isinstance(restore_value, type):
             raise ValueError(
@@ -105,7 +115,17 @@ def patch_attribute(
                 "You can either use mock_callable() / mock_async_callable() instead."
             )
         if type_validation:
-            _validate_argument_type(type(restore_value), attribute, new_value)
+            if is_property:
+                # The property getter should not be called just to figure out the
+                # type of the value. Validate against the getter's return type
+                # annotation, when available.
+                expected_type = getattr(
+                    getattr(restore_value, "fget", None), "__annotations__", {}
+                ).get("return")
+                if expected_type is not None:
+                    _validate_argument_type(expected_type, attribute, new_value)
+            else:
+                _validate_argument_type(type(restore_value), attribute, new_value)
 
     if restore:
         _restore_values[key] = restore_value

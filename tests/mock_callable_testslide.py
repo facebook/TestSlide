@@ -121,6 +121,19 @@ def mock_callable_tests(context):
         self.mock_callable(t3, "method").to_return_value(2).and_assert_called_once()
         self.assertEqual(t3.method(), 2)
 
+    @context.example
+    def mock_callable_fails_for_properties_without_calling_them(self):
+        class SampleClass:
+            @property
+            def prop(self):
+                raise RuntimeError("must not be called")
+
+        host = SampleClass()
+        with self.assertRaisesRegex(
+            ValueError, "can not be used with properties"
+        ):
+            self.mock_callable(host, "prop")
+
     ##
     ## Shared Contexts
     ##
