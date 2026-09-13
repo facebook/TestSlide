@@ -826,7 +826,19 @@ class StrictMock:
 
     def __getattr__(self, name: str) -> Any:
         if self._template and self.__template_has_attr(name):
-            raise UndefinedAttribute(self, name)
+            template_value = getattr(self._template, name, None)
+            if inspect.iscoroutinefunction(template_value):
+                message = (
+                    "Tip: use testslide.mock_async_callable() to configure "
+                    "this attribute."
+                )
+            elif callable(template_value):
+                message = (
+                    "Tip: use testslide.mock_callable() to configure this attribute."
+                )
+            else:
+                message = None
+            raise UndefinedAttribute(self, name, message)
         else:
             raise AttributeError(f"'{name}' was not set for {repr(self)}.")
 

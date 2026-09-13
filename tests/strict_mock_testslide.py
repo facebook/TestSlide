@@ -531,7 +531,9 @@ def strict_mock(context):
                                     UndefinedAttribute,
                                     f"'{self.test_method_name}' is not set.\n"
                                     f"{self.strict_mock_rgx} must have a value set "
-                                    "for this attribute if it is going to be accessed.",
+                                    "for this attribute if it is going to be accessed.\n"
+                                    r"Tip: use testslide.mock_callable\(\) to configure "
+                                    "this attribute.",
                                 ):
                                     getattr(self.strict_mock, self.test_method_name)
 
@@ -862,6 +864,18 @@ def strict_mock(context):
                             "this attribute to be callable.",
                         ):
                             setattr(self.strict_mock, self.method_name, "not callable")
+
+                    @context.example
+                    async def raises_when_an_undefined_method_is_accessed(self):
+                        with self.assertRaisesWithRegexMessage(
+                            UndefinedAttribute,
+                            f"'{self.method_name}' is not set.\n"
+                            "<StrictMock .+> must have a value set "
+                            "for this attribute if it is going to be accessed.\n"
+                            r"Tip: use testslide.mock_async_callable\(\) to configure "
+                            "this attribute.",
+                        ):
+                            getattr(self.strict_mock, self.method_name)
 
                     @context.sub_context
                     def signature_and_type_validation(context):
