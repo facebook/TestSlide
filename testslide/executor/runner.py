@@ -542,8 +542,9 @@ class DocumentFormatter(
 
     def fail(self, example: Example, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions) and 1 == len(
-            exception.exceptions
+            exception.exceptions  # pyrefly: ignore [missing-attribute]
         ):
+            # pyrefly: ignore [missing-attribute]
             exception = exception.exceptions[0]
 
         super().fail(example, exception)
@@ -603,8 +604,9 @@ class LongFormatter(
 
     def fail(self, example: Example, exception: BaseException) -> None:
         if isinstance(exception, AggregatedExceptions) and 1 == len(
-            exception.exceptions
+            exception.exceptions  # pyrefly: ignore [missing-attribute]
         ):
+            # pyrefly: ignore [missing-attribute]
             exception = exception.exceptions[0]
 
         super().fail(example, exception)
