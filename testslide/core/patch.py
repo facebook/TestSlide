@@ -96,7 +96,7 @@ def _patch(
         setattr(type(target), attribute, property(fget=lambda _: new_value))
 
         def unpatcher() -> None:
-            if restore_value:
+            if restore or restore_value:
                 setattr(type(target), attribute, original_property)
             else:
                 delattr(target, attribute)
@@ -105,7 +105,7 @@ def _patch(
         setattr(target, attribute, new_value)
 
         def unpatcher() -> None:
-            if restore_value:
+            if restore or restore_value:
                 setattr(target, attribute, restore_value)
 
             else:
