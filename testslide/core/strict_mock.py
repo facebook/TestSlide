@@ -553,8 +553,10 @@ class StrictMock:
             for name in list(klass.__dict__.keys()):
                 if name in [
                     "__doc__",
+                    "__firstlineno__",
                     "__init__",
                     "__module__",
+                    "__static_attributes__",
                 ]:
                     continue
                 # https://docs.python.org/3/tutorial/classes.html#tut-private
