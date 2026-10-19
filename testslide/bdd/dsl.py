@@ -163,7 +163,7 @@ class _DSLContext:
     def _create_shared_context(
         self, name: str, shared_context_code: ExampleFunction
     ) -> HaltingFunction:
-        _validate_parameter(shared_context_code, "context", 0)
+        _validate_parameter(shared_context_code, "context", 0, allow_async=False)
         self.current_context.add_shared_context(name, shared_context_code)  # type: ignore
         return self._not_callable
 
