@@ -253,6 +253,18 @@ class TestDSLContext(TestDSLBase):
                 async def async_example(self):
                     pass
 
+    def test_sub_context_cant_be_async(self):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "TestSlide DSL context function `async_sub_context` can not be async!",
+        ):
+
+            @context
+            def top(context):
+                @context.sub_context
+                async def async_sub_context(context):
+                    pass
+
     # Duplicate names
 
     def test_cant_create_top_contexts_with_same_name(self):
@@ -410,6 +422,18 @@ class TestDSLContext(TestDSLBase):
 
 class TestDSLSharedContext(TestDSLBase):
     # Shared contexts
+
+    def test_shared_context_cant_be_async(self):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "TestSlide DSL context function `async_shared_context` can not be async!",
+        ):
+
+            @context
+            def top(context):
+                @context.shared_context
+                async def async_shared_context(context):
+                    pass
 
     def test_shared_context_named_from_decorator(self):
         """
