@@ -13,12 +13,13 @@ import testslide as testslide_module
 
 
 class _TestSlideFixture:
+    _assertions: list[Callable]
+
     def _register_assertion(self, assertion: Callable) -> None:
         self._assertions.append(assertion)
 
     def __enter__(self) -> "_TestSlideFixture":
-        # pyre-fixme[16]: `_TestSlideFixture` has no attribute `_assertions`.
-        self._assertions: list[Callable] = []
+        self._assertions = []
         testslide_module.mock_callable.register_assertion = self._register_assertion
         return self
 
