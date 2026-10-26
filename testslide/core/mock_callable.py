@@ -14,6 +14,11 @@ from inspect import Traceback
 from typing import Any, TYPE_CHECKING, Union
 from unittest.mock import Mock
 
+_inspect_currentframe = inspect.currentframe
+_inspect_getframeinfo = inspect.getframeinfo
+_inspect_isclass = inspect.isclass
+_inspect_iscoroutine = inspect.iscoroutine
+
 from testslide.core.lib import (
     _validate_return_type,
     _wrap_signature_and_type_validation,
@@ -39,10 +44,10 @@ def mock_callable(
     #  * False:  type validation will be disabled
     type_validation: bool | None = None,
 ) -> "_MockCallableDSL":
-    caller_frame = inspect.currentframe().f_back.f_back  # type: ignore
+    caller_frame = _inspect_currentframe().f_back.f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
-    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
+    caller_frame_info = _inspect_getframeinfo(caller_frame, context=0)  # type: ignore
     return _MockCallableDSL(
         target,
         method,
@@ -59,10 +64,10 @@ def mock_async_callable(
     allow_private: bool = False,
     type_validation: bool = True,
 ) -> "_MockAsyncCallableDSL":
-    caller_frame = inspect.currentframe().f_back  # type: ignore
+    caller_frame = _inspect_currentframe().f_back  # type: ignore
     # loading the context ends up reading files from disk and that might block
     # the event loop, so we don't do it.
-    caller_frame_info = inspect.getframeinfo(caller_frame, context=0)  # type: ignore
+    caller_frame_info = _inspect_getframeinfo(caller_frame, context=0)  # type: ignore
     return _MockAsyncCallableDSL(
         target,
         method,
@@ -150,13 +155,13 @@ def _is_coroutine(obj: Any) -> bool:
         3,
         11,
     ]:
-        return inspect.iscoroutine(obj) or isinstance(
+        return _inspect_iscoroutine(obj) or isinstance(
             obj,
             # pyre-ignore
             asyncio.coroutines.CoroWrapper,  # type: ignore
         )
     else:
-        return inspect.iscoroutine(obj)
+        return _inspect_iscoroutine(obj)
 
 
 def _is_coroutinefunction(func: Any) -> bool:
@@ -711,7 +716,7 @@ class _MockCallableDSL:
                         f"can use {other_name}() instead."
                     )
         else:
-            if inspect.isclass(self._target) and _is_instance_method(
+            if _inspect_isclass(self._target) and _is_instance_method(
                 self._target, self._method
             ):
                 raise ValueError(
@@ -727,7 +732,7 @@ class _MockCallableDSL:
                     f"{name}() can only be used with callable attributes and "
                     f"{repr(original_callable)} is not."
                 )
-            if inspect.isclass(original_callable):
+            if _inspect_isclass(original_callable):
                 raise ValueError(
                     f"{name}() can not be used with classes: "
                     f"{repr(original_callable)}. Perhaps you want to use "
@@ -776,7 +781,7 @@ class _MockCallableDSL:
             restore = self._method in self._target.__slots__
             restore_value = getattr(self._target, self._method)
 
-        if inspect.isclass(self._target):
+        if _inspect_isclass(self._target):
             new_value = staticmethod(new_value)  # type: ignore
 
         unpatcher = _patch(
