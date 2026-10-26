@@ -16,6 +16,12 @@ from types import FrameType
 from typing import Any, cast, TYPE_CHECKING, Union
 from unittest.mock import Mock
 
+_inspect_ismethod = inspect.ismethod
+_inspect_signature = inspect.signature
+_inspect_getfullargspec = inspect.getfullargspec
+_inspect_ismodule = inspect.ismodule
+_inspect_isclass = inspect.isclass
+
 import typeguard
 import typing_extensions
 
@@ -156,10 +162,10 @@ def _validate_callable_signature(
     # Ugly hack to make mock objects not be subclass of Mock
     if _is_a_builtin(callable_template):
         return False
-    if skip_first_arg and not inspect.ismethod(callable_template):
+    if skip_first_arg and not _inspect_ismethod(callable_template):
         callable_template = functools.partial(callable_template, None)
     try:
-        signature = inspect.signature(callable_template, follow_wrapped=False)
+        signature = _inspect_signature(callable_template, follow_wrapped=False)
     except ValueError:
         return False
 
@@ -234,7 +240,7 @@ def _validate_callable_arg_types(
     args: Any,
     kwargs: dict[str, Any],
 ) -> None:
-    argspec = inspect.getfullargspec(callable_template)
+    argspec = _inspect_getfullargspec(callable_template)
     idx_offset = 1 if skip_first_arg else 0
     type_errors = []
     for idx in range(0, len(args)):
@@ -272,10 +278,10 @@ def _validate_callable_arg_types(
 
 
 def _skip_first_arg(template: Any, attr_name: str) -> bool:
-    if inspect.ismodule(template):
+    if _inspect_ismodule(template):
         return False
 
-    if inspect.isclass(template):
+    if _inspect_isclass(template):
         mro = template.__mro__
     else:
         mro = template.__class__.__mro__
@@ -347,7 +353,7 @@ def _validate_return_type(
     unwrap_template_awaitable: bool = False,
 ) -> None:
     try:
-        argspec = inspect.getfullargspec(template)
+        argspec = _inspect_getfullargspec(template)
     except TypeError:
         return
     expected_type = argspec.annotations.get("return")

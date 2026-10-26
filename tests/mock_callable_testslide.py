@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import contextlib
+import inspect
 import os
 
 import testslide
@@ -1748,4 +1749,14 @@ def mock_callable_tests(context):
         def using_strict_mock(context):
             context.merge_context(
                 "run context", target=StrictMock(sample_module.ParentTarget)
+            )
+
+    @context.sub_context("mocking inspect functions")
+    def mocking_inspect(context):
+        @context.example
+        def does_not_recurse_when_mocking_getfullargspec(self):
+            self.mock_callable(inspect, "getfullargspec").to_call_original()
+            argspec = inspect.getfullargspec(sample_module.Target.instance_method)
+            self.assertEqual(
+                argspec.args, ["self", "arg1", "arg2", "kwarg1", "kwarg2"]
             )
