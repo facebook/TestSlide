@@ -3,8 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from collections.abc import Awaitable, Coroutine
+from collections.abc import AsyncGenerator, Awaitable, Coroutine, Generator
+from contextlib import asynccontextmanager, contextmanager
 from typing import Any, Union
+
+from typing_extensions import Self
 
 attribute = "value"
 typedattr: str = "bruh"
@@ -175,3 +178,35 @@ TupleArgType = dict[str, tuple[str, int]]
 
 def test_tuple(arg: TupleArgType) -> None:
     pass
+
+
+class ContextManagerTarget:
+    "This class is used by some unit tests only"
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        return None
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
+        return None
+
+
+@contextmanager
+def test_function_returns_context_manager() -> Generator[
+    "ContextManagerTarget", None, None
+]:
+    "This function is used by some unit tests only"
+    yield ContextManagerTarget()
+
+
+@asynccontextmanager
+async def test_function_returns_async_context_manager() -> AsyncGenerator[
+    "ContextManagerTarget", None
+]:
+    "This function is used by some unit tests only"
+    yield ContextManagerTarget()
