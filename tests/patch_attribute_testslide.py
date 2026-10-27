@@ -217,3 +217,9 @@ def patch_attribute_tests(context):
         self.patch_attribute(
             sample_module.SomeClass, "_private_attr", "notsoprivate", allow_private=True
         )
+
+    @context.example
+    def unpatching_restores_falsy_values(self):
+        self.patch_attribute(sample_module.SomeUnhashableClass, "class_attr", 1)
+        unpatch_all_mocked_attributes()
+        self.assertEqual(sample_module.SomeUnhashableClass.class_attr, 0)
